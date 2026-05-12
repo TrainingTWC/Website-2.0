@@ -109,16 +109,21 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
 
+  // Scroll container — product page scrolls inside its own div (not window)
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Scroll progress for the hero section (parallax)
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
+    container: containerRef,
     offset: ["start start", "end start"],
   });
   // Page-level progress for the story section + related grid parallax
   const storyRef = useRef<HTMLElement>(null);
   const { scrollYProgress: storyProgress } = useScroll({
     target: storyRef,
+    container: containerRef,
     offset: ["start end", "end start"],
   });
 
@@ -142,12 +147,12 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
 
   // Scroll to top on enter & on product change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    containerRef.current?.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [productId]);
 
   if (products === undefined) {
     return (
-      <div className="min-h-screen bg-natural-bg flex items-center justify-center">
+      <div className="h-full flex items-center justify-center bg-natural-bg">
         <div className="text-natural-text/50 text-sm tracking-widest uppercase">Loading…</div>
       </div>
     );
@@ -155,7 +160,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-natural-bg flex items-center justify-center px-6 text-center">
+      <div className="h-full flex items-center justify-center bg-natural-bg px-6 text-center">
         <div className="space-y-4">
           <p className="text-natural-text/50 uppercase tracking-widest text-xs font-bold">
             Product not found
@@ -204,7 +209,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-natural-bg">
+    <div ref={containerRef} className="h-full overflow-y-auto scrollbar-hide bg-natural-bg">
       {/* ── Hero panel (image 4 style) ─────────────────────────── */}
       <section
         ref={heroRef}

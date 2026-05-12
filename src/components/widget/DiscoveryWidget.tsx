@@ -788,6 +788,26 @@ function shortlistProducts(
   );
 }
 
+// Returns top 2 products per category from the shortlisted set, sorted by rating.
+function topPerCategory(products: Product[], shortlistedIds: Set<string>): Product[] {
+  const filtered = products.filter((p) => shortlistedIds.has(p._id));
+  const byCat = new Map<string, Product[]>();
+  for (const p of filtered) {
+    const key = p.category || p.type;
+    if (!byCat.has(key)) byCat.set(key, []);
+    byCat.get(key)!.push(p);
+  }
+  const result: Product[] = [];
+  for (const [, group] of byCat) {
+    group.sort((a, b) => {
+      const r = (b.rating ?? 0) - (a.rating ?? 0);
+      return r !== 0 ? r : (b.reviewCount ?? 0) - (a.reviewCount ?? 0);
+    });
+    result.push(...group.slice(0, 2));
+  }
+  return result;
+}
+
 function ProductShortlist({
   answers,
   note,
@@ -804,12 +824,12 @@ function ProductShortlist({
   products: Product[];
 }) {
   const shortlist = shortlistProducts(products, answers, note);
-  const totalAnswered = Object.keys(answers).length + (note.trim() ? 1 : 0);
-  const matchedCount = shortlist.size;
-  const totalCount = products.length;
-
   const primaryIds = new Set(recommendation?.primaryProductIds ?? []);
   const isFinal = !!recommendation;
+  const displayProducts = isFinal
+    ? products.filter((p) => primaryIds.has(p._id))
+    : topPerCategory(products, shortlist);
+  const answeredCount = Object.keys(answers).length;
 
   return (
     <div className="relative w-full h-full flex flex-col min-h-0">
@@ -817,19 +837,19 @@ function ProductShortlist({
       <div className="shrink-0 px-6 sm:px-8 py-4 border-b border-natural-border/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-text/55">
-            {isFinal ? "Your match" : loading ? "Brewing" : "Live shortlist"}
+            {isFinal ? "Your match" : loading ? "Brewing" : "Best picks"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-2xl font-serif font-black text-natural-text tabular-nums">
-            {isFinal ? primaryIds.size : matchedCount}
+            {displayProducts.length}
           </span>
           <span className="text-natural-text/40 text-xs font-medium">
-            of {totalCount}
+            {isFinal ? "matched" : "curated"}
           </span>
-          {!isFinal && totalAnswered > 0 && (
+          {!isFinal && answeredCount > 0 && (
             <span className="ml-2 px-2 py-0.5 rounded-full bg-natural-accent/10 text-natural-accent text-[9px] font-bold tracking-[0.2em] uppercase">
-              {totalAnswered} filter{totalAnswered === 1 ? "" : "s"}
+              {answeredCount} {answeredCount === 1 ? "answer" : "answers"}
             </span>
           )}
         </div>
@@ -843,63 +863,54 @@ function ProductShortlist({
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {products.map((p) => {
-              const inShortlist = shortlist.has(p._id);
-              const isPrimary = primaryIds.has(p._id);
-              const muted = isFinal ? !isPrimary : !inShortlist;
-              return (
-                <motion.div
-                  key={p._id}
-                  layout
-                  animate={{
-                    opacity: muted ? 0.18 : 1,
-                    scale: muted ? 0.94 : 1,
-                  }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden border bg-natural-paper ${
-                    isPrimary
-                      ? "border-natural-accent shadow-lg shadow-natural-accent/25 ring-2 ring-natural-accent/40"
-                      : "border-natural-border"
-                  }`}
-                >
-                  {p.imageUrl ? (
-                    <img
-                      src={p.imageUrl}
-                      alt={p.name}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-natural-muted flex items-center justify-center">
-                      <Coffee className="w-8 h-8 text-natural-text/20" />
+            <AnimatePresence mode="popLayout">
+              {displayProducts.map((p) => {
+                const isPrimary = primaryIds.has(p._id);
+                return (
+                  <motion.div
+                    key={p._id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    className={`relative aspect-3/4 rounded-2xl overflow-hidden border bg-natural-paper ${
+                      isPrimary
+                        ? "border-natural-accent shadow-lg shadow-natural-accent/25 ring-2 ring-natural-accent/40"
+                        : "border-natural-border"
+                    }`}
+                  >
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-natural-muted flex items-center justify-center">
+                        <Coffee className="w-8 h-8 text-natural-text/20" />
+                      </div>
+                    )}
+                    {/* Bottom label */}
+                    <div className="absolute inset-x-0 bottom-0 p-2 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
+                      <p className="font-serif font-bold text-[11px] leading-tight line-clamp-2">
+                        {p.name}
+                      </p>
+                      <p className="text-[10px] opacity-80 mt-0.5">
+                        ₹{p.price.toLocaleString("en-IN")}
+                      </p>
                     </div>
-                  )}
-                  {/* Bottom label */}
-                  <div className="absolute inset-x-0 bottom-0 p-2 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
-                    <p className="font-serif font-bold text-[11px] leading-tight line-clamp-2">
-                      {p.name}
-                    </p>
-                    <p className="text-[10px] opacity-80 mt-0.5">
-                      ₹{p.price.toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                  {/* Eliminated stamp */}
-                  {muted && !isFinal && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-natural-bg/30 backdrop-blur-[1px]">
-                      <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-natural-text/60">
-                        Filtered out
-                      </span>
-                    </div>
-                  )}
-                  {/* Primary badge */}
-                  {isPrimary && (
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">
-                      Match
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
+                    {/* Primary badge */}
+                    {isPrimary && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">
+                        Match
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>

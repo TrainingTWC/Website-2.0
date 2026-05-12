@@ -414,7 +414,7 @@ function Storefront() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 overflow-y-auto bg-natural-bg"
+            className="fixed inset-0 z-40 overflow-hidden bg-natural-bg"
             style={{ willChange: "transform, opacity" }}
           >
             <ProductPage productId={activeProductId} onAddToCart={onAddToCart} />
