@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Merriweather", Georgia, serif;
+  --font-serif: "Lato", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-natural-bg: #F5F2ED;
+  --color-natural-text: #2C1810;
+  --color-natural-accent: #5A5A40;
+  --color-natural-border: #E0D8D0;
+  --color-natural-paper: #FAF9F6;
+  --color-natural-muted: #EBE7E0;
+  --color-natural-stone: #D9D1C7;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-natural-bg);
+    color: var(--color-natural-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  /* Refined scrollbar — premium feel */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-natural-stone);
+    border-radius: 10px;
+    border: 2px solid var(--color-natural-bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-natural-accent); }
+}
+
+@utility scrollbar-hide {
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@utility perspective-1000 {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+@utility preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Grain texture for premium paper feel */
+@utility paper-grain {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.09 0 0 0 0 0.06 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+  }
+}
