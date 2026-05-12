@@ -39,6 +39,9 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
 import { BestsellerCarousel3D } from "./components/BestsellerCarousel3D";
+import { SmoothScroll } from "./components/SmoothScroll";
+import { MagneticCursor } from "./components/MagneticCursor";
+import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
 
@@ -257,7 +260,12 @@ export default function App() {
     return <MerchantGate />;
   }
 
-  return <Storefront />;
+  return (
+    <SmoothScroll>
+      <MagneticCursor />
+      <Storefront />
+    </SmoothScroll>
+  );
 }
 
 function Storefront() {
@@ -602,17 +610,6 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: heroProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  // Background drifts upward as you scroll past the hero
-  const heroBgY = useTransform(heroProgress, [0, 1], ["0%", "30%"]);
-  const heroScale = useTransform(heroProgress, [0, 1], [1, 1.15]);
-  // Content fades + lifts slightly
-  const heroContentY = useTransform(heroProgress, [0, 1], [0, -60]);
-  const heroContentOpacity = useTransform(heroProgress, [0, 0.7], [1, 0.2]);
   const beans = products.filter((p) => p.type === "beans");
   const bags = products.filter((p) => p.type === "bags");
   const merch = products.filter((p) => p.type === "merch");
@@ -623,39 +620,98 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
   const visibleBeans = showAllBeans ? beans : beans.slice(0, 4);
   const visibleBags = showAllBags ? bags : bags.slice(0, 4);
 
-  return (
-    <div className="space-y-24">
-      {/* Hero Section */}
-      <section
-        ref={heroRef}
-        className="relative h-[70vh] rounded-[3rem] overflow-hidden bg-natural-text flex items-center px-12"
-        id="hero"
-      >
-        <motion.div
-          style={{ y: heroBgY, scale: heroScale }}
-          className="absolute inset-0 opacity-50 bg-cover bg-center"
-        >
-          <div
-            className="w-full h-[130%] bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url(https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1600)",
-            }}
-          />
-        </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2C1810] via-[#2C1810]/60 to-transparent" />
+  // Chapter feature products — pick the highest-rated bean/bag/merch
+  const featuredBean = [...beans].sort(
+    (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
+  )[0];
+  const featuredBag = bags[0];
+  const featuredMerch = merch[0];
 
-        <motion.div
-          style={{ y: heroContentY, opacity: heroContentOpacity }}
-          className="relative z-10 w-full max-w-6xl mx-auto"
-        >
-          <BestsellerCarousel3D
-            products={products}
-            onSelect={(id) => navigateTo({ product: id })}
-            onAddToCart={onAddToCart}
-          />
-        </motion.div>
-      </section>
+  const goToCatalog = () => {
+    const el = document.getElementById("section-beans");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div>
+      {/* ── Cinematic Hero ─────────────────────────────────────── */}
+      <CinematicHero
+        products={products}
+        onSelectProduct={(id) => navigateTo({ product: id })}
+        onAddToCart={onAddToCart}
+        onScrollHint={goToCatalog}
+      />
+
+      {/* ── Curtain into editorial chapter 01 ──────────────────── */}
+      <CurtainTransition color="bg-natural-paper" />
+
+      {/* ── Chapter 01: Sourcing ───────────────────────────────── */}
+      <ChapterReveal
+        index="01 / 03"
+        eyebrow="Sourcing"
+        title={<>Single origins.<br /><em className="font-serif italic font-light">Patient craft.</em></>}
+        body="Every harvest is hand-selected from partner farms across the Western Ghats and beyond. Beans rest, breathe, then meet our roasters for a slow, deliberate transformation."
+        callouts={["Direct trade", "Hand-picked", "Estate-grown", "Traceable"]}
+        product={featuredBean}
+        align="left"
+        theme="light"
+        onProductClick={featuredBean ? () => navigateTo({ product: featuredBean._id }) : undefined}
+      />
+
+      {/* ── Curtain into chapter 02 ────────────────────────────── */}
+      <CurtainTransition color="bg-[#1A0F08]" />
+
+      {/* ── Chapter 02: Craft (dark) ───────────────────────────── */}
+      <ChapterReveal
+        index="02 / 03"
+        eyebrow="Craft"
+        title={<>The art of <em className="font-serif italic font-light">roasting.</em></>}
+        body="Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self."
+        callouts={["Small batch", "Slow roasted", "Cupped daily", "Aroma profiled"]}
+        product={featuredBag}
+        align="right"
+        theme="dark"
+        onProductClick={featuredBag ? () => navigateTo({ product: featuredBag._id }) : undefined}
+      />
+
+      {/* ── Curtain back to light for chapter 03 ───────────────── */}
+      <CurtainTransition color="bg-natural-paper" />
+
+      {/* ── Chapter 03: Ritual ─────────────────────────────────── */}
+      <ChapterReveal
+        index="03 / 03"
+        eyebrow="Ritual"
+        title={<>Pour. Pause. <em className="font-serif italic font-light">Repeat.</em></>}
+        body="From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day."
+        callouts={["Brewed in seconds", "Cup-ready", "Designed to share"]}
+        product={featuredMerch ?? featuredBean}
+        align="left"
+        theme="light"
+        onProductClick={
+          featuredMerch
+            ? () => navigateTo({ product: featuredMerch._id })
+            : featuredBean
+            ? () => navigateTo({ product: featuredBean._id })
+            : undefined
+        }
+      />
+
+      {/* ── Curtain into the catalog grids ─────────────────────── */}
+      <CurtainTransition color="bg-natural-bg" />
+
+      <div className="space-y-24 max-w-7xl mx-auto px-6 md:px-12 pb-24">
+      {/* Catalog header */}
+      <div className="text-center max-w-2xl mx-auto pt-12">
+        <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-accent">
+          The Collection
+        </span>
+        <h2 className="font-serif font-black text-4xl md:text-6xl leading-tight mt-3 tracking-tight">
+          Choose your ritual.
+        </h2>
+        <p className="text-natural-text/60 mt-4">
+          Every coffee, every bag, every cup — handpicked by our master roasters.
+        </p>
+      </div>
 
       {/* Product Categories — slim cards with product preview strip */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6" id="categories">
@@ -864,6 +920,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

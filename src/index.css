@@ -18,6 +18,15 @@
   html {
     scroll-behavior: smooth;
   }
+  /* Lenis smooth-scroll requires `html.lenis` to set its own scrolling */
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+  /* Hide native cursor when magnetic cursor is active (pointer devices only) */
+  html.has-magnetic-cursor,
+  html.has-magnetic-cursor body,
+  html.has-magnetic-cursor * { cursor: none !important; }
   body {
     background-color: var(--color-natural-bg);
     color: var(--color-natural-text);
