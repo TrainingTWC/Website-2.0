@@ -20,7 +20,6 @@ import {
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
-import { KioskPipeline } from "./KioskPipeline";
 import { asset } from "../../lib/asset";
 import type { Product, RecommendationResult } from "../../types";
 
@@ -144,6 +143,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] =
     useState<RecommendationResult | null>(null);
@@ -206,10 +206,11 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
         origin: p.origin,
         category: p.category,
       }));
-      const rec = await getRecommendation({ answers, products: productSnapshot });
+      const finalAnswers = note.trim() ? { ...answers, freeform: note.trim() } : answers;
+      const rec = await getRecommendation({ answers: finalAnswers, products: productSnapshot });
       setRecommendation(rec);
       await createSession({
-        answers,
+        answers: finalAnswers,
         recommendations: rec.primaryProductIds,
         completed: true,
         converted: false,
@@ -229,6 +230,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
     setStep(0);
     setDirection(1);
     setAnswers({});
+    setNote("");
     setRecommendation(null);
     setLoading(false);
     setIsOpen(false);
@@ -329,32 +331,49 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
             </motion.button>
           </motion.div>
 
-          {/* ── Main content — perspective container for 3D ── */}
-          <div
-            className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-20 perspective-1000"
-          >
-            {loading ? (
-              <KioskPipeline answers={answers} products={products ?? []} />
-            ) : recommendation ? (
-              <RecommendationView
+          {/* ── Main content — split: controls (left) | curation canvas (right) ── */}
+          <div className="relative z-10 h-full pt-20 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            {/* LEFT — controls (40%) */}
+            <div className="relative flex flex-col px-6 sm:px-10 pb-8 overflow-y-auto scrollbar-hide">
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <ProcessingView />
+                </div>
+              ) : recommendation ? (
+                <RecommendationView
+                  recommendation={recommendation}
+                  products={products ?? []}
+                  onReset={reset}
+                />
+              ) : (
+                <QuestionView
+                  q={q}
+                  step={step}
+                  direction={direction}
+                  answers={answers}
+                  note={note}
+                  onNote={setNote}
+                  hasAnswer={hasAnswer}
+                  onAnswer={handleAnswer}
+                  onNext={nextStep}
+                  onPrev={prevStep}
+                  mouseX={mouseX}
+                  mouseY={mouseY}
+                />
+              )}
+            </div>
+
+            {/* RIGHT — live curation canvas (60%) */}
+            <div className="relative hidden lg:block border-l border-natural-border/60 bg-linear-to-br from-natural-paper/40 via-natural-paper/10 to-transparent overflow-hidden">
+              <CurationCanvas
+                answers={answers}
+                note={note}
+                step={step}
+                loading={loading}
                 recommendation={recommendation}
                 products={products ?? []}
-                onReset={reset}
               />
-            ) : (
-              <QuestionView
-                q={q}
-                step={step}
-                direction={direction}
-                answers={answers}
-                hasAnswer={hasAnswer}
-                onAnswer={handleAnswer}
-                onNext={nextStep}
-                onPrev={prevStep}
-                mouseX={mouseX}
-                mouseY={mouseY}
-              />
-            )}
+            </div>
           </div>
         </motion.div>
       )}
@@ -412,6 +431,8 @@ function QuestionView({
   step,
   direction,
   answers,
+  note,
+  onNote,
   hasAnswer,
   onAnswer,
   onNext,
@@ -423,6 +444,8 @@ function QuestionView({
   step: number;
   direction: number;
   answers: Record<string, string>;
+  note: string;
+  onNote: (v: string) => void;
   hasAnswer: boolean;
   onAnswer: (v: string) => void;
   onNext: () => void;
@@ -431,21 +454,21 @@ function QuestionView({
   mouseY: import("motion/react").MotionValue<number>;
 }) {
   // Subtle 3D rotation on the whole card stack following mouse
-  const stackRotateY = useTransform(mouseX, [-1, 1], [-3, 3]);
-  const stackRotateX = useTransform(mouseY, [-1, 1], [2, -2]);
+  const stackRotateY = useTransform(mouseX, [-1, 1], [-2, 2]);
+  const stackRotateX = useTransform(mouseY, [-1, 1], [1.5, -1.5]);
 
   return (
     <motion.div
       style={{ rotateX: stackRotateX, rotateY: stackRotateY, transformPerspective: 1200 }}
-      className="w-full max-w-2xl preserve-3d"
+      className="w-full max-w-xl mx-auto preserve-3d flex-1 flex flex-col justify-center py-6"
     >
       {/* Progress dots */}
-      <div className="flex items-center justify-center gap-2 mb-12">
+      <div className="flex items-center justify-start gap-2 mb-8">
         {QUESTIONS.map((_, i) => (
           <motion.div
             key={i}
             animate={{
-              width: i === step ? 32 : 6,
+              width: i === step ? 28 : 6,
               opacity: i <= step ? 1 : 0.25,
             }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -461,13 +484,13 @@ function QuestionView({
         <motion.div
           key={step}
           custom={direction}
-          initial={{ opacity: 0, x: direction * 40, rotateY: direction * 8 }}
+          initial={{ opacity: 0, x: direction * 30, rotateY: direction * 6 }}
           animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          exit={{ opacity: 0, x: direction * -40, rotateY: direction * -8 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-10 preserve-3d"
+          exit={{ opacity: 0, x: direction * -30, rotateY: direction * -6 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-6 preserve-3d"
         >
-          <div className="text-center space-y-3">
+          <div className="space-y-2">
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -477,10 +500,10 @@ function QuestionView({
               Question {step + 1} of {QUESTIONS.length}
             </motion.p>
             <motion.h2
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.6 }}
-              className="text-4xl sm:text-5xl font-serif font-bold text-natural-text leading-[1.05] tracking-tight"
+              transition={{ delay: 0.15, duration: 0.55 }}
+              className="text-3xl sm:text-4xl font-serif font-bold text-natural-text leading-[1.05] tracking-tight"
             >
               {q.question}
             </motion.h2>
@@ -494,7 +517,8 @@ function QuestionView({
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 4 option cards — single column on narrow, two cols when wide */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {q.options.map((opt, idx) => (
               <TiltOption
                 key={opt.value}
@@ -505,11 +529,25 @@ function QuestionView({
               />
             ))}
           </div>
+
+          {/* Freeform note — tell us anything */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] uppercase text-natural-text/40">
+              <Sparkles className="w-3 h-3" /> Or tell us anything
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => onNote(e.target.value)}
+              placeholder="e.g. I want something smoky for the monsoon mornings…"
+              rows={2}
+              className="w-full resize-none rounded-2xl border border-natural-border/70 bg-natural-paper/60 backdrop-blur-sm p-3 text-sm text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:border-natural-accent focus:bg-natural-paper transition-all"
+            />
+          </div>
         </motion.div>
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-12">
+      <div className="flex items-center justify-between mt-8">
         <motion.button
           onClick={onPrev}
           whileHover={step > 0 ? { x: -3 } : {}}
@@ -521,17 +559,17 @@ function QuestionView({
         </motion.button>
         <motion.button
           onClick={onNext}
-          disabled={!hasAnswer}
-          whileHover={hasAnswer ? { scale: 1.04, y: -2 } : {}}
-          whileTap={hasAnswer ? { scale: 0.97 } : {}}
+          disabled={!hasAnswer && !note.trim()}
+          whileHover={hasAnswer || note.trim() ? { scale: 1.04, y: -2 } : {}}
+          whileTap={hasAnswer || note.trim() ? { scale: 0.97 } : {}}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className={`px-10 py-4 rounded-full font-bold text-sm tracking-wide transition-all flex items-center gap-2 ${
-            hasAnswer
+          className={`px-8 py-3.5 rounded-full font-bold text-sm tracking-wide transition-all flex items-center gap-2 ${
+            hasAnswer || note.trim()
               ? "bg-natural-text text-white shadow-xl shadow-natural-text/20 hover:bg-natural-accent"
               : "bg-natural-muted text-natural-text/30 cursor-not-allowed"
           }`}
         >
-          {step === QUESTIONS.length - 1 ? "Reveal My Match" : "Continue"}
+          {step === QUESTIONS.length - 1 ? "Brew My Match" : "Continue"}
           <ChevronRight className="w-4 h-4" />
         </motion.button>
       </div>
@@ -896,3 +934,465 @@ function RecommendationView({
     </motion.div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// CurationCanvas — the right-side live "build your coffee" stage.
+// As the user answers, the cup colour, foam, ice, accent shift, and
+// floating attribute chips swirl around the cup. Once we have a
+// recommendation, the canvas locks onto the chosen product.
+// ─────────────────────────────────────────────────────────────
+function CurationCanvas({
+  answers,
+  note,
+  step,
+  loading,
+  recommendation,
+  products,
+}: {
+  answers: Record<string, string>;
+  note: string;
+  step: number;
+  loading: boolean;
+  recommendation: RecommendationResult | null;
+  products: Product[];
+}) {
+  // Derive visual attributes from answers
+  const style = answers.style;
+  const time = answers.time;
+  const flavor = answers.flavor;
+  const brew = answers.brew;
+  const nature = answers.nature;
+
+  // Liquid colour — black/milk/cold/sweet
+  const liquidGradient =
+    style === "milk"
+      ? "linear-gradient(180deg, #C4A07A 0%, #8A6740 60%, #5C4326 100%)"
+      : style === "cold"
+      ? "linear-gradient(180deg, #4A3326 0%, #2C1810 100%)"
+      : style === "sweet"
+      ? "linear-gradient(180deg, #B07A4F 0%, #6B3F22 60%, #3E2412 100%)"
+      : "linear-gradient(180deg, #3A2418 0%, #1F1209 100%)";
+
+  // Sky/background tint — time of day
+  const skyGradient =
+    time === "morning"
+      ? "linear-gradient(180deg, #F8E8D0 0%, #F0DAB8 100%)"
+      : time === "afternoon"
+      ? "linear-gradient(180deg, #FAEED5 0%, #E8D2A8 100%)"
+      : time === "evening"
+      ? "linear-gradient(180deg, #2F1F18 0%, #4A2F22 100%)"
+      : "linear-gradient(180deg, #F1E7D5 0%, #DCC7A0 100%)";
+
+  // Accent ring around cup — based on nature
+  const accentRing =
+    nature === "intense"
+      ? "rgba(180, 60, 30, 0.6)"
+      : nature === "creative"
+      ? "rgba(180, 130, 60, 0.55)"
+      : nature === "curious"
+      ? "rgba(90, 130, 110, 0.55)"
+      : "rgba(120, 100, 80, 0.55)";
+
+  const hasMilk = style === "milk" || style === "sweet";
+  const hasIce = style === "cold";
+
+  // Build floating chips from answers
+  const chipMap: Record<string, string> = {
+    morning: "Dawn ritual",
+    afternoon: "Midday reset",
+    evening: "Evening warmth",
+    anytime: "Always on",
+    black: "Pure black",
+    milk: "Silky milk",
+    cold: "Iced",
+    sweet: "Crafted sweet",
+    calm: "Anchor",
+    intense: "Igniter",
+    creative: "Creator",
+    curious: "Seeker",
+    creative_work: "Ideas & art",
+    tech_work: "Code & systems",
+    social_work: "People & stories",
+    physical_work: "On the move",
+    bold: "Bold & dark",
+    sweet_flavor: "Caramel sweet",
+    fruity: "Bright & fruity",
+    earthy: "Earthy & deep",
+    easy: "Quick brew",
+    ritual: "Slow ritual",
+    cold_brew: "Cold brew",
+    cafe: "Cafe-first",
+  };
+  const chips = Object.values(answers)
+    .map((v) => chipMap[v])
+    .filter(Boolean);
+
+  const firstProduct =
+    recommendation && products.find((p) => p._id === recommendation.primaryProductIds[0]);
+
+  // Progress through the build (0 → 1)
+  const progress = Math.min(1, Object.keys(answers).length / 6);
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Sky / time-of-day background */}
+      <motion.div
+        animate={{ background: skyGradient }}
+        transition={{ duration: 1.2 }}
+        className="absolute inset-0"
+        style={{ background: skyGradient }}
+      />
+
+      {/* Soft radial glow behind cup */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 65%, rgba(255,240,210,0.4) 0%, transparent 60%)",
+        }}
+      />
+
+      {/* Step label */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+        <span className="h-px w-10 bg-current opacity-30" />
+        <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-text/55">
+          {recommendation
+            ? "Your match"
+            : loading
+            ? "Brewing"
+            : `Curating · step ${step + 1}/${QUESTIONS.length}`}
+        </span>
+        <span className="h-px w-10 bg-current opacity-30" />
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute top-14 left-1/2 -translate-x-1/2 w-40 h-0.5 bg-natural-text/10 rounded-full overflow-hidden z-10">
+        <motion.div
+          className="h-full bg-natural-accent"
+          animate={{ width: `${progress * 100}%` }}
+          transition={{ type: "spring", stiffness: 80, damping: 18 }}
+        />
+      </div>
+
+      {/* If recommendation, swap the cup for the actual product image */}
+      <AnimatePresence mode="wait">
+        {firstProduct ? (
+          <motion.div
+            key="product"
+            initial={{ opacity: 0, scale: 0.7, rotate: -6 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="relative w-[70%] max-w-md aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-natural-border">
+              {firstProduct.imageUrl ? (
+                <img
+                  src={firstProduct.imageUrl}
+                  alt={firstProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-natural-muted" />
+              )}
+              <div className="absolute inset-x-0 bottom-0 p-6 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
+                <p className="text-[10px] font-bold tracking-[0.35em] uppercase opacity-80">
+                  Your Cup
+                </p>
+                <h3 className="font-serif font-black text-2xl leading-tight mt-1">
+                  {firstProduct.name}
+                </h3>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="cup"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <CoffeeCupGraphic
+              liquidGradient={liquidGradient}
+              accentRing={accentRing}
+              hasMilk={hasMilk}
+              hasIce={hasIce}
+              dark={time === "evening"}
+              flavor={flavor}
+              brew={brew}
+              loading={loading}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating attribute chips orbiting the cup */}
+      <div className="absolute inset-0 pointer-events-none">
+        <AnimatePresence>
+          {chips.map((label, i) => {
+            // Distribute chips around the cup on an ellipse
+            const angle = (i / Math.max(chips.length, 1)) * Math.PI * 2 - Math.PI / 2;
+            const rx = 38; // pct
+            const ry = 32; // pct
+            const left = 50 + Math.cos(angle) * rx;
+            const top = 55 + Math.sin(angle) * ry;
+            return (
+              <motion.div
+                key={label + i}
+                initial={{ opacity: 0, scale: 0.6, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.7 }}
+                transition={{
+                  delay: i * 0.06,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 18,
+                }}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{
+                    duration: 3 + (i % 3),
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-natural-paper/85 backdrop-blur-sm border border-natural-border shadow-lg text-[10px] font-bold tracking-wider uppercase text-natural-text whitespace-nowrap"
+                >
+                  <span className="inline-block w-1 h-1 rounded-full bg-natural-accent mr-1.5 align-middle" />
+                  {label}
+                </motion.div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* Freeform note bubble — bottom right */}
+      <AnimatePresence>
+        {note.trim() && !recommendation && (
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 200, damping: 22 }}
+            className="absolute bottom-6 right-6 max-w-xs"
+          >
+            <div className="relative px-4 py-3 rounded-2xl rounded-br-sm bg-natural-text text-white shadow-2xl">
+              <p className="text-[9px] font-bold tracking-[0.3em] uppercase opacity-60 mb-1">
+                Your note
+              </p>
+              <p className="text-sm italic leading-snug">"{note}"</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// CoffeeCupGraphic — animated cup that fills, takes on milk/ice
+// ─────────────────────────────────────────────────────────────
+function CoffeeCupGraphic({
+  liquidGradient,
+  accentRing,
+  hasMilk,
+  hasIce,
+  dark,
+  flavor,
+  brew,
+  loading,
+}: {
+  liquidGradient: string;
+  accentRing: string;
+  hasMilk: boolean;
+  hasIce: boolean;
+  dark: boolean;
+  flavor?: string;
+  brew?: string;
+  loading: boolean;
+}) {
+  return (
+    <div className="relative w-[58%] max-w-sm aspect-square flex items-center justify-center">
+      {/* Accent ring (nature) */}
+      <motion.div
+        className="absolute inset-0 rounded-full blur-2xl"
+        animate={{
+          backgroundColor: accentRing,
+          scale: loading ? [1, 1.15, 1] : 1,
+        }}
+        transition={{
+          backgroundColor: { duration: 1 },
+          scale: { duration: 2, repeat: loading ? Infinity : 0 },
+        }}
+        style={{ opacity: 0.6 }}
+      />
+
+      {/* Saucer */}
+      <div
+        className={`absolute bottom-[18%] left-1/2 -translate-x-1/2 w-[88%] h-6 rounded-full shadow-2xl ${
+          dark ? "bg-[#1A1108]" : "bg-natural-paper"
+        }`}
+        style={{
+          boxShadow: dark
+            ? "0 30px 50px rgba(0,0,0,0.5)"
+            : "0 30px 50px rgba(80,60,40,0.25)",
+        }}
+      />
+
+      {/* Cup body */}
+      <div
+        className={`absolute bottom-[24%] left-1/2 -translate-x-1/2 w-[60%] aspect-square rounded-b-full rounded-t-2xl overflow-hidden border-2 ${
+          dark ? "bg-[#22160E] border-[#3A2418]" : "bg-natural-paper border-natural-border"
+        }`}
+        style={{
+          boxShadow: dark
+            ? "inset 0 -20px 30px rgba(0,0,0,0.4)"
+            : "inset 0 -20px 30px rgba(80,60,40,0.15)",
+        }}
+      >
+        {/* Liquid level */}
+        <motion.div
+          className="absolute inset-x-0 bottom-0"
+          initial={{ height: "0%" }}
+          animate={{ height: "78%" }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{ background: liquidGradient }}
+        >
+          {/* Surface ripple */}
+          <motion.div
+            className="absolute inset-x-0 top-0 h-2 opacity-50"
+            animate={{ x: [0, 6, 0] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,250,235,0.4), transparent)",
+            }}
+          />
+
+          {/* Milk foam crema */}
+          {hasMilk && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="absolute inset-x-0 top-0 h-5 bg-linear-to-b from-[#F8EBD5] to-[#E5C7A0]"
+              style={{ borderRadius: "50% 50% 0 0 / 100% 100% 0 0" }}
+            />
+          )}
+
+          {/* Ice cubes */}
+          {hasIce && (
+            <div className="absolute inset-x-0 top-1 flex justify-center gap-1 px-3">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 0.8 }}
+                  transition={{ delay: 0.4 + i * 0.1, type: "spring" }}
+                  className="w-5 h-5 rounded-md bg-white/40 border border-white/60 backdrop-blur-sm"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Steam plumes — only for hot drinks */}
+          {!hasIce && (
+            <div className="absolute -top-20 inset-x-0 flex justify-center gap-3 pointer-events-none">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-1.5 rounded-full"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{
+                    height: ["0px", "60px", "0px"],
+                    opacity: [0, 0.5, 0],
+                    y: [0, -20, -40],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: i * 0.6,
+                    ease: "easeOut",
+                  }}
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(255,240,220,0.6) 0%, transparent 100%)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Cup handle */}
+      <div
+        className={`absolute bottom-[34%] right-[18%] w-7 h-12 rounded-full border-2 ${
+          dark ? "border-[#3A2418]" : "border-natural-border"
+        }`}
+        style={{ borderLeftColor: "transparent" }}
+      />
+
+      {/* Floating flavor pellets — petals/beans rising into the cup */}
+      {flavor && (
+        <div className="absolute inset-0 pointer-events-none">
+          {[0, 1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              className="absolute left-1/2 bottom-[60%] w-2 h-2 rounded-full"
+              style={{
+                backgroundColor:
+                  flavor === "fruity"
+                    ? "#C44E5E"
+                    : flavor === "sweet_flavor"
+                    ? "#C99A6A"
+                    : flavor === "earthy"
+                    ? "#6B5039"
+                    : "#3A2418",
+              }}
+              animate={{
+                y: [0, -40, -80],
+                x: [0, (i % 2 === 0 ? 1 : -1) * 12, 0],
+                opacity: [0, 1, 0],
+                scale: [0.6, 1, 0.4],
+              }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                delay: i * 0.7,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Brew tool badge — bottom hint */}
+      {brew && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-natural-text/85 backdrop-blur-sm text-white text-[9px] font-bold tracking-[0.3em] uppercase"
+        >
+          {brew === "easy"
+            ? "Quick brew"
+            : brew === "ritual"
+            ? "Slow ritual"
+            : brew === "cold_brew"
+            ? "Cold brew"
+            : "Cafe"}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+

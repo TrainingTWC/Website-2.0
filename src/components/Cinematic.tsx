@@ -9,7 +9,7 @@ import {
 import { ArrowDown } from "lucide-react";
 import type { Product } from "../types";
 import { SmartImage } from "./SmartImage";
-import { BestsellerCarousel3D } from "./BestsellerCarousel3D";
+import { BannerSlideshow, type Banner } from "./BannerSlideshow";
 
 /**
  * Autajon-inspired cinematic scrollytelling sequence.
@@ -29,14 +29,10 @@ import { BestsellerCarousel3D } from "./BestsellerCarousel3D";
 // Cinematic Hero — full-bleed dark stage, parallax depth
 // ─────────────────────────────────────────────────────────────
 export function CinematicHero({
-  products,
-  onSelectProduct,
-  onAddToCart,
+  banners,
   onScrollHint,
 }: {
-  products: Product[];
-  onSelectProduct: (id: string) => void;
-  onAddToCart: (name: string) => void;
+  banners: Banner[];
   onScrollHint: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -116,11 +112,7 @@ export function CinematicHero({
         <h2 className="sr-only">Master the ritual.</h2>
 
         <div className="w-full max-w-6xl">
-          <BestsellerCarousel3D
-            products={products}
-            onSelect={onSelectProduct}
-            onAddToCart={onAddToCart}
-          />
+          <BannerSlideshow banners={banners} />
         </div>
       </motion.div>
 

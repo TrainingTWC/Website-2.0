@@ -38,7 +38,6 @@ import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
-import { BestsellerCarousel3D } from "./components/BestsellerCarousel3D";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { MagneticCursor } from "./components/MagneticCursor";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
@@ -632,13 +631,22 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const heroBanners = [
+    {
+      src: asset("banner-fizz.jpg"),
+      alt: "Third Wave Coffee × Schweppes — Find Your Fizz. Espresso Tonics have arrived.",
+    },
+    {
+      src: asset("banner-thirdrush.jpg"),
+      alt: "Third Wave Coffee × Third Rush Desserts — Wide range to choose from. Available in select stores in Bangalore.",
+    },
+  ];
+
   return (
     <div>
       {/* ── Cinematic Hero ─────────────────────────────────────── */}
       <CinematicHero
-        products={products}
-        onSelectProduct={(id) => navigateTo({ product: id })}
-        onAddToCart={onAddToCart}
+        banners={heroBanners}
         onScrollHint={goToCatalog}
       />
 
