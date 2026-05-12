@@ -188,12 +188,12 @@ export function KioskPipeline({ answers, products, onComplete }: KioskPipelinePr
     >
       {/* ── Status header ─────────────────────────────────────── */}
       <div className="flex items-center justify-center gap-3 mb-10">
-        <div className="relative w-10 h-10 rounded-full bg-natural-paper border border-natural-border shadow-sm flex items-center justify-center overflow-hidden">
-          <img src={asset("third-intelligence-icon.png")} alt="" className="w-full h-full object-contain scale-90" />
+        <div className="relative w-12 h-12 flex items-center justify-center">
+          <img src={asset("third-intelligence-icon.png")} alt="" className="w-full h-full object-contain drop-shadow-md" />
           <motion.div
-            animate={{ opacity: [0.0, 0.6, 0.0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 bg-natural-accent/40 mix-blend-overlay"
+            animate={{ opacity: [0.0, 0.5, 0.0], scale: [0.9, 1.4, 0.9] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full bg-natural-accent/20 blur-md -z-10"
           />
         </div>
         <div className="flex flex-col">

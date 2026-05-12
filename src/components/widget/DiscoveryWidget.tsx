@@ -302,11 +302,11 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
             className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-6"
           >
             <div className="flex items-center gap-3">
-              <div className="relative w-9 h-9 rounded-full bg-natural-paper border border-natural-border shadow-sm flex items-center justify-center overflow-hidden">
+              <div className="relative w-12 h-12 flex items-center justify-center">
                 <img
                   src={asset("third-intelligence-icon.png")}
                   alt=""
-                  className="w-full h-full object-contain scale-90"
+                  className="w-full h-full object-contain drop-shadow-md"
                 />
               </div>
               <div className="flex flex-col">

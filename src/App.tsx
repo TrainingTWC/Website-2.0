@@ -37,6 +37,8 @@ import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
+import { ProductPage } from "./components/ProductPage";
+import { BestsellerCarousel3D } from "./components/BestsellerCarousel3D";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
 
@@ -226,10 +228,32 @@ function MerchantGate() {
 }
 
 // ── Main App ───────────────────────────────────────────────────
+function useUrlQuery() {
+  const [search, setSearch] = useState(
+    typeof window !== "undefined" ? window.location.search : ""
+  );
+  useEffect(() => {
+    const handler = () => setSearch(window.location.search);
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
+  return new URLSearchParams(search);
+}
+
+function navigateTo(params: Record<string, string | null>) {
+  const url = new URL(window.location.href);
+  for (const [k, v] of Object.entries(params)) {
+    if (v === null) url.searchParams.delete(k);
+    else url.searchParams.set(k, v);
+  }
+  window.history.pushState({}, "", url.toString());
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+}
+
 export default function App() {
-  // Route to merchant panel if ?panel=merchant in URL
-  const isMerchantPanel = new URLSearchParams(window.location.search).get("panel") === "merchant";
-  if (isMerchantPanel) {
+  const params = useUrlQuery();
+  if (params.get("panel") === "merchant") {
     return <MerchantGate />;
   }
 
@@ -241,6 +265,10 @@ function Storefront() {
   const { toasts, show: showToast } = useToast();
   const [widgetOpen, setWidgetOpen] = useState(false);
   const [criticalReady, setCriticalReady] = useState(false);
+  const params = useUrlQuery();
+  const activeProductId = params.get("product");
+
+  const onAddToCart = (name: string) => showToast(`Added \"${name}\" to cart`);
 
   // Wait for: (1) products query resolved, (2) hero bg image preloaded.
   useEffect(() => {
@@ -270,6 +298,10 @@ function Storefront() {
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20 scroll-smooth">
       <LoadingScreen ready={criticalReady} />
+      {activeProductId ? (
+        <ProductPage productId={activeProductId} onAddToCart={onAddToCart} />
+      ) : null}
+      <div style={{ display: activeProductId ? "none" : "block" }}>
       <ScrollProgressBar />
       {/* Main Navigation Header */}
       <motion.header
@@ -335,11 +367,11 @@ function Storefront() {
               {/* Soft outer glow on hover */}
               <div className="absolute w-11 h-11 rounded-full bg-natural-accent/0 group-hover:bg-natural-accent/15 transition-colors blur-md" />
               {/* Icon container — paper aesthetic matching site */}
-              <div className="relative w-10 h-10 rounded-full bg-natural-paper border border-natural-border shadow-sm group-hover:shadow-md group-hover:border-natural-accent/40 flex items-center justify-center overflow-hidden transition-all">
+              <div className="relative w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-110">
                 <img
                   src={asset("third-intelligence-icon.png")}
                   alt="Third Intelligence"
-                  className="w-full h-full object-contain scale-90"
+                  className="w-full h-full object-contain drop-shadow-md"
                 />
               </div>
             </motion.button>
@@ -414,6 +446,7 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
+      </div>
     </div>
   );
 }
@@ -480,7 +513,12 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
       </div>
       <div className="space-y-2 px-1">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="text-lg font-bold leading-tight">{product.name}</h4>
+          <h4
+            className="text-lg font-bold leading-tight cursor-pointer hover:text-natural-accent transition-colors"
+            onClick={() => navigateTo({ product: product._id })}
+          >
+            {product.name}
+          </h4>
           <span className="text-lg font-extrabold text-natural-accent whitespace-nowrap">
             ₹{product.price.toLocaleString("en-IN")}
           </span>
@@ -520,8 +558,8 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 // ── Horizontal Card Component (for Bags) ───────────────────────
 function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCart: (name: string) => void }) {
   return (
-    <div className="group flex flex-col md:flex-row bg-natural-paper rounded-[2.5rem] border border-natural-border overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1">
-      <div className="w-full md:w-48 h-48 md:h-auto overflow-hidden">
+    <div className="group flex flex-col md:flex-row bg-natural-paper rounded-[2.5rem] border border-natural-border overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1 md:h-56">
+      <div className="w-full md:w-56 h-48 md:h-full shrink-0 overflow-hidden bg-natural-muted">
         <SmartImage
           src={product.imageUrl}
           blur={product.imageBlur}
@@ -530,12 +568,17 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
           wrapperClassName="w-full h-full"
         />
       </div>
-      <div className="flex-1 p-8 flex flex-col justify-between gap-4">
-        <div>
+      <div className="flex-1 p-6 flex flex-col justify-between gap-3 min-w-0">
+        <div className="min-w-0">
           <span className="text-[10px] font-bold uppercase tracking-widest text-natural-accent">
             {product.category}
           </span>
-          <h4 className="text-xl font-bold mt-1">{product.name}</h4>
+          <h4
+            className="text-xl font-bold mt-1 line-clamp-1 cursor-pointer hover:text-natural-accent transition-colors"
+            onClick={() => navigateTo({ product: product._id })}
+          >
+            {product.name}
+          </h4>
           <p className="text-sm text-natural-text/60 mt-2 line-clamp-2">
             {product.description}
           </p>
@@ -604,81 +647,77 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
 
         <motion.div
           style={{ y: heroContentY, opacity: heroContentOpacity }}
-          className="relative z-10 max-w-2xl space-y-8"
+          className="relative z-10 w-full max-w-6xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-full">
-            <Sparkles className="w-4 h-4 text-white" />
-            <span className="text-white font-sans text-xs font-bold tracking-widest uppercase">
-              Expert Curation
-            </span>
-          </div>
-          <h2 className="text-6xl md:text-8xl font-serif font-bold text-white leading-[0.9]">
-            Master the ritual.
-          </h2>
-          <p className="text-xl text-white/80 max-w-lg font-medium">
-            Elevate your coffee experience with precision-roasted beans
-            crafted by our expert roasters.
-          </p>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => scrollTo("section-beans")}
-              className="bg-white text-natural-text px-10 py-5 rounded-full font-bold hover:scale-105 active:scale-95 transition-all shadow-2xl"
-            >
-              Shop Collections
-            </button>
-            <button
-              onClick={() => scrollTo("our-story")}
-              className="text-white font-bold border-b-2 border-white/30 pb-1 hover:border-white transition-all"
-            >
-              Our Story
-            </button>
-          </div>
+          <BestsellerCarousel3D
+            products={products}
+            onSelect={(id) => navigateTo({ product: id })}
+            onAddToCart={onAddToCart}
+          />
         </motion.div>
       </section>
 
-      {/* Product Categories — clickable to jump */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8" id="categories">
+      {/* Product Categories — slim cards with product preview strip */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6" id="categories">
         {[
           {
             title: "Coffee Beans",
             subtitle: `${beans.length} freshly roasted`,
-            icon: <Coffee className="w-5 h-5" />,
-            color: "bg-natural-paper border-natural-border",
             target: "section-beans",
+            samples: beans.slice(0, 4),
+            color: "from-amber-50 to-natural-paper",
           },
           {
             title: "Easy Coffee Bags",
             subtitle: `${bags.length} ground & packed`,
-            icon: <Package className="w-5 h-5" />,
-            color: "bg-natural-muted border-natural-stone",
             target: "section-bags",
+            samples: bags.slice(0, 4),
+            color: "from-orange-50 to-natural-muted",
           },
           {
             title: "Merch",
             subtitle: `${merch.length} items`,
-            icon: <ShoppingCart className="w-5 h-5" />,
-            color: "bg-natural-stone/30 border-natural-stone",
             target: "section-merch",
+            samples: merch.slice(0, 4),
+            color: "from-stone-100 to-natural-stone/30",
           },
-        ].map((item, i) => (
-          <div
-            key={i}
+        ].map((item) => (
+          <button
+            key={item.title}
             onClick={() => scrollTo(item.target)}
-            className={`p-10 rounded-[2.5rem] border ${item.color} flex flex-col justify-between h-72 group cursor-pointer transition-all hover:shadow-2xl hover:-translate-y-1`}
+            className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-gradient-to-br ${item.color} p-6 h-40 flex items-center gap-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30`}
           >
-            <div className="bg-white/80 backdrop-blur w-12 h-12 rounded-2xl flex items-center justify-center text-natural-accent shadow-sm group-hover:scale-110 transition-transform">
-              {item.icon}
+            {/* Stacked product previews */}
+            <div className="relative flex -space-x-3 shrink-0">
+              {item.samples.length === 0 ? (
+                <div className="w-20 h-20 rounded-2xl bg-natural-paper border border-natural-border" />
+              ) : (
+                item.samples.map((p, idx) => (
+                  <div
+                    key={p._id}
+                    className="w-16 h-20 rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
+                    style={{ zIndex: item.samples.length - idx, transform: `rotate(${(idx - 1.5) * 4}deg)` }}
+                  >
+                    <SmartImage
+                      src={p.imageUrl}
+                      blur={p.imageBlur}
+                      alt=""
+                      className="object-cover"
+                      wrapperClassName="w-full h-full"
+                    />
+                  </div>
+                ))
+              )}
             </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <h3 className="text-3xl font-serif font-bold">{item.title}</h3>
-                <p className="text-sm text-natural-text opacity-60 font-medium">
-                  {item.subtitle}
-                </p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-2xl font-serif font-bold leading-tight">{item.title}</h3>
+              <p className="text-sm text-natural-text/60 font-medium mt-1">{item.subtitle}</p>
+              <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
+                Browse
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
               </div>
-              <ArrowRight className="w-5 h-5 text-natural-accent opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transition-transform" />
             </div>
-          </div>
+          </button>
         ))}
       </section>
 
