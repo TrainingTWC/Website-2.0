@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "convex/react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import {
   ArrowLeft,
   Minus,
@@ -109,6 +109,32 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
 
+  // Scroll progress for the hero section (parallax)
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  // Page-level progress for the story section + related grid parallax
+  const storyRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: storyProgress } = useScroll({
+    target: storyRef,
+    offset: ["start end", "end start"],
+  });
+
+  // Hero parallax bands
+  const heroImageY = useTransform(heroProgress, [0, 1], ["0%", "-30%"]);
+  const heroImageScale = useTransform(heroProgress, [0, 1], [1, 1.12]);
+  const heroTitleY = useTransform(heroProgress, [0, 1], [0, -120]);
+  const heroTitleOpacity = useTransform(heroProgress, [0, 0.7], [1, 0]);
+  const heroSideY = useTransform(heroProgress, [0, 1], [0, -60]);
+  const heroOrb1Y = useTransform(heroProgress, [0, 1], ["0%", "-50%"]);
+  const heroOrb2Y = useTransform(heroProgress, [0, 1], ["0%", "40%"]);
+
+  // Story-section parallax
+  const storyTitleY = useTransform(storyProgress, [0, 1], [40, -40]);
+  const storyAsideY = useTransform(storyProgress, [0, 1], [80, -40]);
+
   const product = useMemo(
     () => products?.find((p) => p._id === productId) ?? null,
     [products, productId]
@@ -181,13 +207,20 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
     <div className="min-h-screen bg-natural-bg">
       {/* ── Hero panel (image 4 style) ─────────────────────────── */}
       <section
+        ref={heroRef}
         className={`relative overflow-hidden ${theme.fg}`}
         style={{ background: theme.bg }}
       >
-        {/* Decorative leaves */}
+        {/* Decorative blur orbs — drift on scroll */}
         <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`}>
-          <div className="absolute -left-10 top-20 w-72 h-72 rounded-full bg-current blur-3xl" />
-          <div className="absolute right-10 bottom-10 w-96 h-96 rounded-full bg-current blur-3xl" />
+          <motion.div
+            style={{ y: heroOrb1Y, willChange: "transform" }}
+            className="absolute -left-10 top-20 w-72 h-72 rounded-full bg-current blur-3xl"
+          />
+          <motion.div
+            style={{ y: heroOrb2Y, willChange: "transform" }}
+            className="absolute right-10 bottom-10 w-96 h-96 rounded-full bg-current blur-3xl"
+          />
         </div>
 
         {/* Top nav strip */}
@@ -211,6 +244,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
+            style={{ y: heroTitleY, opacity: heroTitleOpacity, willChange: "transform, opacity" }}
             className="space-y-6"
           >
             <span className={`text-[10px] font-bold uppercase tracking-[0.35em] ${theme.accentText}`}>
@@ -238,18 +272,23 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
             className="relative flex items-center justify-center"
           >
             <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              style={{ y: heroImageY, scale: heroImageScale, willChange: "transform" }}
               className={`relative w-full max-w-md aspect-square ${theme.shadow}`}
             >
-              <SmartImage
-                src={product.imageUrl}
-                blur={product.imageBlur}
-                alt={product.name}
-                className="object-contain"
-                wrapperClassName="w-full h-full"
-                priority
-              />
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-full h-full"
+              >
+                <SmartImage
+                  src={product.imageUrl}
+                  blur={product.imageBlur}
+                  alt={product.name}
+                  className="object-contain"
+                  wrapperClassName="w-full h-full"
+                  priority
+                />
+              </motion.div>
             </motion.div>
           </motion.div>
 
@@ -258,6 +297,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
+            style={{ y: heroSideY, willChange: "transform" }}
             className="space-y-6"
           >
             <div className="flex flex-wrap gap-2 justify-end">
@@ -339,8 +379,11 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
       </section>
 
       {/* ── Tasting notes & details ────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-8 py-24 grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-16">
-        <div className="space-y-8">
+      <section
+        ref={storyRef}
+        className="max-w-7xl mx-auto px-8 py-24 grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-16"
+      >
+        <motion.div style={{ y: storyTitleY, willChange: "transform" }} className="space-y-8">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent mb-3">
               The story
@@ -368,9 +411,12 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <aside className="space-y-6 bg-natural-paper border border-natural-border rounded-3xl p-8">
+        <motion.aside
+          style={{ y: storyAsideY, willChange: "transform" }}
+          className="space-y-6 bg-natural-paper border border-natural-border rounded-3xl p-8"
+        >
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">
             Specifications
           </p>
@@ -382,7 +428,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
           {product.weight && <Spec label="Weight" value={product.weight} />}
           <Spec label="Stock" value={product.stockStatus.replace("-", " ")} />
           <Spec label="Tags" value={product.tags.join(", ") || "—"} />
-        </aside>
+        </motion.aside>
       </section>
 
       {/* ── You might also love ────────────────────────────────── */}

@@ -341,6 +341,18 @@ function Storefront() {
   const params = useUrlQuery();
   const activeProductId = params.get("product");
 
+  // Reset scroll to top whenever the active product changes (open / switch).
+  // Use Lenis if available so the transition feels of-a-piece with the rest
+  // of the page; otherwise fall back to window.scrollTo.
+  useEffect(() => {
+    const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis;
+    if (lenis) {
+      lenis.scrollTo(0, { immediate: true });
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }
+  }, [activeProductId]);
+
   const onAddToCart = (name: string) => showToast(`Added \"${name}\" to cart`);
 
   // Wait for: (1) products query resolved, (2) hero bg image preloaded.
@@ -369,12 +381,41 @@ function Storefront() {
   );
 
   return (
-    <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20 scroll-smooth">
+    <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20">
       <LoadingScreen ready={criticalReady} />
-      {activeProductId ? (
-        <ProductPage productId={activeProductId} onAddToCart={onAddToCart} />
-      ) : null}
-      <div style={{ display: activeProductId ? "none" : "block" }}>
+
+      {/* Product page overlays the home with a smooth lift + crossfade.
+          Home stays mounted (scroll position, queries, etc. preserved). */}
+      <AnimatePresence mode="wait">
+        {activeProductId && (
+          <motion.div
+            key={activeProductId}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-40 overflow-y-auto bg-natural-bg"
+            style={{ willChange: "transform, opacity" }}
+          >
+            <ProductPage productId={activeProductId} onAddToCart={onAddToCart} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        animate={{
+          opacity: activeProductId ? 0 : 1,
+          scale: activeProductId ? 0.985 : 1,
+          filter: activeProductId ? "blur(4px)" : "blur(0px)",
+        }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        aria-hidden={activeProductId ? true : undefined}
+        style={{
+          pointerEvents: activeProductId ? "none" : undefined,
+          willChange: "transform, opacity, filter",
+          transformOrigin: "center top",
+        }}
+      >
       <ScrollProgressBar />
       {/* Main Navigation Header */}
       <motion.header
@@ -519,7 +560,7 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
-      </div>
+      </motion.div>
     </div>
   );
 }

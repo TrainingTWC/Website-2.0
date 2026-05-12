@@ -16,7 +16,10 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    /* Native smooth scroll fights Lenis. Lenis owns scroll; let CSS-anchored
+       scrolls (like form auto-focus) be instant so they don't trigger a second
+       animation engine racing the wheel handler. */
+    scroll-behavior: auto;
   }
   /* Lenis smooth-scroll requires `html.lenis` to set its own scrolling */
   html.lenis, html.lenis body { height: auto; }

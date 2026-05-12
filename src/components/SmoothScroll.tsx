@@ -16,12 +16,14 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     if (reduced) return;
 
     const lenis = new Lenis({
-      duration: 1.15,
+      // Frame-rate independent smoothing — feels identical at 60 / 120 / 144 Hz.
+      // Lower = snappier (tighter tracking of the wheel), higher = heavier.
+      lerp: 0.09,
       smoothWheel: true,
-      // Slightly heavier than default — feels "luxe"
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.4,
+      syncTouch: true,
+      syncTouchLerp: 0.08,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
     });
 
     let raf = 0;
@@ -48,7 +50,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 export function smoothScrollTo(target: string | number | HTMLElement, opts?: { offset?: number }) {
   const lenis = (window as unknown as { __lenis?: Lenis }).__lenis;
   if (lenis) {
-    lenis.scrollTo(target as string, { offset: opts?.offset ?? 0, duration: 1.4 });
+    lenis.scrollTo(target as string, {
+      offset: opts?.offset ?? 0,
+      duration: 1.2,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
+    });
     return;
   }
   if (typeof target === "string") {
