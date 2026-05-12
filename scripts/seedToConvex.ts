@@ -11,8 +11,12 @@ if (!convexUrl) {
 
 const client = new ConvexHttpClient(convexUrl);
 
-// Images are served from public/assets/ - use that folder for uploads
-const IMAGE_DIR = path.join(process.cwd(), "public", "assets");
+// Upload optimized WebP versions from public/optimized/
+const IMAGE_DIR = path.join(process.cwd(), "public", "optimized");
+const MANIFEST_PATH = path.join(IMAGE_DIR, "manifest.json");
+const manifest: Record<string, { webp: string; lqip: string; width: number; height: number }> = fs.existsSync(MANIFEST_PATH)
+  ? JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"))
+  : {};
 
 // Define the products and their corresponding image file names
 const productsToSeed = [
@@ -175,7 +179,7 @@ async function uploadFile(filePath: string) {
 
   // Read file as buffer
   const fileBuffer = fs.readFileSync(filePath);
-  const mimeType = "image/jpeg";
+  const mimeType = filePath.toLowerCase().endsWith(".webp") ? "image/webp" : "image/jpeg";
 
   // Upload to Convex
   const response = await fetch(uploadUrl, {
@@ -199,22 +203,26 @@ async function run() {
   for (const product of productsToSeed) {
     let storageId = undefined;
     let imageUrl = product.imageUrl || "";
+    let imageBlur: string | undefined = undefined;
 
     if (product.imageFile) {
-      const filePath = path.join(IMAGE_DIR, product.imageFile);
+      const entry = manifest[product.imageFile];
+      const webpName = entry?.webp ?? product.imageFile.replace(/\.(jpe?g|png)$/i, ".webp");
+      const filePath = path.join(IMAGE_DIR, webpName);
+      if (entry) imageBlur = entry.lqip;
+
       if (fs.existsSync(filePath)) {
-        console.log(`Uploading ${product.imageFile}...`);
+        console.log(`Uploading ${webpName}...`);
         try {
           storageId = await uploadFile(filePath);
           console.log(`  → storageId: ${storageId}`);
         } catch (err) {
-          console.error(`  Error uploading ${product.imageFile}:`, err);
-          // Fallback to encoded local path
-          imageUrl = `/assets/${encodeURIComponent(product.imageFile)}`;
+          console.error(`  Error uploading ${webpName}:`, err);
+          imageUrl = `/optimized/${encodeURIComponent(webpName)}`;
         }
       } else {
         console.warn(`File not found: ${filePath}`);
-        imageUrl = `/assets/${encodeURIComponent(product.imageFile)}`;
+        imageUrl = `/optimized/${encodeURIComponent(webpName)}`;
       }
     }
 
@@ -223,6 +231,7 @@ async function run() {
       ...rest,
       storageId,
       imageUrl,
+      imageBlur,
     });
   }
 

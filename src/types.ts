@@ -11,6 +11,7 @@ export interface Product {
   category: string;
   price: number;
   imageUrl: string;
+  imageBlur?: string;
   tags: string[];
   roastLevel?: RoastLevel;
   origin?: string;

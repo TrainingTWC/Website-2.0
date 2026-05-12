@@ -35,6 +35,9 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { LoadingScreen } from "./components/LoadingScreen";
+import { SmartImage } from "./components/SmartImage";
+import { asset } from "./lib/asset";
 import type { Product } from "./types";
 
 // ── Scroll helper ──────────────────────────────────────────────
@@ -151,8 +154,8 @@ function MerchantGate() {
       <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
         <header className="fixed top-0 left-0 right-0 z-50 bg-natural-paper/90 backdrop-blur-md border-b border-natural-border px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="/" className="flex items-center gap-3">
-              <img src="/logo.png" alt="Third Wave Coffee" className="h-10 w-auto" />
+            <a href={asset("")} className="flex items-center gap-3">
+              <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-10 w-auto" />
             </a>
             <span className="text-sm font-serif font-bold text-natural-accent uppercase tracking-widest">Merchant Panel</span>
           </div>
@@ -175,7 +178,7 @@ function MerchantGate() {
         className="bg-natural-paper border border-natural-border rounded-[2.5rem] shadow-2xl p-12 w-full max-w-md"
       >
         <div className="flex flex-col items-center gap-6 mb-10">
-          <img src="/logo.png" alt="Third Wave Coffee" className="h-16 w-auto" />
+          <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-16 w-auto" />
           <div className="text-center">
             <h2 className="text-2xl font-serif font-bold">Merchant Panel</h2>
             <p className="text-sm text-natural-text/50 mt-1 font-sans">Enter your access password to continue.</p>
@@ -237,6 +240,22 @@ function Storefront() {
   const products = useQuery(api.products.list);
   const { toasts, show: showToast } = useToast();
   const [widgetOpen, setWidgetOpen] = useState(false);
+  const [criticalReady, setCriticalReady] = useState(false);
+
+  // Wait for: (1) products query resolved, (2) hero bg image preloaded.
+  useEffect(() => {
+    if (!products) return;
+    let cancelled = false;
+    const heroImg = new Image();
+    heroImg.src =
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1600";
+    const done = () => { if (!cancelled) setCriticalReady(true); };
+    heroImg.onload = done;
+    heroImg.onerror = done;
+    // Safety fallback so the loader can't get stuck on a bad connection
+    const t = setTimeout(done, 4500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [products]);
 
   // Header reactivity to scroll — opacity + shadow build up
   const { scrollY } = useScroll();
@@ -250,6 +269,7 @@ function Storefront() {
 
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20 scroll-smooth">
+      <LoadingScreen ready={criticalReady} />
       <ScrollProgressBar />
       {/* Main Navigation Header */}
       <motion.header
@@ -265,7 +285,7 @@ function Storefront() {
             className="flex items-center gap-3 cursor-pointer"
             onClick={() => scrollTo("hero")}
           >
-            <img src="/logo.png" alt="Third Wave Coffee" className="h-10 w-auto" />
+            <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-10 w-auto" />
           </div>
 
           <nav className="flex items-center gap-6 text-sm font-serif font-bold">
@@ -317,7 +337,7 @@ function Storefront() {
               {/* Icon container — paper aesthetic matching site */}
               <div className="relative w-10 h-10 rounded-full bg-natural-paper border border-natural-border shadow-sm group-hover:shadow-md group-hover:border-natural-accent/40 flex items-center justify-center overflow-hidden transition-all">
                 <img
-                  src="/third-intelligence-icon.png"
+                  src={asset("third-intelligence-icon.png")}
                   alt="Third Intelligence"
                   className="w-full h-full object-contain scale-90"
                 />
@@ -347,7 +367,7 @@ function Storefront() {
           <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
             <div className="space-y-4 max-w-sm">
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Third Wave Coffee" className="h-8 w-auto" />
+                <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-8 w-auto" />
               </div>
               <p className="text-natural-text/50 text-sm leading-relaxed">
                 India's finest specialty coffee. We source, roast, and deliver premium beans to your doorstep.
@@ -431,10 +451,12 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         className="aspect-[4/5] bg-natural-paper rounded-[2rem] border border-natural-border overflow-hidden shadow-sm group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d"
         style={{ transform: "translateZ(20px)" }}
       >
-        <img
+        <SmartImage
           src={product.imageUrl}
+          blur={product.imageBlur}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="object-cover group-hover:scale-105 transition-transform duration-700"
+          wrapperClassName="w-full h-full"
         />
         {/* Quick-add button */}
         <div
@@ -500,10 +522,12 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
   return (
     <div className="group flex flex-col md:flex-row bg-natural-paper rounded-[2.5rem] border border-natural-border overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1">
       <div className="w-full md:w-48 h-48 md:h-auto overflow-hidden">
-        <img
+        <SmartImage
           src={product.imageUrl}
+          blur={product.imageBlur}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="object-cover group-hover:scale-105 transition-transform duration-700"
+          wrapperClassName="w-full h-full"
         />
       </div>
       <div className="flex-1 p-8 flex flex-col justify-between gap-4">
@@ -572,7 +596,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
             className="w-full h-[130%] bg-cover bg-center"
             style={{
               backgroundImage:
-                "url(https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=2070)",
+                "url(https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1600)",
             }}
           />
         </motion.div>

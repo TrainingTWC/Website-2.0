@@ -20,6 +20,8 @@ import {
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
+import { KioskPipeline } from "./KioskPipeline";
+import { asset } from "../../lib/asset";
 import type { Product, RecommendationResult } from "../../types";
 
 // Pseudo-random particle field (warm coffee tones — floating bean motes)
@@ -302,7 +304,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 rounded-full bg-natural-paper border border-natural-border shadow-sm flex items-center justify-center overflow-hidden">
                 <img
-                  src="/third-intelligence-icon.png"
+                  src={asset("third-intelligence-icon.png")}
                   alt=""
                   className="w-full h-full object-contain scale-90"
                 />
@@ -332,7 +334,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
             className="relative z-10 h-full flex flex-col items-center justify-center px-6 py-20 perspective-1000"
           >
             {loading ? (
-              <ProcessingView />
+              <KioskPipeline answers={answers} products={products ?? []} />
             ) : recommendation ? (
               <RecommendationView
                 recommendation={recommendation}

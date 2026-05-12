@@ -9,6 +9,7 @@ export default defineSchema({
     category: v.string(),
     price: v.number(),
     imageUrl: v.string(),
+    imageBlur: v.optional(v.string()),
     tags: v.array(v.string()),
     roastLevel: v.optional(
       v.union(
