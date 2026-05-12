@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: "/brewmatch-ai/",
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
