@@ -9,7 +9,7 @@ import {
 import { ArrowDown } from "lucide-react";
 import type { Product } from "../types";
 import { SmartImage } from "./SmartImage";
-import { BannerSlideshow, type Banner } from "./BannerSlideshow";
+import { BannerSlideshow } from "./BannerSlideshow";
 
 /**
  * Autajon-inspired cinematic scrollytelling sequence.
@@ -29,10 +29,10 @@ import { BannerSlideshow, type Banner } from "./BannerSlideshow";
 // Cinematic Hero — full-bleed dark stage, parallax depth
 // ─────────────────────────────────────────────────────────────
 export function CinematicHero({
-  banners,
+  slides,
   onScrollHint,
 }: {
-  banners: Banner[];
+  slides: ReactNode[];
   onScrollHint: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -62,10 +62,10 @@ export function CinematicHero({
         className="absolute inset-0 will-change-transform"
       >
         <div
-          className="w-full h-[120%] bg-cover bg-center opacity-60"
+          className="w-full h-[120%] bg-cover bg-center opacity-25"
           style={{
             backgroundImage:
-              "url(https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1800)",
+              "url(https://images.unsplash.com/photo-1442975631115-c4f7b05b8a2c?auto=format&fit=crop&q=80&w=1800)",
           }}
         />
       </motion.div>
@@ -112,7 +112,7 @@ export function CinematicHero({
         <h2 className="sr-only">Master the ritual.</h2>
 
         <div className="w-full max-w-6xl">
-          <BannerSlideshow banners={banners} />
+          <BannerSlideshow slides={slides} />
         </div>
       </motion.div>
 

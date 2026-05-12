@@ -39,7 +39,6 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
 import { SmoothScroll } from "./components/SmoothScroll";
-import { MagneticCursor } from "./components/MagneticCursor";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
@@ -261,9 +260,76 @@ export default function App() {
 
   return (
     <SmoothScroll>
-      <MagneticCursor />
       <Storefront />
     </SmoothScroll>
+  );
+}
+
+// ── Hero banner 1 — Schweppes Fizz ─────────────────────────────
+function FizzBanner() {
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url(https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&q=80&w=1800)",
+        }}
+      />
+      <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
+      <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
+        <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-amber-200/90 mb-4">
+          THIRD WAVE × Schweppes
+        </p>
+        <h3 className="font-serif font-black leading-[0.9] tracking-tight text-[clamp(2.5rem,7vw,6rem)]">
+          FIND YOUR
+          <br />
+          <span className="italic text-amber-200">FIZZ.</span>
+        </h3>
+        <p className="mt-5 text-base sm:text-xl font-light tracking-wide text-white/90 max-w-md">
+          Espresso Tonics have arrived.
+        </p>
+        <div className="mt-6 inline-flex w-fit items-center gap-3 px-5 py-2.5 rounded-full border border-white/40 backdrop-blur-sm">
+          <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
+            In stores now
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Hero banner 2 — Third Rush Desserts ────────────────────────
+function DessertsBanner() {
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url(https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&q=80&w=1800)",
+        }}
+      />
+      <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
+      <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
+        <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-amber-100/90 mb-4">
+          THIRD WAVE × Third Rush Desserts
+        </p>
+        <h3 className="font-serif font-black leading-[0.9] tracking-tight text-[clamp(2.2rem,6vw,5.2rem)]">
+          WIDE RANGE TO
+          <br />
+          <span className="italic">CHOOSE FROM.</span>
+        </h3>
+        <p className="mt-5 text-sm sm:text-base font-light tracking-wider text-white/85 max-w-xl">
+          Tres Leches · Cheesecakes · Tarts &amp; Pie · Cookies · Brownies
+        </p>
+        <div className="mt-6 inline-flex w-fit items-center gap-3 px-5 py-2.5 rounded-full border border-white/40 backdrop-blur-sm">
+          <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
+            Available in select Bangalore stores
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -631,22 +697,16 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const heroBanners = [
-    {
-      src: asset("banner-fizz.jpg"),
-      alt: "Third Wave Coffee × Schweppes — Find Your Fizz. Espresso Tonics have arrived.",
-    },
-    {
-      src: asset("banner-thirdrush.jpg"),
-      alt: "Third Wave Coffee × Third Rush Desserts — Wide range to choose from. Available in select stores in Bangalore.",
-    },
+  const heroSlides = [
+    <FizzBanner key="fizz" />,
+    <DessertsBanner key="desserts" />,
   ];
 
   return (
     <div>
       {/* ── Cinematic Hero ─────────────────────────────────────── */}
       <CinematicHero
-        banners={heroBanners}
+        slides={heroSlides}
         onScrollHint={goToCatalog}
       />
 

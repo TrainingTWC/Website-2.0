@@ -1,12 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useMotionTemplate,
-} from "motion/react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   X,
   ChevronRight,
@@ -22,18 +15,6 @@ import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
 import { asset } from "../../lib/asset";
 import type { Product, RecommendationResult } from "../../types";
-
-// Pseudo-random particle field (warm coffee tones — floating bean motes)
-const PARTICLES = Array.from({ length: 38 }, (_, i) => ({
-  id: i,
-  x: (i * 73.7 + 17.3) % 100,
-  y: (i * 47.1 + 31.9) % 100,
-  size: ((i % 4) + 2) * 0.9,
-  opacity: 0.08 + ((i * 0.09) % 0.18),
-  delay: (i * 0.13) % 6,
-  duration: 6 + ((i * 0.21) % 6),
-  depth: (i % 3) + 1, // 1=far, 3=near — drives parallax intensity
-}));
 
 interface TIQuestion {
   id: string;
@@ -116,29 +97,6 @@ interface DiscoveryWidgetProps {
   onClose?: () => void;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Mouse-parallax hook — returns smoothed motion values [-1, 1]
-// ─────────────────────────────────────────────────────────────
-function useMouseParallax() {
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 60, damping: 20, mass: 0.6 });
-  const sy = useSpring(my, { stiffness: 60, damping: 20, mass: 0.6 });
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = (e.clientY / window.innerHeight) * 2 - 1;
-      mx.set(x);
-      my.set(y);
-    };
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
-  }, [mx, my]);
-
-  return { x: sx, y: sy };
-}
-
 export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -148,16 +106,6 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
   const [recommendation, setRecommendation] =
     useState<RecommendationResult | null>(null);
   const [direction, setDirection] = useState(1);
-
-  const { x: mouseX, y: mouseY } = useMouseParallax();
-
-  // Parallax transforms for ambient layers
-  const orb1X = useTransform(mouseX, [-1, 1], [-30, 30]);
-  const orb1Y = useTransform(mouseY, [-1, 1], [-20, 20]);
-  const orb2X = useTransform(mouseX, [-1, 1], [25, -25]);
-  const orb2Y = useTransform(mouseY, [-1, 1], [15, -15]);
-  const orb3X = useTransform(mouseX, [-1, 1], [-15, 15]);
-  const orb3Y = useTransform(mouseY, [-1, 1], [-10, 10]);
 
   useEffect(() => {
     if (open !== undefined) setIsOpen(open);
@@ -244,71 +192,17 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-110 overflow-hidden font-sans"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% 10%, #F5F2ED 0%, #EFEAE1 35%, #E6DECF 70%, #DDD1BC 100%)",
-          }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-110 overflow-hidden font-sans bg-natural-bg"
         >
-          {/* ── Layer 1 (far) — soft ambient orbs with parallax ── */}
-          <motion.div
-            style={{ x: orb1X, y: orb1Y }}
-            className="absolute top-[10%] left-[5%] w-150 h-150 rounded-full blur-[120px] pointer-events-none"
-          >
-            <div className="w-full h-full rounded-full bg-natural-accent/15" />
-          </motion.div>
-          <motion.div
-            style={{ x: orb2X, y: orb2Y }}
-            className="absolute bottom-[5%] right-[8%] w-125 h-125 rounded-full blur-[100px] pointer-events-none"
-          >
-            <div className="w-full h-full rounded-full bg-[#8B6F47]/15" />
-          </motion.div>
-          <motion.div
-            style={{ x: orb3X, y: orb3Y }}
-            className="absolute top-[55%] left-[55%] w-100 h-100 rounded-full blur-[90px] pointer-events-none"
-          >
-            <div className="w-full h-full rounded-full bg-[#3E5C76]/10" />
-          </motion.div>
-
-          {/* ── Layer 2 — floating particle field with depth-based parallax ── */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {PARTICLES.map((p) => {
-              const intensity = p.depth * 12;
-              return (
-                <FloatingParticle
-                  key={p.id}
-                  particle={p}
-                  mouseX={mouseX}
-                  mouseY={mouseY}
-                  intensity={intensity}
-                />
-              );
-            })}
-          </div>
-
-          {/* ── Layer 3 — subtle paper grain texture ── */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-30 mix-blend-multiply"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.09 0 0 0 0 0.06 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            }}
-          />
-
-          {/* ── Top bar — premium glass ── */}
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-6"
-          >
+          {/* ── Top bar ─────────────────────────────────────────── */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-8 py-4 border-b border-natural-border/60 bg-natural-paper/70 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 flex items-center justify-center">
+              <div className="relative w-10 h-10 flex items-center justify-center">
                 <img
                   src={asset("third-intelligence-icon.png")}
                   alt=""
-                  className="w-full h-full object-contain drop-shadow-md"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex flex-col">
@@ -320,21 +214,18 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
                 </span>
               </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05, rotate: 90 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            <button
               onClick={reset}
-              className="p-2.5 rounded-full bg-natural-paper/70 hover:bg-natural-paper border border-natural-border shadow-sm text-natural-text/60 hover:text-natural-text backdrop-blur-md"
+              className="p-2.5 rounded-full bg-natural-paper hover:bg-natural-muted border border-natural-border text-natural-text/60 hover:text-natural-text transition-colors"
             >
               <X className="w-4 h-4" />
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
 
-          {/* ── Main content — split: controls (left) | curation canvas (right) ── */}
-          <div className="relative z-10 h-full pt-20 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          {/* ── Main content — split: controls (left) | shortlist (right) ── */}
+          <div className="absolute inset-0 pt-16 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] min-h-0">
             {/* LEFT — controls (40%) */}
-            <div className="relative flex flex-col px-6 sm:px-10 pb-8 overflow-y-auto scrollbar-hide">
+            <div className="relative flex flex-col min-h-0 px-6 sm:px-10 py-6 overflow-y-auto scrollbar-hide">
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <ProcessingView />
@@ -357,15 +248,13 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
                   onAnswer={handleAnswer}
                   onNext={nextStep}
                   onPrev={prevStep}
-                  mouseX={mouseX}
-                  mouseY={mouseY}
                 />
               )}
             </div>
 
-            {/* RIGHT — live curation canvas (60%) */}
-            <div className="relative hidden lg:block border-l border-natural-border/60 bg-linear-to-br from-natural-paper/40 via-natural-paper/10 to-transparent overflow-hidden">
-              <CurationCanvas
+            {/* RIGHT — live product shortlist (60%) */}
+            <div className="relative hidden lg:flex min-h-0 border-l border-natural-border/60 bg-linear-to-br from-natural-paper/60 via-natural-paper/20 to-transparent overflow-hidden">
+              <ProductShortlist
                 answers={answers}
                 note={note}
                 step={step}
@@ -378,48 +267,6 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Floating particle — drifts vertically + parallax follows mouse
-// ─────────────────────────────────────────────────────────────
-function FloatingParticle({
-  particle,
-  mouseX,
-  mouseY,
-  intensity,
-}: {
-  particle: (typeof PARTICLES)[number];
-  mouseX: import("motion/react").MotionValue<number>;
-  mouseY: import("motion/react").MotionValue<number>;
-  intensity: number;
-}) {
-  const px = useTransform(mouseX, [-1, 1], [-intensity, intensity]);
-  const py = useTransform(mouseY, [-1, 1], [-intensity, intensity]);
-  return (
-    <motion.div
-      className="absolute rounded-full"
-      style={{
-        left: `${particle.x}%`,
-        top: `${particle.y}%`,
-        width: particle.size,
-        height: particle.size,
-        x: px,
-        y: py,
-        backgroundColor: "rgba(44, 24, 16, 0.5)",
-      }}
-      animate={{
-        y: [0, -25, 0],
-        opacity: [particle.opacity, particle.opacity * 0.3, particle.opacity],
-      }}
-      transition={{
-        duration: particle.duration,
-        repeat: Infinity,
-        delay: particle.delay,
-        ease: "easeInOut",
-      }}
-    />
   );
 }
 
@@ -437,8 +284,6 @@ function QuestionView({
   onAnswer,
   onNext,
   onPrev,
-  mouseX,
-  mouseY,
 }: {
   q: TIQuestion;
   step: number;
@@ -450,31 +295,22 @@ function QuestionView({
   onAnswer: (v: string) => void;
   onNext: () => void;
   onPrev: () => void;
-  mouseX: import("motion/react").MotionValue<number>;
-  mouseY: import("motion/react").MotionValue<number>;
 }) {
-  // Subtle 3D rotation on the whole card stack following mouse
-  const stackRotateY = useTransform(mouseX, [-1, 1], [-2, 2]);
-  const stackRotateX = useTransform(mouseY, [-1, 1], [1.5, -1.5]);
-
   return (
-    <motion.div
-      style={{ rotateX: stackRotateX, rotateY: stackRotateY, transformPerspective: 1200 }}
-      className="w-full max-w-xl mx-auto preserve-3d flex-1 flex flex-col justify-center py-6"
-    >
+    <div className="w-full max-w-xl mx-auto flex-1 flex flex-col">
       {/* Progress dots */}
-      <div className="flex items-center justify-start gap-2 mb-8">
+      <div className="flex items-center justify-start gap-2 mb-6">
         {QUESTIONS.map((_, i) => (
-          <motion.div
+          <div
             key={i}
-            animate={{
+            className="h-1.5 rounded-full transition-all duration-300"
+            style={{
               width: i === step ? 28 : 6,
               opacity: i <= step ? 1 : 0.25,
-            }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="h-1.5 rounded-full"
-            style={{
-              backgroundColor: i <= step ? "var(--color-natural-accent)" : "var(--color-natural-stone)",
+              backgroundColor:
+                i <= step
+                  ? "var(--color-natural-accent)"
+                  : "var(--color-natural-stone)",
             }}
           />
         ))}
@@ -484,45 +320,26 @@ function QuestionView({
         <motion.div
           key={step}
           custom={direction}
-          initial={{ opacity: 0, x: direction * 30, rotateY: direction * 6 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          exit={{ opacity: 0, x: direction * -30, rotateY: direction * -6 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-6 preserve-3d"
+          initial={{ opacity: 0, x: direction * 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: direction * -20 }}
+          transition={{ duration: 0.25 }}
+          className="flex-1 flex flex-col gap-5"
         >
-          <div className="space-y-2">
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-natural-accent text-[10px] font-bold tracking-[0.35em] uppercase"
-            >
+          <div className="space-y-1">
+            <p className="text-natural-accent text-[10px] font-bold tracking-[0.35em] uppercase">
               Question {step + 1} of {QUESTIONS.length}
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.55 }}
-              className="text-3xl sm:text-4xl font-serif font-bold text-natural-text leading-[1.05] tracking-tight"
-            >
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-natural-text leading-[1.05] tracking-tight">
               {q.question}
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.25 }}
-              className="text-natural-text/45 text-sm italic"
-            >
-              {q.subtitle}
-            </motion.p>
+            </h2>
+            <p className="text-natural-text/45 text-sm italic">{q.subtitle}</p>
           </div>
 
-          {/* 4 option cards — single column on narrow, two cols when wide */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {q.options.map((opt, idx) => (
-              <TiltOption
+            {q.options.map((opt) => (
+              <OptionCard
                 key={opt.value}
-                idx={idx}
                 opt={opt}
                 selected={answers[q.id] === opt.value}
                 onSelect={() => onAnswer(opt.value)}
@@ -530,7 +347,6 @@ function QuestionView({
             ))}
           </div>
 
-          {/* Freeform note — tell us anything */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] uppercase text-natural-text/40">
               <Sparkles className="w-3 h-3" /> Or tell us anything
@@ -540,137 +356,82 @@ function QuestionView({
               onChange={(e) => onNote(e.target.value)}
               placeholder="e.g. I want something smoky for the monsoon mornings…"
               rows={2}
-              className="w-full resize-none rounded-2xl border border-natural-border/70 bg-natural-paper/60 backdrop-blur-sm p-3 text-sm text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:border-natural-accent focus:bg-natural-paper transition-all"
+              className="w-full resize-none rounded-2xl border border-natural-border bg-natural-paper p-3 text-sm text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:border-natural-accent transition-colors"
             />
           </div>
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between mt-8">
-        <motion.button
+      {/* Navigation — always pinned to bottom of left panel */}
+      <div className="flex items-center justify-between pt-6 mt-auto">
+        <button
           onClick={onPrev}
-          whileHover={step > 0 ? { x: -3 } : {}}
           className={`flex items-center gap-2 text-natural-text/50 hover:text-natural-text text-xs font-bold tracking-[0.2em] uppercase transition-colors ${
             step === 0 ? "opacity-0 pointer-events-none" : ""
           }`}
         >
           <ChevronLeft className="w-4 h-4" /> Back
-        </motion.button>
-        <motion.button
+        </button>
+        <button
           onClick={onNext}
           disabled={!hasAnswer && !note.trim()}
-          whileHover={hasAnswer || note.trim() ? { scale: 1.04, y: -2 } : {}}
-          whileTap={hasAnswer || note.trim() ? { scale: 0.97 } : {}}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className={`px-8 py-3.5 rounded-full font-bold text-sm tracking-wide transition-all flex items-center gap-2 ${
             hasAnswer || note.trim()
-              ? "bg-natural-text text-white shadow-xl shadow-natural-text/20 hover:bg-natural-accent"
+              ? "bg-natural-text text-white shadow-lg shadow-natural-text/20 hover:bg-natural-accent"
               : "bg-natural-muted text-natural-text/30 cursor-not-allowed"
           }`}
         >
           {step === QUESTIONS.length - 1 ? "Brew My Match" : "Continue"}
           <ChevronRight className="w-4 h-4" />
-        </motion.button>
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// 3D-tilt option card (hover-following perspective)
+// Flat, fast option card (no 3D tilt, no per-mouse-move re-renders)
 // ─────────────────────────────────────────────────────────────
-function TiltOption({
-  idx,
+function OptionCard({
   opt,
   selected,
   onSelect,
 }: {
-  idx: number;
   opt: { label: string; sub: string; value: string };
   selected: boolean;
   onSelect: () => void;
 }) {
-  const ref = useRef<HTMLButtonElement>(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 200, damping: 20 });
-  const sy = useSpring(my, { stiffness: 200, damping: 20 });
-  const rotateY = useTransform(sx, [-1, 1], [-8, 8]);
-  const rotateX = useTransform(sy, [-1, 1], [6, -6]);
-  const glowX = useTransform(sx, [-1, 1], ["0%", "100%"]);
-  const glowY = useTransform(sy, [-1, 1], ["0%", "100%"]);
-  const glow = useMotionTemplate`radial-gradient(400px circle at ${glowX} ${glowY}, rgba(90,90,64,0.18), transparent 50%)`;
-
-  const handleMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    mx.set(((e.clientX - r.left) / r.width) * 2 - 1);
-    my.set(((e.clientY - r.top) / r.height) * 2 - 1);
-  };
-  const handleLeave = () => {
-    mx.set(0);
-    my.set(0);
-  };
-
   return (
-    <motion.button
-      ref={ref}
-      initial={{ opacity: 0, y: 20, rotateX: -10 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ delay: 0.35 + idx * 0.08, type: "spring", stiffness: 150, damping: 18 }}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
+    <button
       onClick={onSelect}
-      whileTap={{ scale: 0.97 }}
-      style={{
-        rotateX,
-        rotateY,
-        transformPerspective: 1000,
-      }}
-      className={`relative p-6 rounded-3xl text-left border transition-all duration-300 overflow-hidden preserve-3d ${
+      className={`relative p-4 rounded-2xl text-left border transition-all duration-200 ${
         selected
-          ? "bg-natural-paper border-natural-accent shadow-xl shadow-natural-accent/15"
-          : "bg-natural-paper/60 border-natural-border hover:border-natural-accent/40 hover:bg-natural-paper backdrop-blur-sm"
+          ? "bg-natural-paper border-natural-accent shadow-md shadow-natural-accent/15"
+          : "bg-natural-paper/70 border-natural-border hover:border-natural-accent/40 hover:bg-natural-paper"
       }`}
     >
-      {/* Hover glow following cursor */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ background: glow, opacity: selected ? 0.5 : 1 }}
-      />
-      <div className="relative z-10" style={{ transform: "translateZ(20px)" }}>
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <p
-            className={`font-serif font-bold text-base leading-snug ${
-              selected ? "text-natural-text" : "text-natural-text/85"
-            }`}
-          >
-            {opt.label}
-          </p>
-          <AnimatePresence>
-            {selected && (
-              <motion.div
-                initial={{ scale: 0, rotate: -90 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 90 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="shrink-0 w-5 h-5 rounded-full bg-natural-accent flex items-center justify-center"
-              >
-                <Sparkles className="w-2.5 h-2.5 text-white" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+      <div className="flex items-start justify-between gap-3 mb-1">
         <p
-          className={`text-xs leading-relaxed ${
-            selected ? "text-natural-text/60" : "text-natural-text/40"
+          className={`font-serif font-bold text-base leading-snug ${
+            selected ? "text-natural-text" : "text-natural-text/85"
           }`}
         >
-          {opt.sub}
+          {opt.label}
         </p>
+        {selected && (
+          <div className="shrink-0 w-5 h-5 rounded-full bg-natural-accent flex items-center justify-center">
+            <Sparkles className="w-2.5 h-2.5 text-white" />
+          </div>
+        )}
       </div>
-    </motion.button>
+      <p
+        className={`text-xs leading-relaxed ${
+          selected ? "text-natural-text/60" : "text-natural-text/40"
+        }`}
+      >
+        {opt.sub}
+      </p>
+    </button>
   );
 }
 
@@ -936,12 +697,115 @@ function RecommendationView({
 }
 
 // ─────────────────────────────────────────────────────────────
-// CurationCanvas — the right-side live "build your coffee" stage.
-// As the user answers, the cup colour, foam, ice, accent shift, and
-// floating attribute chips swirl around the cup. Once we have a
-// recommendation, the canvas locks onto the chosen product.
+// ProductShortlist — live grid of products on the right pane.
+// Filters products as the user answers. Cards remaining in the
+// shortlist stay vivid; eliminated cards dim and shrink.
 // ─────────────────────────────────────────────────────────────
-function CurationCanvas({
+function shortlistProducts(
+  products: Product[],
+  answers: Record<string, string>,
+  note: string
+): Set<string> {
+  const noteLower = note.toLowerCase();
+  return new Set(
+    products
+      .filter((p) => {
+        const tags = (p.tags ?? []).map((t) => t.toLowerCase());
+        const text = [
+          p.name,
+          p.description,
+          p.category,
+          p.roastLevel,
+          (p.flavorNotes ?? []).join(" "),
+          tags.join(" "),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        // ── style: black / milk / cold / sweet
+        if (answers.style === "black") {
+          // Black drinkers don't want sweetened/flavoured/instant lattes
+          if (/latte|frapp|mocha|sweet|sugar|caramel/.test(text)) return false;
+        }
+        if (answers.style === "cold") {
+          // Prefer cold-friendly: cold brew bags, easy bags, instant
+          // Drop heavy ritual-only beans-roast specifics? keep beans but bias
+          if (/french press only|pour over only/.test(text)) return false;
+        }
+        if (answers.style === "milk") {
+          // Drop very light/fruity citrus single origins that don't take milk well
+          if (p.roastLevel === "light" && /citrus|tea-like|floral/.test(text))
+            return false;
+        }
+
+        // ── brew: easy / ritual / cold_brew / cafe
+        if (answers.brew === "easy") {
+          // Keep only easy-brew formats: bags, instant, pods
+          if (p.type === "beans" && !/instant|easy|drip bag|pour bag/.test(text))
+            return false;
+        }
+        if (answers.brew === "ritual") {
+          // Ritual drinkers want whole beans / pour-over / french press
+          if (p.type === "bags" && !/whole bean/.test(text)) return false;
+        }
+        if (answers.brew === "cold_brew") {
+          if (p.type === "beans" && p.roastLevel === "light") return false;
+        }
+        if (answers.brew === "cafe") {
+          // Cafe-first crowd: lean towards merch + sample/gift kits
+          if (p.type === "beans" && p.category !== "gift") {
+            // keep popular high-rated beans only
+            if ((p.rating ?? 0) < 4.5) return false;
+          }
+        }
+
+        // ── flavor: bold / sweet_flavor / fruity / earthy
+        if (answers.flavor === "bold") {
+          if (p.roastLevel === "light") return false;
+        }
+        if (answers.flavor === "fruity") {
+          if (p.roastLevel === "dark") return false;
+        }
+        if (answers.flavor === "sweet_flavor") {
+          if (p.roastLevel === "light" && /citrus|tea-like/.test(text)) return false;
+        }
+        if (answers.flavor === "earthy") {
+          if (p.roastLevel === "light") return false;
+        }
+
+        // ── time: evening prefers decaf/low-caffeine
+        if (answers.time === "evening") {
+          if (/intense|extra caffeine|high caffeine/.test(text)) return false;
+        }
+
+        // ── nature: igniter prefers bold
+        if (answers.nature === "intense") {
+          if (p.roastLevel === "light") return false;
+        }
+        if (answers.nature === "calm") {
+          if (/intense|bold blast/.test(text)) return false;
+        }
+
+        // ── freeform note: drop products clearly mismatched
+        if (noteLower) {
+          if (/no milk|black only/.test(noteLower) && /latte|frapp|mocha/.test(text))
+            return false;
+          if (/decaf/.test(noteLower) && !/decaf/.test(text) && p.type === "beans")
+            return false;
+          if (/iced|cold|chilled/.test(noteLower) && p.type === "beans" && p.roastLevel === "light")
+            return false;
+          if (/strong|bold|dark/.test(noteLower) && p.roastLevel === "light") return false;
+          if (/light|fruity|bright/.test(noteLower) && p.roastLevel === "dark") return false;
+        }
+
+        return true;
+      })
+      .map((p) => p._id)
+  );
+}
+
+function ProductShortlist({
   answers,
   note,
   step,
@@ -956,443 +820,117 @@ function CurationCanvas({
   recommendation: RecommendationResult | null;
   products: Product[];
 }) {
-  // Derive visual attributes from answers
-  const style = answers.style;
-  const time = answers.time;
-  const flavor = answers.flavor;
-  const brew = answers.brew;
-  const nature = answers.nature;
+  const shortlist = shortlistProducts(products, answers, note);
+  const totalAnswered = Object.keys(answers).length + (note.trim() ? 1 : 0);
+  const matchedCount = shortlist.size;
+  const totalCount = products.length;
 
-  // Liquid colour — black/milk/cold/sweet
-  const liquidGradient =
-    style === "milk"
-      ? "linear-gradient(180deg, #C4A07A 0%, #8A6740 60%, #5C4326 100%)"
-      : style === "cold"
-      ? "linear-gradient(180deg, #4A3326 0%, #2C1810 100%)"
-      : style === "sweet"
-      ? "linear-gradient(180deg, #B07A4F 0%, #6B3F22 60%, #3E2412 100%)"
-      : "linear-gradient(180deg, #3A2418 0%, #1F1209 100%)";
-
-  // Sky/background tint — time of day
-  const skyGradient =
-    time === "morning"
-      ? "linear-gradient(180deg, #F8E8D0 0%, #F0DAB8 100%)"
-      : time === "afternoon"
-      ? "linear-gradient(180deg, #FAEED5 0%, #E8D2A8 100%)"
-      : time === "evening"
-      ? "linear-gradient(180deg, #2F1F18 0%, #4A2F22 100%)"
-      : "linear-gradient(180deg, #F1E7D5 0%, #DCC7A0 100%)";
-
-  // Accent ring around cup — based on nature
-  const accentRing =
-    nature === "intense"
-      ? "rgba(180, 60, 30, 0.6)"
-      : nature === "creative"
-      ? "rgba(180, 130, 60, 0.55)"
-      : nature === "curious"
-      ? "rgba(90, 130, 110, 0.55)"
-      : "rgba(120, 100, 80, 0.55)";
-
-  const hasMilk = style === "milk" || style === "sweet";
-  const hasIce = style === "cold";
-
-  // Build floating chips from answers
-  const chipMap: Record<string, string> = {
-    morning: "Dawn ritual",
-    afternoon: "Midday reset",
-    evening: "Evening warmth",
-    anytime: "Always on",
-    black: "Pure black",
-    milk: "Silky milk",
-    cold: "Iced",
-    sweet: "Crafted sweet",
-    calm: "Anchor",
-    intense: "Igniter",
-    creative: "Creator",
-    curious: "Seeker",
-    creative_work: "Ideas & art",
-    tech_work: "Code & systems",
-    social_work: "People & stories",
-    physical_work: "On the move",
-    bold: "Bold & dark",
-    sweet_flavor: "Caramel sweet",
-    fruity: "Bright & fruity",
-    earthy: "Earthy & deep",
-    easy: "Quick brew",
-    ritual: "Slow ritual",
-    cold_brew: "Cold brew",
-    cafe: "Cafe-first",
-  };
-  const chips = Object.values(answers)
-    .map((v) => chipMap[v])
-    .filter(Boolean);
-
-  const firstProduct =
-    recommendation && products.find((p) => p._id === recommendation.primaryProductIds[0]);
-
-  // Progress through the build (0 → 1)
-  const progress = Math.min(1, Object.keys(answers).length / 6);
+  const primaryIds = new Set(recommendation?.primaryProductIds ?? []);
+  const isFinal = !!recommendation;
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
-      {/* Sky / time-of-day background */}
-      <motion.div
-        animate={{ background: skyGradient }}
-        transition={{ duration: 1.2 }}
-        className="absolute inset-0"
-        style={{ background: skyGradient }}
-      />
-
-      {/* Soft radial glow behind cup */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 65%, rgba(255,240,210,0.4) 0%, transparent 60%)",
-        }}
-      />
-
-      {/* Step label */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
-        <span className="h-px w-10 bg-current opacity-30" />
-        <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-text/55">
-          {recommendation
-            ? "Your match"
-            : loading
-            ? "Brewing"
-            : `Curating · step ${step + 1}/${QUESTIONS.length}`}
-        </span>
-        <span className="h-px w-10 bg-current opacity-30" />
-      </div>
-
-      {/* Progress bar */}
-      <div className="absolute top-14 left-1/2 -translate-x-1/2 w-40 h-0.5 bg-natural-text/10 rounded-full overflow-hidden z-10">
-        <motion.div
-          className="h-full bg-natural-accent"
-          animate={{ width: `${progress * 100}%` }}
-          transition={{ type: "spring", stiffness: 80, damping: 18 }}
-        />
-      </div>
-
-      {/* If recommendation, swap the cup for the actual product image */}
-      <AnimatePresence mode="wait">
-        {firstProduct ? (
-          <motion.div
-            key="product"
-            initial={{ opacity: 0, scale: 0.7, rotate: -6 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.7 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <div className="relative w-[70%] max-w-md aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border border-natural-border">
-              {firstProduct.imageUrl ? (
-                <img
-                  src={firstProduct.imageUrl}
-                  alt={firstProduct.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-natural-muted" />
-              )}
-              <div className="absolute inset-x-0 bottom-0 p-6 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
-                <p className="text-[10px] font-bold tracking-[0.35em] uppercase opacity-80">
-                  Your Cup
-                </p>
-                <h3 className="font-serif font-black text-2xl leading-tight mt-1">
-                  {firstProduct.name}
-                </h3>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="cup"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <CoffeeCupGraphic
-              liquidGradient={liquidGradient}
-              accentRing={accentRing}
-              hasMilk={hasMilk}
-              hasIce={hasIce}
-              dark={time === "evening"}
-              flavor={flavor}
-              brew={brew}
-              loading={loading}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating attribute chips orbiting the cup */}
-      <div className="absolute inset-0 pointer-events-none">
-        <AnimatePresence>
-          {chips.map((label, i) => {
-            // Distribute chips around the cup on an ellipse
-            const angle = (i / Math.max(chips.length, 1)) * Math.PI * 2 - Math.PI / 2;
-            const rx = 38; // pct
-            const ry = 32; // pct
-            const left = 50 + Math.cos(angle) * rx;
-            const top = 55 + Math.sin(angle) * ry;
-            return (
-              <motion.div
-                key={label + i}
-                initial={{ opacity: 0, scale: 0.6, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.7 }}
-                transition={{
-                  delay: i * 0.06,
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 18,
-                }}
-                style={{
-                  position: "absolute",
-                  left: `${left}%`,
-                  top: `${top}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-              >
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{
-                    duration: 3 + (i % 3),
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="px-3 py-1.5 rounded-full bg-natural-paper/85 backdrop-blur-sm border border-natural-border shadow-lg text-[10px] font-bold tracking-wider uppercase text-natural-text whitespace-nowrap"
-                >
-                  <span className="inline-block w-1 h-1 rounded-full bg-natural-accent mr-1.5 align-middle" />
-                  {label}
-                </motion.div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-
-      {/* Freeform note bubble — bottom right */}
-      <AnimatePresence>
-        {note.trim() && !recommendation && (
-          <motion.div
-            initial={{ opacity: 0, y: 14, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 200, damping: 22 }}
-            className="absolute bottom-6 right-6 max-w-xs"
-          >
-            <div className="relative px-4 py-3 rounded-2xl rounded-br-sm bg-natural-text text-white shadow-2xl">
-              <p className="text-[9px] font-bold tracking-[0.3em] uppercase opacity-60 mb-1">
-                Your note
-              </p>
-              <p className="text-sm italic leading-snug">"{note}"</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// CoffeeCupGraphic — animated cup that fills, takes on milk/ice
-// ─────────────────────────────────────────────────────────────
-function CoffeeCupGraphic({
-  liquidGradient,
-  accentRing,
-  hasMilk,
-  hasIce,
-  dark,
-  flavor,
-  brew,
-  loading,
-}: {
-  liquidGradient: string;
-  accentRing: string;
-  hasMilk: boolean;
-  hasIce: boolean;
-  dark: boolean;
-  flavor?: string;
-  brew?: string;
-  loading: boolean;
-}) {
-  return (
-    <div className="relative w-[58%] max-w-sm aspect-square flex items-center justify-center">
-      {/* Accent ring (nature) */}
-      <motion.div
-        className="absolute inset-0 rounded-full blur-2xl"
-        animate={{
-          backgroundColor: accentRing,
-          scale: loading ? [1, 1.15, 1] : 1,
-        }}
-        transition={{
-          backgroundColor: { duration: 1 },
-          scale: { duration: 2, repeat: loading ? Infinity : 0 },
-        }}
-        style={{ opacity: 0.6 }}
-      />
-
-      {/* Saucer */}
-      <div
-        className={`absolute bottom-[18%] left-1/2 -translate-x-1/2 w-[88%] h-6 rounded-full shadow-2xl ${
-          dark ? "bg-[#1A1108]" : "bg-natural-paper"
-        }`}
-        style={{
-          boxShadow: dark
-            ? "0 30px 50px rgba(0,0,0,0.5)"
-            : "0 30px 50px rgba(80,60,40,0.25)",
-        }}
-      />
-
-      {/* Cup body */}
-      <div
-        className={`absolute bottom-[24%] left-1/2 -translate-x-1/2 w-[60%] aspect-square rounded-b-full rounded-t-2xl overflow-hidden border-2 ${
-          dark ? "bg-[#22160E] border-[#3A2418]" : "bg-natural-paper border-natural-border"
-        }`}
-        style={{
-          boxShadow: dark
-            ? "inset 0 -20px 30px rgba(0,0,0,0.4)"
-            : "inset 0 -20px 30px rgba(80,60,40,0.15)",
-        }}
-      >
-        {/* Liquid level */}
-        <motion.div
-          className="absolute inset-x-0 bottom-0"
-          initial={{ height: "0%" }}
-          animate={{ height: "78%" }}
-          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{ background: liquidGradient }}
-        >
-          {/* Surface ripple */}
-          <motion.div
-            className="absolute inset-x-0 top-0 h-2 opacity-50"
-            animate={{ x: [0, 6, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(255,250,235,0.4), transparent)",
-            }}
-          />
-
-          {/* Milk foam crema */}
-          {hasMilk && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="absolute inset-x-0 top-0 h-5 bg-linear-to-b from-[#F8EBD5] to-[#E5C7A0]"
-              style={{ borderRadius: "50% 50% 0 0 / 100% 100% 0 0" }}
-            />
-          )}
-
-          {/* Ice cubes */}
-          {hasIce && (
-            <div className="absolute inset-x-0 top-1 flex justify-center gap-1 px-3">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 0.8 }}
-                  transition={{ delay: 0.4 + i * 0.1, type: "spring" }}
-                  className="w-5 h-5 rounded-md bg-white/40 border border-white/60 backdrop-blur-sm"
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Steam plumes — only for hot drinks */}
-          {!hasIce && (
-            <div className="absolute -top-20 inset-x-0 flex justify-center gap-3 pointer-events-none">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-1.5 rounded-full"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{
-                    height: ["0px", "60px", "0px"],
-                    opacity: [0, 0.5, 0],
-                    y: [0, -20, -40],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    delay: i * 0.6,
-                    ease: "easeOut",
-                  }}
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(255,240,220,0.6) 0%, transparent 100%)",
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Cup handle */}
-      <div
-        className={`absolute bottom-[34%] right-[18%] w-7 h-12 rounded-full border-2 ${
-          dark ? "border-[#3A2418]" : "border-natural-border"
-        }`}
-        style={{ borderLeftColor: "transparent" }}
-      />
-
-      {/* Floating flavor pellets — petals/beans rising into the cup */}
-      {flavor && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[0, 1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              className="absolute left-1/2 bottom-[60%] w-2 h-2 rounded-full"
-              style={{
-                backgroundColor:
-                  flavor === "fruity"
-                    ? "#C44E5E"
-                    : flavor === "sweet_flavor"
-                    ? "#C99A6A"
-                    : flavor === "earthy"
-                    ? "#6B5039"
-                    : "#3A2418",
-              }}
-              animate={{
-                y: [0, -40, -80],
-                x: [0, (i % 2 === 0 ? 1 : -1) * 12, 0],
-                opacity: [0, 1, 0],
-                scale: [0.6, 1, 0.4],
-              }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                delay: i * 0.7,
-                ease: "easeOut",
-              }}
-            />
-          ))}
+    <div className="relative w-full h-full flex flex-col min-h-0">
+      {/* Header strip */}
+      <div className="shrink-0 px-6 sm:px-8 py-4 border-b border-natural-border/50 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-text/55">
+            {isFinal ? "Your match" : loading ? "Brewing" : "Live shortlist"}
+          </span>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-serif font-black text-natural-text tabular-nums">
+            {isFinal ? primaryIds.size : matchedCount}
+          </span>
+          <span className="text-natural-text/40 text-xs font-medium">
+            of {totalCount}
+          </span>
+          {!isFinal && totalAnswered > 0 && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-natural-accent/10 text-natural-accent text-[9px] font-bold tracking-[0.2em] uppercase">
+              {totalAnswered} filter{totalAnswered === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+      </div>
 
-      {/* Brew tool badge — bottom hint */}
-      {brew && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-natural-text/85 backdrop-blur-sm text-white text-[9px] font-bold tracking-[0.3em] uppercase"
-        >
-          {brew === "easy"
-            ? "Quick brew"
-            : brew === "ritual"
-            ? "Slow ritual"
-            : brew === "cold_brew"
-            ? "Cold brew"
-            : "Cafe"}
-        </motion.div>
-      )}
+      {/* Product grid */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 sm:px-8 py-5">
+        {products.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-natural-text/40 text-sm">
+            <Coffee className="w-4 h-4 mr-2 animate-pulse" /> Loading our collection…
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {products.map((p) => {
+              const inShortlist = shortlist.has(p._id);
+              const isPrimary = primaryIds.has(p._id);
+              const muted = isFinal ? !isPrimary : !inShortlist;
+              return (
+                <motion.div
+                  key={p._id}
+                  layout
+                  animate={{
+                    opacity: muted ? 0.18 : 1,
+                    scale: muted ? 0.94 : 1,
+                  }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  className={`relative aspect-[3/4] rounded-2xl overflow-hidden border bg-natural-paper ${
+                    isPrimary
+                      ? "border-natural-accent shadow-lg shadow-natural-accent/25 ring-2 ring-natural-accent/40"
+                      : "border-natural-border"
+                  }`}
+                >
+                  {p.imageUrl ? (
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-natural-muted flex items-center justify-center">
+                      <Coffee className="w-8 h-8 text-natural-text/20" />
+                    </div>
+                  )}
+                  {/* Bottom label */}
+                  <div className="absolute inset-x-0 bottom-0 p-2 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
+                    <p className="font-serif font-bold text-[11px] leading-tight line-clamp-2">
+                      {p.name}
+                    </p>
+                    <p className="text-[10px] opacity-80 mt-0.5">
+                      ₹{p.price.toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  {/* Eliminated stamp */}
+                  {muted && !isFinal && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-natural-bg/30 backdrop-blur-[1px]">
+                      <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-natural-text/60">
+                        Filtered out
+                      </span>
+                    </div>
+                  )}
+                  {/* Primary badge */}
+                  {isPrimary && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">
+                      Match
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Progress hint */}
+      <div className="shrink-0 px-6 sm:px-8 py-3 border-t border-natural-border/50 text-center">
+        <p className="text-natural-text/40 text-[10px] tracking-[0.3em] uppercase font-bold">
+          {isFinal
+            ? "Match revealed"
+            : loading
+            ? "Reading your taste…"
+            : `Curating · step ${step + 1}/${QUESTIONS.length}`}
+        </p>
+      </div>
     </div>
   );
 }
-
