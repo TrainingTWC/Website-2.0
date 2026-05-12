@@ -93,12 +93,10 @@ const QUESTIONS: TIQuestion[] = [
 ];
 
 interface DiscoveryWidgetProps {
-  open?: boolean;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
-export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
-  const [isOpen, setIsOpen] = useState(false);
+export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -106,10 +104,6 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
   const [recommendation, setRecommendation] =
     useState<RecommendationResult | null>(null);
   const [direction, setDirection] = useState(1);
-
-  useEffect(() => {
-    if (open !== undefined) setIsOpen(open);
-  }, [open]);
 
   const products = useQuery(api.products.list);
   const getRecommendation = useAction(api.recommendations.getRecommendation);
@@ -181,20 +175,11 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
     setNote("");
     setRecommendation(null);
     setLoading(false);
-    setIsOpen(false);
-    onClose?.();
+    onClose();
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-110 overflow-hidden font-sans bg-natural-bg"
-        >
+    <div className="fixed inset-0 z-110 overflow-hidden font-sans bg-natural-bg">
           {/* ── Top bar ─────────────────────────────────────────── */}
           <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-8 py-4 border-b border-natural-border/60 bg-natural-paper/70 backdrop-blur-md">
             <div className="flex items-center gap-3">
@@ -253,7 +238,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
             </div>
 
             {/* RIGHT — live product shortlist (60%) */}
-            <div className="relative hidden lg:flex min-h-0 border-l border-natural-border/60 bg-linear-to-br from-natural-paper/60 via-natural-paper/20 to-transparent overflow-hidden">
+            <div className="relative hidden lg:flex min-h-0 border-l border-natural-border/60 bg-linear-to-br from-natural-paper/60 via-natural-paper/20 to-transparent overflow-y-auto scrollbar-hide">
               <ProductShortlist
                 answers={answers}
                 note={note}
@@ -264,9 +249,7 @@ export function DiscoveryWidget({ open, onClose }: DiscoveryWidgetProps = {}) {
               />
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
   );
 }
 

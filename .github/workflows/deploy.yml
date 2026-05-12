@@ -26,6 +26,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Deploy Convex functions
+        run: npx convex deploy --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      - name: Set Convex env vars
+        run: npx convex env set GOOGLE_AI_API_KEY "$GOOGLE_AI_API_KEY"
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+
       - name: Build
         run: npm run build
         env:

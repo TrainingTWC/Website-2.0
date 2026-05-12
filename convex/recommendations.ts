@@ -22,7 +22,7 @@ export const getRecommendation = action({
     ),
   },
   handler: async (_ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
       return {
         primaryProductIds: [],

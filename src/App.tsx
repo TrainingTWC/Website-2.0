@@ -336,10 +336,10 @@ function DessertsBanner() {
 function Storefront() {
   const products = useQuery(api.products.list);
   const { toasts, show: showToast } = useToast();
-  const [widgetOpen, setWidgetOpen] = useState(false);
   const [criticalReady, setCriticalReady] = useState(false);
   const params = useUrlQuery();
   const activeProductId = params.get("product");
+  const tiOpen = !!params.get("ti");
 
   // Reset scroll to top whenever the active product changes (open / switch).
   // Use Lenis if available so the transition feels of-a-piece with the rest
@@ -351,7 +351,10 @@ function Storefront() {
     } else {
       window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     }
-  }, [activeProductId]);
+  }, [activeProductId, tiOpen]);
+
+  const openTI = () => navigateTo({ ti: "1" });
+  const closeTI = () => navigateTo({ ti: null });
 
   const onAddToCart = (name: string) => showToast(`Added \"${name}\" to cart`);
 
@@ -383,6 +386,23 @@ function Storefront() {
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20">
       <LoadingScreen ready={criticalReady} />
+
+      {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
+      <AnimatePresence mode="wait">
+        {tiOpen && (
+          <motion.div
+            key="ti-page"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-50 overflow-hidden"
+            style={{ willChange: "transform, opacity" }}
+          >
+            <DiscoveryWidget onClose={closeTI} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Product page overlays the home with a smooth lift + crossfade.
           Home stays mounted (scroll position, queries, etc. preserved). */}
@@ -460,7 +480,7 @@ function Storefront() {
               Our Story
             </button>
             <motion.button
-              onClick={() => setWidgetOpen(true)}
+              onClick={() => openTI()}
               className="relative flex items-center justify-center group"
               title="Third Intelligence — Find Your Match"
               whileHover={{ scale: 1.06 }}
@@ -504,7 +524,6 @@ function Storefront() {
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-7xl mx-auto" id="storefront-view">
           <DemoStorefront products={products ?? []} onAddToCart={(name) => showToast(`${name} added to cart`)} />
-          <DiscoveryWidget open={widgetOpen} onClose={() => setWidgetOpen(false)} />
         </div>
       </main>
 
