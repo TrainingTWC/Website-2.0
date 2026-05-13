@@ -2,6 +2,7 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
+import { BRAND_CONTEXT, buildPersonalitiesBlock } from "./productContext";
 
 export const getRecommendation = action({
   args: {
@@ -22,57 +23,57 @@ export const getRecommendation = action({
     ),
   },
   handler: async (_ctx, args) => {
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return {
         primaryProductIds: [],
         crossSellProductIds: [],
         explanation:
-          "AI recommendations are not configured. Please set the GEMINI_API_KEY environment variable.",
+          "AI recommendations are not configured. Please set the GEMINI_API_KEY environment variable in your Convex dashboard.",
       };
     }
 
-    const productsSnippet = args.products
+    const productNames = args.products.map((p) => p.name);
+    const personalitiesBlock = buildPersonalitiesBlock(productNames);
+
+    const catalogSnippet = args.products
       .map(
-        (p) => `
-      ID: ${p._id}
-      Name: ${p.name}
-      Type: ${p.type}
-      Category: ${p.category}
-      Roast: ${p.roastLevel || "N/A"}
-      Origin: ${p.origin || "N/A"}
-      Tags: ${p.tags.join(", ")}
-      Flavor Notes: ${p.flavorNotes.join(", ")}
-      Price: ₹${p.price.toLocaleString("en-IN")}
-      Description: ${p.description}
-    `
+        (p) =>
+          `ID: ${p._id} | Name: ${p.name} | Category: ${p.category} | Roast: ${p.roastLevel ?? "N/A"} | Origin: ${p.origin ?? "N/A"} | Flavor: ${p.flavorNotes.join(", ")} | Price: ₹${p.price.toLocaleString("en-IN")}`
       )
       .join("\n");
 
-    const answersSnippet = JSON.stringify(args.answers);
+    const answersSnippet = Object.entries(args.answers as Record<string, string>)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
 
     const prompt = `
-      You are an expert barista and personal shopper for a high-end Indian specialty coffee shop.
-      Based on the following customer preferences and our product catalog, recommend the perfect matches.
-      
-      CUSTOMER PREFERENCES:
-      ${answersSnippet}
-      
-      PRODUCT CATALOG:
-      ${productsSnippet}
-      
-      TASKS:
-      1. Select 1-3 primary coffee product IDs that best match the customer's preferences.
-      2. Select 1-2 complementary product IDs (gear, bundles, or other coffees that pair well).
-      3. Provide a brief, warm, knowledgeable explanation of why these were chosen (max 3 sentences). Be specific about flavor notes and brewing suggestions.
-      
-      RETURN JSON ONLY in the following format:
-      {
-        "primaryProductIds": ["id1", "id2"],
-        "crossSellProductIds": ["id3"],
-        "explanation": "..."
-      }
-    `;
+${BRAND_CONTEXT}
+
+${personalitiesBlock}
+
+PRODUCT CATALOG (ID | Name | Category | Roast | Origin | Flavor | Price):
+${catalogSnippet}
+
+CUSTOMER ANSWERS:
+${answersSnippet}
+
+TASK:
+You are Third Intelligence, the recommendation engine for Third Wave Coffee.
+Using the brand voice directive above, select the best product matches for this customer.
+
+Rules:
+- primaryProductIds: 1–3 IDs of coffee products (beans or bags) that best match the customer's answers
+- crossSellProductIds: 1–2 IDs of complementary products (gear, merch, or different format coffee) — use crossSellAffinity from the personality profiles as guidance
+- explanation: 2–3 sentences in Third Intelligence voice (crisp, confident, precise). Reference the matched product's archetype, specific flavor notes, and a brewing suggestion. Do NOT use filler like "great choice", "you'll love this", or "based on your preferences".
+
+RETURN JSON ONLY:
+{
+  "primaryProductIds": ["id1"],
+  "crossSellProductIds": ["id2"],
+  "explanation": "..."
+}
+`.trim();
 
     try {
       const response = await fetch(
@@ -89,15 +90,27 @@ export const getRecommendation = action({
         }
       );
 
+      if (!response.ok) {
+        console.error("Gemini HTTP error:", response.status, await response.text());
+        throw new Error(`Gemini returned ${response.status}`);
+      }
+
       const json = await response.json();
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error("Empty response from Gemini");
 
-      return JSON.parse(text) as {
+      const parsed = JSON.parse(text) as {
         primaryProductIds: string[];
         crossSellProductIds: string[];
         explanation: string;
       };
+
+      // Validate required fields exist
+      if (!Array.isArray(parsed.primaryProductIds) || !parsed.explanation) {
+        throw new Error("Malformed response structure from Gemini");
+      }
+
+      return parsed;
     } catch (error) {
       console.error("Gemini Error:", error);
       return {

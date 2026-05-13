@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as productContext from "../productContext.js";
 import type * as products from "../products.js";
 import type * as recommendations from "../recommendations.js";
 import type * as seed from "../seed.js";
@@ -20,6 +21,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  productContext: typeof productContext;
   products: typeof products;
   recommendations: typeof recommendations;
   seed: typeof seed;

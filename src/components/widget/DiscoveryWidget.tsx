@@ -97,7 +97,7 @@ interface DiscoveryWidgetProps {
 }
 
 export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -169,7 +169,7 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
   };
 
   const reset = () => {
-    setStep(0);
+    setStep(-1);
     setDirection(1);
     setAnswers({});
     setNote("");
@@ -221,6 +221,13 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
                   products={products ?? []}
                   onReset={reset}
                 />
+              ) : step === -1 ? (
+                <IntroView
+                  note={note}
+                  onNote={setNote}
+                  onSubmit={handleRecommend}
+                  onStartQuestions={() => { setDirection(1); setStep(0); }}
+                />
               ) : (
                 <QuestionView
                   q={q}
@@ -250,6 +257,79 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
             </div>
           </div>
         </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Intro view — freeform entry, bypasses the questionnaire
+// ─────────────────────────────────────────────────────────────
+function IntroView({
+  note,
+  onNote,
+  onSubmit,
+  onStartQuestions,
+}: {
+  note: string;
+  onNote: (v: string) => void;
+  onSubmit: () => void;
+  onStartQuestions: () => void;
+}) {
+  const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && note.trim()) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full max-w-xl mx-auto flex-1 flex flex-col justify-center gap-8"
+    >
+      <div className="space-y-2">
+        <p className="text-natural-accent text-[10px] font-bold tracking-[0.35em] uppercase">
+          Third Intelligence
+        </p>
+        <h2 className="text-3xl sm:text-4xl font-serif font-bold text-natural-text leading-[1.05] tracking-tight">
+          What's your coffee moment?
+        </h2>
+        <p className="text-natural-text/45 text-sm italic">
+          Describe it in your own words — we'll find the match.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <textarea
+          value={note}
+          onChange={(e) => onNote(e.target.value)}
+          onKeyDown={handleKey}
+          autoFocus
+          placeholder="e.g. I want something bold for cold mornings, I drink it black and I like earthy, intense flavours…"
+          rows={4}
+          className="w-full resize-none rounded-2xl border border-natural-border bg-natural-paper p-4 text-sm text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:border-natural-accent transition-colors"
+        />
+        <button
+          onClick={onSubmit}
+          disabled={!note.trim()}
+          className={`w-full py-4 rounded-full font-bold text-sm tracking-wide transition-all flex items-center justify-center gap-2 ${
+            note.trim()
+              ? "bg-natural-text text-white shadow-lg shadow-natural-text/20 hover:bg-natural-accent"
+              : "bg-natural-muted text-natural-text/30 cursor-not-allowed"
+          }`}
+        >
+          Distil My Match <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      <button
+        onClick={onStartQuestions}
+        className="text-natural-text/40 hover:text-natural-text text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-1.5"
+      >
+        Answer a few questions instead <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </motion.div>
   );
 }
 
