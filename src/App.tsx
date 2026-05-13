@@ -248,15 +248,40 @@ function useUrlQuery() {
   return new URLSearchParams(search);
 }
 
+// Capture current scroll position (Lenis-aware) before a route change.
+function currentScrollY(): number {
+  const lenis = (window as unknown as { __lenis?: { scroll: number } }).__lenis;
+  return lenis?.scroll ?? window.scrollY ?? 0;
+}
+
+// Scroll to a specific Y immediately, respecting Lenis if present.
+function scrollToY(y: number) {
+  const lenis = (window as unknown as {
+    __lenis?: { scrollTo: (t: number, o?: object) => void };
+  }).__lenis;
+  if (lenis) {
+    lenis.scrollTo(y, { immediate: true, force: true });
+  } else {
+    window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+  }
+}
+
 function navigateTo(params: Record<string, string | null>) {
   const url = new URL(window.location.href);
   for (const [k, v] of Object.entries(params)) {
     if (v === null) url.searchParams.delete(k);
     else url.searchParams.set(k, v);
   }
-  window.history.pushState({}, "", url.toString());
+  // 1. Stamp current scroll onto the entry we are LEAVING so Back can restore it.
+  const leavingState = (window.history.state ?? {}) as Record<string, unknown>;
+  window.history.replaceState(
+    { ...leavingState, scrollY: currentScrollY() },
+    ""
+  );
+  // 2. Push the new entry. New entries start at top.
+  window.history.pushState({ scrollY: 0 }, "", url.toString());
   window.dispatchEvent(new PopStateEvent("popstate"));
-  window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  scrollToY(0);
 }
 
 export default function App() {
@@ -356,17 +381,23 @@ function Storefront() {
   const activeProductId = rawProductParam
     ? (slugMap.get(rawProductParam) ?? rawProductParam) // fallback: old bookmarked IDs still work
     : null;
-  // Reset scroll to top whenever the active product changes (open / switch).
-  // Use Lenis if available so the transition feels of-a-piece with the rest
-  // of the page; otherwise fall back to window.scrollTo.
+  // Restore scroll position on browser back/forward.
+  // navigateTo() stamps scrollY onto history.state before pushing; popstate
+  // reads it back. Double-rAF lets React render the new route's DOM (so the
+  // page is tall enough) before we jump.
   useEffect(() => {
-    const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis;
-    if (lenis) {
-      lenis.scrollTo(0, { immediate: true });
-    } else {
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    }
-  }, [activeProductId, page]);
+    const onPop = (e: PopStateEvent) => {
+      const y =
+        e.state && typeof (e.state as { scrollY?: number }).scrollY === "number"
+          ? (e.state as { scrollY: number }).scrollY
+          : 0;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => scrollToY(y))
+      );
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const openTI = () => navigateTo({ page: "ti" });
   const closeTI = () => navigateTo({ page: null });
