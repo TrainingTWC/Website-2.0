@@ -11,6 +11,7 @@ import {
   useTransform,
   useSpring,
   useMotionValue,
+  useMotionValueEvent,
   useInView,
 } from "motion/react";
 import {
@@ -450,29 +451,16 @@ function Storefront() {
       >
       <ScrollProgressBar />
 
-      {/* ── Icon side-rail nav (desktop) / bottom rail (mobile) ── */}
-      <SideNav onOpenTI={openTI} onOpenCart={() => showToast("Cart coming soon!", "cart")} />
+      {/* Main Navigation Header — morphs text→icons on scroll, stays fixed */}
+      <MorphingHeader
+        headerBg={headerBg}
+        headerBorder={headerBorder}
+        headerShadow={headerShadow}
+        onOpenTI={openTI}
+        onOpenCart={() => showToast("Cart coming soon!", "cart")}
+      />
 
-      {/* Main Navigation Header — thin, logo only (nav lives in rail) */}
-      <motion.header
-        style={{
-          backgroundColor: headerBg,
-          borderBottomColor: headerBorder,
-          boxShadow: headerShadow,
-        }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b px-6 py-2.5"
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-center">
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => scrollTo("hero")}
-          >
-            <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-8 w-auto" />
-          </div>
-        </div>
-      </motion.header>
-
-      <main className="pt-24 pb-12 px-6">
+      <main className="pt-28 lg:pt-32 pb-12 px-6">
         <div className="max-w-7xl mx-auto" id="storefront-view">
           <DemoStorefront products={products ?? []} onAddToCart={(name) => showToast(`${name} added to cart`)} />
         </div>
@@ -573,61 +561,99 @@ function useActiveSection(): string {
   return active;
 }
 
-function SideNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpenCart: () => void }) {
+// Header that morphs from text labels → icons on scroll. Stays fixed throughout.
+function MorphingHeader({
+  headerBg,
+  headerBorder,
+  headerShadow,
+  onOpenTI,
+  onOpenCart,
+}: {
+  headerBg: any;
+  headerBorder: any;
+  headerShadow: any;
+  onOpenTI: () => void;
+  onOpenCart: () => void;
+}) {
   const active = useActiveSection();
+  const { scrollY } = useScroll();
+  const [compact, setCompact] = useState(false);
+  useMotionValueEvent(scrollY, "change", (v) => {
+    const next = v > 80;
+    setCompact((prev) => (prev === next ? prev : next));
+  });
 
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed z-40 pointer-events-auto
-                 lg:left-5 lg:top-1/2 lg:-translate-y-1/2
-                 bottom-4 left-1/2 -translate-x-1/2 lg:translate-x-0"
+    <motion.header
+      style={{
+        backgroundColor: headerBg,
+        borderBottomColor: headerBorder,
+        boxShadow: headerShadow,
+      }}
+      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
     >
-      <div
-        className="flex flex-row lg:flex-col items-center gap-1
-                   bg-natural-paper/85 backdrop-blur-xl border border-natural-border/70
-                   rounded-2xl p-1.5 shadow-lg shadow-natural-text/5"
+      <motion.div
+        animate={{ paddingTop: compact ? 10 : 18, paddingBottom: compact ? 10 : 18 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-6"
       >
-        {NAV_ITEMS.map((item) => (
-          <NavIconButton
-            key={item.key}
-            label={item.label}
-            Icon={item.Icon}
-            active={active === item.key}
-            onClick={() => scrollTo(item.target)}
+        {/* Big logo — shrinks slightly on scroll */}
+        <button
+          onClick={() => scrollTo("hero")}
+          className="flex items-center shrink-0"
+          aria-label="Third Wave Coffee—home"
+        >
+          <motion.img
+            src={asset("logo.png")}
+            alt="Third Wave Coffee"
+            initial={false}
+            animate={{ height: compact ? 44 : 64 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="w-auto"
           />
-        ))}
+        </button>
 
-        {/* Divider */}
-        <div className="hidden lg:block w-5 h-px bg-natural-border my-1" />
-        <div className="lg:hidden w-px h-5 bg-natural-border mx-1" />
+        {/* Center nav */}
+        <nav className="hidden md:flex items-center gap-1">
+          {NAV_ITEMS.map((item) => (
+            <MorphNavItem
+              key={item.key}
+              label={item.label}
+              Icon={item.Icon}
+              active={active === item.key}
+              compact={compact}
+              onClick={() => scrollTo(item.target)}
+            />
+          ))}
+        </nav>
 
-        {/* Cart */}
-        <NavIconButton
-          label="Cart"
-          Icon={ShoppingCart}
-          active={false}
-          onClick={onOpenCart}
-        />
-
-        {/* TI — stays at the bottom (or right on mobile) */}
-        <TIRailButton onClick={onOpenTI} />
-      </div>
-    </motion.aside>
+        {/* Right actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <MorphNavItem
+            label="Cart"
+            Icon={ShoppingCart}
+            active={false}
+            compact={compact}
+            onClick={onOpenCart}
+          />
+          <TIHeaderButton compact={compact} onClick={onOpenTI} />
+        </div>
+      </motion.div>
+    </motion.header>
   );
 }
 
-function NavIconButton({
+function MorphNavItem({
   label,
   Icon,
   active,
+  compact,
   onClick,
 }: {
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
   active: boolean;
+  compact: boolean;
   onClick: () => void;
 }) {
   return (
@@ -635,57 +661,87 @@ function NavIconButton({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`group relative w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${
-        active ? "text-white" : "text-natural-text/70 hover:text-natural-text"
-      }`}
+      className={`relative flex items-center rounded-full transition-colors ${
+        compact ? "h-10 w-10 justify-center" : "h-10 px-4"
+      } ${active ? "text-white" : "text-natural-text/70 hover:text-natural-text"}`}
     >
       {active && (
         <motion.span
-          layoutId="side-nav-active"
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-          className="absolute inset-0 rounded-xl bg-natural-accent shadow-md shadow-natural-accent/30"
+          layoutId="header-nav-active"
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          className="absolute inset-0 rounded-full bg-natural-accent shadow-md shadow-natural-accent/30"
         />
       )}
-      <Icon className="relative z-10 w-5 h-5" />
-      {/* Tooltip on hover (desktop only) */}
-      <span className="hidden lg:block absolute left-full ml-3 px-2.5 py-1 rounded-md
-                       bg-natural-text text-white text-[10px] font-bold tracking-[0.2em] uppercase
-                       whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0
-                       transition-all duration-200 pointer-events-none">
-        {label}
+      <span className="relative z-10 flex items-center justify-center">
+        <AnimatePresence mode="wait" initial={false}>
+          {compact ? (
+            <motion.span
+              key="icon"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="flex items-center justify-center"
+            >
+              <Icon className="w-5 h-5" />
+            </motion.span>
+          ) : (
+            <motion.span
+              key="label"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="text-sm font-serif font-bold whitespace-nowrap"
+            >
+              {label}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </span>
     </button>
   );
 }
 
-// Smooth, single-source pulse for TI (no double-overlap jitter).
-function TIRailButton({ onClick }: { onClick: () => void }) {
+// TI button in header: pill with text by default, icon on scroll. Single smooth pulse ring.
+function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       title="Third Intelligence"
       aria-label="Third Intelligence"
-      className="group relative w-11 h-11 rounded-xl flex items-center justify-center hover:bg-natural-muted/60 transition-colors"
+      className={`relative flex items-center rounded-full hover:bg-natural-muted/60 transition-colors ${
+        compact ? "h-10 w-10 justify-center" : "h-10 pl-2 pr-4 gap-2"
+      }`}
     >
-      {/* Single soft pulse ring — GPU-only transform + opacity, no scale step */}
-      <motion.span
-        aria-hidden
-        animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
-        style={{ willChange: "transform, opacity" }}
-        className="absolute w-7 h-7 rounded-full bg-natural-accent/40 pointer-events-none"
-      />
-      <img
-        src={asset("third-intelligence-icon.png")}
-        alt=""
-        className="relative z-10 w-7 h-7 object-contain"
-      />
-      <span className="hidden lg:block absolute left-full ml-3 px-2.5 py-1 rounded-md
-                       bg-natural-text text-white text-[10px] font-bold tracking-[0.2em] uppercase
-                       whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0
-                       transition-all duration-200 pointer-events-none">
-        Third Intelligence
+      <span className="relative flex items-center justify-center w-7 h-7">
+        <motion.span
+          aria-hidden
+          animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
+          style={{ willChange: "transform, opacity", transformOrigin: "center" }}
+          className="absolute inset-0 m-auto w-7 h-7 rounded-full bg-natural-accent/40 pointer-events-none"
+        />
+        <img
+          src={asset("third-intelligence-icon.png")}
+          alt=""
+          className="relative z-10 w-7 h-7 object-contain"
+        />
       </span>
+      <AnimatePresence initial={false}>
+        {!compact && (
+          <motion.span
+            key="ti-label"
+            initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+            animate={{ opacity: 1, width: "auto", marginLeft: 0 }}
+            exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="overflow-hidden text-sm font-serif font-bold whitespace-nowrap text-natural-text"
+          >
+            Intelligence
+          </motion.span>
+        )}
+      </AnimatePresence>
     </button>
   );
 }
