@@ -410,12 +410,14 @@ function Storefront() {
         headerShadow={headerShadow}
         onOpenTI={openTI}
         onOpenCart={() => showToast("Cart coming soon!", "cart")}
+        onNavTo={handleNavTo}
       />
 
       {/* Mobile bottom nav — only on small screens */}
       <MobileBottomNav
         onOpenTI={openTI}
         onOpenCart={() => showToast("Cart coming soon!", "cart")}
+        onNavTo={handleNavTo}
       />
 
       {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
@@ -532,7 +534,7 @@ function Storefront() {
 }
 
 // ── Mobile bottom nav pill ───────────────────────────────────
-function MobileBottomNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpenCart: () => void }) {
+function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo }: { onOpenTI: () => void; onOpenCart: () => void; onNavTo: (target: string) => void }) {
   const active = useActiveSection();
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
@@ -546,7 +548,7 @@ function MobileBottomNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpe
           {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
-              onClick={() => scrollTo(item.target)}
+              onClick={() => onNavTo(item.target)}
               aria-label={item.label}
               className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] transition-colors ${
                 active === item.key ? "text-white" : "text-natural-text/55"
@@ -656,12 +658,14 @@ function MorphingHeader({
   headerShadow,
   onOpenTI,
   onOpenCart,
+  onNavTo,
 }: {
   headerBg: any;
   headerBorder: any;
   headerShadow: any;
   onOpenTI: () => void;
   onOpenCart: () => void;
+  onNavTo: (target: string) => void;
 }) {
   const active = useActiveSection();
   const { scrollY } = useScroll();
@@ -687,7 +691,7 @@ function MorphingHeader({
       >
         {/* Logo — compact on mobile always, shrinks on scroll on desktop */}
         <button
-          onClick={() => scrollTo("hero")}
+          onClick={() => onNavTo("hero")}
           className="flex items-center shrink-0"
           aria-label="Third Wave Coffee—home"
         >
@@ -718,7 +722,7 @@ function MorphingHeader({
               Icon={item.Icon}
               active={active === item.key}
               compact={compact}
-              onClick={() => scrollTo(item.target)}
+              onClick={() => onNavTo(item.target)}
             />
           ))}
           {/* TI lives next to Our Story */}
