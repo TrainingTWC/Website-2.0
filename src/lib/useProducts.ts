@@ -34,8 +34,9 @@ function writeCache(products: Product[]) {
 export function useProducts(): Product[] | undefined {
   const [cached] = useState<Product[] | null>(() => readCache());
 
-  // Only fires a live query when there is no sessionStorage cache
-  const live = useQuery(cached ? undefined : api.products.list);
+  // Only fires a live query when there is no sessionStorage cache.
+  // Pass "skip" as args to tell Convex to skip the subscription entirely.
+  const live = useQuery(api.products.list, cached ? "skip" : {});
 
   useEffect(() => {
     if (live && live.length > 0) {
