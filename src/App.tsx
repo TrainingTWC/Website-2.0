@@ -995,57 +995,81 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 // ── Horizontal scroll product row ─────────────────────────────
 function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const startX = useRef(0);
-  const startScrollLeft = useRef(0);
-  const hasDragged = useRef(false);
+  const velRef    = useRef(0);
+  const rafRef    = useRef(0);
+  const drag = useRef({ active: false, startX: 0, startSL: 0, lastX: 0, lastT: 0, vel: 0, moved: false });
 
-  // Wheel → horizontal: normalize mouse wheel (deltaMode 1 = lines) vs trackpad (deltaMode 0 = pixels)
+  // rAF inertia loop — friction 0.93 gives a buttery coast that stops naturally
+  const runInertia = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    const el = scrollRef.current;
+    if (!el) return;
+    const tick = () => {
+      velRef.current *= 0.93;
+      if (Math.abs(velRef.current) < 0.25) { velRef.current = 0; return; }
+      el.scrollLeft += velRef.current;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  // Wheel → accumulate velocity then let inertia coast
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      // If trackpad is already scrolling horizontally, let browser handle it
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.3) return;
+      // Horizontal trackpad swipe — let native handle it
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5) return;
       e.preventDefault();
-      const px = e.deltaMode === 1 /* lines */ ? e.deltaY * 40 : e.deltaY;
-      el.scrollLeft += px;
+      // Normalise: deltaMode 1 = lines (~3 lines/notch), 2 = pages
+      const raw = e.deltaMode === 1 ? e.deltaY * 25 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+      velRef.current += raw * 0.55;
+      runInertia();
     };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+    return () => { el.removeEventListener("wheel", onWheel); cancelAnimationFrame(rafRef.current); };
+  }, [runInertia]);
 
-  // Mouse drag-to-scroll
-  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Pointer drag — setPointerCapture keeps events flowing even outside the element
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollRef.current;
     if (!el) return;
-    dragging.current = true;
-    hasDragged.current = false;
-    startX.current = e.pageX;
-    startScrollLeft.current = el.scrollLeft;
-    el.style.cursor = "grabbing";
+    cancelAnimationFrame(rafRef.current);
+    velRef.current = 0;
+    el.setPointerCapture(e.pointerId);
+    drag.current = { active: true, startX: e.clientX, startSL: el.scrollLeft, lastX: e.clientX, lastT: performance.now(), vel: 0, moved: false };
   };
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!dragging.current || !scrollRef.current) return;
-    const dx = e.pageX - startX.current;
-    if (Math.abs(dx) > 4) hasDragged.current = true;
-    scrollRef.current.scrollLeft = startScrollLeft.current - dx;
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d.active || !scrollRef.current) return;
+    const dx = e.clientX - d.startX;
+    if (Math.abs(dx) > 4) d.moved = true;
+    const now = performance.now();
+    const dt = now - d.lastT;
+    if (dt > 0) d.vel = (d.lastX - e.clientX) / dt; // px/ms
+    d.lastX = e.clientX;
+    d.lastT = now;
+    scrollRef.current.scrollLeft = d.startSL - dx;
   };
 
-  const stopDrag = () => {
-    dragging.current = false;
-    if (scrollRef.current) scrollRef.current.style.cursor = "";
+  const onPointerUp = () => {
+    const d = drag.current;
+    if (!d.active) return;
+    d.active = false;
+    // Convert px/ms → px/frame @ 60fps and throw
+    velRef.current = d.vel * 14;
+    runInertia();
   };
 
   return (
     <div
       ref={scrollRef}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={stopDrag}
-      onMouseLeave={stopDrag}
-      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none
                  -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
                  [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
                  [overscroll-behavior-x:contain]"
@@ -1056,8 +1080,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
         <div
           key={p._id}
           className="flex-shrink-0 w-48 sm:w-56 md:w-64"
-          // Suppress click after drag so cards don't open unexpectedly
-          onClick={(e) => { if (hasDragged.current) e.stopPropagation(); }}
+          onClick={(e) => { if (drag.current.moved) e.stopPropagation(); }}
         >
           <ProductCard product={p} onAddToCart={onAddToCart} />
         </div>

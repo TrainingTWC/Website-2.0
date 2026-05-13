@@ -22,8 +22,8 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       smoothWheel: true,
       syncTouch: true,
       syncTouchLerp: 0.08,
-      wheelMultiplier: 1,
-      touchMultiplier: 1.5,
+      wheelMultiplier: 0.75,
+      touchMultiplier: 1.2,
     });
 
     let raf = 0;
