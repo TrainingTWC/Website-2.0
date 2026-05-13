@@ -127,12 +127,12 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   useEffect(() => {
     setVariant("250g");
     setQty(1);
-    containerRef.current?.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [productId]);
 
   if (products === undefined) {
     return (
-      <div className="h-full flex items-center justify-center bg-natural-bg">
+      <div className="min-h-screen flex items-center justify-center bg-natural-bg">
         <div className="text-natural-text/50 text-sm tracking-widest uppercase">Loading…</div>
       </div>
     );
@@ -140,7 +140,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
 
   if (!product) {
     return (
-      <div className="h-full flex items-center justify-center bg-natural-bg px-6 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-natural-bg px-6 text-center">
         <div className="space-y-4">
           <p className="text-natural-text/50 uppercase tracking-widest text-xs font-bold">Product not found</p>
           <button
@@ -192,7 +192,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="min-h-screen"
       style={{ background: theme.bg }}
     >
       {/* ── Hero — full viewport, all info without scrolling ─────────── */}

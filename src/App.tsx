@@ -466,6 +466,32 @@ function Storefront() {
     );
   }
 
+  // ── Full-page route: Product detail ───────────────────────
+  // Renders as a real page (not an overlay) so window scroll, parallax,
+  // and Lenis smooth-scroll all behave naturally.
+  if (activeProductId) {
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
+        <ProductPage
+          productId={activeProductId}
+          onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
+          onOpenCart={() => setCartOpen(true)}
+          cartCount={cartCount}
+        />
+        <CartPanel
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          cart={cart}
+          products={products ?? []}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onCheckout={() => navigateTo({ page: "checkout" })}
+        />
+        <ToastContainer toasts={toasts} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20">
       <LoadingScreen ready={criticalReady} />
@@ -491,43 +517,7 @@ function Storefront() {
         cartCount={cartCount}
       />
 
-      {/* Product page overlays the home with a smooth lift + crossfade.
-          Home stays mounted (scroll position, queries, etc. preserved). */}
-      <AnimatePresence mode="wait">
-        {activeProductId && (
-          <motion.div
-            key={activeProductId}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 overflow-hidden bg-natural-bg"
-            style={{ willChange: "transform, opacity" }}
-          >
-            <ProductPage
-              productId={activeProductId}
-              onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
-              onOpenCart={() => setCartOpen(true)}
-              cartCount={cartCount}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        animate={{
-          opacity: activeProductId ? 0 : 1,
-          scale: activeProductId ? 0.985 : 1,
-          filter: activeProductId ? "blur(4px)" : "blur(0px)",
-        }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        aria-hidden={activeProductId ? true : undefined}
-        style={{
-          pointerEvents: activeProductId ? "none" : undefined,
-          willChange: "transform, opacity, filter",
-          transformOrigin: "center top",
-        }}
-      >
+      <div>
 
       <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
         <div className="max-w-7xl mx-auto" id="storefront-view">
@@ -587,7 +577,7 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
-      </motion.div>
+      </div>
 
       <CartPanel
         open={cartOpen}
