@@ -180,16 +180,17 @@ Return JSON ONLY in this exact shape — no markdown, no prose outside JSON:
   "waterTempC": <number 80-96>,
   "totalTimeSec": <number>,
   "steps": [
-    { "label": "Bloom", "timeSec": 30, "detail": "Pour 40g water, swirl, wait." },
-    { "label": "First pour", "timeSec": 30, "detail": "..." }
+    { "label": "Bloom", "timeSec": 30, "waterG": 40, "detail": "Pour 40g water, swirl, wait." },
+    { "label": "First pour", "timeSec": 30, "waterG": 80, "detail": "..." }
   ],
   "tastingNote": "1 sentence prediction of how the cup will taste, referencing the bean's flavor notes",
   "tip": "1 sentence pro tip specific to this bean+method combination"
 }
 
 Rules:
-- 3 to 6 steps total, each with timeSec and detail (max 18 words)
+- 3 to 6 steps total, each with timeSec, waterG (grams of water added in that step) and detail (max 18 words)
 - Sum of step timeSec must equal totalTimeSec
+- Sum of step waterG must equal the target yield (~${yieldMl} g) for pour-over / drip methods; for espresso, waterG per step represents preinfusion/extraction grams reaching the cup; for immersion methods (french-press, aeropress, cold-brew) the first step's waterG is the total water added and subsequent steps use waterG = 0
 - waterTempC must reflect roast level (darker = lower temp)
 - Steps should feel like a real barista wrote them, not generic
 - Voice: precise, confident, Third Intelligence (no filler, no exclamations)
@@ -239,7 +240,7 @@ Rules:
         grind: string;
         waterTempC: number;
         totalTimeSec: number;
-        steps: Array<{ label: string; timeSec: number; detail: string }>;
+        steps: Array<{ label: string; timeSec: number; waterG?: number; detail: string }>;
         tastingNote: string;
         tip: string;
       };

@@ -16,8 +16,15 @@ interface LoadingScreenProps {
  * curtains out with a paper-fold animation.
  */
 export function LoadingScreen({ ready, onExitComplete }: LoadingScreenProps) {
-  const [visible, setVisible] = useState(true);
-  const [progress, setProgress] = useState(0);
+  // If this browser session has already played the intro, never show it again.
+  // Using sessionStorage means a fresh tab or a hard refresh of a new session
+  // still gets the brand moment, but back-navigation / re-mounts are seamless.
+  const alreadySeen =
+    typeof window !== "undefined" &&
+    window.sessionStorage.getItem("twc:loader-seen") === "1";
+
+  const [visible, setVisible] = useState(!alreadySeen);
+  const [progress, setProgress] = useState(alreadySeen ? 100 : 0);
   const [phaseIdx, setPhaseIdx] = useState(0);
 
   const phases = [
@@ -51,10 +58,19 @@ export function LoadingScreen({ ready, onExitComplete }: LoadingScreenProps) {
     setPhaseIdx(idx);
   }, [progress, phases.length]);
 
-  // Once we've hit 100% and ready, hide
+  // Once we've hit 100% and ready, hide and mark this session as "seen"
+  // so subsequent re-mounts (e.g. back-navigation from a product page) skip
+  // the intro entirely.
   useEffect(() => {
     if (ready && progress >= 100) {
-      const t = setTimeout(() => setVisible(false), 450);
+      const t = setTimeout(() => {
+        setVisible(false);
+        try {
+          window.sessionStorage.setItem("twc:loader-seen", "1");
+        } catch {
+          /* storage may be unavailable; ignore */
+        }
+      }, 450);
       return () => clearTimeout(t);
     }
   }, [ready, progress]);

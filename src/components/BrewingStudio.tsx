@@ -100,7 +100,7 @@ interface Recipe {
   grind: string;
   waterTempC: number;
   totalTimeSec: number;
-  steps: Array<{ label: string; timeSec: number; detail: string }>;
+  steps: Array<{ label: string; timeSec: number; waterG?: number; detail: string }>;
   tastingNote: string;
   tip: string;
 }
@@ -525,7 +525,18 @@ export function BrewingStudio({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline justify-between gap-3 mb-0.5">
                             <p className="font-bold text-sm">{step.label}</p>
-                            <span className="text-[11px] tabular-nums text-white/40">
+                            <span className="text-[11px] tabular-nums text-white/40 flex items-center gap-2 shrink-0">
+                              {typeof step.waterG === "number" && step.waterG > 0 && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded-md font-bold"
+                                  style={{
+                                    background: active ? `${accentHex}33` : "rgba(255,255,255,0.08)",
+                                    color: active ? accentHex : "rgba(255,255,255,0.7)",
+                                  }}
+                                >
+                                  +{step.waterG}g
+                                </span>
+                              )}
                               {formatTime(step.timeSec)}
                             </span>
                           </div>
