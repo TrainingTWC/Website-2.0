@@ -442,7 +442,13 @@ function Storefront() {
             className="fixed inset-0 z-50 overflow-hidden"
             style={{ willChange: "transform, opacity" }}
           >
-            <DiscoveryWidget onClose={closeTI} />
+            <DiscoveryWidget
+              onClose={closeTI}
+              onNavigateToProduct={(slug) => {
+                closeTI();
+                navigateTo({ product: slug });
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>

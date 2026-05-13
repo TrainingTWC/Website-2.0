@@ -14,6 +14,7 @@ import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
 import { asset } from "../../lib/asset";
+import { slugify } from "../../lib/slug";
 import type { Product, RecommendationResult } from "../../types";
 
 interface TIQuestion {
@@ -94,9 +95,10 @@ const QUESTIONS: TIQuestion[] = [
 
 interface DiscoveryWidgetProps {
   onClose: () => void;
+  onNavigateToProduct?: (slug: string) => void;
 }
 
-export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
+export function DiscoveryWidget({ onClose, onNavigateToProduct }: DiscoveryWidgetProps) {
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -220,6 +222,7 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
                   recommendation={recommendation}
                   products={products ?? []}
                   onReset={reset}
+                  onNavigateToProduct={onNavigateToProduct}
                 />
               ) : step === -1 ? (
                 <IntroView
@@ -592,10 +595,12 @@ function RecommendationView({
   recommendation,
   products,
   onReset,
+  onNavigateToProduct,
 }: {
   recommendation: RecommendationResult;
   products: Product[];
   onReset: () => void;
+  onNavigateToProduct?: (slug: string) => void;
 }) {
   const getProduct = (id: string) => products.find((p) => p._id === id);
 
@@ -604,7 +609,7 @@ function RecommendationView({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-2xl overflow-y-auto max-h-full space-y-6 pb-6 pr-1 scrollbar-hide"
+      className="w-full max-w-2xl space-y-6 pb-6"
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -653,7 +658,8 @@ function RecommendationView({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 + idx * 0.12, type: "spring", stiffness: 150, damping: 20 }}
               whileHover={{ y: -4, scale: 1.01 }}
-              className="flex items-center gap-5 bg-natural-paper border border-natural-border rounded-3xl p-5 hover:shadow-xl hover:border-natural-accent/30 transition-all group"
+              onClick={() => onNavigateToProduct && p && onNavigateToProduct(slugify(p.name))}
+              className={`flex items-center gap-5 bg-natural-paper border border-natural-border rounded-3xl p-5 hover:shadow-xl hover:border-natural-accent/30 transition-all group${onNavigateToProduct ? " cursor-pointer" : ""}`}
             >
               <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0 bg-natural-muted">
                 {p.imageUrl ? (
@@ -725,7 +731,8 @@ function RecommendationView({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 + idx * 0.1 }}
                   whileHover={{ y: -4 }}
-                  className="bg-natural-paper border border-natural-border rounded-3xl p-4 space-y-3 hover:shadow-lg hover:border-natural-accent/30 transition-all"
+                  onClick={() => onNavigateToProduct && p && onNavigateToProduct(slugify(p.name))}
+                  className={`bg-natural-paper border border-natural-border rounded-3xl p-4 space-y-3 hover:shadow-lg hover:border-natural-accent/30 transition-all${onNavigateToProduct ? " cursor-pointer" : ""}`}
                 >
                   <div className="h-28 rounded-2xl overflow-hidden bg-natural-muted">
                     {p.imageUrl ? (
