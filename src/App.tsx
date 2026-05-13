@@ -344,8 +344,8 @@ function Storefront() {
   const [criticalReady, setCriticalReady] = useState(false);
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const params = useUrlQuery();
+  const page = params.get("page");
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
   const slugMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -356,8 +356,6 @@ function Storefront() {
   const activeProductId = rawProductParam
     ? (slugMap.get(rawProductParam) ?? rawProductParam) // fallback: old bookmarked IDs still work
     : null;
-  const tiOpen = !!params.get("ti");
-
   // Reset scroll to top whenever the active product changes (open / switch).
   // Use Lenis if available so the transition feels of-a-piece with the rest
   // of the page; otherwise fall back to window.scrollTo.
@@ -368,10 +366,10 @@ function Storefront() {
     } else {
       window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     }
-  }, [activeProductId, tiOpen]);
+  }, [activeProductId, page]);
 
-  const openTI = () => navigateTo({ ti: "1" });
-  const closeTI = () => navigateTo({ ti: null });
+  const openTI = () => navigateTo({ page: "ti" });
+  const closeTI = () => navigateTo({ page: null });
 
   const addToCart = useCallback((productId: string, qty = 1) => {
     setCart((prev) => {
@@ -431,6 +429,7 @@ function Storefront() {
   }, [products]);
 
   // Header reactivity to scroll — opacity + shadow build up
+  // (must be declared before any early returns to satisfy rules of hooks)
   const { scrollY } = useScroll();
   const headerBg = useTransform(scrollY, [0, 120], ["rgba(250,249,246,0.6)", "rgba(250,249,246,0.95)"]);
   const headerBorder = useTransform(scrollY, [0, 120], ["rgba(224,216,208,0)", "rgba(224,216,208,1)"]);
@@ -439,6 +438,33 @@ function Storefront() {
     [0, 120],
     ["0 0 0 rgba(0,0,0,0)", "0 8px 30px rgba(44,24,16,0.06)"]
   );
+
+  // ── Full-page route: TI (Third Intelligence) ─────────────────
+  if (page === "ti") {
+    return (
+      <div className="h-screen overflow-hidden bg-natural-bg text-natural-text font-sans">
+        <DiscoveryWidget
+          onClose={() => navigateTo({ page: null })}
+          onNavigateToProduct={(slug) => navigateTo({ page: null, product: slug })}
+          onAddToCart={(productId) => addToCart(productId)}
+        />
+      </div>
+    );
+  }
+
+  // ── Full-page route: Checkout ───────────────────────────────
+  if (page === "checkout") {
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
+        <CheckoutPage
+          cart={cart}
+          products={products ?? []}
+          onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
+          onPlaceOrder={() => { setCart([]); navigateTo({ page: null }); }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20">
@@ -464,30 +490,6 @@ function Storefront() {
         onNavTo={handleNavTo}
         cartCount={cartCount}
       />
-
-      {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
-      <AnimatePresence mode="wait">
-        {tiOpen && (
-          <motion.div
-            key="ti-page"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-50 overflow-hidden"
-            style={{ willChange: "transform, opacity" }}
-          >
-            <DiscoveryWidget
-              onClose={closeTI}
-              onNavigateToProduct={(slug) => {
-                closeTI();
-                navigateTo({ product: slug });
-              }}
-              onAddToCart={(productId) => addToCart(productId)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Product page overlays the home with a smooth lift + crossfade.
           Home stays mounted (scroll position, queries, etc. preserved). */}
@@ -594,29 +596,8 @@ function Storefront() {
         products={products ?? []}
         onRemove={removeFromCart}
         onUpdateQty={updateQty}
-        onCheckout={() => setCheckoutOpen(true)}
+        onCheckout={() => navigateTo({ page: "checkout" })}
       />
-
-      {/* Checkout full-screen overlay */}
-      <AnimatePresence>
-        {checkoutOpen && (
-          <motion.div
-            key="checkout"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-90 bg-natural-bg overflow-hidden"
-          >
-            <CheckoutPage
-              cart={cart}
-              products={products ?? []}
-              onClose={() => { setCheckoutOpen(false); setCartOpen(true); }}
-              onPlaceOrder={() => { setCart([]); setCheckoutOpen(false); }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
