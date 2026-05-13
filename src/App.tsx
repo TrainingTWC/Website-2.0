@@ -278,8 +278,7 @@ function FizzBanner() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage:
-            "url(/banner-schweppes.png)",
+          backgroundImage: `url(${import.meta.env.BASE_URL}banner-schweppes.png)`,
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
@@ -312,8 +311,7 @@ function DessertsBanner() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage:
-            "url(/banner-third-rush.jpg)",
+          backgroundImage: `url(${import.meta.env.BASE_URL}banner-third-rush.jpg)`,
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
