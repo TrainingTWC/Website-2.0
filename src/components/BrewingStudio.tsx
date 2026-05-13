@@ -214,6 +214,26 @@ export function BrewingStudio({
 
   const progressPct = brewRecipe ? Math.min(100, (elapsed / brewRecipe.totalTimeSec) * 100) : 0;
 
+  // Live cumulative water poured — interpolated within the active step
+  const { flowWaterG, totalWaterG } = useMemo(() => {
+    if (!brewRecipe) return { flowWaterG: 0, totalWaterG: 0 };
+    const total = brewRecipe.steps.reduce((s, st) => s + (st.waterG ?? 0), 0);
+    let cumTime = 0;
+    let cumWater = 0;
+    for (const step of brewRecipe.steps) {
+      const stepEnd = cumTime + step.timeSec;
+      if (elapsed >= stepEnd) {
+        cumWater += step.waterG ?? 0;
+        cumTime = stepEnd;
+      } else {
+        const frac = (elapsed - cumTime) / step.timeSec;
+        cumWater += (step.waterG ?? 0) * frac;
+        break;
+      }
+    }
+    return { flowWaterG: Math.round(cumWater), totalWaterG: total };
+  }, [elapsed, brewRecipe]);
+
   const hasOutput = mode === "brew" ? brewRecipe !== null : craftRecipe !== null;
 
   return (
@@ -585,7 +605,29 @@ export function BrewingStudio({
                       </button>
                     </div>
                   </div>
-                  {/* Glowing progress bar */}
+                  {/* Water flow counter */}
+                  {totalWaterG > 0 && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <Droplets className="w-3.5 h-3.5" style={{ color: accentHex }} />
+                      <span
+                        className="text-lg font-bold tabular-nums leading-none"
+                        style={{ color: accentHex }}
+                      >
+                        {flowWaterG}g
+                      </span>
+                      <span className="text-xs text-white/30">/ {totalWaterG}g water</span>
+                      {/* Water progress bar */}
+                      <div className="flex-1 h-0.75 rounded-full ml-1" style={{ background: "rgba(255,255,255,0.08)" }}>
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: `${accentHex}80` }}
+                          animate={{ width: `${totalWaterG > 0 ? (flowWaterG / totalWaterG) * 100 : 0}%` }}
+                          transition={{ ease: "linear", duration: 0.2 }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {/* Time progress bar */}
                   <div className="h-0.75 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
                     <motion.div
                       className="h-full rounded-full"
