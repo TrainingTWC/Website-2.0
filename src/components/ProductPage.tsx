@@ -244,7 +244,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
         </div>
 
         {/* Top nav strip */}
-        <div className="relative z-10 max-w-7xl mx-auto px-8 pt-8 flex items-center justify-between">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pt-5 sm:pt-8 flex items-center justify-between">
           <button
             onClick={goHome}
             className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] ${theme.fg} opacity-80 hover:opacity-100 transition-opacity`}
@@ -258,7 +258,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
         </div>
 
         {/* Main hero grid */}
-        <div className="relative z-10 max-w-7xl mx-auto px-8 pt-10 pb-24 grid grid-cols-1 lg:grid-cols-[1.05fr_1.2fr_1fr] gap-10 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pt-4 sm:pt-10 pb-6 sm:pb-24 grid grid-cols-1 lg:grid-cols-[1.05fr_1.2fr_1fr] gap-6 lg:gap-10 items-center">
           {/* LEFT — name + tagline */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -270,7 +270,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
             <span className={`text-[10px] font-bold uppercase tracking-[0.35em] ${theme.accentText}`}>
               {product.category}
             </span>
-            <h1 className="font-serif font-bold text-5xl md:text-6xl leading-[0.95] tracking-tight">
+            <h1 className="font-serif font-bold text-3xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight">
               {product.name}
             </h1>
             {product.weight && (
@@ -358,9 +358,9 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="relative z-10 max-w-7xl mx-auto px-8 pb-12 flex flex-col md:flex-row items-end md:items-center justify-between gap-6"
+          className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pb-8 sm:pb-12 flex flex-col items-start sm:items-end sm:flex-row justify-between gap-4 sm:gap-6"
         >
-          <p className={`max-w-md text-sm ${theme.accentText}`}>
+          <p className={`max-w-md text-xs sm:text-sm ${theme.accentText}`}>
             Crafted by our master roasters in small batches. Sourced directly from
             partner farms across India.
           </p>

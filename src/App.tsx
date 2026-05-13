@@ -111,7 +111,7 @@ function useToast() {
 
 function ToastContainer({ toasts }: { toasts: { id: number; text: string; icon?: string }[] }) {
   return (
-    <div className="fixed bottom-24 right-8 z-[200] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed bottom-[7rem] sm:bottom-8 right-4 sm:right-8 z-[200] flex flex-col gap-3 pointer-events-none">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
@@ -411,6 +411,12 @@ function Storefront() {
         onOpenCart={() => showToast("Cart coming soon!", "cart")}
       />
 
+      {/* Mobile bottom nav — only on small screens */}
+      <MobileBottomNav
+        onOpenTI={openTI}
+        onOpenCart={() => showToast("Cart coming soon!", "cart")}
+      />
+
       {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
       <AnimatePresence mode="wait">
         {tiOpen && (
@@ -461,7 +467,7 @@ function Storefront() {
         }}
       >
 
-      <main className="pt-28 lg:pt-32 pb-12 px-6">
+      <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
         <div className="max-w-7xl mx-auto" id="storefront-view">
           <DemoStorefront products={products ?? []} onAddToCart={(name) => showToast(`${name} added to cart`)} />
         </div>
@@ -479,7 +485,7 @@ function Storefront() {
               </p>
             </div>
 
-            <div className="flex gap-16 text-sm">
+            <div className="grid grid-cols-3 gap-4 sm:flex sm:gap-16 text-sm">
               <div className="space-y-4">
                 <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Shop</h4>
                 <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
@@ -519,6 +525,72 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Mobile bottom nav pill ───────────────────────────────────
+function MobileBottomNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpenCart: () => void }) {
+  const active = useActiveSection();
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="mx-3 mb-3 pointer-events-auto"
+      >
+        <div className="flex items-center justify-around bg-natural-paper/92 backdrop-blur-2xl border border-natural-border/70 rounded-2xl px-1 py-2 shadow-2xl shadow-natural-text/15">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => scrollTo(item.target)}
+              aria-label={item.label}
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] transition-colors ${
+                active === item.key ? "text-white" : "text-natural-text/55"
+              }`}
+            >
+              {active === item.key && (
+                <motion.span
+                  layoutId="mobile-nav-active"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-natural-accent shadow-md shadow-natural-accent/30"
+                />
+              )}
+              <item.Icon className="relative z-10 w-5 h-5" />
+              <span className="relative z-10 text-[9px] font-bold uppercase tracking-wide leading-none">
+                {item.label.split(" ")[0]}
+              </span>
+            </button>
+          ))}
+          {/* Cart */}
+          <button
+            onClick={onOpenCart}
+            aria-label="Cart"
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">Cart</span>
+          </button>
+          {/* TI */}
+          <button
+            onClick={onOpenTI}
+            aria-label="Third Intelligence"
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
+          >
+            <span className="relative w-5 h-5 flex items-center justify-center">
+              <motion.span
+                animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
+                style={{ willChange: "transform, opacity" }}
+                className="absolute inset-0 rounded-full bg-natural-accent/40"
+              />
+              <img src={asset("third-intelligence-icon.png")} alt="" className="relative z-10 w-5 h-5 object-contain" />
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">AI</span>
+          </button>
+        </div>
       </motion.div>
     </div>
   );
@@ -608,11 +680,11 @@ function MorphingHeader({
       className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
     >
       <motion.div
-        animate={{ paddingTop: compact ? 10 : 18, paddingBottom: compact ? 10 : 18 }}
+        animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-6"
+        className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4"
       >
-        {/* Big logo — shrinks slightly on scroll */}
+        {/* Logo — compact on mobile always, shrinks on scroll on desktop */}
         <button
           onClick={() => scrollTo("hero")}
           className="flex items-center shrink-0"
@@ -622,9 +694,17 @@ function MorphingHeader({
             src={asset("logo.png")}
             alt="Third Wave Coffee"
             initial={false}
+            animate={{ height: compact ? 40 : 56 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="w-auto md:hidden"
+          />
+          <motion.img
+            src={asset("logo.png")}
+            alt="Third Wave Coffee"
+            initial={false}
             animate={{ height: compact ? 44 : 64 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="w-auto"
+            className="w-auto hidden md:block"
           />
         </button>
 
@@ -1005,13 +1085,13 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       {/* ── Curtain into the catalog grids ─────────────────────── */}
       <CurtainTransition color="bg-natural-bg" />
 
-      <div className="space-y-24 max-w-7xl mx-auto px-6 md:px-12 pb-24">
+      <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24">
       {/* Catalog header */}
       <div className="text-center max-w-2xl mx-auto pt-12">
         <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-accent">
           The Collection
         </span>
-        <h2 className="font-serif font-black text-4xl md:text-6xl leading-tight mt-3 tracking-tight">
+        <h2 className="font-serif font-black text-3xl sm:text-4xl md:text-6xl leading-tight mt-3 tracking-tight">
           Choose your ritual.
         </h2>
         <p className="text-natural-text/60 mt-4">
@@ -1020,45 +1100,45 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       </div>
 
       {/* Product Categories — slim cards with product preview strip */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6" id="categories">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6" id="categories">
         {[
           {
             title: "Coffee Beans",
             subtitle: `${beans.length} freshly roasted`,
             target: "section-beans",
-            samples: beans.slice(0, 4),
+            samples: beans.slice(0, 3),
             color: "from-amber-50 to-natural-paper",
           },
           {
             title: "Easy Coffee Bags",
             subtitle: `${bags.length} ground & packed`,
             target: "section-bags",
-            samples: bags.slice(0, 4),
+            samples: bags.slice(0, 3),
             color: "from-orange-50 to-natural-muted",
           },
           {
             title: "Merch",
             subtitle: `${merch.length} items`,
             target: "section-merch",
-            samples: merch.slice(0, 4),
+            samples: merch.slice(0, 3),
             color: "from-stone-100 to-natural-stone/30",
           },
         ].map((item) => (
           <button
             key={item.title}
             onClick={() => scrollTo(item.target)}
-            className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-gradient-to-br ${item.color} p-6 h-40 flex items-center gap-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30`}
+            className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${item.color} p-4 sm:p-6 h-auto flex items-center gap-3 sm:gap-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30`}
           >
             {/* Stacked product previews */}
-            <div className="relative flex -space-x-3 shrink-0">
+            <div className="relative flex -space-x-2 sm:-space-x-3 shrink-0">
               {item.samples.length === 0 ? (
-                <div className="w-20 h-20 rounded-2xl bg-natural-paper border border-natural-border" />
+                <div className="w-14 h-16 rounded-xl bg-natural-paper border border-natural-border" />
               ) : (
                 item.samples.map((p, idx) => (
                   <div
                     key={p._id}
-                    className="w-16 h-20 rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
-                    style={{ zIndex: item.samples.length - idx, transform: `rotate(${(idx - 1.5) * 4}deg)` }}
+                    className="w-12 h-14 sm:w-16 sm:h-20 rounded-xl sm:rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
+                    style={{ zIndex: item.samples.length - idx, transform: `rotate(${(idx - 1) * 4}deg)` }}
                   >
                     <SmartImage
                       src={p.imageUrl}
@@ -1072,11 +1152,11 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-2xl font-serif font-bold leading-tight">{item.title}</h3>
-              <p className="text-sm text-natural-text/60 font-medium mt-1">{item.subtitle}</p>
-              <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
+              <h3 className="text-lg sm:text-2xl font-serif font-bold leading-tight">{item.title}</h3>
+              <p className="text-xs sm:text-sm text-natural-text/60 font-medium mt-0.5 sm:mt-1">{item.subtitle}</p>
+              <div className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
                 Browse
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform group-hover:translate-x-1" />
               </div>
             </div>
           </button>
@@ -1085,11 +1165,11 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
 
       {/* ── Freshly Roasted Beans ──────────────────────────────── */}
       <section className="space-y-10 scroll-mt-24" id="section-beans">
-        <div className="flex justify-between items-end border-b border-natural-border pb-10">
-          <h3 className="text-4xl font-serif font-bold">Freshly Roasted Beans</h3>
+        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+          <h3 className="text-2xl sm:text-4xl font-serif font-bold">Freshly Roasted Beans</h3>
           <button
             onClick={() => setShowAllBeans(!showAllBeans)}
-            className="text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
+            className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
           >
             {showAllBeans ? (
               <>Show Less <ChevronUp className="w-4 h-4" /></>
@@ -1100,7 +1180,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         </div>
         <motion.div
           layout
-          className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8"
         >
           <AnimatePresence>
             {visibleBeans.map((product) => (
@@ -1121,11 +1201,11 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       {/* ── Easy Coffee Bags ───────────────────────────────────── */}
       {bags.length > 0 && (
         <section className="space-y-10 scroll-mt-24" id="section-bags">
-          <div className="flex justify-between items-end border-b border-natural-border pb-10">
-            <h3 className="text-4xl font-serif font-bold">Easy Coffee Bags</h3>
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+            <h3 className="text-2xl sm:text-4xl font-serif font-bold">Easy Coffee Bags</h3>
             <button
               onClick={() => setShowAllBags(!showAllBags)}
-              className="text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
+              className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
             >
               {showAllBags ? (
                 <>Show Less <ChevronUp className="w-4 h-4" /></>
@@ -1155,13 +1235,13 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       {/* ── Merch ──────────────────────────────────────────────── */}
       {merch.length > 0 && (
         <section className="space-y-10 scroll-mt-24" id="section-merch">
-          <div className="flex justify-between items-end border-b border-natural-border pb-10">
-            <h3 className="text-4xl font-serif font-bold">Merch</h3>
-            <span className="text-sm font-bold uppercase tracking-widest text-natural-text/40 pb-1">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+            <h3 className="text-2xl sm:text-4xl font-serif font-bold">Merch</h3>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-text/40 pb-1">
               {merch.length} items
             </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
             {merch.map((product) => (
               <ProductCard key={product._id} product={product} onAddToCart={onAddToCart} />
             ))}
@@ -1176,7 +1256,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">
               Our Story
             </span>
-            <h3 className="text-5xl font-serif font-bold leading-[1.1]">
+            <h3 className="text-3xl sm:text-5xl font-serif font-bold leading-[1.1]">
               From bean to cup,<br />with intention.
             </h3>
             <div className="space-y-4 text-natural-text/70 leading-relaxed">
@@ -1190,14 +1270,14 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
                 Whether you're a pour-over purist, an espresso devotee, or someone who just wants great coffee without the fuss — we've got you.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-8 pt-4">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-4">
               {[
                 { value: "12+", label: "Origins" },
                 { value: "48hr", label: "Roast-to-ship" },
                 { value: "4.7★", label: "Avg. rating" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <div className="text-3xl font-extrabold">{stat.value}</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold">{stat.value}</div>
                   <div className="text-xs font-bold uppercase tracking-widest text-natural-text/40 mt-1">
                     {stat.label}
                   </div>

@@ -230,13 +230,13 @@ export function ChapterReveal({
       </motion.div>
 
       {/* Sticky pinned stage */}
-      <div className="sticky top-0 h-screen flex items-center">
+      <div className="sticky top-0 h-screen flex items-center overflow-hidden">
         <div
-          className={`relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${
+          className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
             align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
           }`}
         >
-          {/* Product still-life (alternates side) */}
+          {/* Product still-life */}
           <motion.div
             style={{ y: productY, scale: productScale, rotate: productRotate }}
             className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
@@ -245,7 +245,7 @@ export function ChapterReveal({
               <button
                 data-cursor="zoom"
                 onClick={onProductClick}
-                className="block w-full max-w-md mx-auto aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
+                className="block w-full max-w-[200px] sm:max-w-xs lg:max-w-md mx-auto aspect-[4/5] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
               >
                 <SmartImage
                   src={product.imageUrl}
@@ -278,10 +278,10 @@ export function ChapterReveal({
               </span>
             </div>
 
-            <h2 className="font-serif font-black text-5xl md:text-7xl leading-[0.95] tracking-tight">
+            <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] tracking-tight">
               {title}
             </h2>
-            <p className={`text-lg leading-relaxed max-w-md ${subtle}`}>{body}</p>
+            <p className={`text-sm sm:text-base lg:text-lg leading-relaxed max-w-md ${subtle}`}>{body}</p>
 
             {/* Floating callout chips */}
             <div className="flex flex-wrap gap-2 pt-2">
