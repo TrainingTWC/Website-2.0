@@ -278,7 +278,7 @@ function FizzBanner() {
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage:
-            "url(https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&q=80&w=1800)",
+            "url(/banner-schweppes.png)",
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
@@ -312,7 +312,7 @@ function DessertsBanner() {
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage:
-            "url(https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&q=80&w=1800)",
+            "url(/banner-third-rush.jpg)",
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
