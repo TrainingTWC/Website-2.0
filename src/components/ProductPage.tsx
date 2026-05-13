@@ -15,6 +15,7 @@ import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
 import { PersonalitySection } from "./PersonalitySection";
 import { BrewingStudio } from "./BrewingStudio";
+import { SipForecast } from "./SipForecast";
 import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 
@@ -427,13 +428,23 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
            legible regardless of the hero/personality color theme above. ── */}
       <div className="bg-natural-bg text-natural-text">
 
-      {/* ── Brewing Studio (interactive + AI recipe) ────────────────── */}
-      {product.type !== "merch" && (
+      {/* ── AI experience: Brewing Studio for beans, Sip Forecast for bags ── */}
+      {product.type === "beans" && (
         <BrewingStudio
           productName={product.name}
           roastLevel={product.roastLevel}
           origin={product.origin}
           flavorNotes={product.flavorNotes}
+          accentHex={theme.accentHex}
+        />
+      )}
+      {product.type === "bags" && (
+        <SipForecast
+          productName={product.name}
+          roastLevel={product.roastLevel}
+          origin={product.origin}
+          flavorNotes={product.flavorNotes}
+          bagKind={product.category === "cold-brew" ? "cold-brew" : "drip-bag"}
           accentHex={theme.accentHex}
         />
       )}

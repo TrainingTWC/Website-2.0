@@ -258,3 +258,147 @@ Rules:
     }
   },
 });
+
+// ── Sip Forecast: AI-generated cup forecast for easy coffee bags ──
+// Bag products don't need grinders or scales — they're drop-and-steep
+// (cold-brew) or single-pour (drip-bag). This action returns a mood-matched
+// "forecast" with a tailored ritual, a 3-phase flavor arc, and a pairing.
+// Mistral only (env: MISTRAL_API_KEY).
+export const sipForecast = action({
+  args: {
+    productName: v.string(),
+    roastLevel: v.optional(v.string()),
+    origin: v.optional(v.string()),
+    flavorNotes: v.array(v.string()),
+    bagKind: v.string(), // "drip-bag" | "cold-brew"
+    moment: v.string(), // e.g. "morning-calm", "late-night", free text ok
+    cupSize: v.string(), // "small" | "medium" | "large"
+    intensity: v.string(), // "gentle" | "balanced" | "bold"
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env.MISTRAL_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error:
+          "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock the Sip Forecast.",
+      };
+    }
+
+    const methodHint =
+      args.bagKind === "cold-brew"
+        ? "COLD BREW IMMERSION BAG — drop one bag into cold water in a sealed jar, refrigerate. No heat, no equipment. Time is measured in hours (8–18). Output a steep duration in hours."
+        : "DRIP / POUR-OVER BAG — hang the bag's paper ears over a mug, pour hot water in stages. No grinder, no scale. Time is measured in seconds per pour (20–45s) and water temp in Celsius (88–96).";
+
+    const prompt = `
+You are Third Intelligence, the cup forecaster for Third Wave Coffee. The
+customer is holding an easy coffee bag (not loose beans, not a machine).
+Generate a poetic, useful "sip forecast" that matches their moment.
+
+PRODUCT
+- Name: ${args.productName}
+- Roast: ${args.roastLevel ?? "unspecified"}
+- Origin: ${args.origin ?? "unspecified"}
+- Flavor notes: ${args.flavorNotes.join(", ") || "n/a"}
+
+METHOD: ${methodHint}
+
+CONTEXT
+- Moment: ${args.moment}
+- Cup size: ${args.cupSize}
+- Intensity preference: ${args.intensity}
+
+Return JSON ONLY, this exact shape, no markdown:
+{
+  "title": "evocative 3-5 word forecast title",
+  "headline": "single-line technical summary, e.g. '92°C · 30s per pour · 3 pours' (drip) or '12 hours · refrigerator · 1 bag per 300ml' (cold-brew)",
+  "ritual": [
+    { "label": "Pour 1", "detail": "max 18 words" }
+  ],
+  "arc": [
+    { "moment": "First sip", "note": "max 14 words sensory description" },
+    { "moment": "Mid cup", "note": "max 14 words" },
+    { "moment": "Final sip", "note": "max 14 words" }
+  ],
+  "cupCard": "2 short sentences (max 35 words total) describing the cup as if narrating their moment. Poetic but specific.",
+  "pairing": { "kind": "music|food|activity|read", "text": "one short suggestion (max 10 words)" }
+}
+
+Rules:
+- ritual: 2–4 steps total, scaled to bag kind
+- arc: ALWAYS exactly 3 entries
+- Reference the product's flavor notes and origin where natural
+- Tie cupCard to the moment without being saccharine
+- Voice: precise, confident, slightly cinematic. No exclamations. No emojis.
+`.trim();
+
+    try {
+      const response = await fetch(
+        "https://api.mistral.ai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "mistral-small-latest",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are Third Intelligence, the sip forecaster. Always respond with valid JSON only — no markdown, no prose outside the JSON.",
+              },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.9,
+            response_format: { type: "json_object" },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("Mistral HTTP error (sipForecast):", response.status, body);
+        return { ok: false as const, error: `Mistral returned ${response.status}` };
+      }
+
+      const json = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const text = json?.choices?.[0]?.message?.content;
+      if (!text) {
+        return { ok: false as const, error: "Empty response from Mistral" };
+      }
+
+      const parsed = JSON.parse(text) as {
+        title: string;
+        headline: string;
+        ritual: Array<{ label: string; detail: string }>;
+        arc: Array<{ moment: string; note: string }>;
+        cupCard: string;
+        pairing: { kind: string; text: string };
+      };
+
+      if (
+        !parsed.title ||
+        !Array.isArray(parsed.ritual) ||
+        parsed.ritual.length === 0 ||
+        !Array.isArray(parsed.arc) ||
+        parsed.arc.length !== 3 ||
+        !parsed.cupCard ||
+        !parsed.pairing
+      ) {
+        return { ok: false as const, error: "Malformed forecast payload" };
+      }
+
+      return { ok: true as const, forecast: parsed };
+    } catch (error) {
+      console.error("sipForecast error:", error);
+      return {
+        ok: false as const,
+        error: "Could not generate forecast. Try again in a moment.",
+      };
+    }
+  },
+});
