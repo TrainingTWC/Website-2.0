@@ -27,7 +27,7 @@ import type { Product } from "../types";
 
 interface ProductPageProps {
   productId: string;
-  onAddToCart: (name: string) => void;
+  onAddToCart: (productId: string, qty: number) => void;
 }
 
 interface Theme {
@@ -382,7 +382,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
 
             {/* Buy CTA */}
             <button
-              onClick={() => { for (let i = 0; i < qty; i++) onAddToCart(product.name); }}
+              onClick={() => onAddToCart(product._id, qty)}
               className={`w-full ${theme.accent} px-6 py-3.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-transform`}
             >
               <ShoppingCart className="w-4 h-4" />

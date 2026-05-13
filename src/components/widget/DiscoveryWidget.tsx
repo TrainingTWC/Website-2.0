@@ -96,9 +96,10 @@ const QUESTIONS: TIQuestion[] = [
 interface DiscoveryWidgetProps {
   onClose: () => void;
   onNavigateToProduct?: (slug: string) => void;
+  onAddToCart?: (productId: string) => void;
 }
 
-export function DiscoveryWidget({ onClose, onNavigateToProduct }: DiscoveryWidgetProps) {
+export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart }: DiscoveryWidgetProps) {
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -223,6 +224,7 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct }: DiscoveryWidge
                   products={products ?? []}
                   onReset={reset}
                   onNavigateToProduct={onNavigateToProduct}
+                  onAddToCart={onAddToCart}
                 />
               ) : step === -1 ? (
                 <IntroView
@@ -596,11 +598,13 @@ function RecommendationView({
   products,
   onReset,
   onNavigateToProduct,
+  onAddToCart,
 }: {
   recommendation: RecommendationResult;
   products: Product[];
   onReset: () => void;
   onNavigateToProduct?: (slug: string) => void;
+  onAddToCart?: (productId: string) => void;
 }) {
   const getProduct = (id: string) => products.find((p) => p._id === id);
 
@@ -700,6 +704,7 @@ function RecommendationView({
               <motion.button
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
+                onClick={(e) => { e.stopPropagation(); onAddToCart?.(p._id); }}
                 className="shrink-0 w-11 h-11 rounded-full bg-natural-text hover:bg-natural-accent text-white flex items-center justify-center transition-colors shadow-lg"
               >
                 <ShoppingCart className="w-4 h-4" />
@@ -746,9 +751,17 @@ function RecommendationView({
                   <p className="font-serif font-bold text-natural-text text-sm leading-snug">
                     {p.name}
                   </p>
-                  <p className="text-natural-accent font-bold text-sm">
-                    ₹{p.price.toLocaleString("en-IN")}
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <p className="text-natural-accent font-bold text-sm">
+                      ₹{p.price.toLocaleString("en-IN")}
+                    </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onAddToCart?.(p._id); }}
+                      className="w-8 h-8 rounded-full bg-natural-text hover:bg-natural-accent text-white flex items-center justify-center transition-colors shadow-sm shrink-0"
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </motion.div>
               );
             })}

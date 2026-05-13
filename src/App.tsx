@@ -42,6 +42,7 @@ import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
+import { CartPanel } from "./components/CartPanel";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -342,6 +343,8 @@ function Storefront() {
   const products = useQuery(api.products.list);
   const { toasts, show: showToast } = useToast();
   const [criticalReady, setCriticalReady] = useState(false);
+  const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const params = useUrlQuery();
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
   const slugMap = useMemo(() => {
@@ -370,7 +373,37 @@ function Storefront() {
   const openTI = () => navigateTo({ ti: "1" });
   const closeTI = () => navigateTo({ ti: null });
 
-  const onAddToCart = (name: string) => showToast(`Added "${name}" to cart`);
+  const addToCart = useCallback((productId: string, qty = 1) => {
+    setCart((prev) => {
+      const idx = prev.findIndex((c) => c.productId === productId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], qty: next[idx].qty + qty };
+        return next;
+      }
+      return [...prev, { productId, qty }];
+    });
+    showToast("Added to cart");
+  }, [showToast]);
+
+  const removeFromCart = useCallback((productId: string) => {
+    setCart((prev) => prev.filter((c) => c.productId !== productId));
+  }, []);
+
+  const updateQty = useCallback((productId: string, delta: number) => {
+    setCart((prev) =>
+      prev.map((c) =>
+        c.productId === productId ? { ...c, qty: Math.max(1, c.qty + delta) } : c
+      )
+    );
+  }, []);
+
+  const cartCount = cart.reduce((s, c) => s + c.qty, 0);
+
+  const onAddToCart = useCallback((name: string) => {
+    const product = (products ?? []).find((p) => p.name === name);
+    if (product) addToCart(product._id);
+  }, [products, addToCart]);
 
   // Nav click — if product page is open, close it first then scroll to section
   const handleNavTo = useCallback((target: string) => {
@@ -419,15 +452,17 @@ function Storefront() {
         headerBorder={headerBorder}
         headerShadow={headerShadow}
         onOpenTI={openTI}
-        onOpenCart={() => showToast("Cart coming soon!", "cart")}
+        onOpenCart={() => setCartOpen(true)}
         onNavTo={handleNavTo}
+        cartCount={cartCount}
       />
 
       {/* Mobile bottom nav — only on small screens */}
       <MobileBottomNav
         onOpenTI={openTI}
-        onOpenCart={() => showToast("Cart coming soon!", "cart")}
+        onOpenCart={() => setCartOpen(true)}
         onNavTo={handleNavTo}
+        cartCount={cartCount}
       />
 
       {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
@@ -448,6 +483,7 @@ function Storefront() {
                 closeTI();
                 navigateTo({ product: slug });
               }}
+              onAddToCart={(productId) => addToCart(productId)}
             />
           </motion.div>
         )}
@@ -466,7 +502,10 @@ function Storefront() {
             className="fixed inset-0 z-40 overflow-hidden bg-natural-bg"
             style={{ willChange: "transform, opacity" }}
           >
-            <ProductPage productId={activeProductId} onAddToCart={onAddToCart} />
+            <ProductPage
+              productId={activeProductId}
+              onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -488,7 +527,7 @@ function Storefront() {
 
       <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
         <div className="max-w-7xl mx-auto" id="storefront-view">
-          <DemoStorefront products={products ?? []} onAddToCart={(name) => showToast(`${name} added to cart`)} />
+          <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
         </div>
       </main>
 
@@ -544,13 +583,21 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
+      <CartPanel
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        cart={cart}
+        products={products ?? []}
+        onRemove={removeFromCart}
+        onUpdateQty={updateQty}
+      />
       </motion.div>
     </div>
   );
 }
 
 // ── Mobile bottom nav pill ───────────────────────────────────
-function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo }: { onOpenTI: () => void; onOpenCart: () => void; onNavTo: (target: string) => void }) {
+function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onOpenTI: () => void; onOpenCart: () => void; onNavTo: (target: string) => void; cartCount?: number }) {
   const active = useActiveSection();
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
@@ -589,7 +636,14 @@ function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo }: { onOpenTI: () => vo
             aria-label="Cart"
             className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
           >
-            <ShoppingCart className="w-5 h-5" />
+            <span className="relative">
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[1rem] h-4 bg-natural-accent text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </span>
             <span className="text-[9px] font-bold uppercase tracking-wide leading-none">Cart</span>
           </button>
           {/* TI */}
@@ -675,6 +729,7 @@ function MorphingHeader({
   onOpenTI,
   onOpenCart,
   onNavTo,
+  cartCount = 0,
 }: {
   headerBg: any;
   headerBorder: any;
@@ -682,6 +737,7 @@ function MorphingHeader({
   onOpenTI: () => void;
   onOpenCart: () => void;
   onNavTo: (target: string) => void;
+  cartCount?: number;
 }) {
   const active = useActiveSection();
   const { scrollY } = useScroll();
@@ -747,13 +803,20 @@ function MorphingHeader({
 
         {/* Right actions */}
         <div className="flex items-center gap-1 shrink-0">
-          <MorphNavItem
-            label="Cart"
-            Icon={ShoppingCart}
-            active={false}
-            compact={compact}
-            onClick={onOpenCart}
-          />
+          <div className="relative">
+            <MorphNavItem
+              label="Cart"
+              Icon={ShoppingCart}
+              active={false}
+              compact={compact}
+              onClick={onOpenCart}
+            />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </div>
         </div>
       </motion.div>
     </motion.header>
