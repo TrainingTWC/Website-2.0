@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   ShoppingBag,
   BookOpen,
+  Home,
   Info,
   Sparkles,
   Star,
@@ -598,6 +599,7 @@ function MobileBottomNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpe
 
 // ── Icon side rail (desktop left, mobile bottom) ────────────
 const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "home", label: "Home", target: "hero", Icon: Home },
   { key: "beans", label: "Beans", target: "section-beans", Icon: Coffee },
   { key: "bags", label: "Coffee Bags", target: "section-bags", Icon: Package },
   { key: "merch", label: "Merch", target: "section-merch", Icon: ShoppingBag },
@@ -605,34 +607,30 @@ const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.Compo
 ];
 
 function useActiveSection(): string {
-  const [active, setActive] = useState<string>("beans");
+  const [active, setActive] = useState<string>("home");
   useEffect(() => {
-    const els = NAV_ITEMS
-      .map(({ key, target }) => {
-        const el = document.getElementById(target);
-        return el ? { key, el } : null;
-      })
-      .filter((x): x is { key: string; el: HTMLElement } => !!x);
-    if (!els.length) return;
-
-    // Scroll-based: pick the section whose top edge is closest to 35% down the viewport.
-    // Works reliably for sections of any height, unlike IntersectionObserver rootMargin.
+    // Look up elements INSIDE the update fn so we always get the freshest DOM
+    // (sections appear after products load; a stale closure would miss them).
     const update = () => {
+      const items = NAV_ITEMS
+        .map(({ key, target }) => {
+          const el = document.getElementById(target);
+          return el ? { key, el } : null;
+        })
+        .filter((x): x is { key: string; el: HTMLElement } => !!x);
+      if (!items.length) return;
+
       const trigger = window.scrollY + window.innerHeight * 0.35;
-      let best = els[0];
+      let best = items[0];
       let bestDist = Infinity;
-      for (const item of els) {
+      for (const item of items) {
         const top = window.scrollY + item.el.getBoundingClientRect().top;
         const dist = Math.abs(top - trigger);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = item;
-        }
+        if (dist < bestDist) { bestDist = dist; best = item; }
       }
       setActive((prev) => (prev === best.key ? prev : best.key));
     };
 
-    // Hook into Lenis if available, else native scroll
     const lenis = (window as any).__lenis;
     if (lenis) {
       lenis.on("scroll", update);
@@ -640,7 +638,10 @@ function useActiveSection(): string {
       window.addEventListener("scroll", update, { passive: true });
     }
     update();
+    // Re-run after a short delay to catch sections that rendered after mount
+    const t = setTimeout(update, 600);
     return () => {
+      clearTimeout(t);
       if (lenis) lenis.off("scroll", update);
       else window.removeEventListener("scroll", update);
     };
@@ -991,17 +992,29 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
   );
 }
 
+// ── Horizontal scroll product row ─────────────────────────────
+function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
+  return (
+    <div
+      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4
+                 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
+                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+                 [scroll-snap-type:x_mandatory]"
+    >
+      {products.map((p) => (
+        <div key={p._id} className="flex-shrink-0 w-48 sm:w-56 md:w-64 [scroll-snap-align:start]">
+          <ProductCard product={p} onAddToCart={onAddToCart} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const beans = products.filter((p) => p.type === "beans");
   const bags = products.filter((p) => p.type === "bags");
   const merch = products.filter((p) => p.type === "merch");
-
-  const [showAllBeans, setShowAllBeans] = useState(false);
-  const [showAllBags, setShowAllBags] = useState(false);
-
-  const visibleBeans = showAllBeans ? beans : beans.slice(0, 4);
-  const visibleBags = showAllBags ? bags : bags.slice(0, 4);
 
   // Chapter feature products — pick the highest-rated bean/bag/merch
   const featuredBean = [...beans].sort(
@@ -1164,88 +1177,33 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       </section>
 
       {/* ── Freshly Roasted Beans ──────────────────────────────── */}
-      <section className="space-y-10 scroll-mt-24" id="section-beans">
-        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+      <section className="space-y-8 scroll-mt-24" id="section-beans">
+        <div className="flex items-end border-b border-natural-border pb-6">
           <h3 className="text-2xl sm:text-4xl font-serif font-bold">Freshly Roasted Beans</h3>
-          <button
-            onClick={() => setShowAllBeans(!showAllBeans)}
-            className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
-          >
-            {showAllBeans ? (
-              <>Show Less <ChevronUp className="w-4 h-4" /></>
-            ) : (
-              <>Explore All ({beans.length}) <ArrowRight className="w-4 h-4" /></>
-            )}
-          </button>
+          <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{beans.length} varieties</span>
         </div>
-        <motion.div
-          layout
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8"
-        >
-          <AnimatePresence>
-            {visibleBeans.map((product) => (
-              <motion.div
-                key={product._id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <ProductCard product={product} onAddToCart={onAddToCart} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <HScrollRow products={beans} onAddToCart={onAddToCart} />
       </section>
 
       {/* ── Easy Coffee Bags ───────────────────────────────────── */}
       {bags.length > 0 && (
-        <section className="space-y-10 scroll-mt-24" id="section-bags">
-          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+        <section className="space-y-8 scroll-mt-24" id="section-bags">
+          <div className="flex items-end border-b border-natural-border pb-6">
             <h3 className="text-2xl sm:text-4xl font-serif font-bold">Easy Coffee Bags</h3>
-            <button
-              onClick={() => setShowAllBags(!showAllBags)}
-              className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-accent border-b border-natural-accent/30 pb-1 cursor-pointer flex items-center gap-1 hover:gap-2 transition-all"
-            >
-              {showAllBags ? (
-                <>Show Less <ChevronUp className="w-4 h-4" /></>
-              ) : (
-                <>View All ({bags.length}) <ArrowRight className="w-4 h-4" /></>
-              )}
-            </button>
+            <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{bags.length} options</span>
           </div>
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AnimatePresence>
-              {visibleBags.map((product) => (
-                <motion.div
-                  key={product._id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                >
-                  <HorizontalCard product={product} onAddToCart={onAddToCart} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <HScrollRow products={bags} onAddToCart={onAddToCart} />
         </section>
       )}
 
       {/* ── Merch ──────────────────────────────────────────────── */}
       {merch.length > 0 && (
-        <section className="space-y-10 scroll-mt-24" id="section-merch">
-          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end border-b border-natural-border pb-6 sm:pb-10 gap-2 sm:gap-0">
+        <section className="space-y-8 scroll-mt-24" id="section-merch">
+          <div className="flex items-end border-b border-natural-border pb-6">
             <h3 className="text-2xl sm:text-4xl font-serif font-bold">Merch</h3>
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-natural-text/40 pb-1">
-              {merch.length} items
-            </span>
+            <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{merch.length} items</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
-            {merch.map((product) => (
-              <ProductCard key={product._id} product={product} onAddToCart={onAddToCart} />
-            ))}
-          </div>
+          <HScrollRow products={merch} onAddToCart={onAddToCart} />
         </section>
       )}
 
