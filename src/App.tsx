@@ -1010,6 +1010,77 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
   );
 }
 
+// ── Catalog parallax banner ────────────────────────────────────
+function CatalogBanner() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  // Three depth layers — slowest to fastest
+  const wordmarkY = useTransform(scrollYProgress, [0, 1], ["30%", "-30%"]);
+  const headingY  = useTransform(scrollYProgress, [0, 1], ["18%", "-18%"]);
+  const subY      = useTransform(scrollYProgress, [0, 1], ["10%", "-10%"]);
+
+  // Soft fade in as section enters
+  const opacity = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative overflow-hidden bg-natural-paper border-y border-natural-border"
+      style={{ perspective: "600px" }}
+    >
+      {/* Extremely subtle warm tint top-right */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_0%,rgba(160,120,60,0.07)_0%,transparent_60%)] pointer-events-none" />
+
+      {/* Layer 1 — ghost wordmark (slowest, furthest back) */}
+      <motion.div
+        style={{ y: wordmarkY }}
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none select-none overflow-hidden"
+      >
+        <span className="font-serif font-black text-[clamp(5rem,20vw,18rem)] leading-none tracking-tight text-natural-text/[0.04]">
+          COLLECTION
+        </span>
+      </motion.div>
+
+      {/* Layer 2 — horizontal rule accent lines */}
+      <div className="absolute inset-y-0 left-0 w-px bg-natural-border/60" />
+      <div className="absolute inset-y-0 right-0 w-px bg-natural-border/60" />
+
+      {/* Layer 3 — foreground copy (fastest) */}
+      <motion.div
+        style={{ opacity }}
+        className="relative py-24 sm:py-32 px-4 sm:px-6 md:px-12"
+      >
+        <motion.div style={{ y: headingY }} className="text-center max-w-3xl mx-auto">
+          <motion.span
+            style={{ y: subY }}
+            className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-natural-accent"
+          >
+            <span className="h-px w-8 bg-natural-accent/40" />
+            The Collection
+            <span className="h-px w-8 bg-natural-accent/40" />
+          </motion.span>
+
+          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] mt-5 tracking-tight text-natural-text">
+            Choose your<br />
+            <em className="font-serif italic font-light">ritual.</em>
+          </h2>
+
+          <motion.p
+            style={{ y: subY }}
+            className="text-natural-text/50 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
+          >
+            Every coffee, every bag, every cup — handpicked by our master roasters.
+          </motion.p>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const beans = products.filter((p) => p.type === "beans");
@@ -1095,35 +1166,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         }
       />
 
-      {/* ── Catalog intro — dark editorial banner ──────────────── */}
-      <div className="relative bg-natural-text text-white py-20 sm:py-28 px-4 sm:px-6 md:px-12 overflow-hidden">
-        {/* Warm amber glow from below */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_120%,rgba(160,90,30,0.45)_0%,transparent_55%)] pointer-events-none" />
-        {/* Subtle grain */}
-        <div
-          className="absolute inset-0 mix-blend-overlay opacity-[0.12] pointer-events-none"
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
-        />
-        {/* Massive background wordmark */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none select-none overflow-hidden">
-          <span className="font-serif font-black text-[clamp(4rem,18vw,16rem)] leading-none tracking-tight text-white/[0.04]">
-            COLLECTION
-          </span>
-        </div>
-        <div className="relative max-w-7xl mx-auto text-center">
-          <span className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-amber-200/80">
-            <span className="h-px w-8 bg-amber-300/50" />
-            The Collection
-            <span className="h-px w-8 bg-amber-300/50" />
-          </span>
-          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-tight mt-4 tracking-tight">
-            Choose your ritual.
-          </h2>
-          <p className="text-white/50 mt-5 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-            Every coffee, every bag, every cup — handpicked by our master roasters.
-          </p>
-        </div>
-      </div>
+      {/* ── Catalog intro — parallax editorial banner ──────────── */}
+      <CatalogBanner />
 
       <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
 
