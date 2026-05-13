@@ -117,7 +117,7 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
   };
 
   const nextStep = () => {
-    if (!hasAnswer) return;
+    if (!hasAnswer && !note.trim()) return;
     if (step < QUESTIONS.length - 1) {
       setDirection(1);
       setStep(step + 1);
@@ -808,6 +808,54 @@ function topPerCategory(products: Product[], shortlistedIds: Set<string>): Produ
   return result;
 }
 
+// Score shortlisted products by relevance to user answers — higher = better match.
+function rankProducts(
+  products: Product[],
+  answers: Record<string, string>,
+  note: string
+): Array<{ product: Product; score: number }> {
+  const noteLower = note.toLowerCase();
+  return products
+    .map((p) => {
+      let score = (p.rating ?? 4) * 2;
+      const text = [
+        p.name, p.description, p.category, p.roastLevel,
+        (p.flavorNotes ?? []).join(" "), (p.tags ?? []).join(" "),
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      if (answers.flavor === "bold"         && (p.roastLevel === "dark" || /bold|strong|intense/.test(text))) score += 8;
+      if (answers.flavor === "fruity"       && (p.roastLevel === "light" || /fruit|berry|citrus|bright/.test(text))) score += 8;
+      if (answers.flavor === "sweet_flavor" && /caramel|chocolate|sweet|honey|nutty/.test(text)) score += 7;
+      if (answers.flavor === "earthy"       && /earth|wood|smoky|malt|spice/.test(text)) score += 7;
+
+      if (answers.brew === "easy"       && p.type === "bags") score += 8;
+      if (answers.brew === "ritual"     && p.type === "beans") score += 6;
+      if (answers.brew === "cold_brew"  && /cold brew/.test(text)) score += 10;
+
+      if (answers.style === "black" && !/latte|frapp|mocha/.test(text)) score += 4;
+      if (answers.style === "cold"  && /cold|iced|chill/.test(text)) score += 6;
+      if (answers.style === "milk"  && p.roastLevel !== "light") score += 3;
+
+      if (answers.nature === "intense"  && (p.roastLevel === "dark" || /bold|strong/.test(text))) score += 5;
+      if (answers.nature === "calm"     && p.roastLevel === "light") score += 4;
+      if (answers.nature === "creative" && /single origin|micro.?lot/.test(text)) score += 3;
+
+      if (answers.time === "morning" && (p.roastLevel === "medium" || p.roastLevel === "dark")) score += 3;
+      if (answers.time === "evening" && !/intense|extra caffeine/.test(text)) score += 3;
+
+      if (noteLower) {
+        if (/strong|bold|dark/.test(noteLower)   && (p.roastLevel === "dark" || /strong/.test(text))) score += 10;
+        if (/light|fruity|bright/.test(noteLower) && p.roastLevel === "light") score += 10;
+        if (/cold|iced|chill/.test(noteLower)    && /cold/.test(text)) score += 10;
+        if (/milk|latte/.test(noteLower)          && p.roastLevel !== "light") score += 6;
+        if (/easy|quick|bag/.test(noteLower)      && p.type === "bags") score += 8;
+        if (/origin|single/.test(noteLower)       && /single origin/.test(text)) score += 8;
+      }
+      return { product: p, score };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
 function ProductShortlist({
   answers,
   note,
@@ -826,9 +874,10 @@ function ProductShortlist({
   const shortlist = shortlistProducts(products, answers, note);
   const primaryIds = new Set(recommendation?.primaryProductIds ?? []);
   const isFinal = !!recommendation;
-  const displayProducts = isFinal
+  const rawProducts = isFinal
     ? products.filter((p) => primaryIds.has(p._id))
-    : topPerCategory(products, shortlist);
+    : rankProducts(products.filter((p) => shortlist.has(p._id)), answers, note).map((r) => r.product);
+  const displayProducts = rawProducts.map((p, i) => ({ product: p, rank: i + 1 }));
   const answeredCount = Object.keys(answers).length;
 
   return (
@@ -870,7 +919,7 @@ function ProductShortlist({
               data-lenis-prevent
             >
               <AnimatePresence mode="popLayout">
-                {displayProducts.slice(0, 8).map((p) => {
+                {displayProducts.slice(0, 8).map(({ product: p, rank }) => {
                   const isPrimary = primaryIds.has(p._id);
                   return (
                     <motion.div
@@ -895,9 +944,9 @@ function ProductShortlist({
                         <p className="text-white font-serif font-bold text-[9px] leading-tight line-clamp-2">{p.name}</p>
                         <p className="text-white/70 text-[9px] mt-0.5">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
-                      {isPrimary && (
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-natural-accent text-white text-[7px] font-bold tracking-wider uppercase">Match</div>
-                      )}
+                      <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black shadow-md ${
+                        rank === 1 ? "bg-amber-400 text-amber-900" : rank === 2 ? "bg-slate-300 text-slate-800" : rank === 3 ? "bg-orange-500 text-white" : "bg-black/55 text-white"
+                      }`}>{rank}</div>
                     </motion.div>
                   );
                 })}
@@ -907,7 +956,7 @@ function ProductShortlist({
             {/* Desktop: 2-col × 3-row compact grid, fills panel height */}
             <div className="hidden lg:grid grid-cols-2 grid-rows-3 gap-2 h-full">
               <AnimatePresence mode="popLayout">
-                {displayProducts.slice(0, 6).map((p) => {
+                {displayProducts.slice(0, 6).map(({ product: p, rank }) => {
                   const isPrimary = primaryIds.has(p._id);
                   return (
                     <motion.div
@@ -934,9 +983,9 @@ function ProductShortlist({
                         <p className="text-white font-serif font-bold text-[11px] leading-tight line-clamp-1">{p.name}</p>
                         <p className="text-white/75 text-[10px] mt-0.5">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
-                      {isPrimary && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">Match</div>
-                      )}
+                      <div className={`absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-md ${
+                        rank === 1 ? "bg-amber-400 text-amber-900" : rank === 2 ? "bg-slate-300 text-slate-800" : rank === 3 ? "bg-orange-500 text-white" : "bg-black/55 text-white"
+                      }`}>{rank}</div>
                     </motion.div>
                   );
                 })}

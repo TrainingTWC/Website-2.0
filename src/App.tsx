@@ -994,8 +994,23 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 
 // ── Horizontal scroll product row ─────────────────────────────
 function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > 1) return; // horizontal trackpad swipe — browser handles it
+      e.preventDefault();
+      e.stopPropagation();
+      el.scrollLeft += e.deltaY * 1.5;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   return (
     <div
+      ref={scrollRef}
       className="flex gap-4 sm:gap-5 overflow-x-scroll pb-4
                  -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
                  [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
