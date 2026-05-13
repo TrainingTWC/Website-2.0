@@ -996,10 +996,13 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   return (
     <div
-      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4
+      className="flex gap-4 sm:gap-5 overflow-x-scroll pb-4
                  -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
                  [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-                 [scroll-snap-type:x_mandatory]"
+                 [scroll-snap-type:x_mandatory]
+                 [overscroll-behavior-x:contain]"
+      style={{ WebkitOverflowScrolling: "touch" as any, touchAction: "pan-x" }}
+      data-lenis-prevent
     >
       {products.map((p) => (
         <div key={p._id} className="flex-shrink-0 w-48 sm:w-56 md:w-64 [scroll-snap-align:start]">

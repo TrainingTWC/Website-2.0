@@ -207,10 +207,10 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
             </button>
           </div>
 
-          {/* ── Main content — split: controls (left) | shortlist (right) ── */}
-          <div className="absolute inset-0 pt-16 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] min-h-0">
-            {/* LEFT — controls (40%) */}
-            <div className="relative flex flex-col min-h-0 px-6 sm:px-10 py-6 overflow-y-auto scrollbar-hide">
+          {/* ── Main content — flex-col mobile | grid desktop ── */}
+          <div className="absolute inset-0 pt-[4.25rem] flex flex-col lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] min-h-0">
+            {/* LEFT — controls */}
+            <div className="relative flex flex-col flex-1 min-h-0 px-6 sm:px-10 py-5 overflow-y-auto scrollbar-hide">
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <ProcessingView />
@@ -237,8 +237,8 @@ export function DiscoveryWidget({ onClose }: DiscoveryWidgetProps) {
               )}
             </div>
 
-            {/* RIGHT — live product shortlist (60%) */}
-            <div className="relative hidden lg:flex min-h-0 border-l border-natural-border/60 bg-linear-to-br from-natural-paper/60 via-natural-paper/20 to-transparent overflow-y-auto scrollbar-hide">
+            {/* RIGHT — product panel: horizontal strip on mobile (h-44), compact grid on desktop */}
+            <div className="relative flex shrink-0 h-44 lg:h-auto min-h-0 border-t lg:border-t-0 lg:border-l border-natural-border/60 bg-natural-paper/60 lg:bg-linear-to-br lg:from-natural-paper/60 lg:via-natural-paper/20 lg:to-transparent">
               <ProductShortlist
                 answers={answers}
                 note={note}
@@ -524,7 +524,7 @@ function RecommendationView({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-2xl overflow-y-auto max-h-[80vh] space-y-7 pb-6 pr-2 scrollbar-hide"
+      className="w-full max-w-2xl overflow-y-auto max-h-full space-y-6 pb-6 pr-1 scrollbar-hide"
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -856,62 +856,93 @@ function ProductShortlist({
       </div>
 
       {/* Product grid */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 sm:px-8 py-5">
+      <div className="flex-1 min-h-0 overflow-hidden px-3 sm:px-4 py-3">
         {products.length === 0 ? (
           <div className="flex items-center justify-center h-full text-natural-text/40 text-sm">
             <Coffee className="w-4 h-4 mr-2 animate-pulse" /> Loading our collection…
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <AnimatePresence mode="popLayout">
-              {displayProducts.map((p) => {
-                const isPrimary = primaryIds.has(p._id);
-                return (
-                  <motion.div
-                    key={p._id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.85 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className={`relative aspect-3/4 rounded-2xl overflow-hidden border bg-natural-paper ${
-                      isPrimary
-                        ? "border-natural-accent shadow-lg shadow-natural-accent/25 ring-2 ring-natural-accent/40"
-                        : "border-natural-border"
-                    }`}
-                  >
-                    {p.imageUrl ? (
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-natural-muted flex items-center justify-center">
-                        <Coffee className="w-8 h-8 text-natural-text/20" />
+          <>
+            {/* Mobile: horizontal scroll strip */}
+            <div
+              className="lg:hidden flex gap-2 h-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [overscroll-behavior-x:contain]"
+              style={{ WebkitOverflowScrolling: "touch" as any, touchAction: "pan-x" }}
+              data-lenis-prevent
+            >
+              <AnimatePresence mode="popLayout">
+                {displayProducts.slice(0, 8).map((p) => {
+                  const isPrimary = primaryIds.has(p._id);
+                  return (
+                    <motion.div
+                      key={p._id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.88 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.88 }}
+                      transition={{ duration: 0.3 }}
+                      className={`relative flex-shrink-0 w-24 h-full rounded-xl overflow-hidden border ${
+                        isPrimary ? "border-natural-accent ring-2 ring-natural-accent/40" : "border-natural-border"
+                      }`}
+                    >
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} loading="lazy" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-natural-muted flex items-center justify-center">
+                          <Coffee className="w-5 h-5 text-natural-text/20" />
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 p-1.5 bg-linear-to-t from-black/75 to-transparent">
+                        <p className="text-white font-serif font-bold text-[9px] leading-tight line-clamp-2">{p.name}</p>
+                        <p className="text-white/70 text-[9px] mt-0.5">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
-                    )}
-                    {/* Bottom label */}
-                    <div className="absolute inset-x-0 bottom-0 p-2 bg-linear-to-t from-black/70 via-black/30 to-transparent text-white">
-                      <p className="font-serif font-bold text-[11px] leading-tight line-clamp-2">
-                        {p.name}
-                      </p>
-                      <p className="text-[10px] opacity-80 mt-0.5">
-                        ₹{p.price.toLocaleString("en-IN")}
-                      </p>
-                    </div>
-                    {/* Primary badge */}
-                    {isPrimary && (
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">
-                        Match
+                      {isPrimary && (
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-natural-accent text-white text-[7px] font-bold tracking-wider uppercase">Match</div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Desktop: 2-col × 3-row compact grid, fills panel height */}
+            <div className="hidden lg:grid grid-cols-2 grid-rows-3 gap-2 h-full">
+              <AnimatePresence mode="popLayout">
+                {displayProducts.slice(0, 6).map((p) => {
+                  const isPrimary = primaryIds.has(p._id);
+                  return (
+                    <motion.div
+                      key={p._id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.88 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.88 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      className={`relative rounded-xl overflow-hidden border bg-natural-paper ${
+                        isPrimary
+                          ? "border-natural-accent shadow-lg shadow-natural-accent/20 ring-2 ring-natural-accent/30"
+                          : "border-natural-border"
+                      }`}
+                    >
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 bg-natural-muted flex items-center justify-center">
+                          <Coffee className="w-6 h-6 text-natural-text/20" />
+                        </div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 p-2 bg-linear-to-t from-black/70 via-black/30 to-transparent">
+                        <p className="text-white font-serif font-bold text-[11px] leading-tight line-clamp-1">{p.name}</p>
+                        <p className="text-white/75 text-[10px] mt-0.5">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </div>
+                      {isPrimary && (
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-natural-accent text-white text-[8px] font-bold tracking-[0.2em] uppercase">Match</div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          </>
         )}
       </div>
 
