@@ -156,7 +156,11 @@ export const brewingRecipe = action({
       };
     }
 
-    const yieldMl = Math.round(args.dose * args.ratio);
+    // ratio = brew water : coffee (standard SCA definition)
+    // Total brewing water = dose × ratio
+    // Coffee grounds absorb ~2.5× their weight, so cup yield ≈ brewWaterG − (dose × 2.5)
+    const brewWaterG = Math.round(args.dose * args.ratio);
+    const yieldG = Math.max(0, Math.round(brewWaterG - args.dose * 2.5));
     const prompt = `
 You are Third Intelligence, the brewing engine for Third Wave Coffee. Generate
 a precise, opinionated recipe for the following bean + method.
@@ -170,7 +174,7 @@ BEAN
 METHOD: ${args.method}
 PARAMETERS
 - Dose: ${args.dose} g
-- Ratio: 1:${args.ratio} (target yield ~${yieldMl} ml)
+- Ratio: 1:${args.ratio} (total brewing water ~${brewWaterG} g poured; estimated cup yield ~${yieldG} ml after grounds absorption)
 - Strength preference: ${args.strength}
 
 Return JSON ONLY in this exact shape — no markdown, no prose outside JSON:
@@ -193,9 +197,9 @@ Return JSON ONLY in this exact shape — no markdown, no prose outside JSON:
 }
 
 Rules:
-- 3 to 6 steps total, each with timeSec, waterG (grams of water added in that step) and detail (max 18 words)
+- 3 to 6 steps total, each with timeSec, waterG (grams of water POURED in that step) and detail (max 18 words)
 - Sum of step timeSec must equal totalTimeSec
-- Sum of step waterG must equal the target yield (~${yieldMl} g) for pour-over / drip methods; for espresso, waterG per step represents preinfusion/extraction grams reaching the cup; for immersion methods (french-press, aeropress, cold-brew) the first step's waterG is the total water added and subsequent steps use waterG = 0
+- Sum of step waterG must equal the TOTAL BREWING WATER (~${brewWaterG} g) for pour-over / drip methods — NOT the cup yield; for espresso, waterG per step represents preinfusion/extraction grams reaching the cup; for immersion methods (french-press, aeropress, cold-brew) the first step's waterG is the total water added and subsequent steps use waterG = 0
 - waterTempC must reflect roast level (darker = lower temp)
 - Steps should feel like a real barista wrote them, not generic
 - Voice: precise, confident, Third Intelligence (no filler, no exclamations)

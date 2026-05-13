@@ -615,7 +615,7 @@ export function BrewingStudio({
                       >
                         {flowWaterG}g
                       </span>
-                      <span className="text-xs text-white/30">/ {totalWaterG}g water</span>
+                      <span className="text-xs text-white/30\">/ {totalWaterG}g poured</span>
                       {/* Water progress bar */}
                       <div className="flex-1 h-0.75 rounded-full ml-1" style={{ background: "rgba(255,255,255,0.08)" }}>
                         <motion.div
