@@ -3,15 +3,23 @@ import fs from "fs";
 import path from "path";
 import { api } from "../convex/_generated/api.js";
 
-const convexUrl = process.env.VITE_CONVEX_URL;
+// Use CONVEX_URL env var to target a specific deployment (e.g. prod).
+// Falls back to VITE_CONVEX_URL from .env.local for dev.
+const convexUrl = process.env.CONVEX_URL ?? process.env.VITE_CONVEX_URL;
 if (!convexUrl) {
-  console.error("Missing VITE_CONVEX_URL in environment.");
+  console.error("Missing CONVEX_URL or VITE_CONVEX_URL in environment.");
   process.exit(1);
 }
-
+console.log(`Targeting: ${convexUrl}`);
 const client = new ConvexHttpClient(convexUrl);
 
-// Upload optimized WebP versions from public/optimized/
+// ── Image serving ────────────────────────────────────────────────────────────
+// Images are served from GitHub Pages CDN (Fastly) — not Convex file storage.
+// This keeps Convex File Bandwidth at zero regardless of traffic volume.
+// Update this if the GitHub Pages URL changes.
+const GITHUB_PAGES_BASE = "https://trainingtwc.github.io/brewmatch-ai";
+
+// Optimized WebP manifest for LQIP blur hashes
 const IMAGE_DIR = path.join(process.cwd(), "public", "optimized");
 const MANIFEST_PATH = path.join(IMAGE_DIR, "manifest.json");
 const manifest: Record<string, { webp: string; lqip: string; width: number; height: number }> = fs.existsSync(MANIFEST_PATH)
@@ -173,71 +181,36 @@ const productsToSeed = [
   }
 ];
 
-async function uploadFile(filePath: string) {
-  // Generate upload URL from Convex
-  const uploadUrl = await client.mutation(api.seed.generateUploadUrl);
-
-  // Read file as buffer
-  const fileBuffer = fs.readFileSync(filePath);
-  const mimeType = filePath.toLowerCase().endsWith(".webp") ? "image/webp" : "image/jpeg";
-
-  // Upload to Convex
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: { "Content-Type": mimeType },
-    body: fileBuffer,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to upload file: ${response.statusText}`);
-  }
-
-  const { storageId } = await response.json();
-  return storageId;
-}
-
 async function run() {
   console.log("Starting seed script...");
   const formattedProducts = [];
 
   for (const product of productsToSeed) {
-    let storageId = undefined;
     let imageUrl = product.imageUrl || "";
     let imageBlur: string | undefined = undefined;
 
     if (product.imageFile) {
       const entry = manifest[product.imageFile];
       const webpName = entry?.webp ?? product.imageFile.replace(/\.(jpe?g|png)$/i, ".webp");
-      const filePath = path.join(IMAGE_DIR, webpName);
       if (entry) imageBlur = entry.lqip;
 
-      if (fs.existsSync(filePath)) {
-        console.log(`Uploading ${webpName}...`);
-        try {
-          storageId = await uploadFile(filePath);
-          console.log(`  → storageId: ${storageId}`);
-        } catch (err) {
-          console.error(`  Error uploading ${webpName}:`, err);
-          imageUrl = `/optimized/${encodeURIComponent(webpName)}`;
-        }
-      } else {
-        console.warn(`File not found: ${filePath}`);
-        imageUrl = `/optimized/${encodeURIComponent(webpName)}`;
-      }
+      // Serve from GitHub Pages CDN — no Convex upload needed
+      imageUrl = `${GITHUB_PAGES_BASE}/optimized/${encodeURIComponent(webpName)}`;
+      console.log(`  → ${product.imageFile.split(" ")[0]} mapped to GitHub Pages CDN`);
     }
 
     const { imageFile, ...rest } = product;
     formattedProducts.push({
       ...rest,
-      storageId,
       imageUrl,
       imageBlur,
     });
   }
 
-  console.log("Seeding to Convex database...");
+  console.log("\nSeeding to Convex database...");
   const result = await client.mutation(api.seed.seedFromScript, { products: formattedProducts as any });
   console.log("Seed complete!", result);
+  console.log("\nImages are now served from GitHub Pages CDN. Convex File Bandwidth = 0.");
 }
 
 run().catch(console.error);
