@@ -15,6 +15,6 @@ View your app in AI Studio: https://ai.studio/apps/69bb922b-c2a2-44c6-8042-a1b32
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set the `MISTRAL_API_KEY` in [.env.local](.env.local) to your Mistral API key
 3. Run the app:
    `npm run dev`

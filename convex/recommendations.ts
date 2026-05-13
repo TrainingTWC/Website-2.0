@@ -116,12 +116,12 @@ RETURN JSON ONLY:
 
       // Validate required fields exist
       if (!Array.isArray(parsed.primaryProductIds) || !parsed.explanation) {
-        throw new Error("Malformed response structure from Gemini");
+        throw new Error("Malformed response structure from Mistral");
       }
 
       return parsed;
     } catch (error) {
-      console.error("Gemini Error:", error);
+      console.error("Mistral Error:", error);
       return {
         primaryProductIds: [],
         crossSellProductIds: [],
@@ -133,7 +133,7 @@ RETURN JSON ONLY:
 });
 
 // ── Brewing recipe: AI generates a custom brew spec for a product + method ──
-// Uses Gemini (env: GEMINI_API_KEY). Returns structured recipe JSON consumed
+// Uses Mistral (env: MISTRAL_API_KEY). Returns structured recipe JSON consumed
 // by the in-product Brewing Studio.
 export const brewingRecipe = action({
   args: {
@@ -147,12 +147,12 @@ export const brewingRecipe = action({
     strength: v.string(), // "light" | "balanced" | "strong"
   },
   handler: async (_ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
         ok: false as const,
         error:
-          "GEMINI_API_KEY not configured. Set it in the Convex dashboard to unlock AI brewing recipes.",
+          "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock AI brewing recipes.",
       };
     }
 
@@ -197,32 +197,41 @@ Rules:
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        "https://api.mistral.ai/v1/chat/completions",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              temperature: 0.8,
-            },
+            model: "mistral-small-latest",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are Third Intelligence, a precise coffee brewing engine. Always respond with valid JSON only — no markdown, no prose outside the JSON.",
+              },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.8,
+            response_format: { type: "json_object" },
           }),
         }
       );
 
       if (!response.ok) {
         const body = await response.text();
-        console.error("Gemini HTTP error:", response.status, body);
-        return { ok: false as const, error: `Gemini returned ${response.status}` };
+        console.error("Mistral HTTP error:", response.status, body);
+        return { ok: false as const, error: `Mistral returned ${response.status}` };
       }
 
       const json = (await response.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        choices?: Array<{ message?: { content?: string } }>;
       };
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text = json?.choices?.[0]?.message?.content;
       if (!text) {
-        return { ok: false as const, error: "Empty response from Gemini" };
+        return { ok: false as const, error: "Empty response from Mistral" };
       }
 
       const parsed = JSON.parse(text) as {

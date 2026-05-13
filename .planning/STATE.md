@@ -18,10 +18,10 @@ Last activity: 2026-05-13 — All three phases executed
 
 ## Todos
 
-- [x] Implement Phase 1 (fix AI — GOOGLE_AI_API_KEY → GEMINI_API_KEY)
+- [x] Implement Phase 1 (fix AI — switched provider to MISTRAL_API_KEY)
 - [x] Implement Phase 2 (convex/productContext.ts — brand context + 18 personality profiles)
 - [x] Implement Phase 3 (enhanced AI prompt using personalities + brand voice)
-- [ ] Confirm GEMINI_API_KEY is set in Convex dashboard (`npx convex env set GEMINI_API_KEY "your_key"`)
+- [ ] Confirm MISTRAL_API_KEY is set in Convex dashboard (`npx convex env set MISTRAL_API_KEY "your_key"`)
 - [ ] End-to-end test: complete widget flow and verify personality-informed recommendation
 
 ## Decisions This Milestone
@@ -29,7 +29,7 @@ Last activity: 2026-05-13 — All three phases executed
 | Decision | Rationale |
 |----------|-----------|
 | Personalities as in-code constants (productContext.ts) | No DB round-trip, always consistent, co-located with prompt logic |
-| GEMINI_API_KEY (not GOOGLE_AI_API_KEY) | Matches Convex env var set via `npx convex env set` |
+| MISTRAL_API_KEY | Matches Convex env var set via `npx convex env set` |
 | buildPersonalitiesBlock() helper | Keeps prompt builder clean; only embeds personalities for products actually in catalog |
 
 ## Blockers

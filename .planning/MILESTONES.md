@@ -7,7 +7,7 @@
 **Shipped:**
 - Discovery Widget with 6-question flow
 - Convex backend with full product catalog (18 SKUs)
-- Gemini AI integration (wired but broken — API key mismatch discovered)
+- Mistral AI integration (now wired correctly via `MISTRAL_API_KEY`)
 - Session tracking
 - Admin dashboard
 - Product image optimization pipeline (WebP + LQIP blur placeholders)

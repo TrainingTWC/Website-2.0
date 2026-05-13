@@ -9,8 +9,8 @@ Requirements for Milestone v1.1 — Third Intelligence Context & Personality.
 
 ### AI Connectivity
 
-- [ ] **AI-01**: Gemini API key is read from the correct Convex env variable (`GEMINI_API_KEY`) so recommendations no longer error on every request
-- [ ] **AI-02**: AI response parsing handles malformed or empty Gemini responses without surfacing a raw error to the user
+- [ ] **AI-01**: Mistral API key is read from the correct Convex env variable (`MISTRAL_API_KEY`) so recommendations no longer error on every request
+- [ ] **AI-02**: AI response parsing handles malformed or empty Mistral responses without surfacing a raw error to the user
 
 ### Brand Context
 
@@ -28,8 +28,8 @@ Requirements for Milestone v1.1 — Third Intelligence Context & Personality.
 
 ### AI Prompt Enhancement
 
-- [ ] **PROMPT-01**: The AI prompt includes the brand voice directive so Gemini writes in TWC's voice, not a generic assistant voice
-- [ ] **PROMPT-02**: The AI prompt includes personality profiles for all products so Gemini can reference them when writing match explanations
+- [ ] **PROMPT-01**: The AI prompt includes the brand voice directive so Mistral writes in TWC's voice, not a generic assistant voice
+- [ ] **PROMPT-02**: The AI prompt includes personality profiles for all products so Mistral can reference them when writing match explanations
 - [ ] **PROMPT-03**: Match explanations are specific (flavor notes, brewing suggestion, archetype connection) — not generic ("this is a great coffee for you")
 - [ ] **PROMPT-04**: Cross-sell logic is informed by personality compatibility (e.g., El Diablo + Tiger Mug make sense together)
 

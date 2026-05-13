@@ -19,7 +19,7 @@ import { api } from "../../convex/_generated/api";
  * Interactive brewing studio:
  *   - Pick a brew method (Espresso / V60 / French Press / Aeropress / Cold Brew)
  *   - Adjust dose + ratio sliders, yield computes live
- *   - Hit "Generate recipe" → Gemini returns a custom step-by-step recipe
+ *   - Hit "Generate recipe" → Mistral returns a custom step-by-step recipe
  *   - Built-in timer that walks through each step
  *
  * Theming: the entire component is theme-agnostic — it renders on the neutral

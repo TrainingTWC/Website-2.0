@@ -14,15 +14,15 @@
 
 ### Tasks
 
-1. In `convex/recommendations.ts`, change `process.env.GOOGLE_AI_API_KEY` → `process.env.GEMINI_API_KEY`
-2. Add graceful error handling for empty/malformed Gemini responses (null-safe path through `json.candidates`)
+1. In `convex/recommendations.ts`, use `process.env.MISTRAL_API_KEY`
+2. Add graceful error handling for empty/malformed Mistral responses (null-safe path through `json.choices`)
 3. Verify the fix by confirming the error message is gone when the key is present
 
 ### Success Criteria
 
-- User completes the 6-question flow and sees a product recommendation (not an error) when `GEMINI_API_KEY` is set in Convex env
+- User completes the 6-question flow and sees a product recommendation (not an error) when `MISTRAL_API_KEY` is set in Convex env
 - Missing API key shows a clear "not configured" message (not a crash)
-- Malformed Gemini response returns a fallback explanation, not a thrown exception
+- Malformed Mistral response returns a fallback explanation, not a thrown exception
 
 ### Depends On
 
@@ -74,10 +74,10 @@ Phase 1 (none technically, but personality work is wasted without a working AI)
 2. Rewrite the AI prompt to:
    - Open with the brand voice directive (from `BRAND_CONTEXT`)
    - Inject personality profiles for all products in the catalog
-   - Instruct Gemini to reference the matched product's archetype, mood, and brewing ritual in the explanation
+   - Instruct Mistral to reference the matched product's archetype, mood, and brewing ritual in the explanation
    - Prohibit generic phrasing ("perfect for you", "great choice") — require flavor-specific, ritual-specific language
    - For cross-sells, require personality-compatibility reasoning
-3. Ensure prompt stays within Gemini token limits (soft cap: 8000 input tokens)
+3. Ensure prompt stays within Mistral token limits (soft cap: 8000 input tokens)
 4. Update the `explanation` field prompt so output is 2–3 sentences max, crisp and confident
 
 ### Success Criteria
@@ -86,7 +86,7 @@ Phase 1 (none technically, but personality work is wasted without a working AI)
 - Explanation for a single-origin match mentions origin story or flavor notes specific to that product
 - Cross-sell suggestion has a brief rationale (not just a product name)
 - Response is ≤3 sentences — focused, not verbose
-- Prompt compiles and calls Gemini without token errors
+- Prompt compiles and calls Mistral without token errors
 
 ### Depends On
 

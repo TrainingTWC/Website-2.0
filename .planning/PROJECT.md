@@ -14,7 +14,7 @@ Every customer leaves with a coffee recommendation that feels personally curated
 
 - [x] Discovery Widget with 6-step question flow
 - [x] Convex backend with product catalog (beans, bags, merch)
-- [x] Gemini AI integration for recommendation generation
+- [x] Mistral AI integration for recommendation generation
 - [x] Session tracking (answers → recommendations → conversion)
 - [x] Admin dashboard for product management
 - [x] Product image optimization pipeline (WebP + LQIP)
@@ -38,23 +38,23 @@ Every customer leaves with a coffee recommendation that feels personally curated
 ## Context
 
 - **Brand:** Third Wave Coffee — Indian specialty coffee chain with deep roots in South Indian coffee culture
-- **AI engine:** Google Gemini 2.0 Flash, called via Convex `"use node"` action
+- **AI engine:** Mistral (`mistral-small-latest`), called via Convex `"use node"` action
 - **Frontend:** React + Vite + Tailwind, deployed as a Convex app
 - **Products:** 18 SKUs across coffee beans (9), cold brew bags (2), easy drip bags (4), merch (3)
-- **Known issue:** `GOOGLE_AI_API_KEY` env var name in code doesn't match `GEMINI_API_KEY` set in Convex — causes all recommendations to fail silently
+- **Known issue:** ~~`GOOGLE_AI_API_KEY` env var name in code doesn't match `GEMINI_API_KEY` set in Convex~~ — resolved: provider switched to Mistral, env is `MISTRAL_API_KEY`
 
 ## Constraints
 
 - **Runtime:** Convex Node.js actions — no filesystem, HTTP-only external calls
-- **API:** Gemini 2.0 Flash via REST (`generativelanguage.googleapis.com`)
+- **API:** Mistral chat completions via REST (`api.mistral.ai/v1/chat/completions`)
 - **Env vars:** Must be set in Convex dashboard via `npx convex env set`, not `.env.local`
-- **Response format:** Gemini must return JSON with `primaryProductIds`, `crossSellProductIds`, `explanation`
+- **Response format:** Mistral must return JSON with `primaryProductIds`, `crossSellProductIds`, `explanation`
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Gemini over OpenAI | Indian market pricing, no VPN friction | ✓ Good |
+| Mistral over OpenAI | Indian market pricing, no VPN friction | ✓ Good |
 | Convex for backend | Real-time product sync, built-in storage | ✓ Good |
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
@@ -64,7 +64,7 @@ Every customer leaves with a coffee recommendation that feels personally curated
 **Goal:** Make the Third Intelligence AI recommendation engine work correctly, feel like TWC staff, and use rich product personalities when explaining matches.
 
 **Target features:**
-- Fix API key mismatch (`GOOGLE_AI_API_KEY` → `GEMINI_API_KEY`)
+- Fix API key wiring (use `MISTRAL_API_KEY`)
 - Create `convex/productContext.ts` — brand context + 18 product personality profiles
 - Update AI prompt to inject personalities and brand voice
 
