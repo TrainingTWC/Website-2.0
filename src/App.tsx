@@ -15,6 +15,8 @@ import {
 } from "motion/react";
 import {
   ShoppingCart,
+  ShoppingBag,
+  BookOpen,
   Info,
   Sparkles,
   Star,
@@ -448,10 +450,10 @@ function Storefront() {
       >
       <ScrollProgressBar />
 
-      {/* ── Side-rail nav — slides in from left after hero ──────── */}
-      <SideNav onOpenTI={openTI} />
+      {/* ── Icon side-rail nav (desktop) / bottom rail (mobile) ── */}
+      <SideNav onOpenTI={openTI} onOpenCart={() => showToast("Cart coming soon!", "cart")} />
 
-      {/* Main Navigation Header — thin top bar */}
+      {/* Main Navigation Header — thin, logo only (nav lives in rail) */}
       <motion.header
         style={{
           backgroundColor: headerBg,
@@ -460,24 +462,13 @@ function Storefront() {
         }}
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b px-6 py-2.5"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-center">
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => scrollTo("hero")}
           >
             <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-8 w-auto" />
           </div>
-
-          {/* Top-bar nav — hidden once side rail is visible (scrollY > 80) */}
-          <TopBarNav onOpenTI={openTI} />
-
-          <button
-            onClick={() => showToast("Cart coming soon!", "cart")}
-            className="flex items-center gap-2 bg-natural-accent text-white px-4 py-2 rounded-full text-sm font-serif font-bold hover:bg-natural-text transition-colors"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Cart
-          </button>
         </div>
       </motion.header>
 
@@ -544,90 +535,158 @@ function Storefront() {
   );
 }
 
-// ── Top-bar nav items (fade out once side-rail appears) ────────
-function TopBarNav({ onOpenTI }: { onOpenTI: () => void }) {
-  const { scrollY } = useScroll();
-  const opacity = useTransform(scrollY, [60, 140], [1, 0]);
-  const pointerEvents = useTransform(scrollY, (v) => (v > 100 ? "none" : "auto"));
-
-  return (
-    <motion.nav
-      style={{ opacity, pointerEvents }}
-      className="flex items-center gap-6 text-sm font-serif font-bold"
-    >
-      <button onClick={() => scrollTo("section-beans")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Beans</button>
-      <button onClick={() => scrollTo("section-bags")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Coffee Bags</button>
-      <button onClick={() => scrollTo("section-merch")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Merch</button>
-      <button onClick={() => scrollTo("our-story")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Our Story</button>
-      <motion.button
-        onClick={onOpenTI}
-        className="relative flex items-center justify-center group"
-        title="Third Intelligence"
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
-        transition={{ type: "spring", stiffness: 300, damping: 18 }}
-      >
-        <motion.div animate={{ scale: [1, 1.9], opacity: [0.45, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} className="absolute w-10 h-10 rounded-full bg-natural-accent/35" />
-        <motion.div animate={{ scale: [1, 1.9], opacity: [0.4, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.7 }} className="absolute w-10 h-10 rounded-full bg-natural-accent/25" />
-        <div className="relative w-10 h-10 flex items-center justify-center">
-          <img src={asset("third-intelligence-icon.png")} alt="Third Intelligence" className="w-full h-full object-contain drop-shadow-md" />
-        </div>
-      </motion.button>
-    </motion.nav>
-  );
-}
-
-// ── Side-rail nav — slides in from left after hero ─────────────
-const SIDE_NAV_ITEMS = [
-  { label: "Beans", target: "section-beans" },
-  { label: "Coffee Bags", target: "section-bags" },
-  { label: "Merch", target: "section-merch" },
-  { label: "Our Story", target: "our-story" },
+// ── Icon side rail (desktop left, mobile bottom) ────────────
+const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "beans", label: "Beans", target: "section-beans", Icon: Coffee },
+  { key: "bags", label: "Coffee Bags", target: "section-bags", Icon: Package },
+  { key: "merch", label: "Merch", target: "section-merch", Icon: ShoppingBag },
+  { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
 ];
 
-function SideNav({ onOpenTI }: { onOpenTI: () => void }) {
-  const { scrollY } = useScroll();
-  // Slide in once past ~80px (top of hero scroll), slide back at near-zero
-  const x = useTransform(scrollY, [60, 160], [-80, 0]);
-  const opacity = useTransform(scrollY, [60, 160], [0, 1]);
+function useActiveSection(): string {
+  const [active, setActive] = useState<string>("beans"); // Beans default
+  useEffect(() => {
+    const els = NAV_ITEMS
+      .map(({ key, target }) => {
+        const el = document.getElementById(target);
+        return el ? { key, el } : null;
+      })
+      .filter((x): x is { key: string; el: HTMLElement } => !!x);
+    if (!els.length) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        // Pick the entry with the largest intersectionRatio that is intersecting
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]) {
+          const match = els.find((x) => x.el === visible[0].target);
+          if (match) setActive(match.key);
+        }
+      },
+      { rootMargin: "-40% 0px -40% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    els.forEach(({ el }) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+  return active;
+}
+
+function SideNav({ onOpenTI, onOpenCart }: { onOpenTI: () => void; onOpenCart: () => void }) {
+  const active = useActiveSection();
 
   return (
     <motion.aside
-      style={{ x, opacity }}
-      className="fixed left-5 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1 pointer-events-auto"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed z-40 pointer-events-auto
+                 lg:left-5 lg:top-1/2 lg:-translate-y-1/2
+                 bottom-4 left-1/2 -translate-x-1/2 lg:translate-x-0"
     >
-      {/* Vertical pill container */}
-      <div className="flex flex-col items-center gap-1 bg-natural-paper/80 backdrop-blur-xl border border-natural-border/70 rounded-2xl px-2.5 py-3 shadow-lg shadow-natural-text/5">
-        {SIDE_NAV_ITEMS.map((item) => (
-          <button
-            key={item.target}
+      <div
+        className="flex flex-row lg:flex-col items-center gap-1
+                   bg-natural-paper/85 backdrop-blur-xl border border-natural-border/70
+                   rounded-2xl p-1.5 shadow-lg shadow-natural-text/5"
+      >
+        {NAV_ITEMS.map((item) => (
+          <NavIconButton
+            key={item.key}
+            label={item.label}
+            Icon={item.Icon}
+            active={active === item.key}
             onClick={() => scrollTo(item.target)}
-            className="group flex items-center gap-0 hover:gap-2 overflow-hidden transition-all duration-300 py-1.5 px-1 rounded-xl hover:bg-natural-muted w-full"
-            title={item.label}
-          >
-            {/* Dot indicator */}
-            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-natural-text/25 group-hover:bg-natural-accent transition-colors" />
-            {/* Label — expands on hover */}
-            <span className="max-w-0 group-hover:max-w-[7rem] overflow-hidden whitespace-nowrap text-[10px] font-bold tracking-[0.2em] uppercase text-natural-accent transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
-              &nbsp;{item.label}
-            </span>
-          </button>
+          />
         ))}
 
         {/* Divider */}
-        <div className="w-4 h-px bg-natural-border my-0.5" />
+        <div className="hidden lg:block w-5 h-px bg-natural-border my-1" />
+        <div className="lg:hidden w-px h-5 bg-natural-border mx-1" />
 
-        {/* TI button */}
-        <button
-          onClick={onOpenTI}
-          title="Third Intelligence"
-          className="group relative w-8 h-8 flex items-center justify-center rounded-xl hover:bg-natural-muted transition-colors"
-        >
-          <motion.div animate={{ scale: [1, 1.7], opacity: [0.5, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} className="absolute w-6 h-6 rounded-full bg-natural-accent/40 pointer-events-none" />
-          <img src={asset("third-intelligence-icon.png")} alt="Third Intelligence" className="w-6 h-6 object-contain relative z-10" />
-        </button>
+        {/* Cart */}
+        <NavIconButton
+          label="Cart"
+          Icon={ShoppingCart}
+          active={false}
+          onClick={onOpenCart}
+        />
+
+        {/* TI — stays at the bottom (or right on mobile) */}
+        <TIRailButton onClick={onOpenTI} />
       </div>
     </motion.aside>
+  );
+}
+
+function NavIconButton({
+  label,
+  Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={`group relative w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${
+        active ? "text-white" : "text-natural-text/70 hover:text-natural-text"
+      }`}
+    >
+      {active && (
+        <motion.span
+          layoutId="side-nav-active"
+          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+          className="absolute inset-0 rounded-xl bg-natural-accent shadow-md shadow-natural-accent/30"
+        />
+      )}
+      <Icon className="relative z-10 w-5 h-5" />
+      {/* Tooltip on hover (desktop only) */}
+      <span className="hidden lg:block absolute left-full ml-3 px-2.5 py-1 rounded-md
+                       bg-natural-text text-white text-[10px] font-bold tracking-[0.2em] uppercase
+                       whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0
+                       transition-all duration-200 pointer-events-none">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+// Smooth, single-source pulse for TI (no double-overlap jitter).
+function TIRailButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title="Third Intelligence"
+      aria-label="Third Intelligence"
+      className="group relative w-11 h-11 rounded-xl flex items-center justify-center hover:bg-natural-muted/60 transition-colors"
+    >
+      {/* Single soft pulse ring — GPU-only transform + opacity, no scale step */}
+      <motion.span
+        aria-hidden
+        animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
+        style={{ willChange: "transform, opacity" }}
+        className="absolute w-7 h-7 rounded-full bg-natural-accent/40 pointer-events-none"
+      />
+      <img
+        src={asset("third-intelligence-icon.png")}
+        alt=""
+        className="relative z-10 w-7 h-7 object-contain"
+      />
+      <span className="hidden lg:block absolute left-full ml-3 px-2.5 py-1 rounded-md
+                       bg-natural-text text-white text-[10px] font-bold tracking-[0.2em] uppercase
+                       whitespace-nowrap opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0
+                       transition-all duration-200 pointer-events-none">
+        Third Intelligence
+      </span>
+    </button>
   );
 }
 
