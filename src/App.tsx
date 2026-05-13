@@ -581,6 +581,8 @@ function Storefront() {
       </footer>
 
       <ToastContainer toasts={toasts} />
+      </motion.div>
+
       <CartPanel
         open={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -589,7 +591,6 @@ function Storefront() {
         onRemove={removeFromCart}
         onUpdateQty={updateQty}
       />
-      </motion.div>
     </div>
   );
 }
