@@ -995,32 +995,70 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 // ── Horizontal scroll product row ─────────────────────────────
 function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const startScrollLeft = useRef(0);
+  const hasDragged = useRef(false);
+
+  // Wheel → horizontal: normalize mouse wheel (deltaMode 1 = lines) vs trackpad (deltaMode 0 = pixels)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > 1) return; // horizontal trackpad swipe — browser handles it
+      // If trackpad is already scrolling horizontally, let browser handle it
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.3) return;
       e.preventDefault();
-      e.stopPropagation();
-      el.scrollLeft += e.deltaY * 1.5;
+      const px = e.deltaMode === 1 /* lines */ ? e.deltaY * 40 : e.deltaY;
+      el.scrollLeft += px;
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
+  // Mouse drag-to-scroll
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragging.current = true;
+    hasDragged.current = false;
+    startX.current = e.pageX;
+    startScrollLeft.current = el.scrollLeft;
+    el.style.cursor = "grabbing";
+  };
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!dragging.current || !scrollRef.current) return;
+    const dx = e.pageX - startX.current;
+    if (Math.abs(dx) > 4) hasDragged.current = true;
+    scrollRef.current.scrollLeft = startScrollLeft.current - dx;
+  };
+
+  const stopDrag = () => {
+    dragging.current = false;
+    if (scrollRef.current) scrollRef.current.style.cursor = "";
+  };
+
   return (
     <div
       ref={scrollRef}
-      className="flex gap-4 sm:gap-5 overflow-x-scroll pb-4
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={stopDrag}
+      onMouseLeave={stopDrag}
+      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing
                  -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
                  [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-                 [scroll-snap-type:x_mandatory]
                  [overscroll-behavior-x:contain]"
-      style={{ WebkitOverflowScrolling: "touch" as any, touchAction: "pan-x" }}
+      style={{ WebkitOverflowScrolling: "touch" as any }}
       data-lenis-prevent
     >
       {products.map((p) => (
-        <div key={p._id} className="flex-shrink-0 w-48 sm:w-56 md:w-64 [scroll-snap-align:start]">
+        <div
+          key={p._id}
+          className="flex-shrink-0 w-48 sm:w-56 md:w-64"
+          // Suppress click after drag so cards don't open unexpectedly
+          onClick={(e) => { if (hasDragged.current) e.stopPropagation(); }}
+        >
           <ProductCard product={p} onAddToCart={onAddToCart} />
         </div>
       ))}
