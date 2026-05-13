@@ -400,6 +400,17 @@ function Storefront() {
     <div className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20">
       <LoadingScreen ready={criticalReady} />
 
+      <ScrollProgressBar />
+
+      {/* Main Navigation Header — fixed, lives outside transformed wrappers so it stays put on scroll */}
+      <MorphingHeader
+        headerBg={headerBg}
+        headerBorder={headerBorder}
+        headerShadow={headerShadow}
+        onOpenTI={openTI}
+        onOpenCart={() => showToast("Cart coming soon!", "cart")}
+      />
+
       {/* TI page — same AnimatePresence layer as ProductPage, higher z */}
       <AnimatePresence mode="wait">
         {tiOpen && (
@@ -449,16 +460,6 @@ function Storefront() {
           transformOrigin: "center top",
         }}
       >
-      <ScrollProgressBar />
-
-      {/* Main Navigation Header — morphs text→icons on scroll, stays fixed */}
-      <MorphingHeader
-        headerBg={headerBg}
-        headerBorder={headerBorder}
-        headerShadow={headerShadow}
-        onOpenTI={openTI}
-        onOpenCart={() => showToast("Cart coming soon!", "cart")}
-      />
 
       <main className="pt-28 lg:pt-32 pb-12 px-6">
         <div className="max-w-7xl mx-auto" id="storefront-view">
@@ -625,6 +626,8 @@ function MorphingHeader({
               onClick={() => scrollTo(item.target)}
             />
           ))}
+          {/* TI lives next to Our Story */}
+          <TIHeaderButton compact={compact} onClick={onOpenTI} />
         </nav>
 
         {/* Right actions */}
@@ -636,7 +639,6 @@ function MorphingHeader({
             compact={compact}
             onClick={onOpenCart}
           />
-          <TIHeaderButton compact={compact} onClick={onOpenTI} />
         </div>
       </motion.div>
     </motion.header>
