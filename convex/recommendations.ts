@@ -432,6 +432,7 @@ export const flavoredDrink = action({
     milk: v.string(), // "whole" | "oat" | "almond" | "coconut" | "soy" | "no milk"
     temperature: v.string(), // "hot" | "iced"
     size: v.string(), // "small" | "medium" | "large"
+    brewMethod: v.optional(v.string()), // e.g. "drip-bag pour-over" | "cold-brew immersion bag" — omit for espresso-based
   },
   handler: async (_ctx, args) => {
     const apiKey = process.env.MISTRAL_API_KEY;
@@ -457,7 +458,8 @@ DRINK SPEC
 - Flavor addition: ${args.flavorAdd === "none" ? "none — serve clean" : args.flavorAdd}
 - Milk: ${args.milk === "no milk" ? "no milk" : `${args.milk} milk`}
 - Temperature: ${args.temperature}
-- Size: ${args.size}
+- Size: ${args.size}${args.brewMethod ? `
+- Base brew method: ${args.brewMethod} — the coffee is brewed as a bag (no espresso machine). Adapt the build steps for this brew base.` : ""}
 
 Return JSON ONLY, no markdown, no prose outside JSON:
 {

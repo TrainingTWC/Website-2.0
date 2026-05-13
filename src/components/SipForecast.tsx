@@ -11,6 +11,8 @@ import {
   Coffee,
   Droplets,
   Snowflake,
+  GlassWater,
+  Flame,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 
@@ -56,6 +58,20 @@ const INTENSITIES: Array<{ key: "gentle" | "balanced" | "bold"; label: string }>
   { key: "bold", label: "Bold" },
 ];
 
+interface DrinkStyle { key: string; label: string; icon: typeof Coffee; hot: boolean; cold: boolean; }
+const DRINK_STYLES: DrinkStyle[] = [
+  { key: "latte",      label: "Latte",      icon: Coffee,     hot: true,  cold: true  },
+  { key: "cappuccino", label: "Cappuccino", icon: Coffee,     hot: true,  cold: false },
+  { key: "flat-white", label: "Flat White", icon: Coffee,     hot: true,  cold: false },
+  { key: "mocha",      label: "Mocha",      icon: Flame,      hot: true,  cold: true  },
+  { key: "cortado",    label: "Cortado",    icon: Coffee,     hot: true,  cold: false },
+  { key: "cold-tonic", label: "CB Tonic",   icon: GlassWater, hot: false, cold: true  },
+  { key: "whipped",    label: "Whipped",    icon: Droplets,   hot: false, cold: true  },
+  { key: "affogato",   label: "Affogato",   icon: Snowflake,  hot: false, cold: true  },
+];
+const FLAVORS = ["None", "Vanilla", "Caramel", "Hazelnut", "Cinnamon", "Brown Sugar", "Cardamom", "Rose"];
+const MILKS   = ["Whole", "Oat", "Almond", "Coconut", "Soy", "No Milk"];
+
 interface Forecast {
   title: string;
   headline: string;
@@ -63,6 +79,15 @@ interface Forecast {
   arc: Array<{ moment: string; note: string }>;
   cupCard: string;
   pairings: { food: string; book: string; music: string };
+}
+
+interface CraftRecipe {
+  title: string;
+  servingNote: string;
+  steps: Array<{ label: string; duration: string; detail: string }>;
+  tastingNote: string;
+  tip: string;
+  pairings?: { food: string; book: string; music: string };
 }
 
 interface Props {
@@ -118,6 +143,48 @@ export function SipForecast({
 
   const isCold = bagKind === "cold-brew";
 
+  // ── Mode toggle ──────────────────────────────────────────────────
+  const [mode, setMode] = useState<"forecast" | "craft">("forecast");
+
+  // ── Craft (Signature Drink) state ────────────────────────────────
+  const [drinkStyle, setDrinkStyle] = useState("latte");
+  const [flavor, setFlavor] = useState("None");
+  const [milk, setMilk] = useState("Oat");
+  const [temperature, setTemperature] = useState<"hot" | "iced">(isCold ? "iced" : "hot");
+  const [craftSize, setCraftSize] = useState<"small" | "medium" | "large">("medium");
+  const generateCraft = useAction(api.recommendations.flavoredDrink);
+  const [craftRecipe, setCraftRecipe] = useState<CraftRecipe | null>(null);
+  const [craftLoading, setCraftLoading] = useState(false);
+  const [craftError, setCraftError] = useState<string | null>(null);
+
+  const requestCraftRecipe = async () => {
+    setCraftLoading(true);
+    setCraftError(null);
+    setCraftRecipe(null);
+    const actualTemp = isCold ? "iced" : temperature;
+    const visibleStyles = DRINK_STYLES.filter(s => actualTemp === "iced" ? s.cold : s.hot);
+    const actualStyle = visibleStyles.some(s => s.key === drinkStyle) ? drinkStyle : visibleStyles[0]?.key ?? "latte";
+    try {
+      const result = await generateCraft({
+        productName,
+        roastLevel,
+        flavorNotes,
+        drinkStyle: actualStyle,
+        flavorAdd: flavor.toLowerCase(),
+        milk: milk.toLowerCase(),
+        temperature: actualTemp,
+        size: craftSize,
+        brewMethod: isCold ? "cold-brew immersion bag" : "drip-bag pour-over",
+      });
+      if (result.ok) setCraftRecipe(result.recipe);
+      else setCraftError(result.error);
+    } catch (e) {
+      setCraftError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setCraftLoading(false);
+    }
+  };
+
   return (
     <section
       className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16 sm:py-24"
@@ -129,152 +196,259 @@ export function SipForecast({
             className="text-[10px] font-bold uppercase tracking-[0.3em] mb-3"
             style={{ color: accentHex }}
           >
-            Sip Forecast
+            {isCold ? "Cold-brew immersion bag" : "Drip pour-over bag"}
           </p>
           <h2 className="font-serif font-bold text-3xl sm:text-4xl text-natural-text">
-            What kind of cup is this?
+            {mode === "forecast" ? "What kind of cup is this?" : "Craft a signature drink"}
           </h2>
           <p className="text-natural-text/60 mt-2 max-w-lg text-sm sm:text-base">
-            No grinder, no scale. Tell us the moment — Third Intelligence
-            forecasts the ritual, the flavor arc, and the perfect companion.
+            {mode === "forecast"
+              ? "No grinder, no scale. Tell us the moment — Third Intelligence forecasts the ritual, the flavor arc, and the perfect companion."
+              : "Pick a style, add your flavors — Third Intelligence builds a caf\u00e9-quality recipe around this bag."}
           </p>
         </div>
 
+        {/* Mode toggle */}
         <div
-          className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full border text-[11px] font-bold uppercase tracking-wider"
-          style={{ borderColor: accentHex, color: accentHex }}
+          className="flex items-center p-1 rounded-full gap-1"
+          style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)" }}
         >
-          {isCold ? (
-            <Snowflake className="w-3.5 h-3.5" strokeWidth={2.5} />
-          ) : (
-            <Droplets className="w-3.5 h-3.5" strokeWidth={2.5} />
-          )}
-          {isCold ? "Cold-brew immersion bag" : "Drip pour-over bag"}
+          {(["forecast", "craft"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className="px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+              style={
+                mode === m
+                  ? { background: accentHex, color: "#fff", boxShadow: `0 2px 12px ${accentHex}55` }
+                  : { color: "rgba(0,0,0,0.45)" }
+              }
+            >
+              {m === "forecast" ? "Sip Forecast" : "Signature Drink"}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
         {/* ── Left: inputs ───────────────────────────────────────── */}
-        <div className="bg-natural-paper border border-natural-border rounded-3xl p-6 sm:p-8 space-y-7">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">
-              Your moment
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {MOMENTS.map((m) => {
-                const Icon = m.icon;
-                const active = m.key === moment;
-                return (
-                  <button
-                    key={m.key}
-                    onClick={() => setMoment(m.key)}
-                    className={`flex items-center gap-2 px-3.5 py-3 rounded-2xl border text-xs font-bold uppercase tracking-wider transition-all text-left ${
-                      active
-                        ? "text-white shadow-md"
-                        : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
-                    }`}
-                    style={
-                      active
-                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
-                        : undefined
-                    }
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
-                    <span className="truncate">{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        <div className="bg-natural-paper border border-natural-border rounded-3xl p-6 sm:p-8 overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            {mode === "forecast" ? (
+              <motion.div key="forecast-inputs" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} transition={{ duration: 0.2 }} className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Your moment</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {MOMENTS.map((m) => {
+                      const Icon = m.icon;
+                      const active = m.key === moment;
+                      return (
+                        <button
+                          key={m.key}
+                          onClick={() => setMoment(m.key)}
+                          className={`flex items-center gap-2 px-3.5 py-3 rounded-2xl border text-xs font-bold uppercase tracking-wider transition-all text-left ${
+                            active
+                              ? "text-white shadow-md"
+                              : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
+                          }`}
+                          style={active ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` } : undefined}
+                        >
+                          <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
+                          <span className="truncate">{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">
-              Cup size
-            </p>
-            <div className="flex gap-2">
-              {SIZES.map((s) => {
-                const active = s.key === cupSize;
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => setCupSize(s.key)}
-                    className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
-                      active
-                        ? "text-white shadow-md"
-                        : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
-                    }`}
-                    style={
-                      active
-                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
-                        : undefined
-                    }
-                  >
-                    {s.label}
-                    <span className="block text-[10px] font-medium opacity-70 mt-0.5">
-                      {s.ml}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Cup size</p>
+                  <div className="flex gap-2">
+                    {SIZES.map((s) => {
+                      const active = s.key === cupSize;
+                      return (
+                        <button
+                          key={s.key}
+                          onClick={() => setCupSize(s.key)}
+                          className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
+                            active ? "text-white shadow-md" : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
+                          }`}
+                          style={active ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` } : undefined}
+                        >
+                          {s.label}
+                          <span className="block text-[10px] font-medium opacity-70 mt-0.5">{s.ml}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">
-              Intensity
-            </p>
-            <div className="flex gap-2">
-              {INTENSITIES.map((i) => {
-                const active = i.key === intensity;
-                return (
-                  <button
-                    key={i.key}
-                    onClick={() => setIntensity(i.key)}
-                    className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
-                      active
-                        ? "text-white shadow-md"
-                        : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
-                    }`}
-                    style={
-                      active
-                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
-                        : undefined
-                    }
-                  >
-                    {i.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Intensity</p>
+                  <div className="flex gap-2">
+                    {INTENSITIES.map((i) => {
+                      const active = i.key === intensity;
+                      return (
+                        <button
+                          key={i.key}
+                          onClick={() => setIntensity(i.key)}
+                          className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
+                            active ? "text-white shadow-md" : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
+                          }`}
+                          style={active ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` } : undefined}
+                        >
+                          {i.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-          <button
-            onClick={requestForecast}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl text-white font-bold uppercase tracking-wider text-sm disabled:opacity-60 transition-all"
-            style={{
-              background: `linear-gradient(135deg, ${accentHex} 0%, ${accentHex}dd 100%)`,
-              boxShadow: loading ? "none" : `0 6px 28px ${accentHex}55, 0 2px 8px ${accentHex}33`,
-            }}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
-                Forecasting…
-              </>
+                <button
+                  onClick={requestForecast}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl text-white font-bold uppercase tracking-wider text-sm disabled:opacity-60 transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${accentHex} 0%, ${accentHex}dd 100%)`,
+                    boxShadow: loading ? "none" : `0 6px 28px ${accentHex}55, 0 2px 8px ${accentHex}33`,
+                  }}
+                >
+                  {loading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />Forecasting…</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" strokeWidth={2.5} />Generate my sip forecast</>
+                  )}
+                </button>
+                {error && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-2xl p-3">{error}</p>
+                )}
+              </motion.div>
             ) : (
-              <>
-                <Sparkles className="w-4 h-4" strokeWidth={2.5} />
-                Generate my sip forecast
-              </>
-            )}
-          </button>
+              <motion.div key="craft-inputs" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="space-y-5">
+                {/* Temperature — drip-bag only */}
+                {!isCold && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Temperature</p>
+                    <div className="flex gap-2">
+                      {(["hot", "iced"] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setTemperature(t)}
+                          className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
+                            temperature === t ? "text-white shadow-md" : "bg-natural-bg text-natural-text/70 border-natural-border"
+                          }`}
+                          style={temperature === t ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` } : undefined}
+                        >
+                          {t === "hot" ? "Hot" : "Iced"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-2xl p-3">
-              {error}
-            </p>
-          )}
+                {/* Drink style */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Drink style</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {DRINK_STYLES.filter(s => (isCold || temperature === "iced") ? s.cold : s.hot).map((ds) => {
+                      const Icon = ds.icon;
+                      const active = drinkStyle === ds.key;
+                      return (
+                        <button
+                          key={ds.key}
+                          onClick={() => setDrinkStyle(ds.key)}
+                          className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all ${
+                            active ? "text-white" : "bg-natural-bg text-natural-text/60 border-natural-border"
+                          }`}
+                          style={active ? { background: accentHex, borderColor: accentHex, boxShadow: `0 2px 12px ${accentHex}44` } : undefined}
+                        >
+                          <Icon className="w-3.5 h-3.5" strokeWidth={2} />
+                          {ds.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Flavor add */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Flavor add</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {FLAVORS.map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setFlavor(f)}
+                        className={`px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-wider transition-all ${
+                          flavor === f ? "text-white" : "bg-natural-bg text-natural-text/60 border-natural-border"
+                        }`}
+                        style={flavor === f ? { background: accentHex, borderColor: accentHex } : undefined}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Milk */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Milk</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {MILKS.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setMilk(m)}
+                        className={`px-3 py-1.5 rounded-full border text-[11px] font-bold uppercase tracking-wider transition-all ${
+                          milk === m ? "text-white" : "bg-natural-bg text-natural-text/60 border-natural-border"
+                        }`}
+                        style={milk === m ? { background: accentHex, borderColor: accentHex } : undefined}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Size */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/50 mb-3">Size</p>
+                  <div className="flex gap-2">
+                    {SIZES.map((s) => (
+                      <button
+                        key={s.key}
+                        onClick={() => setCraftSize(s.key)}
+                        className={`flex-1 px-3 py-2.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all ${
+                          craftSize === s.key ? "text-white shadow-md" : "bg-natural-bg text-natural-text/70 border-natural-border hover:border-natural-text/30"
+                        }`}
+                        style={craftSize === s.key ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` } : undefined}
+                      >
+                        {s.label}
+                        <span className="block text-[10px] font-medium opacity-70 mt-0.5">{s.ml}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={requestCraftRecipe}
+                  disabled={craftLoading}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl text-white font-bold uppercase tracking-wider text-sm disabled:opacity-60 transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${accentHex} 0%, ${accentHex}dd 100%)`,
+                    boxShadow: craftLoading ? "none" : `0 6px 28px ${accentHex}55, 0 2px 8px ${accentHex}33`,
+                  }}
+                >
+                  {craftLoading ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />Crafting…</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" strokeWidth={2.5} />Craft my signature drink</>
+                  )}
+                </button>
+                {craftError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-2xl p-3">{craftError}</p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ── Right: forecast output ────────────────────────────── */}
@@ -295,7 +469,7 @@ export function SipForecast({
             style={{ background: accentHex }}
           />
           <AnimatePresence mode="wait">
-            {!forecast && !loading && (
+            {mode === "forecast" && !forecast && !loading && (
               <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
@@ -316,7 +490,7 @@ export function SipForecast({
               </motion.div>
             )}
 
-            {loading && (
+            {mode === "forecast" && loading && (
               <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
@@ -335,7 +509,7 @@ export function SipForecast({
               </motion.div>
             )}
 
-            {forecast && (
+            {mode === "forecast" && forecast && (
               <motion.div
                 key="forecast"
                 initial={{ opacity: 0, y: 12 }}
@@ -457,9 +631,132 @@ export function SipForecast({
                 </div>
               </motion.div>
             )}
+
+            {/* ── Craft: empty ────────────────────────────────────── */}
+            {mode === "craft" && !craftRecipe && !craftLoading && (
+              <motion.div
+                key="craft-empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
+              >
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+                  style={{ background: `${accentHex}33` }}
+                >
+                  <Sparkles className="w-6 h-6" style={{ color: accentHex }} strokeWidth={2} />
+                </div>
+                <p className="text-white/60 text-sm max-w-xs leading-relaxed">
+                  Choose your style and flavors — we'll craft the recipe around this specific bag.
+                </p>
+              </motion.div>
+            )}
+
+            {/* ── Craft: loading ──────────────────────────────────── */}
+            {mode === "craft" && craftLoading && (
+              <motion.div
+                key="craft-loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center"
+              >
+                <Loader2 className="w-8 h-8 animate-spin mb-3" style={{ color: accentHex }} strokeWidth={2} />
+                <p className="text-white/60 text-xs uppercase tracking-[0.3em]">Crafting your drink…</p>
+              </motion.div>
+            )}
+
+            {/* ── Craft: recipe ───────────────────────────────────── */}
+            {mode === "craft" && craftRecipe && !craftLoading && (
+              <motion.div
+                key="craft-recipe"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-5"
+              >
+                <div>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[0.35em] mb-2"
+                    style={{ color: accentHex, textShadow: `0 0 16px ${accentHex}` }}
+                  >
+                    Signature Build
+                  </p>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold leading-tight mb-1">
+                    {craftRecipe.title}
+                  </h3>
+                  <p className="text-[11px] font-mono text-white/40 tracking-wide">{craftRecipe.servingNote}</p>
+                </div>
+
+                <ol className="space-y-2">
+                  {craftRecipe.steps.map((step, i) => (
+                    <li
+                      key={i}
+                      className="flex gap-3 rounded-xl p-3"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <span
+                        className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold mt-0.5"
+                        style={{ background: accentHex, color: "#fff", boxShadow: `0 0 10px ${accentHex}66` }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                          <p className="text-sm font-bold">{step.label}</p>
+                          <span className="text-[11px] text-white/30 tabular-nums shrink-0">{step.duration}</span>
+                        </div>
+                        <p className="text-xs text-white/50 leading-relaxed">{step.detail}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="pt-4 border-t grid sm:grid-cols-2 gap-4" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                  <SFBottomBlock label="Expect" italic>{craftRecipe.tastingNote}</SFBottomBlock>
+                  <SFBottomBlock label="Pro tip">{craftRecipe.tip}</SFBottomBlock>
+                </div>
+                {craftRecipe.pairings && (
+                  <SFPairingsBlock pairings={craftRecipe.pairings} accentHex={accentHex} />
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
     </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function SFBottomBlock({ label, children, italic }: { label: string; children: string; italic?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/30 mb-1.5">{label}</p>
+      {italic
+        ? <p className="font-serif italic text-white/75 text-sm leading-relaxed">"{children}"</p>
+        : <p className="text-white/65 text-sm leading-relaxed">{children}</p>
+      }
+    </div>
+  );
+}
+
+function SFPairingsBlock({ pairings, accentHex }: { pairings: { food: string; book: string; music: string }; accentHex: string }) {
+  return (
+    <div className="pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/30 mb-3">Pair with</p>
+      <div className="grid grid-cols-3 gap-2">
+        {(["food", "book", "music"] as const).map((key) => (
+          <div key={key} className="rounded-xl p-3" style={{ background: `${accentHex}10`, border: `1px solid ${accentHex}30` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: accentHex }}>{key}</p>
+            <p className="text-xs text-white/75 leading-snug">{pairings[key]}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
