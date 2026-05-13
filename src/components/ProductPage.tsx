@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "convex/react";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -10,13 +9,13 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { api } from "../../convex/_generated/api";
 import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
 import { PersonalitySection } from "./PersonalitySection";
 import { BrewingStudio } from "./BrewingStudio";
 import { SipForecast } from "./SipForecast";
 import { slugify } from "../lib/slug";
+import { useProducts } from "../lib/useProducts";
 import type { Product } from "../types";
 
 /**
@@ -116,7 +115,7 @@ function themeFor(p: Product): Theme {
 }
 
 export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 }: ProductPageProps) {
-  const products = useQuery(api.products.list);
+  const products = useProducts();
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
   const containerRef = useRef<HTMLDivElement>(null);

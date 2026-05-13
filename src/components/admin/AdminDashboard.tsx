@@ -20,6 +20,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
+import { useProducts } from "../../lib/useProducts";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { Product, ProductType, RoastLevel } from "../../types";
@@ -28,7 +29,7 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<
     "inventory" | "analytics" | "rules"
   >("inventory");
-  const products = useQuery(api.products.list);
+  const products = useProducts();
   const sessions = useQuery(api.sessions.list);
 
   return (

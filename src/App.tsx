@@ -35,8 +35,8 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useProducts } from "./lib/useProducts";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -364,7 +364,7 @@ function DessertsBanner() {
 }
 
 function Storefront() {
-  const products = useQuery(api.products.list);
+  const products = useProducts();
   const { toasts, show: showToast } = useToast();
   const [criticalReady, setCriticalReady] = useState(false);
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);

@@ -10,8 +10,9 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { useQuery, useAction, useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useProducts } from "../../lib/useProducts";
 import ReactMarkdown from "react-markdown";
 import { asset } from "../../lib/asset";
 import { slugify } from "../../lib/slug";
@@ -108,7 +109,7 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart }: D
     useState<RecommendationResult | null>(null);
   const [direction, setDirection] = useState(1);
 
-  const products = useQuery(api.products.list);
+  const products = useProducts();
   const getRecommendation = useAction(api.recommendations.getRecommendation);
   const createSession = useMutation(api.sessions.create);
 
