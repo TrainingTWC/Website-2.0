@@ -447,83 +447,33 @@ function Storefront() {
         }}
       >
       <ScrollProgressBar />
-      {/* Main Navigation Header */}
+
+      {/* ── Side-rail nav — slides in from left after hero ──────── */}
+      <SideNav onOpenTI={openTI} />
+
+      {/* Main Navigation Header — thin top bar */}
       <motion.header
         style={{
           backgroundColor: headerBg,
           borderBottomColor: headerBorder,
           boxShadow: headerShadow,
         }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b px-6 py-2.5"
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer"
             onClick={() => scrollTo("hero")}
           >
-            <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-10 w-auto" />
+            <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-8 w-auto" />
           </div>
 
-          <nav className="flex items-center gap-6 text-sm font-serif font-bold">
-            <button
-              onClick={() => scrollTo("section-beans")}
-              className="text-natural-text/60 hover:text-natural-accent transition-colors"
-            >
-              Beans
-            </button>
-            <button
-              onClick={() => scrollTo("section-bags")}
-              className="text-natural-text/60 hover:text-natural-accent transition-colors"
-            >
-              Coffee Bags
-            </button>
-            <button
-              onClick={() => scrollTo("section-merch")}
-              className="text-natural-text/60 hover:text-natural-accent transition-colors"
-            >
-              Merch
-            </button>
-            <button
-              onClick={() => scrollTo("our-story")}
-              className="text-natural-text/60 hover:text-natural-accent transition-colors"
-            >
-              Our Story
-            </button>
-            <motion.button
-              onClick={() => openTI()}
-              className="relative flex items-center justify-center group"
-              title="Third Intelligence — Find Your Match"
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 300, damping: 18 }}
-            >
-              {/* Pulse rings — warm natural-accent tones */}
-              <motion.div
-                animate={{ scale: [1, 1.9], opacity: [0.45, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-                className="absolute w-11 h-11 rounded-full bg-natural-accent/35"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.9], opacity: [0.4, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.7 }}
-                className="absolute w-11 h-11 rounded-full bg-natural-accent/25"
-              />
-              {/* Soft outer glow on hover */}
-              <div className="absolute w-11 h-11 rounded-full bg-natural-accent/0 group-hover:bg-natural-accent/15 transition-colors blur-md" />
-              {/* Icon container — paper aesthetic matching site */}
-              <div className="relative w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-110">
-                <img
-                  src={asset("third-intelligence-icon.png")}
-                  alt="Third Intelligence"
-                  className="w-full h-full object-contain drop-shadow-md"
-                />
-              </div>
-            </motion.button>
-          </nav>
+          {/* Top-bar nav — hidden once side rail is visible (scrollY > 80) */}
+          <TopBarNav onOpenTI={openTI} />
 
           <button
             onClick={() => showToast("Cart coming soon!", "cart")}
-            className="flex items-center gap-2 bg-natural-accent text-white px-5 py-2.5 rounded-full text-sm font-serif font-bold hover:bg-natural-text transition-colors"
+            className="flex items-center gap-2 bg-natural-accent text-white px-4 py-2 rounded-full text-sm font-serif font-bold hover:bg-natural-text transition-colors"
           >
             <ShoppingCart className="w-4 h-4" />
             Cart
@@ -591,6 +541,93 @@ function Storefront() {
       <ToastContainer toasts={toasts} />
       </motion.div>
     </div>
+  );
+}
+
+// ── Top-bar nav items (fade out once side-rail appears) ────────
+function TopBarNav({ onOpenTI }: { onOpenTI: () => void }) {
+  const { scrollY } = useScroll();
+  const opacity = useTransform(scrollY, [60, 140], [1, 0]);
+  const pointerEvents = useTransform(scrollY, (v) => (v > 100 ? "none" : "auto"));
+
+  return (
+    <motion.nav
+      style={{ opacity, pointerEvents }}
+      className="flex items-center gap-6 text-sm font-serif font-bold"
+    >
+      <button onClick={() => scrollTo("section-beans")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Beans</button>
+      <button onClick={() => scrollTo("section-bags")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Coffee Bags</button>
+      <button onClick={() => scrollTo("section-merch")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Merch</button>
+      <button onClick={() => scrollTo("our-story")} className="text-natural-text/60 hover:text-natural-accent transition-colors">Our Story</button>
+      <motion.button
+        onClick={onOpenTI}
+        className="relative flex items-center justify-center group"
+        title="Third Intelligence"
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        transition={{ type: "spring", stiffness: 300, damping: 18 }}
+      >
+        <motion.div animate={{ scale: [1, 1.9], opacity: [0.45, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} className="absolute w-10 h-10 rounded-full bg-natural-accent/35" />
+        <motion.div animate={{ scale: [1, 1.9], opacity: [0.4, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.7 }} className="absolute w-10 h-10 rounded-full bg-natural-accent/25" />
+        <div className="relative w-10 h-10 flex items-center justify-center">
+          <img src={asset("third-intelligence-icon.png")} alt="Third Intelligence" className="w-full h-full object-contain drop-shadow-md" />
+        </div>
+      </motion.button>
+    </motion.nav>
+  );
+}
+
+// ── Side-rail nav — slides in from left after hero ─────────────
+const SIDE_NAV_ITEMS = [
+  { label: "Beans", target: "section-beans" },
+  { label: "Coffee Bags", target: "section-bags" },
+  { label: "Merch", target: "section-merch" },
+  { label: "Our Story", target: "our-story" },
+];
+
+function SideNav({ onOpenTI }: { onOpenTI: () => void }) {
+  const { scrollY } = useScroll();
+  // Slide in once past ~80px (top of hero scroll), slide back at near-zero
+  const x = useTransform(scrollY, [60, 160], [-80, 0]);
+  const opacity = useTransform(scrollY, [60, 160], [0, 1]);
+
+  return (
+    <motion.aside
+      style={{ x, opacity }}
+      className="fixed left-5 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1 pointer-events-auto"
+    >
+      {/* Vertical pill container */}
+      <div className="flex flex-col items-center gap-1 bg-natural-paper/80 backdrop-blur-xl border border-natural-border/70 rounded-2xl px-2.5 py-3 shadow-lg shadow-natural-text/5">
+        {SIDE_NAV_ITEMS.map((item) => (
+          <button
+            key={item.target}
+            onClick={() => scrollTo(item.target)}
+            className="group flex items-center gap-0 hover:gap-2 overflow-hidden transition-all duration-300 py-1.5 px-1 rounded-xl hover:bg-natural-muted w-full"
+            title={item.label}
+          >
+            {/* Dot indicator */}
+            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-natural-text/25 group-hover:bg-natural-accent transition-colors" />
+            {/* Label — expands on hover */}
+            <span className="max-w-0 group-hover:max-w-[7rem] overflow-hidden whitespace-nowrap text-[10px] font-bold tracking-[0.2em] uppercase text-natural-accent transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
+              &nbsp;{item.label}
+            </span>
+          </button>
+        ))}
+
+        {/* Divider */}
+        <div className="w-4 h-px bg-natural-border my-0.5" />
+
+        {/* TI button */}
+        <button
+          onClick={onOpenTI}
+          title="Third Intelligence"
+          className="group relative w-8 h-8 flex items-center justify-center rounded-xl hover:bg-natural-muted transition-colors"
+        >
+          <motion.div animate={{ scale: [1, 1.7], opacity: [0.5, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }} className="absolute w-6 h-6 rounded-full bg-natural-accent/40 pointer-events-none" />
+          <img src={asset("third-intelligence-icon.png")} alt="Third Intelligence" className="w-6 h-6 object-contain relative z-10" />
+        </button>
+      </div>
+    </motion.aside>
   );
 }
 
