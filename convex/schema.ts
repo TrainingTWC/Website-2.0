@@ -44,4 +44,12 @@ export default defineSchema({
     condition: v.any(),
     resultProductIds: v.array(v.string()),
   }),
+
+  // AI response cache — keyed by stable SHA-256 hash of action name + args.
+  // Eliminates repeat Mistral calls for identical inputs.
+  aiCache: defineTable({
+    key: v.string(),     // SHA-256 hex of (version + actionName + sorted args)
+    value: v.string(),   // JSON-stringified { ok: true, ... } result
+    createdAt: v.number(),
+  }).index("by_key", ["key"]),
 });

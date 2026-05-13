@@ -1,8 +1,34 @@
 "use node";
 
 import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { createHash } from "crypto";
 import { BRAND_CONTEXT, buildPersonalitiesBlock } from "./productContext";
+
+// ── Cache-key helpers ──────────────────────────────────────────────────────
+// Increment CACHE_VERSION whenever prompt templates change so stale entries
+// are automatically bypassed (old entries become orphaned, not served).
+const CACHE_VERSION = "v1";
+
+function stableStringify(val: unknown): string {
+  if (val === null || typeof val !== "object") return JSON.stringify(val);
+  if (Array.isArray(val)) return "[" + (val as unknown[]).map(stableStringify).join(",") + "]";
+  const keys = Object.keys(val as object).sort();
+  return (
+    "{" +
+    keys
+      .map((k) => JSON.stringify(k) + ":" + stableStringify((val as Record<string, unknown>)[k]))
+      .join(",") +
+    "}"
+  );
+}
+
+function makeCacheKey(actionName: string, args: unknown): string {
+  return createHash("sha256")
+    .update(`${CACHE_VERSION}:${actionName}:${stableStringify(args)}`)
+    .digest("hex");
+}
 
 export const getRecommendation = action({
   args: {
@@ -146,7 +172,7 @@ export const brewingRecipe = action({
     ratio: v.number(), // 1:N water ratio (e.g. 16 -> 1:16)
     strength: v.string(), // "light" | "balanced" | "strong"
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
@@ -155,6 +181,10 @@ export const brewingRecipe = action({
           "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock AI brewing recipes.",
       };
     }
+
+    const cacheKey = makeCacheKey("brewingRecipe", args);
+    const cached = (await ctx.runQuery(internal.cache.get, { key: cacheKey })) as { value: string } | null;
+    if (cached) return JSON.parse(cached.value) as { ok: true; recipe: unknown };
 
     // ratio = brew water : coffee (standard SCA definition)
     // Total brewing water = dose × ratio
@@ -259,7 +289,9 @@ Rules:
         return { ok: false as const, error: "Malformed recipe payload" };
       }
 
-      return { ok: true as const, recipe: parsed };
+      const result = { ok: true as const, recipe: parsed };
+      await ctx.runMutation(internal.cache.set, { key: cacheKey, value: JSON.stringify(result) });
+      return result;
     } catch (error) {
       console.error("brewingRecipe error:", error);
       return {
@@ -286,7 +318,7 @@ export const sipForecast = action({
     cupSize: v.string(), // "small" | "medium" | "large"
     intensity: v.string(), // "gentle" | "balanced" | "bold"
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
@@ -295,6 +327,10 @@ export const sipForecast = action({
           "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock the Sip Forecast.",
       };
     }
+
+    const cacheKey = makeCacheKey("sipForecast", args);
+    const cached = (await ctx.runQuery(internal.cache.get, { key: cacheKey })) as { value: string } | null;
+    if (cached) return JSON.parse(cached.value) as { ok: true; forecast: unknown };
 
     const methodHint =
       args.bagKind === "cold-brew"
@@ -407,7 +443,9 @@ Rules:
         return { ok: false as const, error: "Malformed forecast payload" };
       }
 
-      return { ok: true as const, forecast: parsed };
+      const result = { ok: true as const, forecast: parsed };
+      await ctx.runMutation(internal.cache.set, { key: cacheKey, value: JSON.stringify(result) });
+      return result;
     } catch (error) {
       console.error("sipForecast error:", error);
       return {
@@ -434,7 +472,7 @@ export const flavoredDrink = action({
     size: v.string(), // "small" | "medium" | "large"
     brewMethod: v.optional(v.string()), // e.g. "drip-bag pour-over" | "cold-brew immersion bag" — omit for espresso-based
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
@@ -443,6 +481,10 @@ export const flavoredDrink = action({
           "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock signature drinks.",
       };
     }
+
+    const cacheKey = makeCacheKey("flavoredDrink", args);
+    const cached = (await ctx.runQuery(internal.cache.get, { key: cacheKey })) as { value: string } | null;
+    if (cached) return JSON.parse(cached.value) as { ok: true; recipe: unknown };
 
     const prompt = `
 You are Third Intelligence, the craft drinks engine for Third Wave Coffee.
@@ -544,7 +586,9 @@ Rules:
         return { ok: false as const, error: "Malformed drink payload" };
       }
 
-      return { ok: true as const, recipe: parsed };
+      const result = { ok: true as const, recipe: parsed };
+      await ctx.runMutation(internal.cache.set, { key: cacheKey, value: JSON.stringify(result) });
+      return result;
     } catch (error) {
       console.error("flavoredDrink error:", error);
       return {
