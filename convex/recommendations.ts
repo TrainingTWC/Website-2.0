@@ -184,7 +184,12 @@ Return JSON ONLY in this exact shape — no markdown, no prose outside JSON:
     { "label": "First pour", "timeSec": 30, "waterG": 80, "detail": "..." }
   ],
   "tastingNote": "1 sentence prediction of how the cup will taste, referencing the bean's flavor notes",
-  "tip": "1 sentence pro tip specific to this bean+method combination"
+  "tip": "1 sentence pro tip specific to this bean+method combination",
+  "pairings": {
+    "food": "one short food pairing suggestion (max 8 words)",
+    "book": "one short book or genre suggestion (max 8 words)",
+    "music": "one short music artist, genre, or playlist suggestion (max 8 words)"
+  }
 }
 
 Rules:
@@ -243,6 +248,7 @@ Rules:
         steps: Array<{ label: string; timeSec: number; waterG?: number; detail: string }>;
         tastingNote: string;
         tip: string;
+        pairings: { food: string; book: string; music: string };
       };
 
       if (!parsed.title || !Array.isArray(parsed.steps) || parsed.steps.length === 0) {
@@ -322,7 +328,11 @@ Return JSON ONLY, this exact shape, no markdown:
     { "moment": "Final sip", "note": "max 14 words" }
   ],
   "cupCard": "2 short sentences (max 35 words total) describing the cup as if narrating their moment. Poetic but specific.",
-  "pairing": { "kind": "music|food|activity|read", "text": "one short suggestion (max 10 words)" }
+  "pairings": {
+    "food": "one short food pairing suggestion (max 8 words)",
+    "book": "one short book or genre suggestion (max 8 words)",
+    "music": "one short music artist, genre, or playlist suggestion (max 8 words)"
+  }
 }
 
 Rules:
@@ -378,7 +388,7 @@ Rules:
         ritual: Array<{ label: string; detail: string }>;
         arc: Array<{ moment: string; note: string }>;
         cupCard: string;
-        pairing: { kind: string; text: string };
+        pairings: { food: string; book: string; music: string };
       };
 
       if (
@@ -388,7 +398,7 @@ Rules:
         !Array.isArray(parsed.arc) ||
         parsed.arc.length !== 3 ||
         !parsed.cupCard ||
-        !parsed.pairing
+        !parsed.pairings
       ) {
         return { ok: false as const, error: "Malformed forecast payload" };
       }
@@ -453,7 +463,12 @@ Return JSON ONLY, no markdown, no prose outside JSON:
     { "label": "step name (2-3 words)", "duration": "time hint (e.g. '30s', '2 min', 'immediately')", "detail": "max 20 words, precise barista instruction" }
   ],
   "tastingNote": "one sentence sensory prediction referencing the coffee's flavor notes and the flavor addition",
-  "tip": "one sentence pro tip specific to this drink+coffee combination"
+  "tip": "one sentence pro tip specific to this drink+coffee combination",
+  "pairings": {
+    "food": "one short food pairing suggestion (max 8 words)",
+    "book": "one short book or genre suggestion (max 8 words)",
+    "music": "one short music artist, genre, or playlist suggestion (max 8 words)"
+  }
 }
 
 Rules:
@@ -511,6 +526,7 @@ Rules:
         steps: Array<{ label: string; duration: string; detail: string }>;
         tastingNote: string;
         tip: string;
+        pairings: { food: string; book: string; music: string };
       };
 
       if (

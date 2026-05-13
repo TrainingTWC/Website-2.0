@@ -9,10 +9,6 @@ import {
   Moon,
   CloudDrizzle,
   Coffee,
-  Music,
-  Utensils,
-  BookOpen,
-  Activity,
   Droplets,
   Snowflake,
 } from "lucide-react";
@@ -66,7 +62,7 @@ interface Forecast {
   ritual: Array<{ label: string; detail: string }>;
   arc: Array<{ moment: string; note: string }>;
   cupCard: string;
-  pairing: { kind: string; text: string };
+  pairings: { food: string; book: string; music: string };
 }
 
 interface Props {
@@ -78,15 +74,6 @@ interface Props {
   accentHex: string;
 }
 
-function PairingIcon({ kind }: { kind: string }) {
-  const k = kind.toLowerCase();
-  if (k.includes("music")) return <Music className="w-4 h-4" strokeWidth={2.2} />;
-  if (k.includes("food")) return <Utensils className="w-4 h-4" strokeWidth={2.2} />;
-  if (k.includes("read") || k.includes("book"))
-    return <BookOpen className="w-4 h-4" strokeWidth={2.2} />;
-  if (k.includes("activity")) return <Activity className="w-4 h-4" strokeWidth={2.2} />;
-  return <Sparkles className="w-4 h-4" strokeWidth={2.2} />;
-}
 
 export function SipForecast({
   productName,
@@ -442,20 +429,30 @@ export function SipForecast({
                 </div>
 
                 {/* Pairing */}
-                <div className="flex items-center gap-3 pt-2 border-t border-white/10">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                    style={{ background: `${accentHex}25`, color: accentHex }}
-                  >
-                    <PairingIcon kind={forecast.pairing.kind} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50">
-                      Pair with
-                    </p>
-                    <p className="text-sm text-white/90 truncate">
-                      {forecast.pairing.text}
-                    </p>
+                <div className="pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.10)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/50 mb-3">
+                    Pair with
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Food",  value: forecast.pairings.food  },
+                      { label: "Book",  value: forecast.pairings.book  },
+                      { label: "Music", value: forecast.pairings.music },
+                    ].map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="rounded-xl p-3"
+                        style={{ background: `${accentHex}10`, border: `1px solid ${accentHex}30` }}
+                      >
+                        <p
+                          className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+                          style={{ color: accentHex }}
+                        >
+                          {label}
+                        </p>
+                        <p className="text-xs text-white/75 leading-snug">{value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </motion.div>

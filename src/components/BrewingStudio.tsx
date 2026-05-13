@@ -51,6 +51,7 @@ interface BrewRecipe {
   steps: Array<{ label: string; timeSec: number; waterG?: number; detail: string }>;
   tastingNote: string;
   tip: string;
+  pairings?: { food: string; book: string; music: string };
 }
 
 interface CraftRecipe {
@@ -59,6 +60,7 @@ interface CraftRecipe {
   steps: Array<{ label: string; duration: string; detail: string }>;
   tastingNote: string;
   tip: string;
+  pairings?: { food: string; book: string; music: string };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -650,6 +652,9 @@ export function BrewingStudio({
                   <BottomBlock label="Expect" italic>{brewRecipe.tastingNote}</BottomBlock>
                   <BottomBlock label="Pro tip">{brewRecipe.tip}</BottomBlock>
                 </div>
+                {brewRecipe.pairings && (
+                  <PairingsBlock pairings={brewRecipe.pairings} accentHex={accentHex} />
+                )}
               </motion.div>
             )}
 
@@ -705,6 +710,9 @@ export function BrewingStudio({
                   <BottomBlock label="Expect" italic>{craftRecipe.tastingNote}</BottomBlock>
                   <BottomBlock label="Pro tip">{craftRecipe.tip}</BottomBlock>
                 </div>
+                {craftRecipe.pairings && (
+                  <PairingsBlock pairings={craftRecipe.pairings} accentHex={accentHex} />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -774,6 +782,31 @@ function BottomBlock({ label, children, italic }: { label: string; children: str
         ? <p className="font-serif italic text-white/75 text-sm leading-relaxed">"{children}"</p>
         : <p className="text-white/65 text-sm leading-relaxed">{children}</p>
       }
+    </div>
+  );
+}
+
+function PairingsBlock({ pairings, accentHex }: { pairings: { food: string; book: string; music: string }; accentHex: string }) {
+  const items = [
+    { label: "Food", value: pairings.food },
+    { label: "Book", value: pairings.book },
+    { label: "Music", value: pairings.music },
+  ];
+  return (
+    <div className="pt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/30 mb-3">Pair with</p>
+      <div className="grid grid-cols-3 gap-2">
+        {items.map(({ label, value }) => (
+          <div
+            key={label}
+            className="rounded-xl p-3"
+            style={{ background: `${accentHex}10`, border: `1px solid ${accentHex}30` }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: accentHex }}>{label}</p>
+            <p className="text-xs text-white/75 leading-snug">{value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
