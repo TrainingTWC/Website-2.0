@@ -216,7 +216,7 @@ export function ChapterReveal({
     : "bg-natural-paper border-natural-border text-natural-text";
 
   return (
-    <section ref={ref} className={`relative min-h-[140vh] ${bg} ${fg} overflow-hidden`}>
+    <section ref={ref} className={`relative min-h-screen ${bg} ${fg} overflow-hidden`}>
       {/* Background editorial wordmark — slowest moving */}
       <motion.div
         style={{ y: bigTextY }}
