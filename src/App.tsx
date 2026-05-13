@@ -1013,62 +1013,70 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  // Wheel → accumulate velocity then let inertia coast
+  // Wheel: only intercept horizontal trackpad swipes — vertical passes through to Lenis/page
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      // Horizontal trackpad swipe — let native handle it
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5) return;
+      const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5;
+      if (!isHorizontal) return; // vertical scroll: don't block, let page scroll
       e.preventDefault();
-      // Normalise: deltaMode 1 = lines (~3 lines/notch), 2 = pages
-      const raw = e.deltaMode === 1 ? e.deltaY * 25 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
-      velRef.current += raw * 0.55;
+      velRef.current += e.deltaX * 0.6;
       runInertia();
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => { el.removeEventListener("wheel", onWheel); cancelAnimationFrame(rafRef.current); };
   }, [runInertia]);
 
-  // Pointer drag — setPointerCapture keeps events flowing even outside the element
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  // Mouse drag via document listeners — NO pointer capture so click events reach children correctly
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // left button only
     const el = scrollRef.current;
     if (!el) return;
     cancelAnimationFrame(rafRef.current);
     velRef.current = 0;
-    el.setPointerCapture(e.pointerId);
     drag.current = { active: true, startX: e.clientX, startSL: el.scrollLeft, lastX: e.clientX, lastT: performance.now(), vel: 0, moved: false };
+    el.style.cursor = "grabbing";
+
+    const onMove = (ev: MouseEvent) => {
+      const d = drag.current;
+      if (!d.active || !scrollRef.current) return;
+      const dx = ev.clientX - d.startX;
+      if (Math.abs(dx) > 4) d.moved = true;
+      const now = performance.now();
+      const dt = now - d.lastT;
+      if (dt > 0) d.vel = (d.lastX - ev.clientX) / dt; // px/ms
+      d.lastX = ev.clientX;
+      d.lastT = now;
+      scrollRef.current.scrollLeft = d.startSL - dx;
+    };
+
+    const onUp = () => {
+      drag.current.active = false;
+      velRef.current = drag.current.vel * 14;
+      runInertia();
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      if (scrollRef.current) scrollRef.current.style.cursor = "";
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
   };
 
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    if (!d.active || !scrollRef.current) return;
-    const dx = e.clientX - d.startX;
-    if (Math.abs(dx) > 4) d.moved = true;
-    const now = performance.now();
-    const dt = now - d.lastT;
-    if (dt > 0) d.vel = (d.lastX - e.clientX) / dt; // px/ms
-    d.lastX = e.clientX;
-    d.lastT = now;
-    scrollRef.current.scrollLeft = d.startSL - dx;
-  };
-
-  const onPointerUp = () => {
-    const d = drag.current;
-    if (!d.active) return;
-    d.active = false;
-    // Convert px/ms → px/frame @ 60fps and throw
-    velRef.current = d.vel * 14;
-    runInertia();
+  // Capture-phase click guard: suppress clicks that followed a drag (moved > 4px)
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (drag.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   };
 
   return (
     <div
       ref={scrollRef}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onMouseDown={onMouseDown}
+      onClickCapture={onClickCapture}
       className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none
                  -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
                  [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
@@ -1077,11 +1085,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
       data-lenis-prevent
     >
       {products.map((p) => (
-        <div
-          key={p._id}
-          className="flex-shrink-0 w-48 sm:w-56 md:w-64"
-          onClick={(e) => { if (drag.current.moved) e.stopPropagation(); }}
-        >
+        <div key={p._id} className="flex-shrink-0 w-48 sm:w-56 md:w-64">
           <ProductCard product={p} onAddToCart={onAddToCart} />
         </div>
       ))}
