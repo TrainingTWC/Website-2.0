@@ -533,7 +533,7 @@ const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.Compo
 ];
 
 function useActiveSection(): string {
-  const [active, setActive] = useState<string>("beans"); // Beans default
+  const [active, setActive] = useState<string>("beans");
   useEffect(() => {
     const els = NAV_ITEMS
       .map(({ key, target }) => {
@@ -543,21 +543,35 @@ function useActiveSection(): string {
       .filter((x): x is { key: string; el: HTMLElement } => !!x);
     if (!els.length) return;
 
-    const obs = new IntersectionObserver(
-      (entries) => {
-        // Pick the entry with the largest intersectionRatio that is intersecting
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) {
-          const match = els.find((x) => x.el === visible[0].target);
-          if (match) setActive(match.key);
+    // Scroll-based: pick the section whose top edge is closest to 35% down the viewport.
+    // Works reliably for sections of any height, unlike IntersectionObserver rootMargin.
+    const update = () => {
+      const trigger = window.scrollY + window.innerHeight * 0.35;
+      let best = els[0];
+      let bestDist = Infinity;
+      for (const item of els) {
+        const top = window.scrollY + item.el.getBoundingClientRect().top;
+        const dist = Math.abs(top - trigger);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = item;
         }
-      },
-      { rootMargin: "-40% 0px -40% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
-    );
-    els.forEach(({ el }) => obs.observe(el));
-    return () => obs.disconnect();
+      }
+      setActive((prev) => (prev === best.key ? prev : best.key));
+    };
+
+    // Hook into Lenis if available, else native scroll
+    const lenis = (window as any).__lenis;
+    if (lenis) {
+      lenis.on("scroll", update);
+    } else {
+      window.addEventListener("scroll", update, { passive: true });
+    }
+    update();
+    return () => {
+      if (lenis) lenis.off("scroll", update);
+      else window.removeEventListener("scroll", update);
+    };
   }, []);
   return active;
 }
