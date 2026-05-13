@@ -1,0 +1,294 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, ShoppingCart, CheckCircle, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone } from "lucide-react";
+import type { Product } from "../types";
+import type { CartItem } from "./CartPanel";
+
+interface CheckoutPageProps {
+  cart: CartItem[];
+  products: Product[];
+  onClose: () => void;
+  onPlaceOrder: () => void;
+}
+
+type PaymentMethod = "cod" | "upi" | "card";
+
+export function CheckoutPage({ cart, products, onClose, onPlaceOrder }: CheckoutPageProps) {
+  const cartProducts = cart
+    .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
+    .filter((c): c is { productId: string; qty: number; product: Product } => c.product != null);
+
+  const subtotal = cartProducts.reduce((s, c) => s + c.product.price * c.qty, 0);
+  const shipping = subtotal > 499 ? 0 : 49;
+  const total = subtotal + shipping;
+
+  const [step, setStep] = useState<"form" | "success">("form");
+  const [payment, setPayment] = useState<PaymentMethod>("cod");
+  const [form, setForm] = useState({
+    name: "", email: "", phone: "",
+    address1: "", address2: "", city: "", state: "", pincode: "",
+  });
+  const [errors, setErrors] = useState<Partial<typeof form>>({});
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+    setErrors((err) => ({ ...err, [k]: undefined }));
+  };
+
+  const validate = () => {
+    const e: Partial<typeof form> = {};
+    if (!form.name.trim()) e.name = "Required";
+    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = "Valid email required";
+    if (!form.phone.match(/^\d{10}$/)) e.phone = "10-digit number required";
+    if (!form.address1.trim()) e.address1 = "Required";
+    if (!form.city.trim()) e.city = "Required";
+    if (!form.state.trim()) e.state = "Required";
+    if (!form.pincode.match(/^\d{6}$/)) e.pincode = "6-digit pincode required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setStep("success");
+  };
+
+  const handleDone = () => {
+    onPlaceOrder();
+  };
+
+  return (
+    <div className="h-full overflow-y-auto bg-natural-bg scrollbar-none">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-natural-paper/95 backdrop-blur-md border-b border-natural-border px-4 sm:px-6 py-4 flex items-center justify-between">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-natural-text/60 hover:text-natural-text transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Edit Cart
+        </button>
+        <div className="flex items-center gap-2 text-natural-text">
+          <ShoppingCart className="w-4 h-4 text-natural-accent" />
+          <span className="font-serif font-bold text-base">Checkout</span>
+        </div>
+        <div className="w-20" />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {step === "form" ? (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:grid lg:grid-cols-[1fr_360px] lg:gap-10 lg:items-start"
+          >
+            {/* ── Left: Form ─────────────────────────────── */}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Contact */}
+              <section>
+                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-natural-accent" /> Contact
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Full Name" icon={<User className="w-4 h-4" />} value={form.name} onChange={set("name")} error={errors.name} placeholder="Arjun Sharma" />
+                  <Field label="Email" icon={<Mail className="w-4 h-4" />} value={form.email} onChange={set("email")} error={errors.email} placeholder="you@email.com" type="email" />
+                  <Field label="Phone" icon={<Phone className="w-4 h-4" />} value={form.phone} onChange={set("phone")} error={errors.phone} placeholder="9876543210" type="tel" className="sm:col-span-2" />
+                </div>
+              </section>
+
+              {/* Delivery */}
+              <section>
+                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-natural-accent" /> Delivery Address
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Address Line 1" value={form.address1} onChange={set("address1")} error={errors.address1} placeholder="House / Flat / Office No." className="sm:col-span-2" />
+                  <Field label="Address Line 2" value={form.address2} onChange={set("address2")} placeholder="Area, Colony (optional)" className="sm:col-span-2" />
+                  <Field label="City" value={form.city} onChange={set("city")} error={errors.city} placeholder="Bengaluru" />
+                  <Field label="State" value={form.state} onChange={set("state")} error={errors.state} placeholder="Karnataka" />
+                  <Field label="Pincode" value={form.pincode} onChange={set("pincode")} error={errors.pincode} placeholder="560001" />
+                </div>
+              </section>
+
+              {/* Payment */}
+              <section>
+                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-natural-accent" /> Payment
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {([
+                    { id: "cod", label: "Cash on Delivery", icon: <Truck className="w-5 h-5" /> },
+                    { id: "upi", label: "UPI / GPay", icon: <Smartphone className="w-5 h-5" /> },
+                    { id: "card", label: "Credit / Debit Card", icon: <CreditCard className="w-5 h-5" /> },
+                  ] as { id: PaymentMethod; label: string; icon: React.ReactNode }[]).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setPayment(opt.id)}
+                      className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
+                        payment === opt.id
+                          ? "border-natural-accent bg-natural-accent/8 shadow-sm"
+                          : "border-natural-border bg-natural-paper hover:border-natural-accent/40"
+                      }`}
+                    >
+                      <span className={payment === opt.id ? "text-natural-accent" : "text-natural-text/50"}>
+                        {opt.icon}
+                      </span>
+                      <span className={`text-sm font-semibold ${payment === opt.id ? "text-natural-text" : "text-natural-text/60"}`}>
+                        {opt.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {payment === "upi" && (
+                  <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
+                    UPI QR / payment link will be shared after order placement.
+                  </p>
+                )}
+                {payment === "card" && (
+                  <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
+                    Secure card payment via Razorpay will open after placing the order.
+                  </p>
+                )}
+              </section>
+
+              {/* Mobile CTA */}
+              <div className="lg:hidden">
+                <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+                <button
+                  type="submit"
+                  className="mt-5 w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl"
+                >
+                  Place Order · ₹{total.toLocaleString("en-IN")}
+                </button>
+              </div>
+            </form>
+
+            {/* ── Right: Order Summary (desktop) ─── */}
+            <div className="hidden lg:block sticky top-24 space-y-4">
+              <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+              <button
+                onClick={handleSubmit as unknown as React.MouseEventHandler}
+                className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl"
+              >
+                Place Order · ₹{total.toLocaleString("en-IN")}
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center gap-6"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
+            >
+              <CheckCircle className="w-20 h-20 text-green-500" />
+            </motion.div>
+            <div className="space-y-2">
+              <h2 className="font-serif font-bold text-3xl text-natural-text">Order Placed!</h2>
+              <p className="text-natural-text/60 max-w-sm">
+                Thank you, {form.name.split(" ")[0]}! Your order is confirmed. We'll send a confirmation to <strong>{form.email}</strong>.
+              </p>
+            </div>
+            <div className="bg-natural-paper border border-natural-border rounded-2xl px-6 py-4 text-sm space-y-1">
+              <p className="text-natural-text/50 text-xs uppercase tracking-widest font-bold mb-2">Order Summary</p>
+              <p className="font-bold text-natural-text">{cartProducts.length} item{cartProducts.length !== 1 ? "s" : ""} · ₹{total.toLocaleString("en-IN")}</p>
+              <p className="text-natural-text/60">Delivering to {form.city}, {form.pincode}</p>
+              <p className="text-natural-text/60">Payment: {payment === "cod" ? "Cash on Delivery" : payment === "upi" ? "UPI" : "Card"}</p>
+            </div>
+            <button
+              onClick={handleDone}
+              className="px-10 py-3.5 rounded-full bg-natural-text text-white font-bold text-sm hover:bg-natural-accent transition-colors active:scale-[0.98]"
+            >
+              Continue Shopping
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Sub-components ──────────────────────────────────────────────
+
+function Field({
+  label, value, onChange, error, placeholder, type = "text", className = "", icon,
+}: {
+  label: string; value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string; placeholder?: string; type?: string; className?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-natural-text/50">{label}</label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-natural-text/30">{icon}</span>
+        )}
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`w-full bg-natural-paper border rounded-xl py-3 text-sm text-natural-text placeholder:text-natural-text/25 focus:outline-none focus:ring-2 focus:ring-natural-accent/40 transition-all ${
+            icon ? "pl-10 pr-4" : "px-4"
+          } ${error ? "border-red-400" : "border-natural-border"}`}
+        />
+      </div>
+      {error && <p className="text-[11px] text-red-400 font-medium">{error}</p>}
+    </div>
+  );
+}
+
+function OrderSummaryCard({
+  cartProducts, subtotal, shipping, total,
+}: {
+  cartProducts: { productId: string; qty: number; product: Product }[];
+  subtotal: number; shipping: number; total: number;
+}) {
+  return (
+    <div className="bg-natural-paper border border-natural-border rounded-2xl p-5 space-y-4">
+      <h3 className="font-serif font-bold text-base text-natural-text">Your Order</h3>
+      <div className="space-y-3 max-h-52 overflow-y-auto scrollbar-none">
+        {cartProducts.map(({ productId, qty, product: p }) => (
+          <div key={productId} className="flex items-center gap-3">
+            {p.imageUrl && (
+              <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-natural-muted">
+                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-natural-text line-clamp-1">{p.name}</p>
+              <p className="text-xs text-natural-text/50">Qty {qty}</p>
+            </div>
+            <p className="text-sm font-bold text-natural-text shrink-0">₹{(p.price * qty).toLocaleString("en-IN")}</p>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-natural-border pt-3 space-y-1.5 text-sm">
+        <div className="flex justify-between text-natural-text/60">
+          <span>Subtotal</span><span>₹{subtotal.toLocaleString("en-IN")}</span>
+        </div>
+        <div className="flex justify-between text-natural-text/60">
+          <span>Shipping</span>
+          <span>{shipping === 0 ? <span className="text-green-500 font-semibold">Free</span> : `₹${shipping}`}</span>
+        </div>
+        {shipping === 0 && (
+          <p className="text-[11px] text-green-500">Free shipping on orders above ₹499</p>
+        )}
+        <div className="flex justify-between font-bold text-natural-text text-base pt-1 border-t border-natural-border">
+          <span>Total</span><span>₹{total.toLocaleString("en-IN")}</span>
+        </div>
+      </div>
+    </div>
+  );
+}

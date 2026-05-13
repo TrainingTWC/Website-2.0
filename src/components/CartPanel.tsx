@@ -14,6 +14,7 @@ interface CartPanelProps {
   products: Product[];
   onRemove: (productId: string) => void;
   onUpdateQty: (productId: string, delta: number) => void;
+  onCheckout?: () => void;
 }
 
 export function CartPanel({
@@ -23,6 +24,7 @@ export function CartPanel({
   products,
   onRemove,
   onUpdateQty,
+  onCheckout,
 }: CartPanelProps) {
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
@@ -163,7 +165,10 @@ export function CartPanel({
                 <p className="text-natural-text/35 text-xs">
                   Taxes &amp; shipping calculated at checkout.
                 </p>
-                <button className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-sm hover:bg-natural-accent transition-colors active:scale-[0.98]">
+                <button
+                  onClick={() => { onClose(); onCheckout?.(); }}
+                  className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-sm hover:bg-natural-accent transition-colors active:scale-[0.98]"
+                >
                   Proceed to Checkout
                 </button>
               </div>

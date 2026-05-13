@@ -28,6 +28,8 @@ import type { Product } from "../types";
 interface ProductPageProps {
   productId: string;
   onAddToCart: (productId: string, qty: number) => void;
+  onOpenCart?: () => void;
+  cartCount?: number;
 }
 
 interface Theme {
@@ -102,7 +104,7 @@ function themeFor(p: Product): Theme {
   return THEMES[key] ?? THEMES.medium;
 }
 
-export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
+export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 }: ProductPageProps) {
   const products = useQuery(api.products.list);
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
@@ -206,6 +208,20 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
           <span className={`text-[10px] font-bold uppercase tracking-[0.35em] ${theme.accentText}`}>
             {product.category}
           </span>
+          {onOpenCart && (
+            <button
+              onClick={onOpenCart}
+              aria-label="Open cart"
+              className={`relative flex items-center gap-1.5 ${theme.fg} opacity-70 hover:opacity-100 transition-opacity`}
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[1rem] h-4 bg-natural-accent text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Main 3-col grid — expands to fill remaining viewport */}

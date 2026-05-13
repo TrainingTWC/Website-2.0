@@ -43,6 +43,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
 import { CartPanel } from "./components/CartPanel";
+import { CheckoutPage } from "./components/CheckoutPage";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -343,6 +344,7 @@ function Storefront() {
   const [criticalReady, setCriticalReady] = useState(false);
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const params = useUrlQuery();
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
   const slugMap = useMemo(() => {
@@ -503,6 +505,8 @@ function Storefront() {
             <ProductPage
               productId={activeProductId}
               onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
+              onOpenCart={() => setCartOpen(true)}
+              cartCount={cartCount}
             />
           </motion.div>
         )}
@@ -590,7 +594,29 @@ function Storefront() {
         products={products ?? []}
         onRemove={removeFromCart}
         onUpdateQty={updateQty}
+        onCheckout={() => setCheckoutOpen(true)}
       />
+
+      {/* Checkout full-screen overlay */}
+      <AnimatePresence>
+        {checkoutOpen && (
+          <motion.div
+            key="checkout"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-90 bg-natural-bg overflow-hidden"
+          >
+            <CheckoutPage
+              cart={cart}
+              products={products ?? []}
+              onClose={() => { setCheckoutOpen(false); setCartOpen(true); }}
+              onPlaceOrder={() => { setCart([]); setCheckoutOpen(false); }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
