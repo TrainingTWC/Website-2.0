@@ -370,7 +370,17 @@ function Storefront() {
   const openTI = () => navigateTo({ ti: "1" });
   const closeTI = () => navigateTo({ ti: null });
 
-  const onAddToCart = (name: string) => showToast(`Added \"${name}\" to cart`);
+  const onAddToCart = (name: string) => showToast(`Added "${name}" to cart`);
+
+  // Nav click — if product page is open, close it first then scroll to section
+  const handleNavTo = useCallback((target: string) => {
+    if (activeProductId) {
+      navigateTo({ product: null });
+      setTimeout(() => scrollTo(target), 560);
+    } else {
+      scrollTo(target);
+    }
+  }, [activeProductId]);
 
   // Wait for: (1) products query resolved, (2) hero bg image preloaded.
   useEffect(() => {
