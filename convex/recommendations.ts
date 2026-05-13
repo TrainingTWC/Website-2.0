@@ -403,3 +403,132 @@ Rules:
     }
   },
 });
+
+// ── Flavored Drink: AI builds a café-quality drink recipe on top of the bean ──
+// Used by BrewingStudio "Signature Drink" mode. Caller provides bean details +
+// drink spec (style, flavor addition, milk, temperature, size).
+// Mistral only (env: MISTRAL_API_KEY).
+export const flavoredDrink = action({
+  args: {
+    productName: v.string(),
+    roastLevel: v.optional(v.string()),
+    flavorNotes: v.array(v.string()),
+    drinkStyle: v.string(), // "latte" | "cappuccino" | "flat-white" | "mocha" | "cortado" | "cold-tonic" | "whipped" | "affogato"
+    flavorAdd: v.string(), // "none" | "vanilla" | "caramel" | "hazelnut" | "cinnamon" | "brown sugar" | "cardamom" | "rose"
+    milk: v.string(), // "whole" | "oat" | "almond" | "coconut" | "soy" | "no milk"
+    temperature: v.string(), // "hot" | "iced"
+    size: v.string(), // "small" | "medium" | "large"
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env.MISTRAL_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error:
+          "MISTRAL_API_KEY not configured. Set it in the Convex dashboard to unlock signature drinks.",
+      };
+    }
+
+    const prompt = `
+You are Third Intelligence, the craft drinks engine for Third Wave Coffee.
+Build a premium café-quality drink recipe using the provided coffee base.
+
+COFFEE BASE
+- Name: ${args.productName}
+- Roast: ${args.roastLevel ?? "unspecified"}
+- Flavor notes: ${args.flavorNotes.join(", ") || "n/a"}
+
+DRINK SPEC
+- Style: ${args.drinkStyle}
+- Flavor addition: ${args.flavorAdd === "none" ? "none — serve clean" : args.flavorAdd}
+- Milk: ${args.milk === "no milk" ? "no milk" : `${args.milk} milk`}
+- Temperature: ${args.temperature}
+- Size: ${args.size}
+
+Return JSON ONLY, no markdown, no prose outside JSON:
+{
+  "title": "drink name (3-5 words, creative but grounded)",
+  "servingNote": "concise descriptor e.g. 'Hot · 300ml · double shot' or 'Iced · 400ml · slow pour'",
+  "steps": [
+    { "label": "step name (2-3 words)", "duration": "time hint (e.g. '30s', '2 min', 'immediately')", "detail": "max 20 words, precise barista instruction" }
+  ],
+  "tastingNote": "one sentence sensory prediction referencing the coffee's flavor notes and the flavor addition",
+  "tip": "one sentence pro tip specific to this drink+coffee combination"
+}
+
+Rules:
+- 3-5 steps total
+- For "iced": include ice and layering in steps; build top-to-bottom in glass
+- For "no milk": adapt to a black or tonic variation — no milk steps at all
+- For "affogato": vanilla ice cream is implied even if no flavor is selected
+- If flavorAdd is "none", do not reference any syrup in the build
+- Reference the coffee's actual flavor notes in tastingNote
+- Voice: precise, confident, Third Intelligence. No emojis, no exclamations.
+`.trim();
+
+    try {
+      const response = await fetch(
+        "https://api.mistral.ai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "mistral-small-latest",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are Third Intelligence, a precise craft drinks engine. Always respond with valid JSON only — no markdown, no prose outside the JSON.",
+              },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.85,
+            response_format: { type: "json_object" },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("Mistral HTTP error (flavoredDrink):", response.status, body);
+        return { ok: false as const, error: `Mistral returned ${response.status}` };
+      }
+
+      const json = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const text = json?.choices?.[0]?.message?.content;
+      if (!text) {
+        return { ok: false as const, error: "Empty response from Mistral" };
+      }
+
+      const parsed = JSON.parse(text) as {
+        title: string;
+        servingNote: string;
+        steps: Array<{ label: string; duration: string; detail: string }>;
+        tastingNote: string;
+        tip: string;
+      };
+
+      if (
+        !parsed.title ||
+        !Array.isArray(parsed.steps) ||
+        parsed.steps.length === 0 ||
+        !parsed.tastingNote
+      ) {
+        return { ok: false as const, error: "Malformed drink payload" };
+      }
+
+      return { ok: true as const, recipe: parsed };
+    } catch (error) {
+      console.error("flavoredDrink error:", error);
+      return {
+        ok: false as const,
+        error: "Could not craft your drink. Try again in a moment.",
+      };
+    }
+  },
+});

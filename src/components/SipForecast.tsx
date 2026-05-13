@@ -188,7 +188,7 @@ export function SipForecast({
                     }`}
                     style={
                       active
-                        ? { background: accentHex, borderColor: accentHex }
+                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
                         : undefined
                     }
                   >
@@ -218,7 +218,7 @@ export function SipForecast({
                     }`}
                     style={
                       active
-                        ? { background: accentHex, borderColor: accentHex }
+                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
                         : undefined
                     }
                   >
@@ -250,7 +250,7 @@ export function SipForecast({
                     }`}
                     style={
                       active
-                        ? { background: accentHex, borderColor: accentHex }
+                        ? { background: accentHex, borderColor: accentHex, boxShadow: `0 4px 16px ${accentHex}44` }
                         : undefined
                     }
                   >
@@ -264,8 +264,11 @@ export function SipForecast({
           <button
             onClick={requestForecast}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-full text-white font-bold uppercase tracking-wider text-xs shadow-lg disabled:opacity-60 transition-all hover:shadow-xl"
-            style={{ background: accentHex }}
+            className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl text-white font-bold uppercase tracking-wider text-sm disabled:opacity-60 transition-all"
+            style={{
+              background: `linear-gradient(135deg, ${accentHex} 0%, ${accentHex}dd 100%)`,
+              boxShadow: loading ? "none" : `0 6px 28px ${accentHex}55, 0 2px 8px ${accentHex}33`,
+            }}
           >
             {loading ? (
               <>
@@ -288,7 +291,22 @@ export function SipForecast({
         </div>
 
         {/* ── Right: forecast output ────────────────────────────── */}
-        <div className="bg-natural-text text-white rounded-3xl p-6 sm:p-8 min-h-[420px] relative overflow-hidden">
+        <div
+          className="text-white rounded-3xl p-6 sm:p-8 min-h-105 relative overflow-hidden"
+          style={{ background: "linear-gradient(150deg, #1e1208 0%, #110c06 55%, #090704 100%)" }}
+        >
+          {/* Ambient glow — top-right */}
+          <div
+            aria-hidden
+            className="absolute -top-28 -right-28 w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
+            style={{ background: accentHex }}
+          />
+          {/* Ambient glow — bottom-left */}
+          <div
+            aria-hidden
+            className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full blur-3xl opacity-10 pointer-events-none"
+            style={{ background: accentHex }}
+          />
           <AnimatePresence mode="wait">
             {!forecast && !loading && (
               <motion.div
@@ -343,7 +361,7 @@ export function SipForecast({
                 <div>
                   <p
                     className="text-[10px] font-bold uppercase tracking-[0.3em] mb-2"
-                    style={{ color: accentHex }}
+                    style={{ color: accentHex, textShadow: `0 0 16px ${accentHex}` }}
                   >
                     Today's forecast
                   </p>
@@ -384,6 +402,7 @@ export function SipForecast({
                           style={{
                             background: accentHex,
                             color: "#fff",
+                            boxShadow: `0 0 10px ${accentHex}66`,
                           }}
                         >
                           {i + 1}
