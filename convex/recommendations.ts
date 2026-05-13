@@ -23,13 +23,13 @@ export const getRecommendation = action({
     ),
   },
   handler: async (_ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
         primaryProductIds: [],
         crossSellProductIds: [],
         explanation:
-          "AI recommendations are not configured. Please set the GEMINI_API_KEY environment variable in your Convex dashboard.",
+          "AI recommendations are not configured. Please set the MISTRAL_API_KEY environment variable in your Convex dashboard.",
       };
     }
 
@@ -77,27 +77,36 @@ RETURN JSON ONLY:
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        "https://api.mistral.ai/v1/chat/completions",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-            },
+            model: "mistral-small-latest",
+            messages: [
+              {
+                role: "system",
+                content: "You are Third Intelligence, a coffee recommendation engine. Always respond with valid JSON only — no markdown, no explanation outside the JSON.",
+              },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.7,
+            response_format: { type: "json_object" },
           }),
         }
       );
 
       if (!response.ok) {
-        console.error("Gemini HTTP error:", response.status, await response.text());
-        throw new Error(`Gemini returned ${response.status}`);
+        console.error("Mistral HTTP error:", response.status, await response.text());
+        throw new Error(`Mistral returned ${response.status}`);
       }
 
       const json = await response.json();
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("Empty response from Gemini");
+      const text = json?.choices?.[0]?.message?.content;
+      if (!text) throw new Error("Empty response from Mistral");
 
       const parsed = JSON.parse(text) as {
         primaryProductIds: string[];
