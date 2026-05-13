@@ -14,6 +14,7 @@ import { api } from "../../convex/_generated/api";
 import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
 import { PersonalitySection } from "./PersonalitySection";
+import { BrewingStudio } from "./BrewingStudio";
 import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 
@@ -422,12 +423,27 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
         />
       )}
 
+      {/* ── Below-fold detail: always on the neutral light surface so text is
+           legible regardless of the hero/personality color theme above. ── */}
+      <div className="bg-natural-bg text-natural-text">
+
+      {/* ── Brewing Studio (interactive + AI recipe) ────────────────── */}
+      {product.type !== "merch" && (
+        <BrewingStudio
+          productName={product.name}
+          roastLevel={product.roastLevel}
+          origin={product.origin}
+          flavorNotes={product.flavorNotes}
+          accentHex={theme.accentHex}
+        />
+      )}
+
       {/* ── Story & specs — below-fold detail ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-16 sm:py-24 grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-12 sm:gap-16">
         <div className="space-y-8">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent mb-3">The story</p>
-            <h2 className="font-serif font-bold text-3xl sm:text-4xl mb-4">A daily ritual, perfected.</h2>
+            <h2 className="font-serif font-bold text-3xl sm:text-4xl mb-4 text-natural-text">A daily ritual, perfected.</h2>
             <p className="text-natural-text/70 leading-relaxed text-lg">{product.description}</p>
           </div>
           {product.flavorNotes.length > 0 && (
@@ -485,6 +501,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

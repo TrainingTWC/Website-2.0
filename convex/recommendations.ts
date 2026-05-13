@@ -131,3 +131,121 @@ RETURN JSON ONLY:
     }
   },
 });
+
+// ── Brewing recipe: AI generates a custom brew spec for a product + method ──
+// Uses Gemini (env: GEMINI_API_KEY). Returns structured recipe JSON consumed
+// by the in-product Brewing Studio.
+export const brewingRecipe = action({
+  args: {
+    productName: v.string(),
+    roastLevel: v.optional(v.string()),
+    origin: v.optional(v.string()),
+    flavorNotes: v.array(v.string()),
+    method: v.string(), // "espresso" | "v60" | "french-press" | "aeropress" | "cold-brew"
+    dose: v.number(), // grams of coffee
+    ratio: v.number(), // 1:N water ratio (e.g. 16 -> 1:16)
+    strength: v.string(), // "light" | "balanced" | "strong"
+  },
+  handler: async (_ctx, args) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false as const,
+        error:
+          "GEMINI_API_KEY not configured. Set it in the Convex dashboard to unlock AI brewing recipes.",
+      };
+    }
+
+    const yieldMl = Math.round(args.dose * args.ratio);
+    const prompt = `
+You are Third Intelligence, the brewing engine for Third Wave Coffee. Generate
+a precise, opinionated recipe for the following bean + method.
+
+BEAN
+- Name: ${args.productName}
+- Roast: ${args.roastLevel ?? "unspecified"}
+- Origin: ${args.origin ?? "unspecified"}
+- Flavor notes: ${args.flavorNotes.join(", ") || "n/a"}
+
+METHOD: ${args.method}
+PARAMETERS
+- Dose: ${args.dose} g
+- Ratio: 1:${args.ratio} (target yield ~${yieldMl} ml)
+- Strength preference: ${args.strength}
+
+Return JSON ONLY in this exact shape — no markdown, no prose outside JSON:
+{
+  "title": "short evocative recipe name (max 6 words)",
+  "grind": "grind size description (e.g. 'medium-fine, like table salt')",
+  "waterTempC": <number 80-96>,
+  "totalTimeSec": <number>,
+  "steps": [
+    { "label": "Bloom", "timeSec": 30, "detail": "Pour 40g water, swirl, wait." },
+    { "label": "First pour", "timeSec": 30, "detail": "..." }
+  ],
+  "tastingNote": "1 sentence prediction of how the cup will taste, referencing the bean's flavor notes",
+  "tip": "1 sentence pro tip specific to this bean+method combination"
+}
+
+Rules:
+- 3 to 6 steps total, each with timeSec and detail (max 18 words)
+- Sum of step timeSec must equal totalTimeSec
+- waterTempC must reflect roast level (darker = lower temp)
+- Steps should feel like a real barista wrote them, not generic
+- Voice: precise, confident, Third Intelligence (no filler, no exclamations)
+`.trim();
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.8,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("Gemini HTTP error:", response.status, body);
+        return { ok: false as const, error: `Gemini returned ${response.status}` };
+      }
+
+      const json = (await response.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        return { ok: false as const, error: "Empty response from Gemini" };
+      }
+
+      const parsed = JSON.parse(text) as {
+        title: string;
+        grind: string;
+        waterTempC: number;
+        totalTimeSec: number;
+        steps: Array<{ label: string; timeSec: number; detail: string }>;
+        tastingNote: string;
+        tip: string;
+      };
+
+      if (!parsed.title || !Array.isArray(parsed.steps) || parsed.steps.length === 0) {
+        return { ok: false as const, error: "Malformed recipe payload" };
+      }
+
+      return { ok: true as const, recipe: parsed };
+    } catch (error) {
+      console.error("brewingRecipe error:", error);
+      return {
+        ok: false as const,
+        error: "Could not generate recipe. Try again in a moment.",
+      };
+    }
+  },
+});
