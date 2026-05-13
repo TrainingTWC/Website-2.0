@@ -1245,7 +1245,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
           </div>
           <div className="aspect-square rounded-[3rem] overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=1200"
+              src={asset("our-story.png")}
               alt="Coffee roasting process"
               className="w-full h-full object-cover"
             />
