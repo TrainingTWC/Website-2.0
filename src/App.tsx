@@ -1095,22 +1095,37 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         }
       />
 
-      {/* ── Curtain into the catalog grids ─────────────────────── */}
-      <CurtainTransition color="bg-natural-bg" />
-
-      <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24">
-      {/* Catalog header */}
-      <div className="text-center max-w-2xl mx-auto pt-12">
-        <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-natural-accent">
-          The Collection
-        </span>
-        <h2 className="font-serif font-black text-3xl sm:text-4xl md:text-6xl leading-tight mt-3 tracking-tight">
-          Choose your ritual.
-        </h2>
-        <p className="text-natural-text/60 mt-4">
-          Every coffee, every bag, every cup — handpicked by our master roasters.
-        </p>
+      {/* ── Catalog intro — dark editorial banner ──────────────── */}
+      <div className="relative bg-natural-text text-white py-20 sm:py-28 px-4 sm:px-6 md:px-12 overflow-hidden">
+        {/* Warm amber glow from below */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_120%,rgba(160,90,30,0.45)_0%,transparent_55%)] pointer-events-none" />
+        {/* Subtle grain */}
+        <div
+          className="absolute inset-0 mix-blend-overlay opacity-[0.12] pointer-events-none"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
+        />
+        {/* Massive background wordmark */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none select-none overflow-hidden">
+          <span className="font-serif font-black text-[clamp(4rem,18vw,16rem)] leading-none tracking-tight text-white/[0.04]">
+            COLLECTION
+          </span>
+        </div>
+        <div className="relative max-w-7xl mx-auto text-center">
+          <span className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-amber-200/80">
+            <span className="h-px w-8 bg-amber-300/50" />
+            The Collection
+            <span className="h-px w-8 bg-amber-300/50" />
+          </span>
+          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-tight mt-4 tracking-tight">
+            Choose your ritual.
+          </h2>
+          <p className="text-white/50 mt-5 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
+            Every coffee, every bag, every cup — handpicked by our master roasters.
+          </p>
+        </div>
       </div>
+
+      <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
 
       {/* Product Categories — slim cards with product preview strip */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6" id="categories">
