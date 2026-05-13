@@ -11,7 +11,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
+import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
+import { PersonalitySection } from "./PersonalitySection";
 import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 
@@ -40,6 +42,7 @@ interface Theme {
   pillBg: string;    // soft pill bg for secondary chips
   shadow: string;
   decorOpacity: string;
+  accentHex: string; // raw hex for parallax-section tinting
 }
 
 const THEMES: Record<string, Theme> = {
@@ -51,6 +54,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/10 text-white border-white/20",
     shadow: "drop-shadow-[0_40px_60px_rgba(0,0,0,0.55)]",
     decorOpacity: "opacity-[0.12]",
+    accentHex: "#B8763A",
   },
   "medium-dark": {
     bg: "radial-gradient(circle at 30% 20%, #8B5A3C 0%, #5A3A24 70%)",
@@ -60,6 +64,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/10 text-white border-white/20",
     shadow: "drop-shadow-[0_40px_60px_rgba(0,0,0,0.45)]",
     decorOpacity: "opacity-[0.14]",
+    accentHex: "#C97B4A",
   },
   medium: {
     bg: "radial-gradient(circle at 30% 20%, #D4A56A 0%, #A47148 70%)",
@@ -69,6 +74,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/40 text-natural-text border-natural-text/15",
     shadow: "drop-shadow-[0_40px_60px_rgba(60,30,15,0.35)]",
     decorOpacity: "opacity-[0.18]",
+    accentHex: "#A47148",
   },
   light: {
     bg: "radial-gradient(circle at 30% 20%, #F5E6CC 0%, #E2C896 70%)",
@@ -78,6 +84,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/60 text-natural-text border-natural-text/15",
     shadow: "drop-shadow-[0_40px_60px_rgba(80,50,20,0.25)]",
     decorOpacity: "opacity-[0.2]",
+    accentHex: "#C49A5A",
   },
   bags: {
     bg: "radial-gradient(circle at 30% 20%, #E8D5B7 0%, #C4A57B 70%)",
@@ -87,6 +94,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/60 text-natural-text border-natural-text/15",
     shadow: "drop-shadow-[0_40px_60px_rgba(80,50,20,0.25)]",
     decorOpacity: "opacity-[0.2]",
+    accentHex: "#B08A5C",
   },
   merch: {
     bg: "radial-gradient(circle at 30% 20%, #D9D1C7 0%, #A89F95 70%)",
@@ -96,6 +104,7 @@ const THEMES: Record<string, Theme> = {
     pillBg: "bg-white/60 text-natural-text border-natural-text/15",
     shadow: "drop-shadow-[0_40px_60px_rgba(60,50,40,0.3)]",
     decorOpacity: "opacity-[0.18]",
+    accentHex: "#8C7F72",
   },
 };
 
@@ -146,6 +155,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   }
 
   const theme = themeFor(product);
+  const personality = PRODUCT_PERSONALITIES[product.name];
 
   const variants =
     product.type === "beans"
@@ -402,6 +412,15 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
           </motion.div>
         </div>
       </div>
+
+      {/* ── Coffee Personality — parallax, illustrated ─────────────── */}
+      {personality && (
+        <PersonalitySection
+          personality={personality}
+          productName={product.name}
+          accentHex={theme.accentHex}
+        />
+      )}
 
       {/* ── Story & specs — below-fold detail ────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-8 py-16 sm:py-24 grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-12 sm:gap-16">
