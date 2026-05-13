@@ -40,6 +40,7 @@ import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
+import { slugify } from "./lib/slug";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
 
@@ -338,7 +339,16 @@ function Storefront() {
   const { toasts, show: showToast } = useToast();
   const [criticalReady, setCriticalReady] = useState(false);
   const params = useUrlQuery();
-  const activeProductId = params.get("product");
+  // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
+  const slugMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of products ?? []) map.set(slugify(p.name), p._id);
+    return map;
+  }, [products]);
+  const rawProductParam = params.get("product");
+  const activeProductId = rawProductParam
+    ? (slugMap.get(rawProductParam) ?? rawProductParam) // fallback: old bookmarked IDs still work
+    : null;
   const tiOpen = !!params.get("ti");
 
   // Reset scroll to top whenever the active product changes (open / switch).
@@ -648,7 +658,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         <div className="flex items-start justify-between gap-2">
           <h4
             className="text-lg font-bold leading-tight cursor-pointer hover:text-natural-accent transition-colors"
-            onClick={() => navigateTo({ product: product._id })}
+            onClick={() => navigateTo({ product: slugify(product.name) })}
           >
             {product.name}
           </h4>
@@ -708,7 +718,7 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
           </span>
           <h4
             className="text-xl font-bold mt-1 line-clamp-1 cursor-pointer hover:text-natural-accent transition-colors"
-            onClick={() => navigateTo({ product: product._id })}
+            onClick={() => navigateTo({ product: slugify(product.name) })}
           >
             {product.name}
           </h4>
@@ -783,7 +793,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         product={featuredBean}
         align="left"
         theme="light"
-        onProductClick={featuredBean ? () => navigateTo({ product: featuredBean._id }) : undefined}
+        onProductClick={featuredBean ? () => navigateTo({ product: slugify(featuredBean.name) }) : undefined}
       />
 
       {/* ── Curtain into chapter 02 ────────────────────────────── */}
@@ -799,7 +809,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         product={featuredBag}
         align="right"
         theme="dark"
-        onProductClick={featuredBag ? () => navigateTo({ product: featuredBag._id }) : undefined}
+        onProductClick={featuredBag ? () => navigateTo({ product: slugify(featuredBag.name) }) : undefined}
       />
 
       {/* ── Curtain back to light for chapter 03 ───────────────── */}
@@ -817,9 +827,9 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         theme="light"
         onProductClick={
           featuredMerch
-            ? () => navigateTo({ product: featuredMerch._id })
+            ? () => navigateTo({ product: slugify(featuredMerch.name) })
             : featuredBean
-            ? () => navigateTo({ product: featuredBean._id })
+            ? () => navigateTo({ product: slugify(featuredBean.name) })
             : undefined
         }
       />

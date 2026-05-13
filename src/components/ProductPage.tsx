@@ -14,6 +14,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import { SmartImage } from "./SmartImage";
 import { asset } from "../lib/asset";
+import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 
 /**
@@ -150,6 +151,20 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
     containerRef.current?.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [productId]);
 
+  // Intercept wheel events so Lenis (on window) doesn’t eat trackpad scrolls.
+  // Trackpad fires many small deltaY events — summing them onto scrollTop feels smooth.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+      const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * el.clientHeight : e.deltaY;
+      el.scrollBy({ top: px });
+    };
+    el.addEventListener("wheel", onWheel, { passive: true });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   if (products === undefined) {
     return (
       <div className="h-full flex items-center justify-center bg-natural-bg">
@@ -201,9 +216,9 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
 
-  const goToProduct = (id: string) => {
+  const goToProduct = (slug: string) => {
     const url = new URL(window.location.href);
-    url.searchParams.set("product", id);
+    url.searchParams.set("product", slug);
     window.history.pushState({}, "", url.toString());
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
@@ -452,7 +467,7 @@ export function ProductPage({ productId, onAddToCart }: ProductPageProps) {
             {related.map((p) => (
               <button
                 key={p._id}
-                onClick={() => goToProduct(p._id)}
+                onClick={() => goToProduct(slugify(p.name))}
                 className="text-left group space-y-3"
               >
                 <div className="aspect-square bg-natural-paper border border-natural-border rounded-3xl overflow-hidden group-hover:shadow-xl group-hover:-translate-y-1 transition-all">
