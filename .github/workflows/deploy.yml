@@ -32,10 +32,10 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Set Convex env vars
-        run: npx convex env set GOOGLE_AI_API_KEY "$GOOGLE_AI_API_KEY"
+        run: npx convex env set GEMINI_API_KEY "$GEMINI_API_KEY"
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Build
         run: npm run build
