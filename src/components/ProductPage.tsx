@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -11,12 +11,21 @@ import {
 } from "lucide-react";
 import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
+// Lazy-load the 3D viewer — three.js is large, only needed for one product
+const ProductHero3D = lazy(() =>
+  import("./ProductHero3D").then((m) => ({ default: m.ProductHero3D }))
+);
 import { PersonalitySection } from "./PersonalitySection";
 import { BrewingStudio } from "./BrewingStudio";
 import { SipForecast } from "./SipForecast";
 import { slugify } from "../lib/slug";
+import { asset } from "../lib/asset";
 import { useProducts } from "../lib/useProducts";
 import type { Product } from "../types";
+
+// ── 3D model ─────────────────────────────────────────────────────────────────
+const SOUTH_INDIAN_3D_MODEL = asset("models/signature-south-indian-filter-blend.glb");
+const SOUTH_INDIAN_NAME = "Signature South Indian Filter Blend";
 
 /**
  * Full-screen product detail page (route: `?product=<id>`).
@@ -275,21 +284,41 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
             )}
           </motion.div>
 
-          {/* CENTER — 3D rotating product */}
+          {/* CENTER — hero product visual (3D model or CSS-spin fallback) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.65, type: "spring", stiffness: 90, damping: 18 }}
             className="flex items-center justify-center"
           >
-            <div
-              className={`relative ${theme.shadow}`}
-              style={{
-                perspective: "1200px",
-                width: "clamp(200px, 30vw, 380px)",
-                height: "clamp(200px, 30vw, 380px)",
-              }}
-            >
+            {product.name === SOUTH_INDIAN_NAME ? (
+              /* ── Real-time 3D GLB model ── */
+              <div
+                className={`relative ${theme.shadow}`}
+                style={{ width: "clamp(220px, 34vw, 420px)", height: "clamp(220px, 34vw, 420px)" }}
+              >
+                <Suspense fallback={
+                  <div className="w-full h-full flex items-center justify-center opacity-30">
+                    <SmartImage src={product.imageUrl} blur={product.imageBlur} alt={product.name}
+                      className="object-contain" wrapperClassName="w-full h-full" priority />
+                  </div>
+                }>
+                  <ProductHero3D
+                    modelUrl={SOUTH_INDIAN_3D_MODEL}
+                    shadowOpacity={0.3}
+                  />
+                </Suspense>
+              </div>
+            ) : (
+              /* ── CSS pseudo-3D spin (all other products) ── */
+              <div
+                className={`relative ${theme.shadow}`}
+                style={{
+                  perspective: "1200px",
+                  width: "clamp(200px, 30vw, 380px)",
+                  height: "clamp(200px, 30vw, 380px)",
+                }}
+              >
               <motion.div
                 animate={{ rotateY: 360 }}
                 transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
@@ -326,6 +355,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
                 </div>
               </motion.div>
             </div>
+            )} {/* end CSS-spin else */}
           </motion.div>
 
           {/* RIGHT — purchase controls */}
