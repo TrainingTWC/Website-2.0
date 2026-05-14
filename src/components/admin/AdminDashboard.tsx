@@ -35,6 +35,7 @@ import { useProducts } from "../../lib/useProducts";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { Product, ProductType, RoastLevel } from "../../types";
+import { SalesAnalytics } from "./SalesAnalytics";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -145,7 +146,7 @@ function formDataToProductPayload(form: ProductFormData) {
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders">(
-    "inventory"
+    "analytics"
   );
   const products = useProducts();
   const sessions = useQuery(api.sessions.list);
@@ -190,9 +191,7 @@ export function AdminDashboard() {
         {activeTab === "inventory" && (
           <InventoryManager />
         )}
-        {activeTab === "analytics" && (
-          <AnalyticsView sessions={sessions ?? []} products={products ?? []} />
-        )}
+        {activeTab === "analytics" && <SalesAnalytics />}
         {activeTab === "rules" && <RulesManager />}
         {activeTab === "orders" && <OrdersView />}
       </div>
