@@ -326,13 +326,15 @@ export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
     target: ref,
     offset: ["start start", "end end"],
   });
-  // Spring-smooth the master scroll so flips feel weighty, not twitchy.
-  const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.5 });
+  // Spring-smooth the master scroll so cards glide between each other
+  // with weight, never twitchy. Heavier mass + lower stiffness = molten.
+  const smooth = useSpring(scrollYProgress, { stiffness: 70, damping: 24, mass: 0.7 });
   const n = chapters.length;
 
   return (
-    // Total scrollable distance ≈ one viewport per card + one for the final flush-out.
-    <div ref={ref} style={{ height: `${(n + 0.4) * 100}vh` }} className="relative">
+    // One viewport per card — no tail. The last card stays pinned through
+    // the final viewport so there's no empty gap before the next section.
+    <div ref={ref} style={{ height: `${n * 100}vh` }} className="relative">
       <div className="sticky top-0 h-screen overflow-hidden">
         {chapters.map((c, i) => (
           <ChapterCard
@@ -359,32 +361,89 @@ function ChapterCard({
   progress: MotionValue<number>;
   config: ChapterConfig;
 }) {
-  // Each card claims a 1/total slice. Inside its slice: first ~70% is the
-  // parallax phase, last ~30% is the morph (cross-fade) into the next card.
-  const seg = 1 / (total + 0.4);
+  // Each card claims a 1/total slice of master scroll progress.
+  //
+  //   ├── enter ──┼─────── hold (parallax) ───────┼── exit ──┤
+  //   ^                    ^                                  ^
+  //   enterStart          start                              end
+  //
+  // Crucially, the enter window of card N overlaps the exit window of
+  // card N-1: they share the same scroll range, cross-fading and
+  // co-parallaxing through it. That's what makes one card feel like it's
+  // becoming the next, not "card vanishes, blank, new card appears".
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+  const seg = 1 / total;
   const start = index * seg;
-  const morphStart = start + seg * 0.72;
-  const end = start + seg * 1.0;
+  const end = start + seg;
+  // Morph window: last ~32% of each card's slice cross-fades into the next.
+  const morphStart = start + seg * 0.68;
+  // Enter window: incoming card's appearance shares the outgoing card's
+  // morph window so they overlap perfectly.
+  const enterStart = isFirst ? 0 : start - seg * 0.32;
+  const enterEnd = isFirst ? 0 : start;
 
-  // Local 0→1 progress used to drive internal parallax.
-  const local = useTransform(progress, [start, morphStart], [0, 1]);
-
-  // Visibility — fade in just before this card's turn, fade out as the next
-  // card fades in. No rotation, no 3D — just a clean cross-fade morph.
-  const opacity = useTransform(
+  // Local 0→1 progress used to drive internal parallax. Starts during the
+  // enter phase so content is *already in motion* the moment the card is
+  // visible — no static "wait, now I'll start" feeling.
+  const local = useTransform(
     progress,
-    [Math.max(0, start - seg * 0.15), start, morphStart, end],
-    [index === 0 ? 1 : 0, 1, 1, 0],
+    [enterStart, morphStart],
+    [0, 1],
   );
 
-  // Subtle scale breath on exit (1.0 → 1.04) so it feels like the camera
-  // gently pushes through into the next chapter, not a hard cut.
-  const morphScale = useTransform(progress, [morphStart, end], [1, 1.04]);
-  // Soft blur ramp at the very end of the morph sells the transition.
-  const morphBlur = useTransform(progress, [morphStart, end], [0, 6]);
-  const filter = useTransform(morphBlur, (b) => `blur(${b}px)`);
+  // Visibility cross-fade — outgoing card N-1 fades 1→0 while this card
+  // fades 0→1 across the SAME scroll range (enterStart..enterEnd).
+  const opacity = useTransform(
+    progress,
+    isFirst
+      ? [0, morphStart, end]
+      : isLast
+      ? [enterStart, enterEnd, 1]
+      : [enterStart, enterEnd, morphStart, end],
+    isFirst ? [1, 1, 0] : isLast ? [0, 1, 1] : [0, 1, 1, 0],
+  );
 
-  // Parallax band values (same numerics as ChapterReveal).
+  // "Push-through camera" effect: outgoing card scales UP and blurs OUT
+  // (like the camera dollies through it), while incoming card scales
+  // DOWN from 1.08 to 1 and blurs IN from 8 to 0 (like the camera lands
+  // on it). They share the same scroll window so the eye reads one
+  // continuous depth move rather than two separate fades.
+  const scale = useTransform(
+    progress,
+    isFirst
+      ? [start, morphStart, end]
+      : isLast
+      ? [enterStart, enterEnd, 1]
+      : [enterStart, enterEnd, morphStart, end],
+    isFirst ? [1, 1, 1.08] : isLast ? [1.08, 1, 1] : [1.08, 1, 1, 1.08],
+  );
+
+  const blurVal = useTransform(
+    progress,
+    isFirst
+      ? [start, morphStart, end]
+      : isLast
+      ? [enterStart, enterEnd, 1]
+      : [enterStart, enterEnd, morphStart, end],
+    isFirst ? [0, 0, 10] : isLast ? [10, 0, 0] : [10, 0, 0, 10],
+  );
+  const filter = useTransform(blurVal, (b) => `blur(${b.toFixed(2)}px)`);
+
+  // Slight vertical drift — outgoing rises away, incoming arrives from
+  // just below. Subtle (only 24px) but adds the "merging" feel.
+  const y = useTransform(
+    progress,
+    isFirst
+      ? [start, morphStart, end]
+      : isLast
+      ? [enterStart, enterEnd, 1]
+      : [enterStart, enterEnd, morphStart, end],
+    isFirst ? [0, 0, -24] : isLast ? [24, 0, 0] : [24, 0, 0, -24],
+  );
+
+  // Parallax band values — extended into the enter window so incoming
+  // content has *already started* moving when the card is first visible.
   const bigTextY = useTransform(local, [0, 1], ["20%", "-50%"]);
   const productY = useTransform(local, [0, 1], ["10%", "-20%"]);
   const productScale = useTransform(local, [0, 0.4, 1], [0.85, 1, 1.08]);
@@ -407,9 +466,15 @@ function ChapterCard({
     <motion.div
       style={{
         opacity,
-        scale: morphScale,
+        scale,
+        y,
         filter,
-        zIndex: total - index,
+        // Later cards on top so the incoming card rises *over* the
+        // outgoing one during the shared cross-fade window. Without
+        // this, the new card would be hidden underneath until the old
+        // one fully disappears — which is exactly the "school project"
+        // hard-cut feel we're removing.
+        zIndex: index,
         willChange: "opacity, transform, filter",
       }}
       className={`absolute inset-0 ${bg} ${fg} overflow-hidden`}

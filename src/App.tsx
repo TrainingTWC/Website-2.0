@@ -776,9 +776,9 @@ function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onO
 // ── Icon side rail (desktop left, mobile bottom) ────────────
 const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "home", label: "Home", target: "hero", Icon: Home },
-  { key: "beans", label: "Beans", target: "section-beans", Icon: Coffee },
-  { key: "bags", label: "Coffee Bags", target: "section-bags", Icon: Package },
-  { key: "merch", label: "Merch", target: "section-merch", Icon: ShoppingBag },
+  { key: "beans", label: "Beans", target: "section-coffee-beans", Icon: Coffee },
+  { key: "bags", label: "Coffee Bags", target: "section-coffee-ecb", Icon: Package },
+  { key: "merch", label: "Merch", target: "section-merch-drinkware", Icon: ShoppingBag },
   { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
 ];
 
@@ -1668,8 +1668,10 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         ]}
       />
 
-      {/* ── Curtain back to light for the catalog ──────────────── */}
-      <CurtainTransition color="bg-natural-paper" />
+      {/* ── Straight from the last chapter into the catalog banner.
+            No curtain in between: the deck's final card already sits on
+            paper and CatalogBanner is paper too — a curtain would just
+            be a blank stretch of identical color, reading as dead space. ── */}
 
       {/* ── Catalog intro — parallax editorial banner ──────────── */}
       <CatalogBanner />
