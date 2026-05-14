@@ -1029,7 +1029,7 @@ function ProductCard({ product, onAddToCart, imageParallaxX }: {
         {imageParallaxX ? (
           <motion.div
             className="absolute h-full"
-            style={{ width: "130%", left: "-15%", x: imageParallaxX }}
+            style={{ width: "140%", left: "-20%", x: imageParallaxX }}
           >
             <SmartImage
               src={product.imageUrl}
@@ -1281,7 +1281,7 @@ function HScrollCard({
   onAddToCart: (name: string) => void;
 }) {
   // Image moves at 12% of card speed (opposite direction) = depth parallax
-  const imageX = useTransform(scrollX, (sl) => (index * HSCROLL_CARD_STRIDE - sl) * 0.12);
+  const imageX = useTransform(scrollX, (sl) => (index * HSCROLL_CARD_STRIDE - sl) * 0.05);
   return (
     <div className="flex-shrink-0 w-48 sm:w-56 md:w-64">
       <ProductCard product={product} onAddToCart={onAddToCart} imageParallaxX={imageX} />
