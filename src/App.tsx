@@ -56,6 +56,7 @@ import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Ci
 import { slugify } from "./lib/slug";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
+import { resolveTaxonomy } from "./types";
 
 // ── Scroll helper ──────────────────────────────────────────────
 function scrollTo(id: string) {
@@ -1410,21 +1411,119 @@ function CatalogBanner() {
   );
 }
 
+// ── Bento tile (used by DemoStorefront category grid) ──────────
+type BentoTileData = {
+  title: string;
+  target: string;
+  items: Product[];
+  span: string;
+  accent: string;
+};
+function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void }) {
+  const samples = tile.items.slice(0, 3);
+  return (
+    <button
+      onClick={onClick}
+      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 ${tile.span} min-h-[140px] sm:min-h-[160px] flex items-center gap-3 sm:gap-4`}
+    >
+      <div className="relative flex -space-x-2 sm:-space-x-3 shrink-0">
+        {samples.length === 0 ? (
+          <div className="w-12 h-14 rounded-xl bg-natural-paper border border-natural-border" />
+        ) : (
+          samples.map((p, idx) => (
+            <div
+              key={p._id}
+              className="w-12 h-14 sm:w-14 sm:h-18 rounded-xl sm:rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
+              style={{ zIndex: samples.length - idx, transform: `rotate(${(idx - 1) * 4}deg)` }}
+            >
+              <SmartImage
+                src={p.imageUrl}
+                blur={p.imageBlur}
+                alt=""
+                className="object-cover"
+                wrapperClassName="w-full h-full"
+              />
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-base sm:text-lg font-serif font-bold leading-tight">{tile.title}</h3>
+        <p className="text-[11px] sm:text-xs text-natural-text/60 font-medium mt-0.5">
+          {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
+        </p>
+        <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
+          Browse
+          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+        </div>
+      </div>
+    </button>
+  );
+}
+
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
-  const beans = products.filter((p) => p.type === "beans");
-  const bags = products.filter((p) => p.type === "bags");
-  const merch = products.filter((p) => p.type === "merch");
+  // Bucket products by the new two-tier taxonomy. `resolveTaxonomy` honours
+  // explicit fields and falls back to legacy `type` so un-migrated rows still
+  // land in a sensible bucket.
+  const bucket = (main: "coffee" | "merch", sub: string) =>
+    products.filter((p) => {
+      const tax = resolveTaxonomy(p);
+      return tax.mainCategory === main && tax.subCategory === sub;
+    });
 
-  // Chapter feature products — pick the highest-rated bean/bag/merch
-  const featuredBean = [...beans].sort(
+  const coffeeBeans = bucket("coffee", "beans");
+  const coffeeEcb = bucket("coffee", "ecb");
+  const coffeeBrewing = bucket("coffee", "brewing-tools");
+  const merchDrinkware = bucket("merch", "drinkware");
+  const merchBags = bucket("merch", "bags");
+  const merchKeychains = bucket("merch", "keychains");
+  const merchChocolates = bucket("merch", "chocolates-nuts");
+  const merchBrewing = bucket("merch", "brewing-tools");
+
+  // Chapter hero pick — best-rated bean / first ECB / first drinkware piece.
+  const featuredBean = [...coffeeBeans].sort(
     (a, b) => (b.rating ?? 0) - (a.rating ?? 0)
   )[0];
-  const featuredBag = bags[0];
-  const featuredMerch = merch[0];
+  const featuredBag = coffeeEcb[0];
+  const featuredMerch = merchDrinkware[0] ?? merchKeychains[0] ?? merchBags[0];
+
+  // Bento tile descriptors — one per subcategory, declared once and reused.
+  type Tile = {
+    title: string;
+    target: string;
+    items: Product[];
+    span: string;   // tailwind col-span class for desktop
+    accent: string; // gradient class
+  };
+  const coffeeTiles: Tile[] = [
+    { title: "Freshly Roasted Beans", target: "section-coffee-beans",      items: coffeeBeans,    span: "md:col-span-3", accent: "from-amber-50 to-natural-paper" },
+    { title: "Easy Coffee Bags",      target: "section-coffee-ecb",        items: coffeeEcb,      span: "md:col-span-2", accent: "from-orange-50 to-natural-muted" },
+    { title: "Brewing Tools",         target: "section-coffee-brewing",    items: coffeeBrewing,  span: "md:col-span-1", accent: "from-stone-100 to-natural-paper" },
+  ].filter((t) => t.items.length > 0);
+
+  const merchTiles: Tile[] = [
+    { title: "Drinkware",             target: "section-merch-drinkware",   items: merchDrinkware, span: "md:col-span-2", accent: "from-emerald-50 to-natural-paper" },
+    { title: "Bags",                  target: "section-merch-bags",        items: merchBags,      span: "md:col-span-2", accent: "from-rose-50 to-natural-paper" },
+    { title: "Keychains & Accessories", target: "section-merch-keychains", items: merchKeychains, span: "md:col-span-1", accent: "from-sky-50 to-natural-paper" },
+    { title: "Chocolates & Nuts",     target: "section-merch-chocolates",  items: merchChocolates, span: "md:col-span-1", accent: "from-yellow-50 to-natural-paper" },
+    { title: "Brewing Tools",         target: "section-merch-brewing",     items: merchBrewing,    span: "md:col-span-2", accent: "from-slate-100 to-natural-paper" },
+  ].filter((t) => t.items.length > 0);
+
+  // All sections in display order — rendered as <HScrollRow>s below the bento.
+  const sections: { id: string; title: string; items: Product[] }[] = [
+    { id: "section-coffee-beans",      title: "Freshly Roasted Beans",     items: coffeeBeans },
+    { id: "section-coffee-ecb",        title: "Easy Coffee Bags",          items: coffeeEcb },
+    { id: "section-coffee-brewing",    title: "Coffee · Brewing Tools",    items: coffeeBrewing },
+    { id: "section-merch-drinkware",   title: "Drinkware",                 items: merchDrinkware },
+    { id: "section-merch-bags",        title: "Bags",                      items: merchBags },
+    { id: "section-merch-keychains",   title: "Keychains & Accessories",   items: merchKeychains },
+    { id: "section-merch-chocolates",  title: "Chocolates & Nuts",         items: merchChocolates },
+    { id: "section-merch-brewing",     title: "Merch · Brewing Tools",     items: merchBrewing },
+  ].filter((s) => s.items.length > 0);
 
   const goToCatalog = () => {
-    const el = document.getElementById("section-beans");
+    const el = document.getElementById(sections[0]?.id ?? "categories");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -1465,8 +1564,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         index="02 / 03"
         eyebrow="Craft"
         title={<>The art of <em className="font-serif italic font-light">roasting.</em></>}
-        body="Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self."
-        callouts={["Small batch", "Slow roasted", "Cupped daily", "Aroma profiled"]}
+        body="Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self — then packed whole, ground, or as Easy Coffee Bags ready to brew."
+        callouts={["Small batch", "Slow roasted", "Cupped daily", "Brew-ready"]}
         product={featuredBag}
         align="right"
         theme="dark"
@@ -1481,8 +1580,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
         index="03 / 03"
         eyebrow="Ritual"
         title={<>Pour. Pause. <em className="font-serif italic font-light">Repeat.</em></>}
-        body="From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day."
-        callouts={["Brewed in seconds", "Cup-ready", "Designed to share"]}
+        body="From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day. Mugs, tumblers, totes and trinkets that carry the ritual with you."
+        callouts={["Brewed in seconds", "Cup-ready", "Carry it everywhere", "Made to share"]}
         product={featuredMerch ?? featuredBean}
         align="left"
         theme="light"
@@ -1500,100 +1599,44 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
 
       <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
 
-      {/* Product Categories — slim cards with product preview strip */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6" id="categories">
-        {[
-          {
-            title: "Coffee Beans",
-            subtitle: `${beans.length} freshly roasted`,
-            target: "section-beans",
-            samples: beans.slice(0, 3),
-            color: "from-amber-50 to-natural-paper",
-          },
-          {
-            title: "Easy Coffee Bags",
-            subtitle: `${bags.length} ground & packed`,
-            target: "section-bags",
-            samples: bags.slice(0, 3),
-            color: "from-orange-50 to-natural-muted",
-          },
-          {
-            title: "Merch",
-            subtitle: `${merch.length} items`,
-            target: "section-merch",
-            samples: merch.slice(0, 3),
-            color: "from-stone-100 to-natural-stone/30",
-          },
-        ].map((item) => (
-          <button
-            key={item.title}
-            onClick={() => scrollTo(item.target)}
-            className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${item.color} p-4 sm:p-6 h-auto flex items-center gap-3 sm:gap-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30`}
-          >
-            {/* Stacked product previews */}
-            <div className="relative flex -space-x-2 sm:-space-x-3 shrink-0">
-              {item.samples.length === 0 ? (
-                <div className="w-14 h-16 rounded-xl bg-natural-paper border border-natural-border" />
-              ) : (
-                item.samples.map((p, idx) => (
-                  <div
-                    key={p._id}
-                    className="w-12 h-14 sm:w-16 sm:h-20 rounded-xl sm:rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
-                    style={{ zIndex: item.samples.length - idx, transform: `rotate(${(idx - 1) * 4}deg)` }}
-                  >
-                    <SmartImage
-                      src={p.imageUrl}
-                      blur={p.imageBlur}
-                      alt=""
-                      className="object-cover"
-                      wrapperClassName="w-full h-full"
-                    />
-                  </div>
-                ))
-              )}
+      {/* ── Bento grid (desktop) / stacked tiles (mobile) ──────── */}
+      <section id="categories" className="space-y-4 sm:space-y-6">
+        {/* Coffee row */}
+        {coffeeTiles.length > 0 && (
+          <>
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">Coffee</h2>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4">
+              {coffeeTiles.map((t) => (
+                <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
+              ))}
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-2xl font-serif font-bold leading-tight">{item.title}</h3>
-              <p className="text-xs sm:text-sm text-natural-text/60 font-medium mt-0.5 sm:mt-1">{item.subtitle}</p>
-              <div className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
-                Browse
-                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
+          </>
+        )}
+        {/* Merch row */}
+        {merchTiles.length > 0 && (
+          <>
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent mt-6">Merch</h2>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4">
+              {merchTiles.map((t) => (
+                <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
+              ))}
             </div>
-          </button>
-        ))}
+          </>
+        )}
       </section>
 
-      {/* ── Freshly Roasted Beans ──────────────────────────────── */}
-      <section className="space-y-8 scroll-mt-24" id="section-beans">
-        <div className="flex items-end border-b border-natural-border pb-6">
-          <h3 className="text-2xl sm:text-4xl font-serif font-bold">Freshly Roasted Beans</h3>
-          <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{beans.length} varieties</span>
-        </div>
-        <HScrollRow products={beans} onAddToCart={onAddToCart} />
-      </section>
-
-      {/* ── Easy Coffee Bags ───────────────────────────────────── */}
-      {bags.length > 0 && (
-        <section className="space-y-8 scroll-mt-24" id="section-bags">
+      {/* ── Product sections — one per non-empty subcategory ───── */}
+      {sections.map((s) => (
+        <section key={s.id} id={s.id} className="space-y-8 scroll-mt-24">
           <div className="flex items-end border-b border-natural-border pb-6">
-            <h3 className="text-2xl sm:text-4xl font-serif font-bold">Easy Coffee Bags</h3>
-            <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{bags.length} options</span>
+            <h3 className="text-2xl sm:text-4xl font-serif font-bold">{s.title}</h3>
+            <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">
+              {s.items.length} {s.items.length === 1 ? "option" : "options"}
+            </span>
           </div>
-          <HScrollRow products={bags} onAddToCart={onAddToCart} />
+          <HScrollRow products={s.items} onAddToCart={onAddToCart} />
         </section>
-      )}
-
-      {/* ── Merch ──────────────────────────────────────────────── */}
-      {merch.length > 0 && (
-        <section className="space-y-8 scroll-mt-24" id="section-merch">
-          <div className="flex items-end border-b border-natural-border pb-6">
-            <h3 className="text-2xl sm:text-4xl font-serif font-bold">Merch</h3>
-            <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">{merch.length} items</span>
-          </div>
-          <HScrollRow products={merch} onAddToCart={onAddToCart} />
-        </section>
-      )}
+      ))}
 
       {/* ── Our Story ──────────────────────────────────────────── */}
       <section className="scroll-mt-24" id="our-story">

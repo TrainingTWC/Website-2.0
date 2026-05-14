@@ -11,6 +11,7 @@
 import type * as analytics from "../analytics.js";
 import type * as cache from "../cache.js";
 import type * as categories from "../categories.js";
+import type * as migrations from "../migrations.js";
 import type * as orders from "../orders.js";
 import type * as pageViews from "../pageViews.js";
 import type * as productContext from "../productContext.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   cache: typeof cache;
   categories: typeof categories;
+  migrations: typeof migrations;
   orders: typeof orders;
   pageViews: typeof pageViews;
   productContext: typeof productContext;

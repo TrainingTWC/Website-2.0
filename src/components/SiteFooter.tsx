@@ -45,9 +45,10 @@ export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
             <div className="space-y-4">
               <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Shop</h4>
               <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-beans")}>Coffee Beans</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-bags")}>Easy Coffee Bags</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-merch")}>Merch</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-coffee-beans")}>Coffee Beans</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-coffee-ecb")}>Easy Coffee Bags</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-merch-drinkware")}>Drinkware</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-merch-keychains")}>Keychains</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("order-portal")}>Track your order</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("shop")}>Shop All</span>
               </div>
