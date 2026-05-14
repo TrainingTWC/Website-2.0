@@ -429,8 +429,15 @@ function Storefront() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [tiOverlay, setTiOverlay] = useState(false);
-  const openTI = () => setTiOverlay(true);
+  const [tiSweep, setTiSweep] = useState<{ x: number; y: number } | null>(null);
+  const openTI = (e?: React.MouseEvent) => {
+    if (e) {
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      setTiSweep({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    } else {
+      setTiSweep({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    }
+  };
   const closeTI = () => navigateTo({ page: null });
 
   const addToCart = useCallback((productId: string, qty = 1) => {
@@ -510,14 +517,6 @@ function Storefront() {
           onClose={() => navigateTo({ page: null })}
           onNavigateToProduct={(slug) => navigateTo({ page: null, product: slug })}
           onAddToCart={(productId) => addToCart(productId)}
-        />
-        {/* Entrance overlay: same gradient, starts opaque, fades out to reveal the widget */}
-        <motion.div
-          className="fixed inset-0 z-[9998] pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 0.55, delay: 0.08, ease: [0.33, 1, 0.68, 1] }}
         />
       </div>
     );
@@ -709,29 +708,29 @@ function Storefront() {
         onCheckout={() => navigateTo({ page: "checkout" })}
       />
 
-      {/* TI transition overlay — gradient curtain that sweeps in before navigating */}
-      <AnimatePresence>
-        {tiOverlay && (
-          <motion.div
-            key="ti-overlay"
-            className="fixed inset-0 z-[9998] pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.38, ease: [0.4, 0, 0.6, 0] }}
-            onAnimationComplete={() => {
-              setTiOverlay(false);
-              navigateTo({ page: "ti" });
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* TI circular sweep — expands from click point, then navigates */}
+      {tiSweep && (
+        <motion.div
+          key="ti-sweep"
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at center, #3D1F0F 0%, #1A0A06 55%, #090503 100%)",
+          }}
+          initial={{ clipPath: `circle(0px at ${tiSweep.x}px ${tiSweep.y}px)` }}
+          animate={{ clipPath: `circle(150vmax at ${tiSweep.x}px ${tiSweep.y}px)` }}
+          transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
+          onAnimationComplete={() => {
+            setTiSweep(null);
+            navigateTo({ page: "ti" });
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // ── Mobile bottom nav pill ───────────────────────────────────
-function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onOpenTI: () => void; onOpenCart: () => void; onNavTo: (target: string) => void; cartCount?: number }) {
+function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onOpenTI: (e: React.MouseEvent) => void; onOpenCart: () => void; onNavTo: (target: string) => void; cartCount?: number }) {
   const active = useActiveSection();
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
@@ -868,7 +867,7 @@ function MorphingHeader({
   headerBg: any;
   headerBorder: any;
   headerShadow: any;
-  onOpenTI: () => void;
+  onOpenTI: (e: React.MouseEvent) => void;
   onOpenCart: () => void;
   onNavTo: (target: string) => void;
   cartCount?: number;
@@ -1011,7 +1010,7 @@ function MorphNavItem({
 }
 
 // TI button in header: pill with text by default, icon on scroll. Single smooth pulse ring.
-function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: () => void }) {
+function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: (e: React.MouseEvent) => void }) {
   return (
     <button
       onClick={onClick}
