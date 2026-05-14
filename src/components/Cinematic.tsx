@@ -303,6 +303,200 @@ export function ChapterReveal({
 }
 
 // ─────────────────────────────────────────────────────────────
+// ChapterDeck — stacked deck of chapter cards. Scrolling first
+// plays each card's internal parallax, then flips it away to
+// reveal the next card beneath. Same chapter visuals as
+// ChapterReveal, just sequenced as a 3D card stack.
+// ─────────────────────────────────────────────────────────────
+export type ChapterConfig = {
+  index: string;
+  eyebrow: string;
+  title: ReactNode;
+  body: string;
+  callouts: string[];
+  product?: Product;
+  align?: "left" | "right";
+  theme?: "light" | "dark";
+  onProductClick?: () => void;
+};
+
+export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end end"],
+  });
+  // Spring-smooth the master scroll so flips feel weighty, not twitchy.
+  const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.5 });
+  const n = chapters.length;
+
+  return (
+    // Total scrollable distance ≈ one viewport per card + one for the final flush-out.
+    <div ref={ref} style={{ height: `${(n + 0.4) * 100}vh` }} className="relative">
+      <div
+        className="sticky top-0 h-screen overflow-hidden"
+        style={{ perspective: 1800 }}
+      >
+        {chapters.map((c, i) => (
+          <ChapterCard
+            key={`${c.eyebrow}-${i}`}
+            index={i}
+            total={n}
+            progress={smooth}
+            config={c}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChapterCard({
+  index,
+  total,
+  progress,
+  config,
+}: {
+  index: number;
+  total: number;
+  progress: MotionValue<number>;
+  config: ChapterConfig;
+}) {
+  // Each card claims a 1/total slice. Inside its slice: first 75% is the
+  // parallax phase, last 25% is the flip phase.
+  const seg = 1 / (total + 0.4);
+  const start = index * seg;
+  const flipStart = start + seg * 0.78;
+  const end = start + seg * 1.05; // slight overlap into next card
+
+  // Local 0→1 progress used to drive internal parallax (same shapes as ChapterReveal).
+  const local = useTransform(progress, [start, flipStart], [0, 1]);
+
+  // Visibility — fade in just before this card's turn, hold until flip completes.
+  const opacity = useTransform(
+    progress,
+    [Math.max(0, start - seg * 0.05), start, flipStart, end],
+    [index === 0 ? 1 : 0, 1, 1, 0],
+  );
+
+  // Flip-out: rotateX away from the camera while the next card sits beneath.
+  const rotateX = useTransform(progress, [flipStart, end], [0, -92]);
+  const translateZ = useTransform(progress, [flipStart, end], [0, -260]);
+  const scale = useTransform(progress, [flipStart, end], [1, 0.92]);
+
+  // Parallax band values (same numerics as ChapterReveal).
+  const bigTextY = useTransform(local, [0, 1], ["20%", "-50%"]);
+  const productY = useTransform(local, [0, 1], ["10%", "-20%"]);
+  const productScale = useTransform(local, [0, 0.4, 1], [0.85, 1, 1.08]);
+  const productRotate = useTransform(local, [0, 1], [-6, 6]);
+  const copyOpacity = useTransform(local, [0.05, 0.25, 0.85, 1], [0, 1, 1, 0.85]);
+  const copyY = useTransform(local, [0.05, 0.25], [40, 0]);
+
+  const { eyebrow, index: indexLabel, title, body, callouts, product, align = "left", theme = "light", onProductClick } = config;
+  const dark = theme === "dark";
+  const bg = dark ? "bg-[#1A0F08]" : "bg-natural-paper";
+  const fg = dark ? "text-white" : "text-natural-text";
+  const subtle = dark ? "text-white/55" : "text-natural-text/55";
+  const accent = dark ? "text-amber-300" : "text-natural-accent";
+  const bigText = dark ? "text-white/[0.05]" : "text-natural-text/[0.05]";
+  const chipBg = dark
+    ? "bg-white/10 border-white/20 text-white"
+    : "bg-natural-paper border-natural-border text-natural-text";
+
+  return (
+    <motion.div
+      style={{
+        opacity,
+        rotateX,
+        translateZ,
+        scale,
+        zIndex: total - index,
+        transformStyle: "preserve-3d",
+        transformOrigin: "center top",
+        willChange: "transform, opacity",
+      }}
+      className={`absolute inset-0 ${bg} ${fg} overflow-hidden shadow-2xl shadow-black/40`}
+    >
+      {/* Background editorial wordmark — slowest moving */}
+      <motion.div
+        style={{ y: bigTextY }}
+        className="absolute inset-x-0 top-0 pointer-events-none select-none flex justify-center"
+      >
+        <span
+          className={`font-serif font-black text-[clamp(7rem,22vw,22rem)] leading-[0.85] tracking-tight ${bigText} whitespace-nowrap`}
+        >
+          {eyebrow.toUpperCase()}
+        </span>
+      </motion.div>
+
+      {/* Pinned stage — full height of the card */}
+      <div className="absolute inset-0 flex items-center overflow-hidden">
+        <div
+          className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
+            align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
+          }`}
+        >
+          {/* Product still-life */}
+          <motion.div
+            style={{ y: productY, scale: productScale, rotate: productRotate }}
+            className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
+          >
+            {product ? (
+              <button
+                data-cursor="zoom"
+                onClick={onProductClick}
+                className="block w-full max-w-[200px] sm:max-w-xs lg:max-w-md mx-auto aspect-[4/5] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
+              >
+                <SmartImage
+                  src={product.imageUrl}
+                  blur={product.imageBlur}
+                  alt={product.name}
+                  className="object-cover group-hover:scale-110 transition-transform duration-[1.6s]"
+                  wrapperClassName="w-full h-full"
+                  priority
+                />
+                <MacroBeam progress={local} />
+              </button>
+            ) : (
+              <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-[2.5rem] bg-natural-muted" />
+            )}
+          </motion.div>
+
+          {/* Copy column */}
+          <motion.div
+            style={{ opacity: copyOpacity, y: copyY }}
+            className={`relative space-y-6 ${align === "right" ? "lg:order-1" : "lg:order-2"}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-mono font-bold tracking-[0.3em] ${accent}`}>
+                {indexLabel}
+              </span>
+              <span className="h-px w-10 bg-current opacity-30" />
+              <span className={`text-[10px] font-bold tracking-[0.4em] uppercase ${subtle}`}>
+                {eyebrow}
+              </span>
+            </div>
+
+            <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] tracking-tight">
+              {title}
+            </h2>
+            <p className={`text-sm sm:text-base lg:text-lg leading-relaxed max-w-md ${subtle}`}>{body}</p>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              {callouts.map((c, i) => (
+                <FloatingChip key={c} index={i} className={`${chipBg} backdrop-blur-sm`}>
+                  {c}
+                </FloatingChip>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // MacroBeam — a slow light sweep across the product to mimic the
 // Autajon "camera panning across embossing / gold leaf" effect.
 // ─────────────────────────────────────────────────────────────

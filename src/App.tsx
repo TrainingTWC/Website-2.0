@@ -52,7 +52,7 @@ import { ShopPage } from "./components/ShopPage";
 import { SiteFooter } from "./components/SiteFooter";
 import { GalaxySweep } from "./components/GalaxySweep";
 import { SmoothScroll } from "./components/SmoothScroll";
-import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
+import { CinematicHero, CurtainTransition, ChapterDeck } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
@@ -1420,11 +1420,68 @@ type BentoTileData = {
   accent: string;
 };
 function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void }) {
-  const samples = tile.items.slice(0, 3);
+  // Tall tiles get a full-bleed hero layout, short tiles stay compact.
+  const isTall = tile.span.includes("row-span-2");
+  const heroProduct = tile.items[0];
+  const samples = tile.items.slice(0, isTall ? 4 : 3);
+
+  if (isTall && heroProduct) {
+    return (
+      <button
+        onClick={onClick}
+        className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} text-left transition-all hover:shadow-2xl hover:-translate-y-0.5 hover:border-natural-accent/40 ${tile.span} min-h-[260px] md:min-h-0 flex flex-col`}
+      >
+        {/* Full-bleed hero image */}
+        <div className="relative flex-1 overflow-hidden">
+          <SmartImage
+            src={heroProduct.imageUrl}
+            blur={heroProduct.imageBlur}
+            alt=""
+            className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
+            wrapperClassName="absolute inset-0"
+          />
+          {/* Gradient scrim so the copy stays legible */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+          {/* Stack of thumbnail peeks bottom-right */}
+          <div className="absolute bottom-3 right-3 flex -space-x-2">
+            {samples.slice(1).map((p, idx) => (
+              <div
+                key={p._id}
+                className="w-10 h-10 rounded-xl bg-white/90 border-2 border-white shadow-md overflow-hidden"
+                style={{ zIndex: samples.length - idx }}
+              >
+                <SmartImage
+                  src={p.imageUrl}
+                  blur={p.imageBlur}
+                  alt=""
+                  className="object-cover"
+                  wrapperClassName="w-full h-full"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Copy band */}
+        <div className="relative p-4 sm:p-5 bg-white/85 backdrop-blur-sm">
+          <h3 className="text-lg sm:text-xl font-serif font-bold leading-tight">{tile.title}</h3>
+          <div className="flex items-center justify-between mt-1.5">
+            <p className="text-[11px] sm:text-xs text-natural-text/60 font-medium">
+              {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
+            </p>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
+              Browse
+              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+            </span>
+          </div>
+        </div>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 ${tile.span} min-h-[140px] sm:min-h-[160px] flex items-center gap-3 sm:gap-4`}
+      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 ${tile.span} min-h-[140px] md:min-h-0 flex items-center gap-3 sm:gap-4`}
     >
       <div className="relative flex -space-x-2 sm:-space-x-3 shrink-0">
         {samples.length === 0 ? (
@@ -1487,6 +1544,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
   )[0];
   const featuredBag = coffeeEcb[0];
   const featuredMerch = merchDrinkware[0] ?? merchKeychains[0] ?? merchBags[0];
+  const featuredBrewing = coffeeBrewing[0] ?? merchBrewing[0];
+  const featuredKeychain = merchKeychains[0] ?? merchBags[0] ?? merchChocolates[0];
 
   // Bento tile descriptors — one per subcategory, declared once and reused.
   type Tile = {
@@ -1496,18 +1555,18 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
     span: string;   // tailwind col-span class for desktop
     accent: string; // gradient class
   };
-  const coffeeTiles: Tile[] = [
-    { title: "Freshly Roasted Beans", target: "section-coffee-beans",      items: coffeeBeans,    span: "md:col-span-3", accent: "from-amber-50 to-natural-paper" },
-    { title: "Easy Coffee Bags",      target: "section-coffee-ecb",        items: coffeeEcb,      span: "md:col-span-2", accent: "from-orange-50 to-natural-muted" },
-    { title: "Brewing Tools",         target: "section-coffee-brewing",    items: coffeeBrewing,  span: "md:col-span-1", accent: "from-stone-100 to-natural-paper" },
-  ].filter((t) => t.items.length > 0);
-
-  const merchTiles: Tile[] = [
-    { title: "Drinkware",             target: "section-merch-drinkware",   items: merchDrinkware, span: "md:col-span-2", accent: "from-emerald-50 to-natural-paper" },
-    { title: "Bags",                  target: "section-merch-bags",        items: merchBags,      span: "md:col-span-2", accent: "from-rose-50 to-natural-paper" },
-    { title: "Keychains & Accessories", target: "section-merch-keychains", items: merchKeychains, span: "md:col-span-1", accent: "from-sky-50 to-natural-paper" },
-    { title: "Chocolates & Nuts",     target: "section-merch-chocolates",  items: merchChocolates, span: "md:col-span-1", accent: "from-yellow-50 to-natural-paper" },
-    { title: "Brewing Tools",         target: "section-merch-brewing",     items: merchBrewing,    span: "md:col-span-2", accent: "from-slate-100 to-natural-paper" },
+  // Single bento grid covering all 8 subcategories. Spans are tuned for a
+  // 6-col layout: hero (beans) takes a 3x2 block, drinkware claims a tall
+  // 2x2, smaller tiles flow around with dense auto-placement.
+  const allTiles: Tile[] = [
+    { title: "Freshly Roasted Beans",   target: "section-coffee-beans",     items: coffeeBeans,    span: "md:col-span-3 md:row-span-2", accent: "from-amber-100 via-amber-50 to-natural-paper" },
+    { title: "Easy Coffee Bags",        target: "section-coffee-ecb",       items: coffeeEcb,      span: "md:col-span-2 md:row-span-1", accent: "from-orange-50 to-natural-muted" },
+    { title: "Coffee · Brewing Tools",  target: "section-coffee-brewing",   items: coffeeBrewing,  span: "md:col-span-1 md:row-span-1", accent: "from-stone-100 to-natural-paper" },
+    { title: "Drinkware",               target: "section-merch-drinkware",  items: merchDrinkware, span: "md:col-span-3 md:row-span-1", accent: "from-emerald-100 via-emerald-50 to-natural-paper" },
+    { title: "Bags",                    target: "section-merch-bags",       items: merchBags,      span: "md:col-span-2 md:row-span-1", accent: "from-rose-50 to-natural-paper" },
+    { title: "Keychains & Accessories", target: "section-merch-keychains",  items: merchKeychains, span: "md:col-span-2 md:row-span-1", accent: "from-sky-50 to-natural-paper" },
+    { title: "Chocolates & Nuts",       target: "section-merch-chocolates", items: merchChocolates, span: "md:col-span-1 md:row-span-1", accent: "from-yellow-50 to-natural-paper" },
+    { title: "Brewing Tools",           target: "section-merch-brewing",    items: merchBrewing,    span: "md:col-span-1 md:row-span-1", accent: "from-slate-100 to-natural-paper" },
   ].filter((t) => t.items.length > 0);
 
   // All sections in display order — rendered as <HScrollRow>s below the bento.
@@ -1543,56 +1602,74 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       {/* ── Curtain into editorial chapter 01 ──────────────────── */}
       <CurtainTransition color="bg-natural-paper" />
 
-      {/* ── Chapter 01: Sourcing ───────────────────────────────── */}
-      <ChapterReveal
-        index="01 / 03"
-        eyebrow="Sourcing"
-        title={<>Single origins.<br /><em className="font-serif italic font-light">Patient craft.</em></>}
-        body="Every harvest is hand-selected from partner farms across the Western Ghats and beyond. Beans rest, breathe, then meet our roasters for a slow, deliberate transformation."
-        callouts={["Direct trade", "Hand-picked", "Estate-grown", "Traceable"]}
-        product={featuredBean}
-        align="left"
-        theme="light"
-        onProductClick={featuredBean ? () => navigateTo({ product: slugify(featuredBean.name) }) : undefined}
+      {/* ── Chapter deck: 5 stacked cards. Each scrolls through its
+            own parallax pass, then flips out to reveal the next. ── */}
+      <ChapterDeck
+        chapters={[
+          {
+            index: "01 / 05",
+            eyebrow: "Sourcing",
+            title: <>Single origins.<br /><em className="font-serif italic font-light">Patient craft.</em></>,
+            body: "Every harvest is hand-selected from partner farms across the Western Ghats and beyond. Beans rest, breathe, then meet our roasters for a slow, deliberate transformation.",
+            callouts: ["Direct trade", "Hand-picked", "Estate-grown", "Traceable"],
+            product: featuredBean,
+            align: "left",
+            theme: "light",
+            onProductClick: featuredBean ? () => navigateTo({ product: slugify(featuredBean.name) }) : undefined,
+          },
+          {
+            index: "02 / 05",
+            eyebrow: "Craft",
+            title: <>The art of <em className="font-serif italic font-light">roasting.</em></>,
+            body: "Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self — then packed whole, ground, or as Easy Coffee Bags ready to brew.",
+            callouts: ["Small batch", "Slow roasted", "Cupped daily", "Brew-ready"],
+            product: featuredBag,
+            align: "right",
+            theme: "dark",
+            onProductClick: featuredBag ? () => navigateTo({ product: slugify(featuredBag.name) }) : undefined,
+          },
+          {
+            index: "03 / 05",
+            eyebrow: "Brewing",
+            title: <>Built to <em className="font-serif italic font-light">brew.</em></>,
+            body: "Grinders that whisper, presses that bloom, kettles tuned for that gooseneck pour. The tools we trust to coax the best out of every roast — now in your kitchen.",
+            callouts: ["Curated", "Barista-tested", "Coffee-first", "Built to last"],
+            product: featuredBrewing ?? featuredBag,
+            align: "left",
+            theme: "light",
+            onProductClick: featuredBrewing ? () => navigateTo({ product: slugify(featuredBrewing.name) }) : undefined,
+          },
+          {
+            index: "04 / 05",
+            eyebrow: "Drinkware",
+            title: <>The vessel <em className="font-serif italic font-light">matters.</em></>,
+            body: "Ceramic that keeps the crema, double-walls that hold the heat, tumblers that travel as well as you do. Cups, mugs and bottles we'd reach for first thing in the morning.",
+            callouts: ["Hand-finished", "Built for daily use", "Travel-ready"],
+            product: featuredMerch,
+            align: "right",
+            theme: "dark",
+            onProductClick: featuredMerch ? () => navigateTo({ product: slugify(featuredMerch.name) }) : undefined,
+          },
+          {
+            index: "05 / 05",
+            eyebrow: "Ritual",
+            title: <>Pour. Pause. <em className="font-serif italic font-light">Repeat.</em></>,
+            body: "From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day. Bags, keychains and trinkets that carry the ritual with you.",
+            callouts: ["Carry it everywhere", "Made to share", "Everyday joy"],
+            product: featuredKeychain ?? featuredMerch ?? featuredBean,
+            align: "left",
+            theme: "light",
+            onProductClick: featuredKeychain
+              ? () => navigateTo({ product: slugify(featuredKeychain.name) })
+              : featuredMerch
+              ? () => navigateTo({ product: slugify(featuredMerch.name) })
+              : undefined,
+          },
+        ]}
       />
 
-      {/* ── Curtain into chapter 02 ────────────────────────────── */}
-      <CurtainTransition color="bg-[#1A0F08]" />
-
-      {/* ── Chapter 02: Craft (dark) ───────────────────────────── */}
-      <ChapterReveal
-        index="02 / 03"
-        eyebrow="Craft"
-        title={<>The art of <em className="font-serif italic font-light">roasting.</em></>}
-        body="Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self — then packed whole, ground, or as Easy Coffee Bags ready to brew."
-        callouts={["Small batch", "Slow roasted", "Cupped daily", "Brew-ready"]}
-        product={featuredBag}
-        align="right"
-        theme="dark"
-        onProductClick={featuredBag ? () => navigateTo({ product: slugify(featuredBag.name) }) : undefined}
-      />
-
-      {/* ── Curtain back to light for chapter 03 ───────────────── */}
+      {/* ── Curtain back to light for the catalog ──────────────── */}
       <CurtainTransition color="bg-natural-paper" />
-
-      {/* ── Chapter 03: Ritual ─────────────────────────────────── */}
-      <ChapterReveal
-        index="03 / 03"
-        eyebrow="Ritual"
-        title={<>Pour. Pause. <em className="font-serif italic font-light">Repeat.</em></>}
-        body="From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day. Mugs, tumblers, totes and trinkets that carry the ritual with you."
-        callouts={["Brewed in seconds", "Cup-ready", "Carry it everywhere", "Made to share"]}
-        product={featuredMerch ?? featuredBean}
-        align="left"
-        theme="light"
-        onProductClick={
-          featuredMerch
-            ? () => navigateTo({ product: slugify(featuredMerch.name) })
-            : featuredBean
-            ? () => navigateTo({ product: slugify(featuredBean.name) })
-            : undefined
-        }
-      />
 
       {/* ── Catalog intro — parallax editorial banner ──────────── */}
       <CatalogBanner />
@@ -1600,29 +1677,24 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
 
       {/* ── Bento grid (desktop) / stacked tiles (mobile) ──────── */}
-      <section id="categories" className="space-y-4 sm:space-y-6">
-        {/* Coffee row */}
-        {coffeeTiles.length > 0 && (
-          <>
-            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">Coffee</h2>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4">
-              {coffeeTiles.map((t) => (
-                <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
-              ))}
-            </div>
-          </>
-        )}
-        {/* Merch row */}
-        {merchTiles.length > 0 && (
-          <>
-            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent mt-6">Merch</h2>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4">
-              {merchTiles.map((t) => (
-                <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
-              ))}
-            </div>
-          </>
-        )}
+      <section id="categories" className="space-y-6">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">Shop the catalog</p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black mt-2">Pick your aisle.</h2>
+          </div>
+          <span className="hidden sm:inline text-xs text-natural-text/40 font-bold uppercase tracking-widest">
+            {allTiles.length} categories
+          </span>
+        </div>
+        <div
+          className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4 md:auto-rows-[180px]"
+          style={{ gridAutoFlow: "dense" }}
+        >
+          {allTiles.map((t) => (
+            <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
+          ))}
+        </div>
       </section>
 
       {/* ── Product sections — one per non-empty subcategory ───── */}
