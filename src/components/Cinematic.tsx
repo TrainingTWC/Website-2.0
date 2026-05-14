@@ -328,13 +328,13 @@ export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
   });
   // Spring-smooth the master scroll so cards glide between each other
   // with weight, never twitchy. Heavier mass + lower stiffness = molten.
-  const smooth = useSpring(scrollYProgress, { stiffness: 70, damping: 24, mass: 0.7 });
+  const smooth = useSpring(scrollYProgress, { stiffness: 40, damping: 28, mass: 1.1 });
   const n = chapters.length;
 
   return (
-    // One viewport per card — the last card stays pinned through the
-    // final viewport so there's no empty gap before the next section.
-    <div ref={ref} style={{ height: `${n * 100}vh` }} className="relative">
+    // ~1.7 viewports per card — gives each transition a long scroll
+    // runway so the 3D swap glides instead of snapping.
+    <div ref={ref} style={{ height: `${n * 170}vh` }} className="relative">
       {/* Perspective wrapper — gives every child a real 3D camera so
           rotateY / translateZ on the cards reads as depth, not 2D shear. */}
       <div
