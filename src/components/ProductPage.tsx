@@ -23,9 +23,12 @@ import { asset } from "../lib/asset";
 import { useProducts } from "../lib/useProducts";
 import type { Product } from "../types";
 
-// ── 3D model ─────────────────────────────────────────────────────────────────
+// ── 3D models ────────────────────────────────────────────────────────────────
 const SOUTH_INDIAN_3D_MODEL = asset("models/signature-south-indian-filter-blend.glb");
 const SOUTH_INDIAN_NAME = "Signature South Indian Filter Blend";
+
+const EL_DIABLO_3D_MODEL = asset("models/el-diablo-blend.glb");
+const EL_DIABLO_NAME = "El Diablo Blend";
 
 /**
  * Full-screen product detail page (route: `?product=<id>`).
@@ -293,7 +296,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
             transition={{ duration: 0.65, type: "spring", stiffness: 90, damping: 18 }}
             className="flex items-center justify-center"
           >
-            {product.name === SOUTH_INDIAN_NAME ? (
+            {(product.name === SOUTH_INDIAN_NAME || product.name === EL_DIABLO_NAME) ? (
               /* ── Real-time 3D GLB model with seamless crossfade ── */
               <div
                 className={`relative ${theme.shadow}`}
@@ -323,7 +326,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
                 >
                   <Suspense fallback={null}>
                     <ProductHero3D
-                      modelUrl={SOUTH_INDIAN_3D_MODEL}
+                      modelUrl={product.name === EL_DIABLO_NAME ? EL_DIABLO_3D_MODEL : SOUTH_INDIAN_3D_MODEL}
                       shadowOpacity={0.3}
                       onReady={() => setModel3DReady(true)}
                     />
