@@ -49,6 +49,8 @@ import { CheckoutPage } from "./components/CheckoutPage";
 import { OrderConfirmation } from "./components/OrderConfirmation";
 import { OrderPortal } from "./components/OrderPortal";
 import { ShopPage } from "./components/ShopPage";
+import { SiteFooter } from "./components/SiteFooter";
+import { GalaxySweep } from "./components/GalaxySweep";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -512,7 +514,7 @@ function Storefront() {
   // ── Full-page route: TI (Third Intelligence) ─────────────────
   if (page === "ti") {
     return (
-      <div className="h-screen overflow-hidden bg-[#090503] text-natural-text font-sans">
+      <div className="h-screen overflow-hidden bg-[#050E1F] text-natural-text font-sans">
         <DiscoveryWidget
           onClose={() => navigateTo({ page: null })}
           onNavigateToProduct={(slug) => navigateTo({ page: null, product: slug })}
@@ -526,8 +528,13 @@ function Storefront() {
   if (page === "order-portal") {
     const orderPortalId = params.get("id") ?? undefined;
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <OrderPortal initialOrderId={orderPortalId} />
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <OrderPortal initialOrderId={orderPortalId} />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
+        />
         <ToastContainer toasts={toasts} />
       </div>
     );
@@ -536,10 +543,15 @@ function Storefront() {
   // ── Full-page route: Order Confirmation ────────────────────
   if (page === "order-confirmation" && currentOrderId) {
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <OrderConfirmation
-          orderId={currentOrderId}
-          onContinueShopping={() => { setCart([]); setCurrentOrderId(null); navigateTo({ page: null }); }}
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <OrderConfirmation
+            orderId={currentOrderId}
+            onContinueShopping={() => { setCart([]); setCurrentOrderId(null); navigateTo({ page: null }); }}
+          />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
       </div>
     );
@@ -548,26 +560,36 @@ function Storefront() {
   // ── Full-page route: Checkout ───────────────────────────────
   if (page === "checkout") {
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <CheckoutPage
-          cart={cart}
-          products={products ?? []}
-          onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
-          onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <CheckoutPage
+            cart={cart}
+            products={products ?? []}
+            onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
+            onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
+          />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
       </div>
     );
   }
 
-  // ── Full-page route: Shop ──────────────────────────────────
-  if (page === "shop") {
+  // ── Full-page route: Product detail (must come BEFORE Shop so clicks navigate) ──
+  if (activeProductId) {
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <ShopPage
-          cart={cart}
-          onAddToCart={(productId) => { addToCart(productId); }}
-          onProductClick={(slug) => navigateTo({ product: slug })}
-          onGoToCart={() => setCartOpen(true)}
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <ProductPage
+            productId={activeProductId}
+            onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
+            onOpenCart={() => setCartOpen(true)}
+            cartCount={cartCount}
+          />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t, product: null })}
         />
         <CartPanel
           open={cartOpen}
@@ -583,17 +605,20 @@ function Storefront() {
     );
   }
 
-  // ── Full-page route: Product detail ───────────────────────
-  // Renders as a real page (not an overlay) so window scroll, parallax,
-  // and Lenis smooth-scroll all behave naturally.
-  if (activeProductId) {
+  // ── Full-page route: Shop ──────────────────────────────────
+  if (page === "shop") {
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <ProductPage
-          productId={activeProductId}
-          onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
-          onOpenCart={() => setCartOpen(true)}
-          cartCount={cartCount}
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <ShopPage
+            cart={cart}
+            onAddToCart={(productId) => { addToCart(productId); }}
+            onProductClick={(slug) => navigateTo({ page: null, product: slug })}
+            onGoToCart={() => setCartOpen(true)}
+          />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
         <CartPanel
           open={cartOpen}
@@ -642,58 +667,10 @@ function Storefront() {
         </div>
       </main>
 
-      <footer className="py-16 border-t border-natural-border bg-natural-paper" id="footer">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
-            <div className="space-y-4 max-w-sm">
-              <div className="flex items-center gap-2">
-                <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-8 w-auto" />
-              </div>
-              <p className="text-natural-text/50 text-sm leading-relaxed">
-                India's finest specialty coffee. We source, roast, and deliver premium beans to your doorstep.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 sm:flex sm:gap-16 text-sm">
-              <div className="space-y-4">
-                <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Shop</h4>
-                <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-beans")}>Coffee Beans</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-bags")}>Easy Coffee Bags</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-merch")}>Merch</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigateTo({ page: "order-portal" })}>Track your order</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigateTo({ page: "shop" })}>Shop All</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Company</h4>
-                <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("our-story")}>Our Story</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors">Contact</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors">Careers</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Legal</h4>
-                <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors">Privacy Policy</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors">Terms of Service</span>
-                  <span className="cursor-pointer hover:text-natural-accent transition-colors">Shipping Policy</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-natural-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-natural-text/40 text-xs">
-            <span className="flex items-center gap-1">
-              <Info className="w-3 h-3" /> © 2026 Third Wave Coffee. All rights reserved.
-            </span>
-            <span className="flex items-center gap-1">
-              Made with <Heart className="w-3 h-3 fill-red-400 text-red-400" /> in India
-            </span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter
+        onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
+        onScrollTo={(id) => scrollTo(id)}
+      />
 
       <ToastContainer toasts={toasts} />
       </div>
@@ -708,18 +685,11 @@ function Storefront() {
         onCheckout={() => navigateTo({ page: "checkout" })}
       />
 
-      {/* TI circular sweep — expands from click point, then navigates */}
+      {/* Galaxy-AI style sweep when opening Third Intelligence */}
       {tiSweep && (
-        <motion.div
-          key="ti-sweep"
-          className="fixed inset-0 z-[9998] pointer-events-none"
-          style={{
-            background: "radial-gradient(circle at center, #3D1F0F 0%, #1A0A06 55%, #090503 100%)",
-          }}
-          initial={{ clipPath: `circle(0px at ${tiSweep.x}px ${tiSweep.y}px)` }}
-          animate={{ clipPath: `circle(150vmax at ${tiSweep.x}px ${tiSweep.y}px)` }}
-          transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
-          onAnimationComplete={() => {
+        <GalaxySweep
+          origin={tiSweep}
+          onComplete={() => {
             setTiSweep(null);
             navigateTo({ page: "ti" });
           }}

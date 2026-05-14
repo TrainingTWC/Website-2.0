@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft, Search, ShoppingCart, X, Sparkles, Coffee, Plus,
 } from "lucide-react";
 import { useProducts } from "../lib/useProducts";
 import { SmartImage } from "./SmartImage";
 import { DiscoveryWidget } from "./widget/DiscoveryWidget";
+import { GalaxySweep } from "./GalaxySweep";
 import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 
@@ -353,18 +353,11 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
         Find Your Match
       </button>
 
-      {/* ── Circular sweep transition (Gemini-style) ─────────── */}
+      {/* ── Galaxy-AI sweep transition ─────────────────── */}
       {tiSweep && !aiOpen && (
-        <motion.div
-          key="shop-ti-sweep"
-          className="fixed inset-0 z-[9998] pointer-events-none"
-          style={{
-            background: "radial-gradient(circle at center, #3D1F0F 0%, #1A0A06 55%, #090503 100%)",
-          }}
-          initial={{ clipPath: `circle(0px at ${tiSweep.x}px ${tiSweep.y}px)` }}
-          animate={{ clipPath: `circle(150vmax at ${tiSweep.x}px ${tiSweep.y}px)` }}
-          transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
-          onAnimationComplete={() => setAiOpen(true)}
+        <GalaxySweep
+          origin={tiSweep}
+          onComplete={() => setAiOpen(true)}
         />
       )}
 
