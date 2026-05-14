@@ -13,6 +13,7 @@ import {
   useMotionValue,
   useMotionValueEvent,
   useInView,
+  type MotionValue,
 } from "motion/react";
 import {
   ShoppingCart,
@@ -987,7 +988,11 @@ function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: () =>
 }
 
 // ── Product Card Component ─────────────────────────────────────
-function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (name: string) => void }) {
+function ProductCard({ product, onAddToCart, imageParallaxX }: {
+  product: Product;
+  onAddToCart: (name: string) => void;
+  imageParallaxX?: MotionValue<number>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -1020,13 +1025,29 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         style={{ transform: "translateZ(20px)" }}
         onClick={() => navigateTo({ product: slugify(product.name) })}
       >
-        <SmartImage
-          src={product.imageUrl}
-          blur={product.imageBlur}
-          alt={product.name}
-          className="object-cover group-hover:scale-105 transition-transform duration-700"
-          wrapperClassName="w-full h-full"
-        />
+        {/* Image — wider than card when parallax is active so the shift has room */}
+        {imageParallaxX ? (
+          <motion.div
+            className="absolute h-full"
+            style={{ width: "130%", left: "-15%", x: imageParallaxX }}
+          >
+            <SmartImage
+              src={product.imageUrl}
+              blur={product.imageBlur}
+              alt={product.name}
+              className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+              wrapperClassName="w-full h-full"
+            />
+          </motion.div>
+        ) : (
+          <SmartImage
+            src={product.imageUrl}
+            blur={product.imageBlur}
+            alt={product.name}
+            className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+            wrapperClassName="absolute inset-0"
+          />
+        )}
         {/* Quick-add button */}
         <div
           onClick={(e) => { e.stopPropagation(); onAddToCart(product.name); }}
@@ -1137,11 +1158,26 @@ function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCar
 }
 
 // ── Horizontal scroll product row ─────────────────────────────
+// Approx stride per card at md breakpoint (256px + 20px gap). Used for parallax offset math.
+const HSCROLL_CARD_STRIDE = 276;
+
 function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const velRef    = useRef(0);
   const rafRef    = useRef(0);
   const drag = useRef({ active: false, startX: 0, startSL: 0, lastX: 0, lastT: 0, vel: 0, moved: false });
+
+  // MotionValue tracking scrollLeft — updated via native scroll event so parallax
+  // image transforms bypass React reconciliation entirely (direct DOM updates).
+  const scrollX = useMotionValue(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => scrollX.set(el.scrollLeft);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollX]);
 
   // rAF inertia loop — friction 0.93 gives a buttery coast that stops naturally
   const runInertia = useCallback(() => {
@@ -1157,12 +1193,12 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  // Wheel: only intercept horizontal trackpad swipes — vertical passes through to Lenis/page
+  // Wheel: only intercept clearly-horizontal trackpad swipes — vertical passes through to Lenis
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5;
+      const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5;
       if (!isHorizontal) return; // vertical scroll: don't block, let page scroll
       e.preventDefault();
       velRef.current += e.deltaX * 0.6;
@@ -1228,11 +1264,27 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
       style={{ WebkitOverflowScrolling: "touch" as any }}
       data-lenis-prevent
     >
-      {products.map((p) => (
-        <div key={p._id} className="flex-shrink-0 w-48 sm:w-56 md:w-64">
-          <ProductCard product={p} onAddToCart={onAddToCart} />
-        </div>
+      {products.map((p, i) => (
+        <HScrollCard key={p._id} product={p} index={i} scrollX={scrollX} onAddToCart={onAddToCart} />
       ))}
+    </div>
+  );
+}
+
+// ── HScrollCard — card in the horizontal scroll row with image parallax ──────
+function HScrollCard({
+  product, index, scrollX, onAddToCart,
+}: {
+  product: Product;
+  index: number;
+  scrollX: MotionValue<number>;
+  onAddToCart: (name: string) => void;
+}) {
+  // Image moves at 12% of card speed (opposite direction) = depth parallax
+  const imageX = useTransform(scrollX, (sl) => (index * HSCROLL_CARD_STRIDE - sl) * 0.12);
+  return (
+    <div className="flex-shrink-0 w-48 sm:w-56 md:w-64">
+      <ProductCard product={product} onAddToCart={onAddToCart} imageParallaxX={imageX} />
     </div>
   );
 }

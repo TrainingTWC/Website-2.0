@@ -18,12 +18,12 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     const lenis = new Lenis({
       // Frame-rate independent smoothing — feels identical at 60 / 120 / 144 Hz.
       // Lower = snappier (tighter tracking of the wheel), higher = heavier.
-      lerp: 0.09,
+      lerp: 0.13,
       smoothWheel: true,
       syncTouch: true,
-      syncTouchLerp: 0.08,
-      wheelMultiplier: 0.75,
-      touchMultiplier: 1.2,
+      syncTouchLerp: 0.1,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.4,
     });
 
     let raf = 0;
