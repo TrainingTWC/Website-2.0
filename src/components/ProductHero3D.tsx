@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   useGLTF,
@@ -10,9 +10,16 @@ import {
 import type { Group } from "three";
 
 /** Loads and auto-rotates the GLB model. Rotation pauses while user drags. */
-function Model({ url, paused }: { url: string; paused: boolean }) {
+function Model({ url, paused, onReady }: { url: string; paused: boolean; onReady?: () => void }) {
   const { scene } = useGLTF(url);
   const groupRef = useRef<Group>(null!);
+
+  // GLB is synchronously available here (Suspense resolved) — signal ready after first paint
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => onReady?.());
+    return () => cancelAnimationFrame(raf);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useFrame((_, delta) => {
     if (!paused && groupRef.current) {
@@ -31,9 +38,11 @@ interface ProductHero3DProps {
   modelUrl: string;
   /** Shadow opacity (0–1). Set lower for dark-bg pages. Default 0.25 */
   shadowOpacity?: number;
+  /** Called after the model has rendered its first frame — use to crossfade from fallback */
+  onReady?: () => void;
 }
 
-export function ProductHero3D({ modelUrl, shadowOpacity = 0.25 }: ProductHero3DProps) {
+export function ProductHero3D({ modelUrl, shadowOpacity = 0.25, onReady }: ProductHero3DProps) {
   const [dragging, setDragging] = useState(false);
 
   return (
@@ -52,7 +61,7 @@ export function ProductHero3D({ modelUrl, shadowOpacity = 0.25 }: ProductHero3DP
       <Suspense fallback={null}>
         {/* Bounds auto-fits the model inside the viewport on load */}
         <Bounds fit clip observe margin={1.1}>
-          <Model url={modelUrl} paused={dragging} />
+          <Model url={modelUrl} paused={dragging} onReady={onReady} />
         </Bounds>
 
         <ContactShadows

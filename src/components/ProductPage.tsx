@@ -127,6 +127,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   const products = useProducts();
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
+  const [model3DReady, setModel3DReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const product = useMemo(
@@ -137,6 +138,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   useEffect(() => {
     setVariant("250g");
     setQty(1);
+    setModel3DReady(false);
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [productId]);
 
@@ -292,22 +294,41 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
             className="flex items-center justify-center"
           >
             {product.name === SOUTH_INDIAN_NAME ? (
-              /* ── Real-time 3D GLB model ── */
+              /* ── Real-time 3D GLB model with seamless crossfade ── */
               <div
                 className={`relative ${theme.shadow}`}
                 style={{ width: "clamp(220px, 34vw, 420px)", height: "clamp(220px, 34vw, 420px)" }}
               >
-                <Suspense fallback={
-                  <div className="w-full h-full flex items-center justify-center opacity-30">
-                    <SmartImage src={product.imageUrl} blur={product.imageBlur} alt={product.name}
-                      className="object-contain" wrapperClassName="w-full h-full" priority />
-                  </div>
-                }>
-                  <ProductHero3D
-                    modelUrl={SOUTH_INDIAN_3D_MODEL}
-                    shadowOpacity={0.3}
+                {/* Flat image — always present, fades out once 3D is ready */}
+                <motion.div
+                  className="absolute inset-0"
+                  animate={{ opacity: model3DReady ? 0 : 1 }}
+                  transition={{ duration: 0.7, ease: "easeInOut" }}
+                  style={{ pointerEvents: "none" }}
+                >
+                  <SmartImage
+                    src={product.imageUrl}
+                    blur={product.imageBlur}
+                    alt={product.name}
+                    className="object-contain"
+                    wrapperClassName="w-full h-full"
+                    priority
                   />
-                </Suspense>
+                </motion.div>
+                {/* 3D canvas — transparent until model renders, then fades in */}
+                <motion.div
+                  className="absolute inset-0"
+                  animate={{ opacity: model3DReady ? 1 : 0 }}
+                  transition={{ duration: 0.7, ease: "easeInOut" }}
+                >
+                  <Suspense fallback={null}>
+                    <ProductHero3D
+                      modelUrl={SOUTH_INDIAN_3D_MODEL}
+                      shadowOpacity={0.3}
+                      onReady={() => setModel3DReady(true)}
+                    />
+                  </Suspense>
+                </motion.div>
               </div>
             ) : (
               /* ── CSS pseudo-3D spin (all other products) ── */
