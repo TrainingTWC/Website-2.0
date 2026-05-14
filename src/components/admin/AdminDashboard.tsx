@@ -188,7 +188,7 @@ export function AdminDashboard() {
 
       <div className="bg-white rounded-[3rem] border border-natural-border shadow-sm min-h-[60vh] overflow-hidden">
         {activeTab === "inventory" && (
-          <InventoryManager products={products ?? []} />
+          <InventoryManager />
         )}
         {activeTab === "analytics" && (
           <AnalyticsView sessions={sessions ?? []} products={products ?? []} />
@@ -201,7 +201,8 @@ export function AdminDashboard() {
 }
 
 // ─── Inventory manager ────────────────────────────────────────────────────────
-function InventoryManager({ products }: { products: Product[] }) {
+function InventoryManager() {
+  const products = (useQuery(api.products.list) ?? []) as Product[];
   const categories = useQuery((api as any).categories.list) as
     | Category[]
     | undefined;
