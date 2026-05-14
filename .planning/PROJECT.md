@@ -14,20 +14,23 @@ Every customer leaves with a coffee recommendation that feels personally curated
 
 - [x] Discovery Widget with 6-step question flow
 - [x] Convex backend with product catalog (beans, bags, merch)
-- [x] Mistral AI integration for recommendation generation
+- [x] Mistral AI integration for recommendation generation (`MISTRAL_API_KEY`)
 - [x] Session tracking (answers → recommendations → conversion)
 - [x] Admin dashboard for product management
 - [x] Product image optimization pipeline (WebP + LQIP)
 - [x] Kiosk pipeline view (`KioskPipeline.tsx`)
 - [x] 3D bestseller carousel and cinematic product pages
+- [x] AI connectivity fixed (MISTRAL_API_KEY wired correctly) — v1.1
+- [x] Brand context + 18 product personality profiles (`convex/productContext.ts`) — v1.1
+- [x] Enhanced AI prompt with personality-aware recommendations — v1.1
 
 ### Active
 
-- [ ] **AI-01**: AI engine can actually run (API key wired correctly)
-- [ ] **CTX-01**: AI prompt carries full brand context so responses feel like TWC staff
-- [ ] **CTX-02**: Every product has a personality profile (archetype, voice, ideal customer, mood, ritual)
-- [ ] **CTX-03**: AI uses product personalities when crafting match explanations
-- [ ] **CTX-04**: Brand voice is crisp, confident, knowledgeable — no generic chatbot phrasing
+- [ ] **CART-01 – CART-05**: Cart hook + Add to Cart + cart drawer + header badge
+- [ ] **CHK-01 – CHK-04**: Guest checkout form (Name, Phone, Email, Address, Pincode)
+- [ ] **ORD-01 – ORD-03**: Convex orders table, submitOrder mutation, confirmation screen
+- [ ] **ADM-01 – ADM-03**: Admin dashboard Orders tab with order queue + detail view
+- [ ] **PAY-01 – PAY-04**: Razorpay integration + webhook verification
 
 ### Out of Scope
 
@@ -59,14 +62,19 @@ Every customer leaves with a coffee recommendation that feels personally curated
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
 
-## Current Milestone: v1.1 Third Intelligence Context & Personality
+## Current Milestone: v2.0 — Own eShop (No Shopify)
 
-**Goal:** Make the Third Intelligence AI recommendation engine work correctly, feel like TWC staff, and use rich product personalities when explaining matches.
+**Goal:** Build a fully self-hosted eShop within the existing React + Convex stack — cart, guest checkout, order capture, Razorpay payment, and admin order queue. Zero dependency on Shopify or any external eCommerce platform.
 
 **Target features:**
-- Fix API key wiring (use `MISTRAL_API_KEY`)
-- Create `convex/productContext.ts` — brand context + 18 product personality profiles
-- Update AI prompt to inject personalities and brand voice
+- `useCart` hook with localStorage persistence
+- "Add to Cart" on product cards and product detail pages
+- Cart drawer (slide-in panel) with quantity controls
+- Guest checkout form: Name, Phone, Email, Address, Pincode
+- Convex `orders` table + `submitOrder` mutation
+- Order confirmation screen with order number
+- Admin dashboard Orders tab (order queue, detail view)
+- Razorpay payment integration with server-side webhook verification
 
 ## Evolution
 

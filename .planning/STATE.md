@@ -1,36 +1,41 @@
 ---
-milestone: v1.1
-name: Third Intelligence Context & Personality
-status: executing
+milestone: v2.0
+name: Own eShop (No Shopify)
+status: ready
 progress:
   phases_total: 3
-  phases_done: 3
+  phases_done: 0
 ---
 
 # STATE.md
 
 ## Current Position
 
-Phase: All phases complete
-Plan: Awaiting UAT / Convex deployment verification
-Status: Implemented — pending env var confirmation
-Last activity: 2026-05-13 — All three phases executed
+Phase: Not started — ready to begin Phase 1
+Plan: Run `/gsd-plan-phase 1` to generate the execution plan
+Status: Planning complete, implementation pending
+Last activity: 2026-05-14 — v2.0 milestone initialized (eShop)
 
 ## Todos
 
-- [x] Implement Phase 1 (fix AI — switched provider to MISTRAL_API_KEY)
-- [x] Implement Phase 2 (convex/productContext.ts — brand context + 18 personality profiles)
-- [x] Implement Phase 3 (enhanced AI prompt using personalities + brand voice)
-- [ ] Confirm MISTRAL_API_KEY is set in Convex dashboard (`npx convex env set MISTRAL_API_KEY "your_key"`)
-- [ ] End-to-end test: complete widget flow and verify personality-informed recommendation
+- [ ] Execute Phase 1 — Cart + Checkout UI
+- [ ] Execute Phase 2 — Order Backend + Confirmation
+- [ ] Execute Phase 3 — Razorpay Payment Integration
 
 ## Decisions This Milestone
 
 | Decision | Rationale |
 |----------|-----------|
-| Personalities as in-code constants (productContext.ts) | No DB round-trip, always consistent, co-located with prompt logic |
-| MISTRAL_API_KEY | Matches Convex env var set via `npx convex env set` |
-| buildPersonalitiesBlock() helper | Keeps prompt builder clean; only embeds personalities for products actually in catalog |
+| localStorage cart (not Convex) | No auth needed, no server round-trip for cart state; simpler and faster |
+| Guest checkout only | Kiosk/web-shop hybrid audience; friction reduction > account benefits |
+| Razorpay over Stripe | Dominant Indian gateway; UPI + cards + net banking + wallets in one modal |
+| Convex HTTP action for webhook | Keeps everything in one backend; no separate Node server |
+| Orders in Phase 2, payment in Phase 3 | Ship order capture fast; Razorpay needs KEY_ID/KEY_SECRET configured first |
+
+## Previous Milestone (v1.1) — Complete
+
+All 3 phases of v1.1 (Third Intelligence Context & Personality) were shipped 2026-05-13.
+AI connectivity, brand context, product personalities, and enhanced prompt are live.
 
 ## Blockers
 
