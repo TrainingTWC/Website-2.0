@@ -786,29 +786,28 @@ function MorphingHeader({
       <motion.div
         animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4"
+        className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-4"
       >
-        {/* Logo — compact on mobile always, shrinks on scroll on desktop */}
+        {/* Invisible spacer on mobile to balance the cart button on the right,
+            so the centered logo sits truly in the middle. Hidden on desktop. */}
+        <div className="md:hidden w-10 shrink-0" aria-hidden />
+
+        {/* Logo — centered on mobile (flex-1), flush-left on desktop.
+            Shares a layoutId with the LoadingScreen logo so it flies in
+            from the splash on first paint. */}
         <button
           onClick={() => onNavTo("hero")}
-          className="flex items-center shrink-0"
+          className="flex items-center justify-center md:justify-start flex-1 md:flex-none"
           aria-label="Third Wave Coffee—home"
         >
           <motion.img
+            layoutId="brand-logo"
             src={asset("logo.png")}
             alt="Third Wave Coffee"
             initial={false}
             animate={{ height: compact ? 40 : 56 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="w-auto md:hidden"
-          />
-          <motion.img
-            src={asset("logo.png")}
-            alt="Third Wave Coffee"
-            initial={false}
-            animate={{ height: compact ? 44 : 64 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="w-auto hidden md:block"
+            className="w-auto"
           />
         </button>
 

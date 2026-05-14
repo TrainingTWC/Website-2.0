@@ -35,7 +35,9 @@ export function BannerSlideshow({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="relative w-full aspect-16/6">
+      {/* Portrait on phones so the banners are tall and impactful; switches to
+          a wide cinematic 16:6 from sm: up. */}
+      <div className="relative w-full aspect-[4/5] sm:aspect-16/6">
         <AnimatePresence mode="sync">
           {slides.map((node, i) =>
             i === active ? (

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as cache from "../cache.js";
 import type * as productContext from "../productContext.js";
 import type * as products from "../products.js";
 import type * as recommendations from "../recommendations.js";
@@ -21,6 +22,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  cache: typeof cache;
   productContext: typeof productContext;
   products: typeof products;
   recommendations: typeof recommendations;

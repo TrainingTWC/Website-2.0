@@ -126,11 +126,13 @@ export function LoadingScreen({ ready, onExitComplete }: LoadingScreenProps) {
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute inset-0 -m-8 rounded-full bg-natural-accent/15 blur-2xl"
                 />
-                <img
+                <motion.img
+                  layoutId="brand-logo"
                   src="logo.png"
                   alt="Third Wave Coffee"
                   className="relative h-16 w-auto select-none"
                   draggable={false}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 />
               </motion.div>
 
