@@ -461,13 +461,14 @@ function Storefront() {
 
   // Header reactivity to scroll — opacity + shadow build up
   // (must be declared before any early returns to satisfy rules of hooks)
+  // Frosted glass: stays translucent across the whole scroll range, just nudges saturation/shadow.
   const { scrollY } = useScroll();
-  const headerBg = useTransform(scrollY, [0, 120], ["rgba(250,249,246,0.6)", "rgba(250,249,246,0.95)"]);
-  const headerBorder = useTransform(scrollY, [0, 120], ["rgba(224,216,208,0)", "rgba(224,216,208,1)"]);
+  const headerBg = useTransform(scrollY, [0, 120], ["rgba(250,249,246,0.35)", "rgba(250,249,246,0.62)"]);
+  const headerBorder = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0.25)", "rgba(255,255,255,0.45)"]);
   const headerShadow = useTransform(
     scrollY,
     [0, 120],
-    ["0 0 0 rgba(0,0,0,0)", "0 8px 30px rgba(44,24,16,0.06)"]
+    ["0 0 0 rgba(0,0,0,0)", "0 10px 40px -12px rgba(44,24,16,0.12)"]
   );
 
   // ── Full-page route: TI (Third Intelligence) ─────────────────
@@ -634,7 +635,7 @@ function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onO
         transition={{ duration: 0.55, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="mx-3 mb-3 pointer-events-auto"
       >
-        <div className="flex items-center justify-around bg-natural-paper/92 backdrop-blur-2xl border border-natural-border/70 rounded-2xl px-1 py-2 shadow-2xl shadow-natural-text/15">
+        <div className="flex items-center justify-around glass-strong rounded-2xl px-1 py-2">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
@@ -781,7 +782,7 @@ function MorphingHeader({
         borderBottomColor: headerBorder,
         boxShadow: headerShadow,
       }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
+      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl saturate-150 border-b"
     >
       <motion.div
         animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
@@ -976,7 +977,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
       className="group space-y-5 preserve-3d"
     >
       <div
-        className="aspect-[4/5] bg-natural-paper rounded-[2rem] border border-natural-border overflow-hidden shadow-sm group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d cursor-pointer"
+        className="aspect-[4/5] glass-card rounded-[2rem] overflow-hidden group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d cursor-pointer"
         style={{ transform: "translateZ(20px)" }}
         onClick={() => navigateTo({ product: slugify(product.name) })}
       >
@@ -1054,7 +1055,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
 // ── Horizontal Card Component (for Bags) ───────────────────────
 function HorizontalCard({ product, onAddToCart }: { product: Product; onAddToCart: (name: string) => void }) {
   return (
-    <div className="group flex flex-col md:flex-row bg-natural-paper rounded-[2.5rem] border border-natural-border overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1 md:h-56">
+    <div className="group flex flex-col md:flex-row glass-card rounded-[2.5rem] overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1 md:h-56">
       <div className="w-full md:w-56 h-48 md:h-full shrink-0 overflow-hidden bg-natural-muted">
         <SmartImage
           src={product.imageUrl}
