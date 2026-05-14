@@ -916,22 +916,22 @@ function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: () =>
       onClick={onClick}
       title="Third Intelligence"
       aria-label="Third Intelligence"
-      className={`relative flex items-center rounded-full hover:bg-natural-muted/60 transition-colors ${
-        compact ? "h-10 w-10 justify-center" : "h-10 pl-2 pr-4 gap-2"
+      className={`relative flex items-center rounded-full hover:bg-natural-muted/60 transition-colors text-natural-text/70 hover:text-natural-text ${
+        compact ? "h-10 w-10 justify-center" : "h-10 px-4 gap-2"
       }`}
     >
-      <span className="relative flex items-center justify-center w-7 h-7">
+      <span className="relative flex items-center justify-center w-5 h-5 shrink-0">
         <motion.span
           aria-hidden
           animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
           transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
           style={{ willChange: "transform, opacity", transformOrigin: "center" }}
-          className="absolute inset-0 m-auto w-7 h-7 rounded-full bg-natural-accent/40 pointer-events-none"
+          className="absolute inset-0 m-auto rounded-full bg-natural-accent/40 pointer-events-none"
         />
         <img
           src={asset("third-intelligence-icon.png")}
           alt=""
-          className="relative z-10 w-7 h-7 object-contain"
+          className="relative z-10 w-5 h-5 object-contain"
         />
       </span>
       <AnimatePresence initial={false}>
@@ -942,7 +942,7 @@ function TIHeaderButton({ compact, onClick }: { compact: boolean; onClick: () =>
             animate={{ opacity: 1, width: "auto", marginLeft: 0 }}
             exit={{ opacity: 0, width: 0, marginLeft: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="overflow-hidden text-sm font-serif font-bold whitespace-nowrap text-natural-text"
+            className="overflow-hidden text-sm font-medium whitespace-nowrap"
           >
             Intelligence
           </motion.span>
