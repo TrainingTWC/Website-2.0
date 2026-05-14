@@ -47,6 +47,7 @@ import { ProductPage } from "./components/ProductPage";
 import { CartPanel } from "./components/CartPanel";
 import { CheckoutPage } from "./components/CheckoutPage";
 import { OrderConfirmation } from "./components/OrderConfirmation";
+import { OrderPortal } from "./components/OrderPortal";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -512,6 +513,17 @@ function Storefront() {
     );
   }
 
+  // ── Full-page route: Order Portal ──────────────────────────────
+  if (page === "order-portal") {
+    const orderPortalId = params.get("id") ?? undefined;
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
+        <OrderPortal initialOrderId={orderPortalId} />
+        <ToastContainer toasts={toasts} />
+      </div>
+    );
+  }
+
   // ── Full-page route: Order Confirmation ────────────────────
   if (page === "order-confirmation" && currentOrderId) {
     return (
@@ -616,6 +628,7 @@ function Storefront() {
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-beans")}>Coffee Beans</span>
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-bags")}>Easy Coffee Bags</span>
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-merch")}>Merch</span>
+                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigateTo({ page: "order-portal" })}>Track your order</span>
                 </div>
               </div>
               <div className="space-y-4">

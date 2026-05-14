@@ -156,6 +156,19 @@ export function OrderConfirmation({ orderId, onContinueShopping }: OrderConfirma
               Continue Shopping
               <ArrowRight className="w-4 h-4" />
             </button>
+            <button
+              onClick={() => {
+                window.history.pushState(
+                  {},
+                  "",
+                  `${window.location.pathname}?page=order-portal&id=${orderId}`
+                );
+                window.dispatchEvent(new PopStateEvent("popstate"));
+              }}
+              className="text-sm text-natural-accent underline underline-offset-2 hover:opacity-80 transition-opacity mt-3"
+            >
+              Track your order →
+            </button>
           </motion.div>
         )}
       </div>

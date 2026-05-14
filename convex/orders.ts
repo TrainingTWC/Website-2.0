@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function randomAlphaNum(len: number): string {
@@ -90,5 +90,41 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { status: args.status });
+  },
+});
+
+// ── cancelOrder ────────────────────────────────────────────────────────────
+export const cancelOrder = mutation({
+  args: { orderId: v.string() },
+  handler: async (ctx, args) => {
+    const order = await ctx.db
+      .query("orders")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .first();
+    if (!order) throw new ConvexError("Order not found.");
+    if (order.status !== "pending") {
+      throw new ConvexError(`Cannot cancel — order is already ${order.status}.`);
+    }
+    await ctx.db.patch(order._id, { status: "cancelled" });
+  },
+});
+
+// ── addOrderNote ───────────────────────────────────────────────────────────
+export const addOrderNote = mutation({
+  args: {
+    orderId: v.string(),
+    message: v.string(),
+    role: v.union(v.literal("customer"), v.literal("system")),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db
+      .query("orders")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .first();
+    if (!order) throw new ConvexError("Order not found.");
+    const notes = order.notes ?? [];
+    await ctx.db.patch(order._id, {
+      notes: [...notes, { role: args.role, message: args.message, ts: Date.now() }],
+    });
   },
 });

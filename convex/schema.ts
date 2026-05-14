@@ -115,6 +115,11 @@ export default defineSchema({
     razorpayOrderId: v.optional(v.string()),
     razorpayPaymentId: v.optional(v.string()),
     paidAt: v.optional(v.number()),
+    notes: v.optional(v.array(v.object({
+      role: v.union(v.literal("customer"), v.literal("system")),
+      message: v.string(),
+      ts: v.number(),
+    }))),
   })
     .index("by_status", ["status"])
     .index("by_orderId", ["orderId"]),
