@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, AnimatePresence, type PanInfo } from "motion/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
  * BannerSlideshow — auto-rotating, accepts React slides so each can be a
@@ -99,22 +100,49 @@ export function BannerSlideshow({
       </div>
 
       {slides.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-3 py-2 rounded-full bg-black/30 backdrop-blur-md">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i, i > active ? 1 : -1)}
-              aria-label={`Show slide ${i + 1}`}
-              className="group p-1"
-            >
-              <span
-                className={`block h-1.5 rounded-full transition-all duration-500 ${
-                  i === active ? "w-8 bg-white" : "w-1.5 bg-white/50 group-hover:bg-white/80"
-                }`}
-              />
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Prev / next arrows — appear on hover (desktop) and always
+              on touch devices via opacity-100 sm:opacity-0 cascade. */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+            }}
+            aria-label="Previous slide"
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 grid place-items-center w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/35 hover:bg-black/55 backdrop-blur-md text-white transition-all opacity-80 hover:opacity-100 hover:-translate-x-0.5 hover:scale-105 active:scale-95 shadow-lg"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              next();
+            }}
+            aria-label="Next slide"
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 grid place-items-center w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/35 hover:bg-black/55 backdrop-blur-md text-white transition-all opacity-80 hover:opacity-100 hover:translate-x-0.5 hover:scale-105 active:scale-95 shadow-lg"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+          </button>
+
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-3 py-2 rounded-full bg-black/30 backdrop-blur-md">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i, i > active ? 1 : -1)}
+                aria-label={`Show slide ${i + 1}`}
+                className="group p-1"
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all duration-500 ${
+                    i === active ? "w-8 bg-white" : "w-1.5 bg-white/50 group-hover:bg-white/80"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

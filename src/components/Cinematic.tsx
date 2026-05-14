@@ -333,10 +333,7 @@ export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
   return (
     // Total scrollable distance ≈ one viewport per card + one for the final flush-out.
     <div ref={ref} style={{ height: `${(n + 0.4) * 100}vh` }} className="relative">
-      <div
-        className="sticky top-0 h-screen overflow-hidden"
-        style={{ perspective: 1800 }}
-      >
+      <div className="sticky top-0 h-screen overflow-hidden">
         {chapters.map((c, i) => (
           <ChapterCard
             key={`${c.eyebrow}-${i}`}
@@ -362,27 +359,30 @@ function ChapterCard({
   progress: MotionValue<number>;
   config: ChapterConfig;
 }) {
-  // Each card claims a 1/total slice. Inside its slice: first 75% is the
-  // parallax phase, last 25% is the flip phase.
+  // Each card claims a 1/total slice. Inside its slice: first ~70% is the
+  // parallax phase, last ~30% is the morph (cross-fade) into the next card.
   const seg = 1 / (total + 0.4);
   const start = index * seg;
-  const flipStart = start + seg * 0.78;
-  const end = start + seg * 1.05; // slight overlap into next card
+  const morphStart = start + seg * 0.72;
+  const end = start + seg * 1.0;
 
-  // Local 0→1 progress used to drive internal parallax (same shapes as ChapterReveal).
-  const local = useTransform(progress, [start, flipStart], [0, 1]);
+  // Local 0→1 progress used to drive internal parallax.
+  const local = useTransform(progress, [start, morphStart], [0, 1]);
 
-  // Visibility — fade in just before this card's turn, hold until flip completes.
+  // Visibility — fade in just before this card's turn, fade out as the next
+  // card fades in. No rotation, no 3D — just a clean cross-fade morph.
   const opacity = useTransform(
     progress,
-    [Math.max(0, start - seg * 0.05), start, flipStart, end],
+    [Math.max(0, start - seg * 0.15), start, morphStart, end],
     [index === 0 ? 1 : 0, 1, 1, 0],
   );
 
-  // Flip-out: rotateX away from the camera while the next card sits beneath.
-  const rotateX = useTransform(progress, [flipStart, end], [0, -92]);
-  const translateZ = useTransform(progress, [flipStart, end], [0, -260]);
-  const scale = useTransform(progress, [flipStart, end], [1, 0.92]);
+  // Subtle scale breath on exit (1.0 → 1.04) so it feels like the camera
+  // gently pushes through into the next chapter, not a hard cut.
+  const morphScale = useTransform(progress, [morphStart, end], [1, 1.04]);
+  // Soft blur ramp at the very end of the morph sells the transition.
+  const morphBlur = useTransform(progress, [morphStart, end], [0, 6]);
+  const filter = useTransform(morphBlur, (b) => `blur(${b}px)`);
 
   // Parallax band values (same numerics as ChapterReveal).
   const bigTextY = useTransform(local, [0, 1], ["20%", "-50%"]);
@@ -407,15 +407,12 @@ function ChapterCard({
     <motion.div
       style={{
         opacity,
-        rotateX,
-        translateZ,
-        scale,
+        scale: morphScale,
+        filter,
         zIndex: total - index,
-        transformStyle: "preserve-3d",
-        transformOrigin: "center top",
-        willChange: "transform, opacity",
+        willChange: "opacity, transform, filter",
       }}
-      className={`absolute inset-0 ${bg} ${fg} overflow-hidden shadow-2xl shadow-black/40`}
+      className={`absolute inset-0 ${bg} ${fg} overflow-hidden`}
     >
       {/* Background editorial wordmark — slowest moving */}
       <motion.div
