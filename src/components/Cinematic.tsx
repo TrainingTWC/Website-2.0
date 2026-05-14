@@ -362,39 +362,32 @@ function ChapterCard({
   config: ChapterConfig;
 }) {
   // Each card claims a 1/total slice of master scroll progress.
-  //
-  //   ├── enter ──┼─────── hold (parallax) ───────┼── exit ──┤
-  //   ^                    ^                                  ^
-  //   enterStart          start                              end
-  //
-  // Crucially, the enter window of card N overlaps the exit window of
-  // card N-1: they share the same scroll range, cross-fading and
-  // co-parallaxing through it. That's what makes one card feel like it's
-  // becoming the next, not "card vanishes, blank, new card appears".
+  // The morph between adjacent cards happens in a generous shared window
+  // (~40% of a slice). Inside that window each *content layer*
+  // (background tint, wordmark, product image, copy column) cross-fades
+  // independently — so the user sees the bg colour smoothly bleed into
+  // the next bg colour, the image dissolve into the next image, and the
+  // text swap to the next text. No whole-card blur, no whole-card scale.
   const isFirst = index === 0;
   const isLast = index === total - 1;
   const seg = 1 / total;
   const start = index * seg;
   const end = start + seg;
-  // Morph window: last ~32% of each card's slice cross-fades into the next.
-  const morphStart = start + seg * 0.68;
-  // Enter window: incoming card's appearance shares the outgoing card's
-  // morph window so they overlap perfectly.
-  const enterStart = isFirst ? 0 : start - seg * 0.32;
+  const MORPH = 0.4; // fraction of a slice spent crossfading
+  const morphStart = start + seg * (1 - MORPH);
+  const enterStart = isFirst ? 0 : start - seg * MORPH;
   const enterEnd = isFirst ? 0 : start;
 
-  // Local 0→1 progress used to drive internal parallax. Starts during the
-  // enter phase so content is *already in motion* the moment the card is
-  // visible — no static "wait, now I'll start" feeling.
-  const local = useTransform(
-    progress,
-    [enterStart, morphStart],
-    [0, 1],
-  );
+  // Local 0→1 progress drives per-card parallax. Starts during the enter
+  // window so incoming content is already in motion the moment it's
+  // visible.
+  const local = useTransform(progress, [enterStart, morphStart], [0, 1]);
 
-  // Visibility cross-fade — outgoing card N-1 fades 1→0 while this card
-  // fades 0→1 across the SAME scroll range (enterStart..enterEnd).
-  const opacity = useTransform(
+  // ONE crossfade curve, applied independently to each content layer.
+  // First card: starts visible, fades out across its morph window.
+  // Last card: fades in across its enter window, stays visible.
+  // Middle cards: fade in across enter window, hold, fade out across morph.
+  const layerOpacity = useTransform(
     progress,
     isFirst
       ? [0, morphStart, end]
@@ -404,51 +397,11 @@ function ChapterCard({
     isFirst ? [1, 1, 0] : isLast ? [0, 1, 1] : [0, 1, 1, 0],
   );
 
-  // "Push-through camera" effect: outgoing card scales UP and blurs OUT
-  // (like the camera dollies through it), while incoming card scales
-  // DOWN from 1.08 to 1 and blurs IN from 8 to 0 (like the camera lands
-  // on it). They share the same scroll window so the eye reads one
-  // continuous depth move rather than two separate fades.
-  const scale = useTransform(
-    progress,
-    isFirst
-      ? [start, morphStart, end]
-      : isLast
-      ? [enterStart, enterEnd, 1]
-      : [enterStart, enterEnd, morphStart, end],
-    isFirst ? [1, 1, 1.08] : isLast ? [1.08, 1, 1] : [1.08, 1, 1, 1.08],
-  );
-
-  const blurVal = useTransform(
-    progress,
-    isFirst
-      ? [start, morphStart, end]
-      : isLast
-      ? [enterStart, enterEnd, 1]
-      : [enterStart, enterEnd, morphStart, end],
-    isFirst ? [0, 0, 10] : isLast ? [10, 0, 0] : [10, 0, 0, 10],
-  );
-  const filter = useTransform(blurVal, (b) => `blur(${b.toFixed(2)}px)`);
-
-  // Slight vertical drift — outgoing rises away, incoming arrives from
-  // just below. Subtle (only 24px) but adds the "merging" feel.
-  const y = useTransform(
-    progress,
-    isFirst
-      ? [start, morphStart, end]
-      : isLast
-      ? [enterStart, enterEnd, 1]
-      : [enterStart, enterEnd, morphStart, end],
-    isFirst ? [0, 0, -24] : isLast ? [24, 0, 0] : [24, 0, 0, -24],
-  );
-
-  // Parallax band values — extended into the enter window so incoming
-  // content has *already started* moving when the card is first visible.
+  // Parallax band values
   const bigTextY = useTransform(local, [0, 1], ["20%", "-50%"]);
   const productY = useTransform(local, [0, 1], ["10%", "-20%"]);
   const productScale = useTransform(local, [0, 0.4, 1], [0.85, 1, 1.08]);
   const productRotate = useTransform(local, [0, 1], [-6, 6]);
-  const copyOpacity = useTransform(local, [0.05, 0.25, 0.85, 1], [0, 1, 1, 0.85]);
   const copyY = useTransform(local, [0.05, 0.25], [40, 0]);
 
   const { eyebrow, index: indexLabel, title, body, callouts, product, align = "left", theme = "light", onProductClick } = config;
@@ -463,25 +416,25 @@ function ChapterCard({
     : "bg-natural-paper border-natural-border text-natural-text";
 
   return (
-    <motion.div
-      style={{
-        opacity,
-        scale,
-        y,
-        filter,
-        // Later cards on top so the incoming card rises *over* the
-        // outgoing one during the shared cross-fade window. Without
-        // this, the new card would be hidden underneath until the old
-        // one fully disappears — which is exactly the "school project"
-        // hard-cut feel we're removing.
-        zIndex: index,
-        willChange: "opacity, transform, filter",
-      }}
-      className={`absolute inset-0 ${bg} ${fg} overflow-hidden`}
+    // Wrapper itself never animates — it's pinned and always present.
+    // Every visible layer inside owns its own crossfade opacity, so the
+    // background colour bleeds into the next, the image dissolves into
+    // the next image, and the copy swaps to the next copy — all as
+    // independent layers rather than "a whole card with blur".
+    <div
+      style={{ zIndex: index }}
+      className={`absolute inset-0 ${fg} overflow-hidden pointer-events-none`}
     >
-      {/* Background editorial wordmark — slowest moving */}
+      {/* Layer 1 — background colour wash. Its opacity crossfades so the
+          card-1 paper bleeds into the card-2 dark bg as you scroll. */}
       <motion.div
-        style={{ y: bigTextY }}
+        style={{ opacity: layerOpacity }}
+        className={`absolute inset-0 ${bg}`}
+      />
+
+      {/* Layer 2 — editorial wordmark */}
+      <motion.div
+        style={{ y: bigTextY, opacity: layerOpacity }}
         className="absolute inset-x-0 top-0 pointer-events-none select-none flex justify-center"
       >
         <span
@@ -492,15 +445,16 @@ function ChapterCard({
       </motion.div>
 
       {/* Pinned stage — full height of the card */}
-      <div className="absolute inset-0 flex items-center overflow-hidden">
+      <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-auto">
         <div
           className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
             align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
           }`}
         >
-          {/* Product still-life */}
+          {/* Layer 3 — product still-life. Its OWN opacity crossfade so
+              the image visibly dissolves into the next product image. */}
           <motion.div
-            style={{ y: productY, scale: productScale, rotate: productRotate }}
+            style={{ y: productY, scale: productScale, rotate: productRotate, opacity: layerOpacity }}
             className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
           >
             {product ? (
@@ -524,9 +478,10 @@ function ChapterCard({
             )}
           </motion.div>
 
-          {/* Copy column */}
+          {/* Layer 4 — copy column. Independent opacity crossfade so the
+              text swaps to the next chapter's text without any blur. */}
           <motion.div
-            style={{ opacity: copyOpacity, y: copyY }}
+            style={{ opacity: layerOpacity, y: copyY }}
             className={`relative space-y-6 ${align === "right" ? "lg:order-1" : "lg:order-2"}`}
           >
             <div className="flex items-center gap-3">
@@ -554,7 +509,7 @@ function ChapterCard({
           </motion.div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
