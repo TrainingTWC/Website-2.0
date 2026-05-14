@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, ShoppingCart, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone } from "lucide-react";
+import { ArrowLeft, ShoppingCart, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone, Loader2 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useGeoAddress } from "../lib/useGeoAddress";
 import type { Product } from "../types";
 import type { CartItem } from "./CartPanel";
 
@@ -32,6 +33,22 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated }: Checko
   });
   const [errors, setErrors] = useState<Partial<typeof form>>({});
   const submitOrder = useMutation(api.orders.submitOrder);
+
+  const { loading: geoLoading, error: geoError, address: geoAddress, requestLocation, clearCache } = useGeoAddress();
+  const geoApplied = useRef(false);
+  useEffect(() => {
+    if (geoAddress && !geoApplied.current) {
+      setForm((f) => ({
+        ...f,
+        address1: geoAddress.address1 || f.address1,
+        address2: geoAddress.address2 || f.address2,
+        city: geoAddress.city || f.city,
+        state: geoAddress.state || f.state,
+        pincode: geoAddress.pincode || f.pincode,
+      }));
+      geoApplied.current = true;
+    }
+  }, [geoAddress]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -132,6 +149,46 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated }: Checko
             <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-natural-accent" /> Delivery Address
             </h2>
+            {/* GPS autofill button */}
+            {typeof navigator !== "undefined" && "geolocation" in navigator && (
+              <div className="flex items-center gap-2 mb-3">
+                {geoAddress ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => { geoApplied.current = false; requestLocation(); }}
+                      className="flex items-center gap-1.5 text-xs font-medium text-natural-accent underline underline-offset-2"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Update location
+                    </button>
+                    <span className="text-natural-muted text-xs">·</span>
+                    <button
+                      type="button"
+                      onClick={clearCache}
+                      className="text-xs text-natural-muted hover:text-red-500 transition-colors"
+                    >
+                      Clear saved address
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestLocation}
+                    disabled={geoLoading}
+                    className="flex items-center gap-1.5 text-xs font-medium text-natural-accent hover:underline underline-offset-2 disabled:opacity-60"
+                  >
+                    {geoLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <MapPin className="w-3.5 h-3.5" />
+                    )}
+                    {geoLoading ? "Detecting location…" : "Use my location"}
+                  </button>
+                )}
+              </div>
+            )}
+            {geoError && <p className="text-red-500 text-xs mb-3">{geoError}</p>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="Address Line 1" value={form.address1} onChange={set("address1")} error={errors.address1} placeholder="House / Flat / Office No." className="sm:col-span-2" />
               <Field label="Address Line 2" value={form.address2} onChange={set("address2")} placeholder="Area, Colony (optional)" className="sm:col-span-2" />
