@@ -76,4 +76,46 @@ export default defineSchema({
       v.literal("all")
     ),
   }),
+
+  // Customer orders
+  orders: defineTable({
+    orderId: v.string(), // "TWC-XXXXXXXX"
+    customer: v.object({
+      name: v.string(),
+      phone: v.string(),
+      email: v.string(),
+      address: v.object({
+        line1: v.string(),
+        line2: v.optional(v.string()),
+        city: v.string(),
+        state: v.string(),
+        pincode: v.string(),
+      }),
+    }),
+    items: v.array(
+      v.object({
+        productId: v.string(),
+        name: v.string(),
+        imageUrl: v.string(),
+        qty: v.number(),
+        price: v.number(),
+      })
+    ),
+    subtotal: v.number(),
+    shipping: v.number(),
+    total: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("confirmed"),
+      v.literal("shipped"),
+      v.literal("delivered"),
+      v.literal("cancelled")
+    ),
+    paymentMethod: v.optional(v.string()),
+    razorpayOrderId: v.optional(v.string()),
+    razorpayPaymentId: v.optional(v.string()),
+    paidAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_orderId", ["orderId"]),
 });

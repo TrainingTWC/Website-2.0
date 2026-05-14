@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ShoppingCart, CheckCircle, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone } from "lucide-react";
+import { motion } from "motion/react";
+import { ArrowLeft, ShoppingCart, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import type { Product } from "../types";
 import type { CartItem } from "./CartPanel";
 
@@ -8,12 +10,12 @@ interface CheckoutPageProps {
   cart: CartItem[];
   products: Product[];
   onClose: () => void;
-  onPlaceOrder: () => void;
+  onOrderCreated: (orderId: string) => void;
 }
 
 type PaymentMethod = "cod" | "upi" | "card";
 
-export function CheckoutPage({ cart, products, onClose, onPlaceOrder }: CheckoutPageProps) {
+export function CheckoutPage({ cart, products, onClose, onOrderCreated }: CheckoutPageProps) {
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
     .filter((c): c is { productId: string; qty: number; product: Product } => c.product != null);
@@ -22,13 +24,14 @@ export function CheckoutPage({ cart, products, onClose, onPlaceOrder }: Checkout
   const shipping = subtotal > 499 ? 0 : 49;
   const total = subtotal + shipping;
 
-  const [step, setStep] = useState<"form" | "success">("form");
+  const [submitting, setSubmitting] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod>("cod");
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
     address1: "", address2: "", city: "", state: "", pincode: "",
   });
   const [errors, setErrors] = useState<Partial<typeof form>>({});
+  const submitOrder = useMutation(api.orders.submitOrder);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -48,14 +51,43 @@ export function CheckoutPage({ cart, products, onClose, onPlaceOrder }: Checkout
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    setStep("success");
-  };
-
-  const handleDone = () => {
-    onPlaceOrder();
+    setSubmitting(true);
+    try {
+      const { orderId } = await submitOrder({
+        customer: {
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          address: {
+            line1: form.address1,
+            line2: form.address2 || undefined,
+            city: form.city,
+            state: form.state,
+            pincode: form.pincode,
+          },
+        },
+        items: cartProducts.map((c) => ({
+          productId: c.productId,
+          name: c.product.name,
+          imageUrl: c.product.imageUrl,
+          qty: c.qty,
+          price: c.product.price,
+        })),
+        subtotal,
+        shipping,
+        total,
+        paymentMethod: payment,
+      });
+      onOrderCreated(orderId);
+    } catch (err) {
+      console.error("submitOrder failed:", err);
+      setErrors({ name: "Something went wrong. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -76,143 +108,108 @@ export function CheckoutPage({ cart, products, onClose, onPlaceOrder }: Checkout
         <div className="w-20" />
       </div>
 
-      <AnimatePresence mode="wait">
-        {step === "form" ? (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:grid lg:grid-cols-[1fr_360px] lg:gap-10 lg:items-start"
-          >
-            {/* ── Left: Form ─────────────────────────────── */}
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Contact */}
-              <section>
-                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-natural-accent" /> Contact
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:grid lg:grid-cols-[1fr_360px] lg:gap-10 lg:items-start"
+      >
+        {/* ── Left: Form ─────────────────────────────── */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Contact */}
+          <section>
+            <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-natural-accent" /> Contact
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Full Name" icon={<User className="w-4 h-4" />} value={form.name} onChange={set("name")} error={errors.name} placeholder="Arjun Sharma" />
                   <Field label="Email" icon={<Mail className="w-4 h-4" />} value={form.email} onChange={set("email")} error={errors.email} placeholder="you@email.com" type="email" />
                   <Field label="Phone" icon={<Phone className="w-4 h-4" />} value={form.phone} onChange={set("phone")} error={errors.phone} placeholder="9876543210" type="tel" className="sm:col-span-2" />
                 </div>
-              </section>
+          </section>
 
-              {/* Delivery */}
-              <section>
-                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-natural-accent" /> Delivery Address
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Address Line 1" value={form.address1} onChange={set("address1")} error={errors.address1} placeholder="House / Flat / Office No." className="sm:col-span-2" />
-                  <Field label="Address Line 2" value={form.address2} onChange={set("address2")} placeholder="Area, Colony (optional)" className="sm:col-span-2" />
-                  <Field label="City" value={form.city} onChange={set("city")} error={errors.city} placeholder="Bengaluru" />
-                  <Field label="State" value={form.state} onChange={set("state")} error={errors.state} placeholder="Karnataka" />
-                  <Field label="Pincode" value={form.pincode} onChange={set("pincode")} error={errors.pincode} placeholder="560001" />
-                </div>
-              </section>
+          {/* Delivery */}
+          <section>
+            <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-natural-accent" /> Delivery Address
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Address Line 1" value={form.address1} onChange={set("address1")} error={errors.address1} placeholder="House / Flat / Office No." className="sm:col-span-2" />
+              <Field label="Address Line 2" value={form.address2} onChange={set("address2")} placeholder="Area, Colony (optional)" className="sm:col-span-2" />
+              <Field label="City" value={form.city} onChange={set("city")} error={errors.city} placeholder="Bengaluru" />
+              <Field label="State" value={form.state} onChange={set("state")} error={errors.state} placeholder="Karnataka" />
+              <Field label="Pincode" value={form.pincode} onChange={set("pincode")} error={errors.pincode} placeholder="560001" />
+            </div>
+          </section>
 
-              {/* Payment */}
-              <section>
-                <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-natural-accent" /> Payment
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {([
-                    { id: "cod", label: "Cash on Delivery", icon: <Truck className="w-5 h-5" /> },
-                    { id: "upi", label: "UPI / GPay", icon: <Smartphone className="w-5 h-5" /> },
-                    { id: "card", label: "Credit / Debit Card", icon: <CreditCard className="w-5 h-5" /> },
-                  ] as { id: PaymentMethod; label: string; icon: React.ReactNode }[]).map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setPayment(opt.id)}
-                      className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                        payment === opt.id
-                          ? "border-natural-accent bg-natural-accent/8 shadow-sm"
-                          : "border-natural-border bg-natural-paper hover:border-natural-accent/40"
-                      }`}
-                    >
-                      <span className={payment === opt.id ? "text-natural-accent" : "text-natural-text/50"}>
-                        {opt.icon}
-                      </span>
-                      <span className={`text-sm font-semibold ${payment === opt.id ? "text-natural-text" : "text-natural-text/60"}`}>
-                        {opt.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {payment === "upi" && (
-                  <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
-                    UPI QR / payment link will be shared after order placement.
-                  </p>
-                )}
-                {payment === "card" && (
-                  <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
-                    Secure card payment via Razorpay will open after placing the order.
-                  </p>
-                )}
-              </section>
-
-              {/* Mobile CTA */}
-              <div className="lg:hidden">
-                <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+          {/* Payment */}
+          <section>
+            <h2 className="font-serif font-bold text-xl text-natural-text mb-4 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-natural-accent" /> Payment
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {([
+                { id: "cod", label: "Cash on Delivery", icon: <Truck className="w-5 h-5" /> },
+                { id: "upi", label: "UPI / GPay", icon: <Smartphone className="w-5 h-5" /> },
+                { id: "card", label: "Credit / Debit Card", icon: <CreditCard className="w-5 h-5" /> },
+              ] as { id: PaymentMethod; label: string; icon: React.ReactNode }[]).map((opt) => (
                 <button
-                  type="submit"
-                  className="mt-5 w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl"
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setPayment(opt.id)}
+                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
+                    payment === opt.id
+                      ? "border-natural-accent bg-natural-accent/8 shadow-sm"
+                      : "border-natural-border bg-natural-paper hover:border-natural-accent/40"
+                  }`}
                 >
-                  Place Order · ₹{total.toLocaleString("en-IN")}
+                  <span className={payment === opt.id ? "text-natural-accent" : "text-natural-text/50"}>
+                    {opt.icon}
+                  </span>
+                  <span className={`text-sm font-semibold ${payment === opt.id ? "text-natural-text" : "text-natural-text/60"}`}>
+                    {opt.label}
+                  </span>
                 </button>
-              </div>
-            </form>
-
-            {/* ── Right: Order Summary (desktop) ─── */}
-            <div className="hidden lg:block sticky top-24 space-y-4">
-              <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
-              <button
-                onClick={handleSubmit as unknown as React.MouseEventHandler}
-                className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl"
-              >
-                Place Order · ₹{total.toLocaleString("en-IN")}
-              </button>
+              ))}
             </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center gap-6"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
-            >
-              <CheckCircle className="w-20 h-20 text-green-500" />
-            </motion.div>
-            <div className="space-y-2">
-              <h2 className="font-serif font-bold text-3xl text-natural-text">Order Placed!</h2>
-              <p className="text-natural-text/60 max-w-sm">
-                Thank you, {form.name.split(" ")[0]}! Your order is confirmed. We'll send a confirmation to <strong>{form.email}</strong>.
+            {payment === "upi" && (
+              <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
+                UPI QR / payment link will be shared after order placement.
               </p>
-            </div>
-            <div className="bg-natural-paper border border-natural-border rounded-2xl px-6 py-4 text-sm space-y-1">
-              <p className="text-natural-text/50 text-xs uppercase tracking-widest font-bold mb-2">Order Summary</p>
-              <p className="font-bold text-natural-text">{cartProducts.length} item{cartProducts.length !== 1 ? "s" : ""} · ₹{total.toLocaleString("en-IN")}</p>
-              <p className="text-natural-text/60">Delivering to {form.city}, {form.pincode}</p>
-              <p className="text-natural-text/60">Payment: {payment === "cod" ? "Cash on Delivery" : payment === "upi" ? "UPI" : "Card"}</p>
-            </div>
+            )}
+            {payment === "card" && (
+              <p className="mt-3 text-xs text-natural-text/50 bg-natural-paper border border-natural-border rounded-xl px-4 py-3">
+                Secure card payment via Razorpay will open after placing the order.
+              </p>
+            )}
+          </section>
+
+          {/* Mobile CTA */}
+          <div className="lg:hidden">
+            <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
             <button
-              onClick={handleDone}
-              className="px-10 py-3.5 rounded-full bg-natural-text text-white font-bold text-sm hover:bg-natural-accent transition-colors active:scale-[0.98]"
+              type="submit"
+              disabled={submitting}
+              className="mt-5 w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Continue Shopping
+              {submitting ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : null}
+              {submitting ? "Placing Order..." : `Place Order · ₹${total.toLocaleString("en-IN")}`}
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </form>
+
+        {/* ── Right: Order Summary (desktop) ─── */}
+        <div className="hidden lg:block sticky top-24 space-y-4">
+          <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+          <button
+            onClick={handleSubmit as unknown as React.MouseEventHandler}
+            disabled={submitting}
+            className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {submitting ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : null}
+            {submitting ? "Placing Order..." : `Place Order · ₹${total.toLocaleString("en-IN")}`}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

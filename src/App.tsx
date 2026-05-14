@@ -45,6 +45,7 @@ import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
 import { CartPanel } from "./components/CartPanel";
 import { CheckoutPage } from "./components/CheckoutPage";
+import { OrderConfirmation } from "./components/OrderConfirmation";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -370,6 +371,7 @@ function Storefront() {
   const [criticalReady, setCriticalReady] = useState(false);
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const params = useUrlQuery();
   const page = params.get("page");
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
@@ -509,6 +511,18 @@ function Storefront() {
     );
   }
 
+  // ── Full-page route: Order Confirmation ────────────────────
+  if (page === "order-confirmation" && currentOrderId) {
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
+        <OrderConfirmation
+          orderId={currentOrderId}
+          onContinueShopping={() => { setCart([]); setCurrentOrderId(null); navigateTo({ page: null }); }}
+        />
+      </div>
+    );
+  }
+
   // ── Full-page route: Checkout ───────────────────────────────
   if (page === "checkout") {
     return (
@@ -517,7 +531,7 @@ function Storefront() {
           cart={cart}
           products={products ?? []}
           onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
-          onPlaceOrder={() => { setCart([]); navigateTo({ page: null }); }}
+          onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
         />
       </div>
     );

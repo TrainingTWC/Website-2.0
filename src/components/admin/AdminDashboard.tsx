@@ -144,7 +144,7 @@ function formDataToProductPayload(form: ProductFormData) {
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules">(
+  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders">(
     "inventory"
   );
   const products = useProducts();
@@ -154,6 +154,7 @@ export function AdminDashboard() {
     { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
     { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
     { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
+    { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
   ];
 
   return (
@@ -193,6 +194,7 @@ export function AdminDashboard() {
           <AnalyticsView sessions={sessions ?? []} products={products ?? []} />
         )}
         {activeTab === "rules" && <RulesManager />}
+        {activeTab === "orders" && <OrdersView />}
       </div>
     </div>
   );
@@ -1047,6 +1049,154 @@ function RulesManager() {
             </span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+// ─── Orders view ──────────────────────────────────────────────────────────────
+type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+
+interface Order {
+  _id: string;
+  _creationTime: number;
+  orderId: string;
+  customer: { name: string; phone: string; email: string; address: { line1: string; line2?: string; city: string; state: string; pincode: string } };
+  items: { productId: string; name: string; imageUrl?: string; qty: number; price: number }[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  status: OrderStatus;
+  paymentMethod?: string;
+}
+
+const STATUS_COLORS: Record<OrderStatus, string> = {
+  pending: "bg-amber-50 text-amber-700",
+  confirmed: "bg-green-50 text-green-700",
+  shipped: "bg-blue-50 text-blue-700",
+  delivered: "bg-emerald-50 text-emerald-700",
+  cancelled: "bg-red-50 text-red-600",
+};
+
+function OrdersView() {
+  const orders = useQuery((api as any).orders.listOrders) as Order[] | undefined;
+  const updateStatus = useMutation((api as any).orders.updateStatus);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  if (!orders) {
+    return (
+      <div className="p-10 flex items-center justify-center text-natural-text/40 text-sm">
+        Loading orders…
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="p-10 flex flex-col items-center justify-center gap-3 text-natural-text/40">
+        <ShoppingBag className="w-10 h-10 opacity-30" />
+        <p className="text-sm font-medium">No orders yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="font-serif font-bold text-2xl text-natural-text">Orders</h3>
+      <div className="overflow-x-auto rounded-2xl border border-natural-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-natural-muted/50 border-b border-natural-border text-natural-text/50 text-xs uppercase tracking-wider">
+              <th className="px-5 py-3 text-left">Order #</th>
+              <th className="px-5 py-3 text-left">Customer</th>
+              <th className="px-5 py-3 text-center">Items</th>
+              <th className="px-5 py-3 text-right">Total</th>
+              <th className="px-5 py-3 text-center">Status</th>
+              <th className="px-5 py-3 text-left">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map((order) => (
+              <>
+                <tr
+                  key={order._id}
+                  className="border-b last:border-0 border-stone-50 hover:bg-stone-50/50 transition-colors cursor-pointer"
+                  onClick={() => setExpanded(expanded === order._id ? null : order._id)}
+                >
+                  <td className="px-5 py-3.5 font-mono text-xs font-bold text-natural-accent">{order.orderId}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="font-semibold text-natural-text">{order.customer.name}</div>
+                    <div className="text-xs text-natural-text/50">{order.customer.email}</div>
+                  </td>
+                  <td className="px-5 py-3.5 text-center">{order.items.length}</td>
+                  <td className="px-5 py-3.5 text-right font-bold">₹{order.total.toLocaleString("en-IN")}</td>
+                  <td className="px-5 py-3.5 text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${STATUS_COLORS[order.status]}`}>
+                      {order.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-xs text-natural-text/50">
+                    {new Date(order._creationTime).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                </tr>
+                {expanded === order._id && (
+                  <tr key={`${order._id}-detail`} className="bg-natural-muted/30">
+                    <td colSpan={6} className="px-5 py-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-wider text-natural-text/40 mb-2">Delivery Address</p>
+                          <p className="text-sm text-natural-text">{order.customer.address.line1}</p>
+                          {order.customer.address.line2 && <p className="text-sm text-natural-text/70">{order.customer.address.line2}</p>}
+                          <p className="text-sm text-natural-text/70">{order.customer.address.city}, {order.customer.address.state} – {order.customer.address.pincode}</p>
+                          <p className="text-xs text-natural-text/50 pt-1">📞 {order.customer.phone}</p>
+                          {order.paymentMethod && <p className="text-xs text-natural-text/50">Payment: {order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod === "upi" ? "UPI" : "Card"}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-wider text-natural-text/40 mb-2">Items</p>
+                          {order.items.map((item, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              {item.imageUrl && (
+                                <img src={item.imageUrl} alt={item.name} className="w-9 h-9 rounded-lg object-cover shrink-0 bg-natural-paper" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate">{item.name}</p>
+                                <p className="text-xs text-natural-text/50">×{item.qty} · ₹{(item.price * item.qty).toLocaleString("en-IN")}</p>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex justify-between pt-2 border-t border-natural-border text-xs text-natural-text/60">
+                            <span>Subtotal</span><span>₹{order.subtotal.toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-natural-text/60">
+                            <span>Shipping</span><span>{order.shipping === 0 ? "Free" : `₹${order.shipping}`}</span>
+                          </div>
+                          <div className="flex justify-between font-bold text-sm">
+                            <span>Total</span><span>₹{order.total.toLocaleString("en-IN")}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center gap-3 flex-wrap">
+                        <p className="text-xs font-bold uppercase tracking-wider text-natural-text/40">Update Status:</p>
+                        {(["pending", "confirmed", "shipped", "delivered", "cancelled"] as OrderStatus[]).map((s) => (
+                          <button
+                            key={s}
+                            onClick={(e) => { e.stopPropagation(); updateStatus({ id: order._id as any, status: s }); }}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold capitalize transition-all border ${
+                              order.status === s
+                                ? `${STATUS_COLORS[s]} border-transparent`
+                                : "border-natural-border text-natural-text/40 hover:border-natural-accent/40"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
