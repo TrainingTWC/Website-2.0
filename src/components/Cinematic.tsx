@@ -432,11 +432,12 @@ function ChapterCard({
 
   // Content opacity: hard window, content vanishes completely outside
   // [enterStart, exitEnd]. Small ramps at the very edges so the cut
-  // isn't binary.
+  // isn't binary. First card is fully visible at progress 0 (no fade-in
+  // gap when you first reach the deck); last card stays visible at end.
   const contentOpacity = useTransform(
     progress,
     [enterStart, enterStart + seg * 0.06, exitEnd - seg * 0.06, exitEnd],
-    [0, 1, 1, 0],
+    [isFirst ? 1 : 0, 1, 1, isLast ? 1 : 0],
   );
 
   // Slice-local progress 0→1 for parallax / motion across the visible window.
@@ -447,9 +448,21 @@ function ChapterCard({
   // right edge faces camera), flies through centre, exits left mirrored.
   // translateZ dips negative at the edges so it feels like the product
   // is travelling past the camera, not pasted onto a flat wall.
-  const productX = useTransform(local, [0, 0.18, 0.82, 1], ["60%", "0%", "0%", "-60%"]);
-  const productRotateY = useTransform(local, [0, 0.18, 0.82, 1], [-24, 0, 0, 24]);
-  const productZ = useTransform(local, [0, 0.18, 0.82, 1], [-500, 0, 0, -500]);
+  // ── Product transforms ────────────────────────────────────────────
+  // Enters from the right (positive X, slight negative rotateY so the
+  // right edge faces camera), flies through centre, exits left mirrored.
+  // translateZ dips negative at the edges so it feels like the product
+  // is travelling past the camera, not pasted onto a flat wall.
+  // First card starts settled (no fly-in); last card stays settled (no fly-out).
+  const inX = isFirst ? "0%" : "60%";
+  const outX = isLast ? "0%" : "-60%";
+  const inRY = isFirst ? 0 : -24;
+  const outRY = isLast ? 0 : 24;
+  const inZ = isFirst ? 0 : -500;
+  const outZ = isLast ? 0 : -500;
+  const productX = useTransform(local, [0, 0.18, 0.82, 1], [inX, "0%", "0%", outX]);
+  const productRotateY = useTransform(local, [0, 0.18, 0.82, 1], [inRY, 0, 0, outRY]);
+  const productZ = useTransform(local, [0, 0.18, 0.82, 1], [inZ, 0, 0, outZ]);
   // Subtle vertical drift while held (the "hover" parallax beat).
   const productY = useTransform(local, [0.18, 0.82], ["8%", "-8%"]);
   const productRotate = useTransform(local, [0.18, 0.82], [-4, 4]);
@@ -457,17 +470,27 @@ function ChapterCard({
   // ── Copy transforms ───────────────────────────────────────────────
   // Mirrors the product: enters from the LEFT, exits to the RIGHT, so
   // the two halves of the page cross each other on every transition.
-  const copyX = useTransform(local, [0, 0.18, 0.82, 1], ["-50%", "0%", "0%", "50%"]);
-  const copyRotateY = useTransform(local, [0, 0.18, 0.82, 1], [20, 0, 0, -20]);
-  const copyZ = useTransform(local, [0, 0.18, 0.82, 1], [-400, 0, 0, -400]);
+  const copyInX = isFirst ? "0%" : "-50%";
+  const copyOutX = isLast ? "0%" : "50%";
+  const copyInRY = isFirst ? 0 : 20;
+  const copyOutRY = isLast ? 0 : -20;
+  const copyInZ = isFirst ? 0 : -400;
+  const copyOutZ = isLast ? 0 : -400;
+  const copyX = useTransform(local, [0, 0.18, 0.82, 1], [copyInX, "0%", "0%", copyOutX]);
+  const copyRotateY = useTransform(local, [0, 0.18, 0.82, 1], [copyInRY, 0, 0, copyOutRY]);
+  const copyZ = useTransform(local, [0, 0.18, 0.82, 1], [copyInZ, 0, 0, copyOutZ]);
   const copyY = useTransform(local, [0.18, 0.82], ["3%", "-3%"]);
 
   // ── Wordmark transform ────────────────────────────────────────────
   // Travels with the product (right→left) but at HALF magnitude so it
   // reads as a deeper parallax layer behind everything.
-  const wordmarkX = useTransform(local, [0, 0.18, 0.82, 1], ["30%", "0%", "0%", "-30%"]);
+  const wmInX = isFirst ? "0%" : "30%";
+  const wmOutX = isLast ? "0%" : "-30%";
+  const wmInZ = isFirst ? -50 : -300;
+  const wmOutZ = isLast ? -50 : -300;
+  const wordmarkX = useTransform(local, [0, 0.18, 0.82, 1], [wmInX, "0%", "0%", wmOutX]);
   const wordmarkY = useTransform(local, [0.18, 0.82], ["12%", "-30%"]);
-  const wordmarkZ = useTransform(local, [0, 0.18, 0.82, 1], [-300, -50, -50, -300]);
+  const wordmarkZ = useTransform(local, [0, 0.18, 0.82, 1], [wmInZ, -50, -50, wmOutZ]);
 
   const { eyebrow, index: indexLabel, title, body, callouts, product, align = "left", theme = "light", onProductClick } = config;
   const dark = theme === "dark";
