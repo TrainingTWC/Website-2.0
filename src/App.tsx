@@ -429,7 +429,8 @@ function Storefront() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openTI = () => navigateTo({ page: "ti" });
+  const [tiOverlay, setTiOverlay] = useState(false);
+  const openTI = () => setTiOverlay(true);
   const closeTI = () => navigateTo({ page: null });
 
   const addToCart = useCallback((productId: string, qty = 1) => {
@@ -504,11 +505,19 @@ function Storefront() {
   // ── Full-page route: TI (Third Intelligence) ─────────────────
   if (page === "ti") {
     return (
-      <div className="h-screen overflow-hidden bg-natural-bg text-natural-text font-sans">
+      <div className="h-screen overflow-hidden bg-[#090503] text-natural-text font-sans">
         <DiscoveryWidget
           onClose={() => navigateTo({ page: null })}
           onNavigateToProduct={(slug) => navigateTo({ page: null, product: slug })}
           onAddToCart={(productId) => addToCart(productId)}
+        />
+        {/* Entrance overlay: same gradient, starts opaque, fades out to reveal the widget */}
+        <motion.div
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.55, delay: 0.08, ease: [0.33, 1, 0.68, 1] }}
         />
       </div>
     );
@@ -699,6 +708,24 @@ function Storefront() {
         onUpdateQty={updateQty}
         onCheckout={() => navigateTo({ page: "checkout" })}
       />
+
+      {/* TI transition overlay — gradient curtain that sweeps in before navigating */}
+      <AnimatePresence>
+        {tiOverlay && (
+          <motion.div
+            key="ti-overlay"
+            className="fixed inset-0 z-[9998] pointer-events-none"
+            style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.38, ease: [0.4, 0, 0.6, 0] }}
+            onAnimationComplete={() => {
+              setTiOverlay(false);
+              navigateTo({ page: "ti" });
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

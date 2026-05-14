@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft, Search, ShoppingCart, X, Sparkles, Coffee, Plus,
 } from "lucide-react";
@@ -133,6 +134,7 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortMode>("default");
   const [aiOpen, setAiOpen] = useState(false);
+  const [tiTransitioning, setTiTransitioning] = useState(false);
   const [aiPrimaryIds, setAiPrimaryIds] = useState<string[]>([]);
   const [aiCrossIds, setAiCrossIds] = useState<string[]>([]);
 
@@ -341,12 +343,30 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
 
       {/* ── Floating Third Intelligence button ────────────────── */}
       <button
-        onClick={() => setAiOpen(true)}
+        onClick={() => setTiTransitioning(true)}
         className="fixed bottom-6 right-6 z-30 flex items-center gap-2.5 bg-natural-accent text-white px-5 py-3.5 rounded-full shadow-2xl font-bold text-sm hover:scale-105 active:scale-95 transition-transform"
       >
         <Sparkles className="w-4 h-4" />
         Find Your Match
       </button>
+
+      {/* ── Transition overlay (fades in before widget opens) ─── */}
+      <AnimatePresence>
+        {tiTransitioning && (
+          <motion.div
+            key="shop-ti-overlay"
+            className="fixed inset-0 z-[9998] pointer-events-none"
+            style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.38, ease: [0.4, 0, 0.6, 0] }}
+            onAnimationComplete={() => {
+              setTiTransitioning(false);
+              setAiOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Discovery Widget overlay ──────────────────────────── */}
       {aiOpen && (
@@ -366,6 +386,14 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
               setAiCrossIds(crossIds);
               setAiOpen(false);
             }}
+          />
+          {/* Entrance overlay: fades out to reveal widget */}
+          <motion.div
+            className="fixed inset-0 z-[9999] pointer-events-none"
+            style={{ background: "radial-gradient(ellipse at 50% 40%, #3D1F0F 0%, #1A0A06 60%, #090503 100%)" }}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.06, ease: [0.33, 1, 0.68, 1] }}
           />
         </div>
       )}
