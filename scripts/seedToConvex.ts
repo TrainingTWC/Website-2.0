@@ -178,6 +178,88 @@ const productsToSeed = [
     tags: ["keychain", "enamel", "gift", "accessory", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.5, reviewCount: 876,
     imageFile: "merch-green-mug.jpg",
     imageUrl: null
+  },
+
+  // ════ NEW MERCH (2025 Collection) ════
+  {
+    name: "Black Art Tote Bag",
+    description: "Sturdy black canvas tote bag featuring a gold foil 'The Pattern of Coffee and People' art print. Third Wave Coffee branding. Spacious and reusable.",
+    type: "merch", category: "tote", price: 799,
+    tags: ["tote", "bag", "canvas", "art", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/black-tote-bag.jpg"
+  },
+  {
+    name: "White Skater Tote Bag",
+    description: "Natural cream canvas tote with a playful skater dog illustration holding a coffee cup. Third Wave Coffee branding. Lightweight and everyday-ready.",
+    type: "merch", category: "tote", price: 799,
+    tags: ["tote", "bag", "canvas", "illustrated", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/white-tote-bag.jpg"
+  },
+  {
+    name: "Cat in a Cup Lapel Pin",
+    description: "Charming wooden lapel pin of a black cat sitting in a striped coffee cup. Third Wave Coffee branded backing card. Perfect for bags, jackets, and gift sets.",
+    type: "merch", category: "pin", price: 449,
+    tags: ["lapel-pin", "wooden", "cat", "accessory", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/cat-in-cup-lapel-pin.jpg"
+  },
+  {
+    name: "Cat Lapel Pin",
+    description: "Brushed metal lapel pin featuring a contented sleeping cat cradling a Third Wave Coffee cup. Elegant antique finish with a secure butterfly clutch.",
+    type: "merch", category: "pin", price: 449,
+    tags: ["lapel-pin", "metal", "cat", "accessory", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/cat-lapel-pin.jpg"
+  },
+  {
+    name: "Coffee Strainer",
+    description: "Fine-mesh stainless steel coffee strainer with Third Wave Coffee branding. Fits most cups and mugs — perfect for filter coffee and loose-leaf brewing.",
+    type: "merch", category: "accessories", price: 699,
+    tags: ["strainer", "steel", "brewing", "kitchen", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.6, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/coffee-strainer.jpg"
+  },
+  {
+    name: "Brass Dabara Set",
+    description: "Traditional South Indian filter coffee experience in a premium gold brass finish. Includes a dabara tumbler, saucer, and branded storage canister. An heirloom-quality set.",
+    type: "merch", category: "accessories", price: 1499,
+    tags: ["dabara", "brass", "filter-coffee", "traditional", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.9, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/dabra-set.jpg"
+  },
+  {
+    name: "Keychain & Magnetic Bookmarks Set",
+    description: "Gift set featuring a wooden 'You Can Brew This' Third Wave Coffee keychain and two coffee-themed magnetic bookmarks. Perfect for coffee lovers who love to read.",
+    type: "merch", category: "keychain", price: 549,
+    tags: ["keychain", "wooden", "bookmark", "gift-set", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/keychain-magnetic-bookmarks.jpg"
+  },
+  {
+    name: "NFC Smart Keychain",
+    description: "Laser-engraved wooden keychain shaped like a bottle, featuring a serene forest and Third Wave Coffee scene. Built-in NFC chip — tap to share your contact info instantly.",
+    type: "merch", category: "keychain", price: 599,
+    tags: ["keychain", "nfc", "wooden", "smart", "tech", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.6, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/nfc-keychain.jpg"
+  },
+  {
+    name: "Iridescent Sipper Cup",
+    description: "Eye-catching iridescent purple sipper cup with diamond-textured exterior. Comes with a reusable straw and a Third Wave Coffee holographic logo badge. 700ml capacity.",
+    type: "merch", category: "drinkware", price: 999,
+    tags: ["sipper", "cup", "purple", "iridescent", "drinkware", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/sipper.jpg"
+  },
+  {
+    name: "Gradient Stainless Steel Tumbler",
+    description: "Double-walled insulated tumbler with a stunning pink-to-teal gradient and faceted geometric design. Third Wave Coffee laser-engraved logo. Includes a metal straw. 500ml capacity.",
+    type: "merch", category: "drinkware", price: 1299,
+    tags: ["tumbler", "steel", "insulated", "gradient", "drinkware", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
+    imageFile: null,
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/tumbler.jpg"
   }
 ];
 
