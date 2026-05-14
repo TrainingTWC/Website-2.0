@@ -14,7 +14,7 @@ const SRC = path.join(ROOT, "public", "logo.png");
 const OUT = path.join(ROOT, "public", "favicon.png");
 
 const SIZE = 256;
-const PADDING = 24; // px on each side inside the circle
+const PADDING = 6; // px on each side inside the circle — tight crop so the cup reads big
 
 async function main() {
   // White circle SVG background
@@ -24,9 +24,10 @@ async function main() {
     </svg>`
   );
 
-  // Resize logo to fit inside circle (with padding), preserving aspect.
+  // Trim transparent edges off the source logo, then resize to fill the circle.
   const inner = SIZE - PADDING * 2;
   const logo = await sharp(SRC)
+    .trim() // strip empty space around the logo so it really fills the circle
     .resize({ width: inner, height: inner, fit: "inside" })
     .toBuffer();
 
