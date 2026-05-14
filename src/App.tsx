@@ -48,6 +48,7 @@ import { CartPanel } from "./components/CartPanel";
 import { CheckoutPage } from "./components/CheckoutPage";
 import { OrderConfirmation } from "./components/OrderConfirmation";
 import { OrderPortal } from "./components/OrderPortal";
+import { ShopPage } from "./components/ShopPage";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterReveal } from "./components/Cinematic";
 import { slugify } from "./lib/slug";
@@ -550,6 +551,30 @@ function Storefront() {
     );
   }
 
+  // ── Full-page route: Shop ──────────────────────────────────
+  if (page === "shop") {
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
+        <ShopPage
+          cart={cart}
+          onAddToCart={(productId) => { addToCart(productId); }}
+          onProductClick={(slug) => navigateTo({ product: slug })}
+          onGoToCart={() => setCartOpen(true)}
+        />
+        <CartPanel
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          cart={cart}
+          products={products ?? []}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onCheckout={() => navigateTo({ page: "checkout" })}
+        />
+        <ToastContainer toasts={toasts} />
+      </div>
+    );
+  }
+
   // ── Full-page route: Product detail ───────────────────────
   // Renders as a real page (not an overlay) so window scroll, parallax,
   // and Lenis smooth-scroll all behave naturally.
@@ -629,6 +654,7 @@ function Storefront() {
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-bags")}>Easy Coffee Bags</span>
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scrollTo("section-merch")}>Merch</span>
                   <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigateTo({ page: "order-portal" })}>Track your order</span>
+                  <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigateTo({ page: "shop" })}>Shop All</span>
                 </div>
               </div>
               <div className="space-y-4">

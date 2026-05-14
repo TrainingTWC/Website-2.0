@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft, Package, MapPin, MessageCircle, X, Send,
-  CheckCircle, Truck, Clock, Ban, ChevronRight,
+  CheckCircle, Truck, Clock, Ban, ChevronRight, Mail, ShoppingBag,
 } from "lucide-react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -12,12 +12,17 @@ interface OrderPortalProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  pending:   "bg-amber-100 text-amber-800 border border-amber-300",
+  confirmed: "bg-blue-100 text-blue-700 border border-blue-300",
+  shipped:   "bg-violet-100 text-violet-700 border border-violet-300",
+  delivered: "bg-green-100 text-green-700 border border-green-300",
+  cancelled: "bg-red-100 text-red-700 border border-red-300",
 };
+
+function goToStorefront() {
+  window.history.pushState({ scrollY: 0 }, "", window.location.pathname);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
 
 const ORDER_ID_RE = /^TWC-[A-Z0-9]{8}$/i;
 
@@ -35,58 +40,209 @@ function stepIndex(status: string) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Lookup screen
+// Lookup screen — two tabs: Order ID | Email / Phone
 // ──────────────────────────────────────────────────────────────────────────────
 function LookupScreen({ onFound }: { onFound: (id: string) => void }) {
-  const [value, setValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"orderId" | "contact">("orderId");
 
-  function handleSubmit(e: React.FormEvent) {
+  // Order ID tab
+  const [orderIdValue, setOrderIdValue] = useState("");
+  const [orderIdError, setOrderIdError] = useState<string | null>(null);
+
+  // Contact tab
+  const [contactValue, setContactValue] = useState("");
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+
+  // Always call hook; pass "skip" until user searches
+  const ordersByContact = useQuery(
+    api.orders.getOrdersByContact,
+    contactSubmitted ? { contact: contactValue.trim() } : "skip"
+  );
+
+  function handleTabChange(t: "orderId" | "contact") {
+    setTab(t);
+    setOrderIdError(null);
+    setContactError(null);
+    setContactSubmitted(false);
+  }
+
+  function handleOrderIdSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = value.trim().toUpperCase();
+    const trimmed = orderIdValue.trim().toUpperCase();
     if (!ORDER_ID_RE.test(trimmed)) {
-      setError("Enter a valid order ID in the format TWC-XXXXXXXX");
+      setOrderIdError("Enter a valid order ID — format: TWC-XXXXXXXX");
       return;
     }
-    setError(null);
+    setOrderIdError(null);
     onFound(trimmed);
   }
 
+  function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = contactValue.trim();
+    if (!trimmed) {
+      setContactError("Enter your email address or phone number");
+      return;
+    }
+    setContactError(null);
+    setContactSubmitted(true);
+  }
+
   return (
-    <div className="min-h-screen bg-natural-bg flex items-center justify-center px-4">
+    <div className="min-h-screen bg-natural-bg flex flex-col items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-natural-paper rounded-2xl shadow-xl p-8 border border-natural-border"
+        className="w-full max-w-md bg-natural-paper rounded-2xl shadow-xl border border-natural-border overflow-hidden"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <Package className="w-7 h-7 text-natural-accent" />
-          <h1 className="font-serif font-bold text-2xl text-natural-text">Track your order</h1>
-        </div>
-        <p className="text-natural-muted text-sm mb-6">
-          Enter your order ID from your confirmation email (e.g. TWC-AB12CD34).
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => { setValue(e.target.value); setError(null); }}
-              placeholder="TWC-XXXXXXXX"
-              className="w-full bg-natural-bg border border-natural-border rounded-lg px-4 py-3 text-natural-text placeholder:text-natural-muted focus:outline-none focus:ring-2 focus:ring-natural-accent/40 font-mono uppercase tracking-widest text-sm"
-              maxLength={12}
-              autoFocus
-            />
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+        {/* Card header */}
+        <div className="px-8 pt-8 pb-5">
+          <div className="flex items-center gap-3 mb-1.5">
+            <Package className="w-6 h-6 text-natural-accent" />
+            <h1 className="font-serif font-bold text-2xl text-natural-text">Track your order</h1>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-natural-accent text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-          >
-            Track Order <ChevronRight className="w-4 h-4" />
-          </button>
-        </form>
+          <p className="text-natural-text/55 text-sm">Look up by order ID or the email/phone used at checkout.</p>
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex border-b border-natural-border mx-8">
+          {(["orderId", "contact"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => handleTabChange(t)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                tab === t
+                  ? "border-natural-accent text-natural-accent"
+                  : "border-transparent text-natural-text/45 hover:text-natural-text/70"
+              }`}
+            >
+              {t === "orderId" ? <Package className="w-3.5 h-3.5" /> : <Mail className="w-3.5 h-3.5" />}
+              {t === "orderId" ? "Order ID" : "Email / Phone"}
+            </button>
+          ))}
+        </div>
+
+        <div className="px-8 py-6">
+          {/* ── Tab: Order ID ── */}
+          {tab === "orderId" && (
+            <form onSubmit={handleOrderIdSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-natural-text/45 mb-2">
+                  Order ID
+                </label>
+                <input
+                  type="text"
+                  value={orderIdValue}
+                  onChange={(e) => { setOrderIdValue(e.target.value); setOrderIdError(null); }}
+                  placeholder="TWC-XXXXXXXX"
+                  className="w-full bg-natural-bg border border-natural-border rounded-xl px-4 py-3 text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:ring-2 focus:ring-natural-accent/40 font-mono uppercase tracking-widest text-sm"
+                  maxLength={12}
+                  autoFocus
+                />
+                {orderIdError && <p className="text-red-500 text-xs mt-1.5">{orderIdError}</p>}
+                <p className="text-natural-text/40 text-xs mt-1.5">You can find this in your confirmation email.</p>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-natural-accent text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                Track Order <ChevronRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+
+          {/* ── Tab: Email / Phone ── */}
+          {tab === "contact" && (
+            <div className="space-y-4">
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest text-natural-text/45 mb-2">
+                    Email or Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={contactValue}
+                    onChange={(e) => {
+                      setContactValue(e.target.value);
+                      setContactError(null);
+                      setContactSubmitted(false);
+                    }}
+                    placeholder="name@email.com or 9XXXXXXXXX"
+                    className="w-full bg-natural-bg border border-natural-border rounded-xl px-4 py-3 text-natural-text placeholder:text-natural-text/30 focus:outline-none focus:ring-2 focus:ring-natural-accent/40 text-sm"
+                    autoFocus
+                  />
+                  {contactError && <p className="text-red-500 text-xs mt-1.5">{contactError}</p>}
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-natural-accent text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                >
+                  Find My Orders <ChevronRight className="w-4 h-4" />
+                </button>
+              </form>
+
+              {/* Loading */}
+              {contactSubmitted && ordersByContact === undefined && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-natural-accent border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+
+              {/* No results */}
+              {contactSubmitted && ordersByContact !== undefined && ordersByContact.length === 0 && (
+                <div className="text-center py-8">
+                  <Package className="w-9 h-9 text-natural-text/20 mx-auto mb-3" />
+                  <p className="text-natural-text/60 text-sm font-medium">No orders found</p>
+                  <p className="text-natural-text/40 text-xs mt-1">
+                    Double-check the email or phone used when placing the order.
+                  </p>
+                </div>
+              )}
+
+              {/* Results list */}
+              {contactSubmitted && ordersByContact && ordersByContact.length > 0 && (
+                <div className="space-y-2 mt-1">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-natural-text/40">
+                    {ordersByContact.length} order{ordersByContact.length !== 1 ? "s" : ""} found
+                  </p>
+                  {ordersByContact.map((order) => (
+                    <button
+                      key={order._id}
+                      onClick={() => onFound(order.orderId)}
+                      className="w-full flex items-center justify-between bg-natural-bg border border-natural-border rounded-xl px-4 py-3.5 hover:border-natural-accent hover:bg-natural-accent/5 transition-all group text-left"
+                    >
+                      <div>
+                        <p className="font-mono font-bold text-sm text-natural-text tracking-wider">
+                          {order.orderId}
+                        </p>
+                        <p className="text-xs text-natural-text/50 mt-0.5">
+                          ₹{order.total.toLocaleString("en-IN")} &middot;{" "}
+                          {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status] ?? ""}`}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-natural-text/30 group-hover:text-natural-accent transition-colors" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </motion.div>
+
+      {/* Back to shop */}
+      <button
+        onClick={goToStorefront}
+        className="mt-6 flex items-center gap-1.5 text-natural-text/50 hover:text-natural-accent text-sm transition-colors"
+      >
+        <ShoppingBag className="w-4 h-4" /> Continue Shopping
+      </button>
     </div>
   );
 }
@@ -276,22 +432,39 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
 
   return (
     <div className="min-h-screen bg-natural-bg pb-32">
-      {/* Nav */}
-      <div className="sticky top-0 z-10 bg-natural-bg/90 backdrop-blur-sm border-b border-natural-border px-4 py-3 flex items-center gap-3">
-        <button onClick={onBack} className="text-natural-muted hover:text-natural-text transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <span className="font-serif font-bold text-natural-text">{order.orderId}</span>
-        <span className={`ml-auto text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[order.status] ?? "bg-natural-stone/10 text-natural-muted"}`}>
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-        </span>
+      {/* Sticky nav */}
+      <div className="sticky top-0 z-10 bg-natural-bg/95 backdrop-blur-sm border-b border-natural-border">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-natural-text/65 hover:text-natural-text transition-colors shrink-0"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-natural-text/40 leading-none">
+              Your Order
+            </p>
+            <p className="font-mono font-bold text-natural-text text-sm tracking-wider truncate mt-0.5">
+              {order.orderId}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
+              STATUS_COLORS[order.status] ?? "bg-natural-stone/10 text-natural-text/60"
+            }`}
+          >
+            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          </span>
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Timeline */}
         {!isCancelled ? (
           <div className="bg-natural-paper rounded-2xl border border-natural-border p-5">
-            <h2 className="font-semibold text-natural-text mb-4 text-sm uppercase tracking-wide">Order Timeline</h2>
+            <h2 className="font-semibold text-natural-text mb-4 text-xs uppercase tracking-widest">Order Timeline</h2>
             <div className="flex items-start gap-0">
               {TIMELINE_STEPS.map((step, idx) => {
                 const done = currentStep >= idx;
@@ -301,7 +474,7 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${done ? "bg-natural-accent border-natural-accent text-white" : "bg-natural-bg border-natural-border text-natural-muted"}`}>
                       <Icon className="w-4 h-4" />
                     </div>
-                    <p className={`text-xs text-center mt-1.5 ${done ? "text-natural-accent font-semibold" : "text-natural-muted"}`}>
+                    <p className={`text-xs text-center mt-1.5 ${done ? "text-natural-accent font-semibold" : "text-natural-text/45"}`}>
                       {step.label}
                     </p>
                     {idx < TIMELINE_STEPS.length - 1 && (
@@ -325,13 +498,16 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
         ) : (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-3">
             <Ban className="w-6 h-6 text-red-500 shrink-0" />
-            <p className="text-red-700 text-sm font-medium">This order has been cancelled.</p>
+            <div>
+              <p className="text-red-700 text-sm font-semibold">Order Cancelled</p>
+              <p className="text-red-600/75 text-xs mt-0.5">This order has been cancelled and will not be processed.</p>
+            </div>
           </div>
         )}
 
         {/* Items */}
         <div className="bg-natural-paper rounded-2xl border border-natural-border p-5">
-          <h2 className="font-semibold text-natural-text mb-4 text-sm uppercase tracking-wide">Items Ordered</h2>
+            <h2 className="font-semibold text-natural-text mb-4 text-xs uppercase tracking-widest">Items Ordered</h2>
           <div className="space-y-3">
             {order.items.map((item, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -342,48 +518,53 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-natural-text text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-natural-muted text-xs">Qty: {item.qty}</p>
+                  <p className="text-natural-text/55 text-xs mt-0.5">Qty: {item.qty}</p>
                 </div>
                 <p className="text-natural-text text-sm font-semibold">₹{(item.price * item.qty).toLocaleString("en-IN")}</p>
               </div>
             ))}
           </div>
-          <div className="border-t border-natural-border mt-4 pt-3 flex justify-between text-sm">
-            <span className="text-natural-muted">Subtotal</span>
-            <span>₹{order.subtotal.toLocaleString("en-IN")}</span>
-          </div>
-          <div className="flex justify-between text-sm mt-1">
-            <span className="text-natural-muted">Shipping</span>
-            <span>{order.shipping === 0 ? "Free" : `₹${order.shipping}`}</span>
-          </div>
-          <div className="flex justify-between font-bold mt-2">
-            <span>Total</span>
-            <span>₹{order.total.toLocaleString("en-IN")}</span>
+          <div className="border-t border-natural-border mt-4 pt-3 space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-natural-text/60">Subtotal</span>
+              <span className="text-natural-text">₹{order.subtotal.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-natural-text/60">Shipping</span>
+              <span className="text-natural-text">{order.shipping === 0 ? "Free" : `₹${order.shipping}`}</span>
+            </div>
+            <div className="flex justify-between font-bold text-sm pt-2 border-t border-natural-border">
+              <span className="text-natural-text">Total</span>
+              <span className="text-natural-text">₹{order.total.toLocaleString("en-IN")}</span>
+            </div>
           </div>
         </div>
 
         {/* Delivery address */}
         <div className="bg-natural-paper rounded-2xl border border-natural-border p-5">
-          <h2 className="font-semibold text-natural-text mb-3 text-sm uppercase tracking-wide flex items-center gap-2">
+            <h2 className="font-semibold text-natural-text mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
             <MapPin className="w-4 h-4 text-natural-accent" /> Delivery Address
           </h2>
-          <p className="text-natural-text text-sm">{order.customer.name}</p>
-          <p className="text-natural-muted text-sm">{order.customer.address.line1}</p>
+          <p className="text-natural-text text-sm font-medium">{order.customer.name}</p>
+          <p className="text-natural-text/75 text-sm mt-1">{order.customer.address.line1}</p>
           {order.customer.address.line2 && (
-            <p className="text-natural-muted text-sm">{order.customer.address.line2}</p>
+            <p className="text-natural-text/75 text-sm">{order.customer.address.line2}</p>
           )}
-          <p className="text-natural-muted text-sm">
+          <p className="text-natural-text/75 text-sm">
             {order.customer.address.city}, {order.customer.address.state} — {order.customer.address.pincode}
           </p>
+          {order.customer.phone && (
+            <p className="text-natural-text/55 text-xs mt-2">{order.customer.phone}</p>
+          )}
         </div>
 
         {/* Payment */}
         <div className="bg-natural-paper rounded-2xl border border-natural-border p-5 flex items-center justify-between">
-          <span className="text-sm text-natural-muted">Payment</span>
+          <span className="text-sm text-natural-text/60">Payment</span>
           {order.razorpayPaymentId ? (
             <span className="text-sm font-semibold text-green-600">Paid ✓</span>
           ) : (
-            <span className="text-sm text-natural-muted">
+            <span className="text-sm font-medium text-natural-text">
               {order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod ?? "—"}
             </span>
           )}
@@ -413,7 +594,7 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
                   </button>
                   <button
                     onClick={() => setShowConfirm(false)}
-                    className="flex-1 border border-natural-border py-2 rounded-lg text-sm hover:bg-natural-bg"
+                    className="flex-1 border border-natural-border py-2 rounded-lg text-sm hover:bg-natural-bg text-natural-text"
                   >
                     Keep order
                   </button>
@@ -429,6 +610,14 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
           className="w-full flex items-center justify-center gap-2 bg-natural-paper border border-natural-border rounded-2xl py-4 text-natural-accent font-semibold text-sm hover:bg-natural-accent hover:text-white transition-colors"
         >
           <MessageCircle className="w-4 h-4" /> Chat with support
+        </button>
+
+        {/* Continue shopping CTA */}
+        <button
+          onClick={goToStorefront}
+          className="w-full flex items-center justify-center gap-2 bg-natural-accent text-white rounded-2xl py-4 font-bold text-sm hover:opacity-90 transition-opacity"
+        >
+          <ShoppingBag className="w-4 h-4" /> Continue Shopping
         </button>
       </div>
 

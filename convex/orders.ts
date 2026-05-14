@@ -109,6 +109,21 @@ export const cancelOrder = mutation({
   },
 });
 
+// ── getOrdersByContact ─────────────────────────────────────────────────────
+export const getOrdersByContact = query({
+  args: { contact: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.contact.trim()) return [];
+    const normalized = args.contact.toLowerCase().trim();
+    const all = await ctx.db.query("orders").order("desc").collect();
+    return all.filter(
+      (o) =>
+        o.customer.email?.toLowerCase() === normalized ||
+        o.customer.phone === normalized
+    );
+  },
+});
+
 // ── addOrderNote ───────────────────────────────────────────────────────────
 export const addOrderNote = mutation({
   args: {

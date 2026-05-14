@@ -99,9 +99,10 @@ interface DiscoveryWidgetProps {
   onClose: () => void;
   onNavigateToProduct?: (slug: string) => void;
   onAddToCart?: (productId: string) => void;
+  onRecommendations?: (primaryIds: string[], crossSellIds: string[]) => void;
 }
 
-export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart }: DiscoveryWidgetProps) {
+export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart, onRecommendations }: DiscoveryWidgetProps) {
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -156,6 +157,7 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart }: D
       const finalAnswers = note.trim() ? { ...answers, freeform: note.trim() } : answers;
       const rec = await getRecommendation({ answers: finalAnswers, products: productSnapshot });
       setRecommendation(rec);
+      onRecommendations?.(rec.primaryProductIds, rec.crossSellProductIds);
       await createSession({
         answers: finalAnswers,
         recommendations: rec.primaryProductIds,
