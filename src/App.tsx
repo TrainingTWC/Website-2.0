@@ -786,18 +786,12 @@ function MorphingHeader({
       <motion.div
         animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-4"
+        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center"
       >
-        {/* Invisible spacer on mobile to balance the cart button on the right,
-            so the centered logo sits truly in the middle. Hidden on desktop. */}
-        <div className="md:hidden w-10 shrink-0" aria-hidden />
-
-        {/* Logo — centered on mobile (flex-1), flush-left on desktop.
-            Shares a layoutId with the LoadingScreen logo so it flies in
-            from the splash on first paint. */}
+        {/* LEFT — logo */}
         <button
           onClick={() => onNavTo("hero")}
-          className="flex items-center justify-center md:justify-start flex-1 md:flex-none"
+          className="flex items-center justify-start"
           aria-label="Third Wave Coffee—home"
         >
           <motion.img
@@ -811,7 +805,7 @@ function MorphingHeader({
           />
         </button>
 
-        {/* Center nav */}
+        {/* CENTER — nav */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_ITEMS.map((item) => (
             <MorphNavItem
@@ -827,8 +821,8 @@ function MorphingHeader({
           <TIHeaderButton compact={compact} onClick={onOpenTI} />
         </nav>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* RIGHT — cart */}
+        <div className="flex items-center gap-1 justify-end">
           <div className="relative">
             <MorphNavItem
               label="Cart"
