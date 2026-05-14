@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAction } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  Sparkles,
   Loader2,
   Sun,
   Sunrise,
@@ -316,7 +315,7 @@ export function SipForecast({
                   {loading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />Forecasting…</>
                   ) : (
-                    <><Sparkles className="w-4 h-4" strokeWidth={2.5} />Generate my sip forecast</>
+                    <><TIIcon className="w-4 h-4" />Generate my sip forecast</>
                   )}
                 </button>
                 {error && (
@@ -440,7 +439,7 @@ export function SipForecast({
                   {craftLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />Crafting…</>
                   ) : (
-                    <><Sparkles className="w-4 h-4" strokeWidth={2.5} />Craft my signature drink</>
+                    <><TIIcon className="w-4 h-4" />Craft my signature drink</>
                   )}
                 </button>
                 {craftError && (
@@ -645,7 +644,7 @@ export function SipForecast({
                   className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
                   style={{ background: `${accentHex}33` }}
                 >
-                  <Sparkles className="w-6 h-6" style={{ color: accentHex }} strokeWidth={2} />
+                  <TIIcon className="w-7 h-7" />
                 </div>
                 <p className="text-white/60 text-sm max-w-xs leading-relaxed">
                   Choose your style and flavors — we'll craft the recipe around this specific bag.

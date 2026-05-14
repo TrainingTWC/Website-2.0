@@ -12,10 +12,10 @@ import {
   Play,
   RotateCcw,
   Snowflake,
-  Sparkles,
   Thermometer,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
+import { TIIcon } from "./TIIcon";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -515,7 +515,7 @@ export function BrewingStudio({
                   className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5"
                   style={{ background: `${accentHex}1a`, boxShadow: `0 0 32px ${accentHex}22` }}
                 >
-                  <Sparkles className="w-6 h-6" style={{ color: accentHex }} />
+                  <TIIcon className="w-7 h-7" />
                 </div>
                 <p className="font-serif italic text-xl leading-snug text-white/75">
                   {mode === "brew" ? "Your recipe will appear here." : "Your drink build will appear here."}
@@ -873,10 +873,10 @@ function GenerateButton({ loading, hasResult, mode, accentHex, onClick }: {
         </>
       ) : (
         <>
-          <Sparkles className="w-4 h-4" />
+          <TIIcon className="w-4 h-4" />
           {hasResult
             ? (mode === "brew" ? "Regenerate recipe" : "Recreate drink")
-            : (mode === "brew" ? "Generate AI recipe" : "Craft this drink")
+            : (mode === "brew" ? "Generate with Third Intelligence" : "Craft this drink")
           }
         </>
       )}

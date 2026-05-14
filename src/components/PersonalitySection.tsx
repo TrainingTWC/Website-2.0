@@ -5,8 +5,8 @@ import {
   Sun,
   Coffee,
   Quote,
-  Sparkles,
 } from "lucide-react";
+import { TIIcon } from "./TIIcon";
 import type { ProductPersonality } from "../../convex/productContext";
 
 interface PersonalitySectionProps {
@@ -213,9 +213,9 @@ export function PersonalitySection({
           transition={{ duration: 0.8 }}
           className="flex items-center justify-center gap-2 mt-20 text-[10px] font-bold uppercase tracking-[0.35em] text-natural-text/40"
         >
-          <Sparkles className="w-3 h-3" style={{ color: accentHex }} />
+          <TIIcon className="w-4 h-4" />
           Profile curated by Third Intelligence
-          <Sparkles className="w-3 h-3" style={{ color: accentHex }} />
+          <TIIcon className="w-4 h-4" />
         </motion.p>
       </div>
     </section>

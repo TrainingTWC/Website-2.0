@@ -10,6 +10,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
+import { TIIcon } from "../TIIcon";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useProducts } from "../../lib/useProducts";
@@ -418,7 +419,7 @@ function QuestionView({
 
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] uppercase text-natural-text/40">
-              <Sparkles className="w-3 h-3" /> Or tell us anything
+              <TIIcon className="w-3.5 h-3.5" /> Or tell us anything
             </label>
             <textarea
               value={note}
@@ -638,9 +639,9 @@ function RecommendationView({
         className="bg-natural-paper border border-natural-border rounded-3xl p-7 shadow-sm"
       >
         <div className="flex items-center gap-2 text-natural-accent mb-3">
-          <Sparkles className="w-4 h-4" />
+          <TIIcon className="w-4 h-4" />
           <span className="font-bold uppercase tracking-[0.25em] text-[10px]">
-            The Intelligence Says
+            Third Intelligence Says
           </span>
         </div>
         <div className="text-natural-text/80 text-base leading-relaxed font-medium italic">
