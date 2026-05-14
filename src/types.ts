@@ -18,6 +18,8 @@ export interface Product {
   weight?: string;
   flavorNotes: string[];
   stockStatus: StockStatus;
+  stockQty?: number;
+  lowStockThreshold?: number;
   rating?: number;
   reviewCount?: number;
 }

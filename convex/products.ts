@@ -94,3 +94,25 @@ export const update = mutation({
     await ctx.db.patch(id, updates);
   },
 });
+
+export const updateStock = mutation({
+  args: {
+    id: v.id("products"),
+    stockQty: v.number(),
+    lowStockThreshold: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const threshold = args.lowStockThreshold ?? 10;
+    const stockStatus =
+      args.stockQty === 0
+        ? ("out-of-stock" as const)
+        : args.stockQty <= threshold
+          ? ("low-stock" as const)
+          : ("in-stock" as const);
+    await ctx.db.patch(args.id, {
+      stockQty: args.stockQty,
+      lowStockThreshold: threshold,
+      stockStatus,
+    });
+  },
+});

@@ -18,6 +18,8 @@ import {
   Settings,
   Star,
   MapPin,
+  AlertTriangle,
+  PackageX,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { useProducts } from "../../lib/useProducts";
@@ -123,6 +125,28 @@ function InventoryManager({ products }: { products: Product[] }) {
 
   const addProduct = useMutation(api.products.add);
   const removeProduct = useMutation(api.products.remove);
+  const updateStockMutation = useMutation(api.products.updateStock);
+
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
+  const [editQty, setEditQty] = useState(0);
+  const [editThreshold, setEditThreshold] = useState(10);
+
+  const handleOpenStockEdit = (p: Product) => {
+    if (editingStockId === p._id) { setEditingStockId(null); return; }
+    setEditingStockId(p._id);
+    setEditQty(p.stockQty ?? 0);
+    setEditThreshold(p.lowStockThreshold ?? 10);
+  };
+
+  const handleSaveStock = async () => {
+    if (!editingStockId) return;
+    await updateStockMutation({
+      id: editingStockId as Id<"products">,
+      stockQty: editQty,
+      lowStockThreshold: editThreshold,
+    });
+    setEditingStockId(null);
+  };
 
   const handleAddProduct = async () => {
     if (!newProduct.name) return;
@@ -176,6 +200,29 @@ function InventoryManager({ products }: { products: Product[] }) {
           {isAdding ? "Cancel" : "Add New Product"}
         </button>
       </div>
+
+      {products.length > 0 && (
+        <div className="flex gap-3 flex-wrap">
+          <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-bold text-green-700">
+              {products.filter((p) => p.stockStatus === "in-stock").length} In Stock
+            </span>
+          </div>
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-3 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-bold text-amber-700">
+              {products.filter((p) => p.stockStatus === "low-stock").length} Low Stock
+            </span>
+          </div>
+          <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-3 flex items-center gap-2">
+            <PackageX className="w-4 h-4 text-red-500" />
+            <span className="text-sm font-bold text-red-700">
+              {products.filter((p) => p.stockStatus === "out-of-stock").length} Out of Stock
+            </span>
+          </div>
+        </div>
+      )}
 
       {isAdding && (
         <motion.div
@@ -352,9 +399,9 @@ function InventoryManager({ products }: { products: Product[] }) {
 
       <div className="grid grid-cols-1 gap-4">
         {products.map((p) => (
+          <div key={p._id}>
           <div
-            key={p._id}
-            className="group flex items-center justify-between p-6 bg-white border border-stone-100 rounded-3xl hover:border-[#5A5A40]/30 hover:shadow-xl transition-all"
+            className={`group flex items-center justify-between p-6 bg-white border border-stone-100 rounded-3xl hover:border-[#5A5A40]/30 hover:shadow-xl transition-all ${editingStockId === p._id ? "rounded-b-none border-b-0" : ""}`}
           >
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0">
@@ -410,13 +457,20 @@ function InventoryManager({ products }: { products: Product[] }) {
                       className={`w-3 h-3 ${p.stockStatus === "in-stock" ? "text-green-500" : p.stockStatus === "low-stock" ? "text-amber-500" : "text-red-500"}`}
                     />{" "}
                     {p.stockStatus}
+                    {p.stockQty !== undefined && (
+                      <span className="ml-1 text-stone-500">({p.stockQty} units)</span>
+                    )}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="p-3 text-stone-400 hover:text-[#5A5A40] hover:bg-[#5A5A40]/5 rounded-xl transition-all">
+              <button
+                onClick={() => handleOpenStockEdit(p)}
+                title="Edit stock"
+                className={`p-3 rounded-xl transition-all ${editingStockId === p._id ? "text-[#5A5A40] bg-[#5A5A40]/10" : "text-stone-400 hover:text-[#5A5A40] hover:bg-[#5A5A40]/5"}`}
+              >
                 <Edit3 className="w-5 h-5" />
               </button>
               <button
@@ -426,6 +480,93 @@ function InventoryManager({ products }: { products: Product[] }) {
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
+          </div>
+          {editingStockId === p._id && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-stone-50 p-6 rounded-b-3xl border-x border-b border-[#5A5A40]/20"
+            >
+              <div className="flex flex-wrap items-end gap-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
+                    Stock Quantity
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditQty(Math.max(0, editQty - 1))}
+                      className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editQty}
+                      onChange={(e) =>
+                        setEditQty(Math.max(0, parseInt(e.target.value) || 0))
+                      }
+                      className="w-20 text-center p-2 rounded-xl border border-stone-200 font-bold text-lg outline-none focus:ring-2 ring-[#5A5A40]/20"
+                    />
+                    <button
+                      onClick={() => setEditQty(editQty + 1)}
+                      className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
+                    Low-Stock Alert Below
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={editThreshold}
+                      onChange={(e) =>
+                        setEditThreshold(
+                          Math.max(1, parseInt(e.target.value) || 1)
+                        )
+                      }
+                      className="w-24 text-center p-2 rounded-xl border border-stone-200 font-bold outline-none focus:ring-2 ring-[#5A5A40]/20"
+                    />
+                    <span className="text-sm text-stone-400">units</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 ml-auto">
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                      editQty === 0
+                        ? "bg-red-100 text-red-700"
+                        : editQty <= editThreshold
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {editQty === 0
+                      ? "→ Out of Stock"
+                      : editQty <= editThreshold
+                      ? "→ Low Stock"
+                      : "→ In Stock"}
+                  </span>
+                  <button
+                    onClick={handleSaveStock}
+                    className="bg-[#5A5A40] text-white px-6 py-2.5 rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    Save Stock
+                  </button>
+                  <button
+                    onClick={() => setEditingStockId(null)}
+                    className="px-4 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-200 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
           </div>
         ))}
         {products.length === 0 && (

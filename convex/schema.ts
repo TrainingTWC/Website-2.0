@@ -27,6 +27,8 @@ export default defineSchema({
       v.literal("out-of-stock"),
       v.literal("low-stock")
     ),
+    stockQty: v.optional(v.number()),
+    lowStockThreshold: v.optional(v.number()),
     rating: v.optional(v.number()),
     reviewCount: v.optional(v.number()),
   })
