@@ -9,6 +9,7 @@ export default defineSchema({
     category: v.string(),
     price: v.number(),
     imageUrl: v.string(),
+    modelUrl: v.optional(v.string()),
     imageBlur: v.optional(v.string()),
     tags: v.array(v.string()),
     roastLevel: v.optional(
@@ -54,4 +55,25 @@ export default defineSchema({
     value: v.string(),   // JSON-stringified { ok: true, ... } result
     createdAt: v.number(),
   }).index("by_key", ["key"]),
+
+  // Page view tracking for site analytics
+  pageViews: defineTable({
+    path: v.string(),
+    sessionId: v.string(),
+    referrer: v.optional(v.string()),
+    timestamp: v.number(),
+    duration: v.optional(v.number()), // seconds on page
+  }).index("by_timestamp", ["timestamp"]),
+
+  // Custom product categories
+  categories: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    productType: v.union(
+      v.literal("beans"),
+      v.literal("bags"),
+      v.literal("merch"),
+      v.literal("all")
+    ),
+  }),
 });

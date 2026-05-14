@@ -36,6 +36,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { api } from "../convex/_generated/api";
+import { useMutation } from "convex/react";
 import { useProducts } from "./lib/useProducts";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
@@ -397,6 +398,30 @@ function Storefront() {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Page view tracking
+  const recordPageView = useMutation((api as any).pageViews.record);
+  const updatePageViewDuration = useMutation((api as any).pageViews.updateDuration);
+  useEffect(() => {
+    let pvId: string | null = null;
+    const start = Date.now();
+    const sessionId = (() => {
+      let id = sessionStorage.getItem("brewmatch:sid");
+      if (!id) { id = Math.random().toString(36).slice(2); sessionStorage.setItem("brewmatch:sid", id); }
+      return id;
+    })();
+    recordPageView({ path: window.location.pathname, sessionId, referrer: document.referrer || undefined })
+      .then((id: any) => { pvId = id; });
+    const handleUnload = () => {
+      if (pvId) {
+        const duration = Math.round((Date.now() - start) / 1000);
+        updatePageViewDuration({ id: pvId as any, duration });
+      }
+    };
+    window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") handleUnload(); });
+    return () => { handleUnload(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openTI = () => navigateTo({ page: "ti" });

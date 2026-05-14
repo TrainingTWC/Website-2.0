@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Package,
   Plus,
@@ -10,7 +10,6 @@ import {
   Edit3,
   Search,
   List as ListIcon,
-  Tag,
   Coffee as CoffeeIcon,
   IndianRupee,
   Database,
@@ -20,6 +19,16 @@ import {
   MapPin,
   AlertTriangle,
   PackageX,
+  FolderPlus,
+  Eye,
+  Clock,
+  BarChart2,
+  Globe,
+  ShoppingBag,
+  Save,
+  Box,
+  Filter,
+  Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { useProducts } from "../../lib/useProducts";
@@ -27,12 +36,125 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { Product, ProductType, RoastLevel } from "../../types";
 
+// ─── Shared design tokens ─────────────────────────────────────────────────────
+const INPUT =
+  "w-full px-4 py-3 rounded-xl border border-stone-200 outline-none focus:ring-2 ring-[#5A5A40]/20 bg-white text-sm";
+const LABEL =
+  "block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5";
+const ROAST_LEVELS: RoastLevel[] = ["light", "medium", "medium-dark", "dark"];
+const PRODUCT_TYPES: { value: ProductType; label: string }[] = [
+  { value: "beans", label: "Coffee Beans (Freshly Roasted)" },
+  { value: "bags", label: "Coffee Bags (Ground & Packed)" },
+  { value: "merch", label: "Merch (Cups, Keychains, etc.)" },
+];
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  productType: "beans" | "bags" | "merch" | "all";
+}
+
+// ─── Product form helpers ─────────────────────────────────────────────────────
+interface ProductFormData {
+  name: string;
+  description: string;
+  type: ProductType;
+  category: string;
+  price: number;
+  imageUrl: string;
+  modelUrl: string;
+  roastLevel?: RoastLevel;
+  origin: string;
+  weight: string;
+  flavorNotes: string;
+  tags: string;
+  stockQty: number;
+  lowStockThreshold: number;
+  rating: string;
+  reviewCount: string;
+}
+
+function productToFormData(p: Product): ProductFormData {
+  return {
+    name: p.name,
+    description: p.description,
+    type: p.type,
+    category: p.category,
+    price: p.price,
+    imageUrl: p.imageUrl,
+    modelUrl: p.modelUrl ?? "",
+    roastLevel: p.roastLevel,
+    origin: p.origin ?? "",
+    weight: p.weight ?? "",
+    flavorNotes: p.flavorNotes.join(", "),
+    tags: p.tags.join(", "),
+    stockQty: p.stockQty ?? 0,
+    lowStockThreshold: p.lowStockThreshold ?? 10,
+    rating: p.rating?.toString() ?? "",
+    reviewCount: p.reviewCount?.toString() ?? "",
+  };
+}
+
+function defaultFormData(): ProductFormData {
+  return {
+    name: "",
+    description: "",
+    type: "beans",
+    category: "single-origin",
+    price: 1499,
+    imageUrl: "",
+    modelUrl: "",
+    roastLevel: "medium",
+    origin: "",
+    weight: "250g",
+    flavorNotes: "",
+    tags: "",
+    stockQty: 0,
+    lowStockThreshold: 10,
+    rating: "",
+    reviewCount: "",
+  };
+}
+
+function formDataToProductPayload(form: ProductFormData) {
+  const sq = form.stockQty;
+  const th = form.lowStockThreshold;
+  const stockStatus: "in-stock" | "out-of-stock" | "low-stock" =
+    sq === 0 ? "out-of-stock" : sq <= th ? "low-stock" : "in-stock";
+  return {
+    name: form.name,
+    description: form.description,
+    type: form.type,
+    category: form.category,
+    price: form.price,
+    imageUrl: form.imageUrl,
+    modelUrl: form.modelUrl || undefined,
+    roastLevel:
+      form.type === "beans" || form.type === "bags" ? form.roastLevel : undefined,
+    origin: form.origin || undefined,
+    weight: form.weight || undefined,
+    flavorNotes: form.flavorNotes.split(",").map((s) => s.trim()).filter(Boolean),
+    tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
+    stockStatus,
+    rating: form.rating ? parseFloat(form.rating) : undefined,
+    reviewCount: form.reviewCount ? parseInt(form.reviewCount) : undefined,
+  };
+}
+
+// ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<
-    "inventory" | "analytics" | "rules"
-  >("inventory");
+  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules">(
+    "inventory"
+  );
   const products = useProducts();
   const sessions = useQuery(api.sessions.list);
+
+  const tabs = [
+    { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
+    { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
+  ];
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -42,28 +164,11 @@ export function AdminDashboard() {
             Merchant Control
           </h2>
           <p className="text-natural-text opacity-50 mt-2 font-medium">
-            Manage your catalog and monitor AI recommendation performance.
+            Manage catalog, categories, media and monitor site performance.
           </p>
         </div>
-
         <div className="flex bg-natural-muted rounded-2xl p-1 border border-natural-stone shadow-inner">
-          {[
-            {
-              id: "inventory",
-              label: "Inventory",
-              icon: <Package className="w-4 h-4" />,
-            },
-            {
-              id: "analytics",
-              label: "Analytics",
-              icon: <TrendingUp className="w-4 h-4" />,
-            },
-            {
-              id: "rules",
-              label: "Logic Rules",
-              icon: <Search className="w-4 h-4" />,
-            },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
@@ -85,7 +190,7 @@ export function AdminDashboard() {
           <InventoryManager products={products ?? []} />
         )}
         {activeTab === "analytics" && (
-          <AnalyticsView sessions={sessions ?? []} />
+          <AnalyticsView sessions={sessions ?? []} products={products ?? []} />
         )}
         {activeTab === "rules" && <RulesManager />}
       </div>
@@ -93,94 +198,77 @@ export function AdminDashboard() {
   );
 }
 
+// ─── Inventory manager ────────────────────────────────────────────────────────
 function InventoryManager({ products }: { products: Product[] }) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [newProduct, setNewProduct] = useState<{
-    name: string;
-    description: string;
-    type: ProductType;
-    category: string;
-    price: number;
-    imageUrl: string;
-    tags: string[];
-    roastLevel?: RoastLevel;
-    origin?: string;
-    weight?: string;
-    flavorNotes: string[];
-    stockStatus: "in-stock" | "out-of-stock" | "low-stock";
-  }>({
-    name: "",
-    description: "",
-    type: "beans",
-    category: "single-origin",
-    price: 1499,
-    imageUrl: "",
-    tags: [],
-    roastLevel: "medium",
-    origin: "",
-    weight: "250g",
-    flavorNotes: [],
-    stockStatus: "in-stock",
-  });
+  const categories = useQuery((api as any).categories.list) as
+    | Category[]
+    | undefined;
 
-  const addProduct = useMutation(api.products.add);
-  const removeProduct = useMutation(api.products.remove);
+  const addProductMutation = useMutation(api.products.add);
+  const updateProductMutation = useMutation(api.products.update);
+  const removeProductMutation = useMutation(api.products.remove);
   const updateStockMutation = useMutation(api.products.updateStock);
+  const addCategoryMutation = useMutation((api as any).categories.add);
+  const removeCategoryMutation = useMutation((api as any).categories.remove);
 
-  const [editingStockId, setEditingStockId] = useState<string | null>(null);
-  const [editQty, setEditQty] = useState(0);
-  const [editThreshold, setEditThreshold] = useState(10);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatType, setNewCatType] = useState<"all" | "beans" | "bags" | "merch">("all");
 
-  const handleOpenStockEdit = (p: Product) => {
-    if (editingStockId === p._id) { setEditingStockId(null); return; }
-    setEditingStockId(p._id);
-    setEditQty(p.stockQty ?? 0);
-    setEditThreshold(p.lowStockThreshold ?? 10);
+  const filteredProducts = useMemo(() => {
+    if (activeFilter === "all") return products;
+    if (["beans", "bags", "merch"].includes(activeFilter))
+      return products.filter((p) => p.type === activeFilter);
+    return products.filter((p) => p.category === activeFilter);
+  }, [products, activeFilter]);
+
+  const handleDelete = async (p: Product) => {
+    if (confirm(`Delete "${p.name}"? This cannot be undone.`)) {
+      await removeProductMutation({ id: p._id as Id<"products"> });
+      if (editingId === p._id) setEditingId(null);
+    }
   };
 
-  const handleSaveStock = async () => {
-    if (!editingStockId) return;
-    await updateStockMutation({
-      id: editingStockId as Id<"products">,
-      stockQty: editQty,
-      lowStockThreshold: editThreshold,
-    });
-    setEditingStockId(null);
+  const handleToggleEdit = (p: Product) => {
+    setEditingId(editingId === p._id ? null : p._id);
+    setIsAdding(false);
   };
 
-  const handleAddProduct = async () => {
-    if (!newProduct.name) return;
+  const handleAddCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    const slug = name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
     try {
-      await addProduct(newProduct);
-      setIsAdding(false);
-      setNewProduct({
-        name: "",
-        description: "",
-        type: "beans",
-        category: "single-origin",
-        price: 1499,
-        imageUrl: "",
-        tags: [],
-        roastLevel: "medium",
-        origin: "",
-        weight: "250g",
-        flavorNotes: [],
-        stockStatus: "in-stock",
-      });
-    } catch (err) {
-      console.error(err);
+      await addCategoryMutation({ name, slug, productType: newCatType });
+    } catch {
+      /* duplicate — silently ignore */
+    }
+    setNewCatName("");
+    setNewCatType("all");
+    setShowAddCategory(false);
+  };
+
+  const handleRemoveCategory = async (cat: Category) => {
+    if (confirm(`Remove category "${cat.name}"?`)) {
+      await removeCategoryMutation({ id: cat._id as any });
+      if (activeFilter === cat.slug) setActiveFilter("all");
     }
   };
 
-  const handleDelete = async (product: Product) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      await removeProduct({ id: product._id as Id<"products"> });
-    }
-  };
+  const inStock = products.filter((p) => p.stockStatus === "in-stock").length;
+  const lowStock = products.filter((p) => p.stockStatus === "low-stock").length;
+  const outStock = products.filter((p) => p.stockStatus === "out-of-stock").length;
 
   return (
     <div className="p-8 space-y-8">
-      <div className="flex justify-between items-center">
+      {/* ── Header ── */}
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <h3 className="text-3xl font-serif font-bold flex items-center gap-3">
           <Database className="w-7 h-7 text-natural-accent" />
           Product Catalog
@@ -189,400 +277,539 @@ function InventoryManager({ products }: { products: Product[] }) {
           </span>
         </h3>
         <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-natural-text text-white px-8 py-4 rounded-full font-bold hover:bg-natural-accent transition-all shadow-xl active:scale-95"
+          onClick={() => { setIsAdding(!isAdding); setEditingId(null); }}
+          className="flex items-center gap-2 bg-natural-text text-white px-6 py-3 rounded-full font-bold hover:bg-natural-accent transition-all shadow-xl active:scale-95"
         >
-          {isAdding ? (
-            <X className="w-4 h-4" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-          {isAdding ? "Cancel" : "Add New Product"}
+          {isAdding ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {isAdding ? "Cancel" : "Add Product"}
         </button>
       </div>
 
+      {/* ── Category filter bar ── */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1 mr-1">
+          <Filter className="w-3 h-3" /> Filter:
+        </span>
+        {[
+          { id: "all", label: "All", count: products.length },
+          { id: "beans", label: "Beans", count: products.filter((p) => p.type === "beans").length },
+          { id: "bags", label: "Bags", count: products.filter((p) => p.type === "bags").length },
+          { id: "merch", label: "Merch", count: products.filter((p) => p.type === "merch").length },
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setActiveFilter(f.id)}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              activeFilter === f.id
+                ? "bg-natural-accent text-white border-natural-accent shadow"
+                : "bg-stone-50 text-stone-500 border-stone-200 hover:border-natural-accent/40"
+            }`}
+          >
+            {f.label} <span className={activeFilter === f.id ? "opacity-70" : "opacity-50"}>({f.count})</span>
+          </button>
+        ))}
+        {categories?.map((cat) => (
+          <div key={cat._id} className="flex items-center">
+            <button
+              onClick={() => setActiveFilter(cat.slug)}
+              className={`pl-3 pr-2 py-1.5 rounded-l-full text-xs font-bold transition-all border border-r-0 ${
+                activeFilter === cat.slug
+                  ? "bg-natural-accent text-white border-natural-accent shadow"
+                  : "bg-stone-50 text-stone-500 border-stone-200 hover:border-natural-accent/40"
+              }`}
+            >
+              {cat.name} <span className={activeFilter === cat.slug ? "opacity-70" : "opacity-50"}>({products.filter((p) => p.category === cat.slug).length})</span>
+            </button>
+            <button
+              onClick={() => handleRemoveCategory(cat)}
+              title="Remove category"
+              className={`px-1.5 py-1.5 rounded-r-full border text-xs transition-all ${
+                activeFilter === cat.slug
+                  ? "bg-natural-accent text-white/70 hover:text-white border-natural-accent"
+                  : "bg-stone-50 text-stone-300 border-stone-200 hover:text-red-400 hover:border-red-200"
+              }`}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        {!showAddCategory && (
+          <button
+            onClick={() => setShowAddCategory(true)}
+            className="px-3 py-1.5 rounded-full text-xs font-bold border border-dashed border-stone-300 text-stone-400 hover:text-natural-accent hover:border-natural-accent transition-all flex items-center gap-1"
+          >
+            <FolderPlus className="w-3 h-3" /> Category
+          </button>
+        )}
+        <AnimatePresence>
+          {showAddCategory && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-2xl px-4 py-2"
+            >
+              <input
+                autoFocus
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddCategory();
+                  if (e.key === "Escape") setShowAddCategory(false);
+                }}
+                placeholder="Category name"
+                className="text-xs outline-none bg-transparent font-medium w-32"
+              />
+              <select
+                value={newCatType}
+                onChange={(e) => setNewCatType(e.target.value as any)}
+                className="text-xs bg-transparent outline-none font-medium text-stone-500"
+              >
+                <option value="all">All types</option>
+                <option value="beans">Beans only</option>
+                <option value="bags">Bags only</option>
+                <option value="merch">Merch only</option>
+              </select>
+              <button onClick={handleAddCategory} className="bg-natural-accent text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
+              <button onClick={() => setShowAddCategory(false)} className="text-stone-400 hover:text-stone-600"><X className="w-3 h-3" /></button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Stock overview pills ── */}
       {products.length > 0 && (
         <div className="flex gap-3 flex-wrap">
           <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-3 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-bold text-green-700">
-              {products.filter((p) => p.stockStatus === "in-stock").length} In Stock
-            </span>
+            <span className="text-sm font-bold text-green-700">{inStock} In Stock</span>
           </div>
           <div className="bg-amber-50 border border-amber-100 rounded-2xl px-5 py-3 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-bold text-amber-700">
-              {products.filter((p) => p.stockStatus === "low-stock").length} Low Stock
-            </span>
+            <span className="text-sm font-bold text-amber-700">{lowStock} Low Stock</span>
           </div>
           <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-3 flex items-center gap-2">
             <PackageX className="w-4 h-4 text-red-500" />
-            <span className="text-sm font-bold text-red-700">
-              {products.filter((p) => p.stockStatus === "out-of-stock").length} Out of Stock
-            </span>
+            <span className="text-sm font-bold text-red-700">{outStock} Out of Stock</span>
           </div>
         </div>
       )}
 
-      {isAdding && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-stone-50 p-8 rounded-3xl border-2 border-dashed border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
-          <div className="space-y-4">
-            <label className="block text-sm font-bold uppercase tracking-wider text-stone-400">
-              Product Name
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Ethiopian Yirgacheffe"
-              value={newProduct.name}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, name: e.target.value })
-              }
-              className="w-full p-4 rounded-xl border border-stone-200 outline-none focus:ring-2 ring-[#5A5A40]/20"
-            />
-
-            <label className="block text-sm font-bold uppercase tracking-wider text-stone-400">
-              Description
-            </label>
-            <textarea
-              placeholder="Flavor notes, roast process..."
-              value={newProduct.description}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, description: e.target.value })
-              }
-              className="w-full p-4 rounded-xl border border-stone-200 h-32 outline-none focus:ring-2 ring-[#5A5A40]/20"
-            />
-
-            <label className="block text-sm font-bold uppercase tracking-wider text-stone-400">
-              Image URL
-            </label>
-            <input
-              type="text"
-              placeholder="https://images.unsplash.com/..."
-              value={newProduct.imageUrl}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, imageUrl: e.target.value })
-              }
-              className="w-full p-4 rounded-xl border border-stone-200 outline-none focus:ring-2 ring-[#5A5A40]/20"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Type
-                </label>
-                <select
-                  value={newProduct.type}
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      type: e.target.value as ProductType,
-                    })
-                  }
-                  className="w-full p-4 rounded-xl border border-stone-200 bg-white"
-                >
-                  <option value="beans">Coffee Beans (Freshly Roasted)</option>
-                  <option value="bags">Easy Coffee Bags (Ground & Packed)</option>
-                  <option value="merch">Merch (Keychains, Cups, etc.)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Price (₹)
-                </label>
-                <input
-                  type="number"
-                  value={newProduct.price}
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      price: parseFloat(e.target.value),
-                    })
-                  }
-                  className="w-full p-4 rounded-xl border border-stone-200"
-                />
-              </div>
-            </div>
-
-            {(newProduct.type === "beans" || newProduct.type === "bags") && (
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Roast Level
-                </label>
-                <div className="flex gap-2">
-                  {(
-                    ["light", "medium", "medium-dark", "dark"] as RoastLevel[]
-                  ).map((level) => (
-                    <button
-                      key={level}
-                      onClick={() =>
-                        setNewProduct({ ...newProduct, roastLevel: level })
-                      }
-                      className={`flex-1 p-3 rounded-xl border-2 capitalize font-bold transition-all text-sm ${
-                        newProduct.roastLevel === level
-                          ? "bg-[#5A5A40] text-white border-[#5A5A40]"
-                          : "bg-white text-stone-400 border-stone-100 hover:border-stone-300"
-                      }`}
-                    >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Origin
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Yirgacheffe, Ethiopia"
-                  value={newProduct.origin || ""}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, origin: e.target.value })
-                  }
-                  className="w-full p-4 rounded-xl border border-stone-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. single-origin, blend"
-                  value={newProduct.category}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, category: e.target.value })
-                  }
-                  className="w-full p-4 rounded-xl border border-stone-200"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold uppercase tracking-wider text-stone-400 mb-2">
-                Search Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                placeholder="citrus, chocolatey, morning-brew"
-                onBlur={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    tags: e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  })
-                }
-                className="w-full p-4 rounded-xl border border-stone-200"
-              />
-            </div>
-
-            <button
-              onClick={handleAddProduct}
-              className="w-full bg-[#5A5A40] text-white py-4 rounded-xl font-bold shadow-lg hover:brightness-110 active:scale-[0.99] transition-all"
-            >
-              Save Product to Catalog
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4">
-        {products.map((p) => (
-          <div key={p._id}>
-          <div
-            className={`group flex items-center justify-between p-6 bg-white border border-stone-100 rounded-3xl hover:border-[#5A5A40]/30 hover:shadow-xl transition-all ${editingStockId === p._id ? "rounded-b-none border-b-0" : ""}`}
+      {/* ── Add product form ── */}
+      <AnimatePresence>
+        {isAdding && (
+          <motion.div
+            key="add-form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
           >
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0">
-                {p.imageUrl ? (
-                  <img
-                    src={p.imageUrl}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-stone-100 flex items-center justify-center text-stone-300">
-                    <CoffeeIcon className="w-8 h-8" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="text-xl font-bold">{p.name}</h4>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      p.type === "beans"
-                        ? "bg-[#5A5A40]/10 text-[#5A5A40]"
-                        : p.type === "bags"
-                          ? "bg-blue-50 text-blue-600"
-                          : "bg-amber-50 text-amber-700"
-                    }`}
-                  >
-                    {p.type}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-stone-400">
-                  <span className="flex items-center gap-1">
-                    <IndianRupee className="w-3 h-3" /> {p.price.toLocaleString("en-IN")}
-                  </span>
-                  {p.roastLevel && (
-                    <span className="flex items-center gap-1 capitalize">
-                      <Tag className="w-3 h-3" /> {p.roastLevel} Roast
-                    </span>
-                  )}
-                  {p.origin && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" /> {p.origin}
-                    </span>
-                  )}
-                  {p.rating && (
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />{" "}
-                      {p.rating}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2
-                      className={`w-3 h-3 ${p.stockStatus === "in-stock" ? "text-green-500" : p.stockStatus === "low-stock" ? "text-amber-500" : "text-red-500"}`}
-                    />{" "}
-                    {p.stockStatus}
-                    {p.stockQty !== undefined && (
-                      <span className="ml-1 text-stone-500">({p.stockQty} units)</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <AddProductForm
+              categories={categories ?? []}
+              onSave={async (data) => {
+                await addProductMutation(data as any);
+                setIsAdding(false);
+              }}
+              onCancel={() => setIsAdding(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => handleOpenStockEdit(p)}
-                title="Edit stock"
-                className={`p-3 rounded-xl transition-all ${editingStockId === p._id ? "text-[#5A5A40] bg-[#5A5A40]/10" : "text-stone-400 hover:text-[#5A5A40] hover:bg-[#5A5A40]/5"}`}
-              >
-                <Edit3 className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => handleDelete(p)}
-                className="p-3 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-          {editingStockId === p._id && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-stone-50 p-6 rounded-b-3xl border-x border-b border-[#5A5A40]/20"
-            >
-              <div className="flex flex-wrap items-end gap-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
-                    Stock Quantity
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditQty(Math.max(0, editQty - 1))}
-                      className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={editQty}
-                      onChange={(e) =>
-                        setEditQty(Math.max(0, parseInt(e.target.value) || 0))
-                      }
-                      className="w-20 text-center p-2 rounded-xl border border-stone-200 font-bold text-lg outline-none focus:ring-2 ring-[#5A5A40]/20"
-                    />
-                    <button
-                      onClick={() => setEditQty(editQty + 1)}
-                      className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">
-                    Low-Stock Alert Below
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      value={editThreshold}
-                      onChange={(e) =>
-                        setEditThreshold(
-                          Math.max(1, parseInt(e.target.value) || 1)
-                        )
-                      }
-                      className="w-24 text-center p-2 rounded-xl border border-stone-200 font-bold outline-none focus:ring-2 ring-[#5A5A40]/20"
-                    />
-                    <span className="text-sm text-stone-400">units</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 ml-auto">
-                  <span
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                      editQty === 0
-                        ? "bg-red-100 text-red-700"
-                        : editQty <= editThreshold
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {editQty === 0
-                      ? "→ Out of Stock"
-                      : editQty <= editThreshold
-                      ? "→ Low Stock"
-                      : "→ In Stock"}
-                  </span>
-                  <button
-                    onClick={handleSaveStock}
-                    className="bg-[#5A5A40] text-white px-6 py-2.5 rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all"
-                  >
-                    Save Stock
-                  </button>
-                  <button
-                    onClick={() => setEditingStockId(null)}
-                    className="px-4 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-200 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          </div>
-        ))}
-        {products.length === 0 && (
+      {/* ── Product list ── */}
+      <div className="space-y-3">
+        {filteredProducts.length === 0 && (
           <div className="py-24 text-center border-2 border-dashed border-stone-100 rounded-[2rem]">
             <Package className="w-12 h-12 text-stone-200 mx-auto mb-4" />
             <p className="text-stone-400 font-medium">
-              Your catalog is empty. Start adding products above.
+              {activeFilter === "all"
+                ? "Your catalog is empty. Add a product above."
+                : `No products in this category.`}
             </p>
           </div>
         )}
+        {filteredProducts.map((p) => (
+          <div key={p._id}>
+            <div
+              className={`group flex items-center justify-between p-5 bg-white border border-stone-100 hover:border-[#5A5A40]/30 hover:shadow-lg transition-all ${
+                editingId === p._id ? "rounded-t-3xl rounded-b-none border-b-0" : "rounded-3xl"
+              }`}
+            >
+              <div className="flex items-center gap-5 flex-1 min-w-0">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-stone-100">
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <CoffeeIcon className="w-6 h-6 text-stone-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h4 className="text-base font-bold truncate">{p.name}</h4>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${
+                      p.type === "beans" ? "bg-[#5A5A40]/10 text-[#5A5A40]"
+                        : p.type === "bags" ? "bg-blue-50 text-blue-600"
+                        : "bg-amber-50 text-amber-700"
+                    }`}>{p.type}</span>
+                    {p.category && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-500 uppercase tracking-wider flex-shrink-0">
+                        {p.category}
+                      </span>
+                    )}
+                    {p.modelUrl && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-500 uppercase tracking-wider flex-shrink-0 flex items-center gap-0.5">
+                        <Box className="w-2.5 h-2.5" /> 3D
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-stone-400 flex-wrap">
+                    <span className="flex items-center gap-0.5 font-bold text-natural-text">
+                      <IndianRupee className="w-3 h-3" />{p.price.toLocaleString("en-IN")}
+                    </span>
+                    {p.roastLevel && <span className="capitalize">{p.roastLevel} Roast</span>}
+                    {p.origin && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{p.origin}</span>}
+                    {p.rating && <span className="flex items-center gap-0.5"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{p.rating}</span>}
+                    <span className={`flex items-center gap-1 font-semibold ${
+                      p.stockStatus === "in-stock" ? "text-green-600"
+                        : p.stockStatus === "low-stock" ? "text-amber-600"
+                        : "text-red-600"
+                    }`}>
+                      {p.stockStatus}
+                      {p.stockQty !== undefined && (
+                        <span className="text-stone-400 font-normal">({p.stockQty} units)</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                <button
+                  onClick={() => handleToggleEdit(p)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    editingId === p._id
+                      ? "bg-[#5A5A40] text-white"
+                      : "bg-stone-100 text-stone-600 hover:bg-[#5A5A40]/10 hover:text-[#5A5A40]"
+                  }`}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  {editingId === p._id ? "Close" : "Edit"}
+                </button>
+                <button
+                  onClick={() => handleDelete(p)}
+                  className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {editingId === p._id && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <ProductEditor
+                    product={p}
+                    categories={categories ?? []}
+                    onSave={async (updates) => {
+                      const { _stockQty, _lowStockThreshold, ...rest } = updates;
+                      await updateProductMutation({ id: p._id as Id<"products">, ...rest } as any);
+                      await updateStockMutation({ id: p._id as Id<"products">, stockQty: _stockQty, lowStockThreshold: _lowStockThreshold });
+                      setEditingId(null);
+                    }}
+                    onCancel={() => setEditingId(null)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function AnalyticsView({ sessions }: { sessions: any[] }) {
+// ─── Full product editor ──────────────────────────────────────────────────────
+function ProductEditor({
+  product, categories, onSave, onCancel,
+}: {
+  product: Product;
+  categories: Category[];
+  onSave: (updates: any) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<ProductFormData>(() => productToFormData(product));
+  const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"details" | "media" | "stock">("details");
+  const set = (key: keyof ProductFormData, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = formDataToProductPayload(form);
+      await onSave({ ...payload, _stockQty: form.stockQty, _lowStockThreshold: form.lowStockThreshold });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const computedStatus = form.stockQty === 0 ? "out-of-stock" : form.stockQty <= form.lowStockThreshold ? "low-stock" : "in-stock";
+
+  return (
+    <div className="bg-stone-50 border-x border-b border-[#5A5A40]/20 rounded-b-3xl overflow-hidden">
+      <div className="flex border-b border-stone-200 bg-white/60">
+        {[
+          { id: "details", label: "Details & Pricing" },
+          { id: "media", label: "Media & 3D" },
+          { id: "stock", label: "Stock & Status" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id as any)}
+            className={`px-6 py-3.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+              tab === t.id ? "border-[#5A5A40] text-[#5A5A40]" : "border-transparent text-stone-400 hover:text-stone-600"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-6">
+        {tab === "details" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div><label className={LABEL}>Product Name</label><input className={INPUT} value={form.name} onChange={(e) => set("name", e.target.value)} /></div>
+              <div><label className={LABEL}>Description</label><textarea className={`${INPUT} h-28 resize-none`} value={form.description} onChange={(e) => set("description", e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={LABEL}>Type</label>
+                  <select className={INPUT} value={form.type} onChange={(e) => set("type", e.target.value as ProductType)}>
+                    {PRODUCT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div><label className={LABEL}>Price (₹)</label><input type="number" className={INPUT} value={form.price} onChange={(e) => set("price", parseFloat(e.target.value) || 0)} /></div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className={LABEL}>Category</label>
+                <input className={INPUT} value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="e.g. single-origin" list="edit-cat-dl" />
+                <datalist id="edit-cat-dl">{categories.map((c) => <option key={c._id} value={c.slug} />)}</datalist>
+              </div>
+              {(form.type === "beans" || form.type === "bags") && (
+                <div>
+                  <label className={LABEL}>Roast Level</label>
+                  <div className="flex gap-2">
+                    {ROAST_LEVELS.map((level) => (
+                      <button key={level} onClick={() => set("roastLevel", level)}
+                        className={`flex-1 py-2 rounded-xl border-2 capitalize font-bold text-xs transition-all ${form.roastLevel === level ? "bg-[#5A5A40] text-white border-[#5A5A40]" : "border-stone-200 text-stone-400 hover:border-stone-400"}`}
+                      >{level}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={LABEL}>Origin</label><input className={INPUT} value={form.origin} onChange={(e) => set("origin", e.target.value)} placeholder="e.g. Yirgacheffe" /></div>
+                <div><label className={LABEL}>Weight</label><input className={INPUT} value={form.weight} onChange={(e) => set("weight", e.target.value)} placeholder="e.g. 250g" /></div>
+              </div>
+              <div>
+                <label className={LABEL}>Flavor Notes <span className="normal-case font-normal">(comma separated)</span></label>
+                <input className={INPUT} value={form.flavorNotes} onChange={(e) => set("flavorNotes", e.target.value)} placeholder="chocolate, citrus, caramel" />
+              </div>
+              <div>
+                <label className={LABEL}>Search Tags <span className="normal-case font-normal">(comma separated)</span></label>
+                <input className={INPUT} value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="morning-brew, espresso" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={LABEL}>Rating (0–5)</label><input type="number" min="0" max="5" step="0.1" className={INPUT} value={form.rating} onChange={(e) => set("rating", e.target.value)} placeholder="4.5" /></div>
+                <div><label className={LABEL}>Review Count</label><input type="number" min="0" className={INPUT} value={form.reviewCount} onChange={(e) => set("reviewCount", e.target.value)} placeholder="128" /></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "media" && (
+          <div className="max-w-2xl space-y-6">
+            <div>
+              <label className={LABEL}>Product Image URL</label>
+              <input className={INPUT} value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://..." />
+              {form.imageUrl && (
+                <div className="mt-3 flex items-start gap-4">
+                  <img src={form.imageUrl} alt="preview" className="w-24 h-24 rounded-2xl object-cover border border-stone-200 flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <p className="text-xs text-stone-400 mt-1">Paste a direct URL (.jpg .png .webp). Use a CDN or Cloudinary for best performance.</p>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className={LABEL}>3D Model URL <span className="normal-case font-normal">(GLB/GLTF file)</span></label>
+              <input className={INPUT} value={form.modelUrl} onChange={(e) => set("modelUrl", e.target.value)} placeholder="https://your-cdn.com/model.glb" />
+              <p className="mt-2 text-xs text-stone-400">Used for the interactive 3D product viewer on the product page. Upload a .glb file to a CDN and paste the URL here.</p>
+              {form.modelUrl && (
+                <div className="mt-2 inline-flex items-center gap-2 bg-violet-50 text-violet-600 px-3 py-1.5 rounded-xl text-xs font-bold">
+                  <Box className="w-3.5 h-3.5" /> 3D model linked — will appear in product viewer
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "stock" && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-end gap-8">
+              <div>
+                <label className={LABEL}>Stock Quantity</label>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => set("stockQty", Math.max(0, form.stockQty - 1))} className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center">−</button>
+                  <input type="number" min="0" value={form.stockQty}
+                    onChange={(e) => set("stockQty", Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-24 text-center p-2 rounded-xl border border-stone-200 font-bold text-lg outline-none focus:ring-2 ring-[#5A5A40]/20" />
+                  <button onClick={() => set("stockQty", form.stockQty + 1)} className="w-10 h-10 rounded-xl bg-stone-200 hover:bg-stone-300 font-bold text-xl transition-all flex items-center justify-center">+</button>
+                </div>
+              </div>
+              <div>
+                <label className={LABEL}>Low-Stock Alert Threshold</label>
+                <div className="flex items-center gap-2">
+                  <input type="number" min="1" value={form.lowStockThreshold}
+                    onChange={(e) => set("lowStockThreshold", Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-24 text-center p-2 rounded-xl border border-stone-200 font-bold outline-none focus:ring-2 ring-[#5A5A40]/20" />
+                  <span className="text-sm text-stone-400">units</span>
+                </div>
+              </div>
+              <span className={`px-4 py-2 rounded-full text-sm font-bold ${
+                computedStatus === "out-of-stock" ? "bg-red-100 text-red-700"
+                  : computedStatus === "low-stock" ? "bg-amber-100 text-amber-700"
+                  : "bg-green-100 text-green-700"
+              }`}>
+                → {computedStatus === "out-of-stock" ? "Out of Stock" : computedStatus === "low-stock" ? "Low Stock" : "In Stock"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 mt-6 pt-5 border-t border-stone-200">
+          <button onClick={onCancel} className="px-5 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-200 transition-all text-sm">Cancel</button>
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center gap-2 bg-[#5A5A40] text-white px-8 py-2.5 rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 text-sm"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Saving…" : "Save All Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Add product form ─────────────────────────────────────────────────────────
+function AddProductForm({ categories, onSave, onCancel }: {
+  categories: Category[];
+  onSave: (data: any) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<ProductFormData>(defaultFormData);
+  const [saving, setSaving] = useState(false);
+  const set = (key: keyof ProductFormData, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleSave = async () => {
+    if (!form.name) return;
+    setSaving(true);
+    try { await onSave(formDataToProductPayload(form)); } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="bg-stone-50 p-8 rounded-3xl border-2 border-dashed border-stone-200 space-y-5 mb-4">
+      <h4 className="text-xl font-bold flex items-center gap-2">
+        <Plus className="w-5 h-5 text-natural-accent" /> Add New Product
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div><label className={LABEL}>Product Name *</label><input className={INPUT} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Ethiopian Yirgacheffe" /></div>
+          <div><label className={LABEL}>Description</label><textarea className={`${INPUT} h-24 resize-none`} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Flavor notes, roast process…" /></div>
+          <div><label className={LABEL}>Image URL</label><input className={INPUT} value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://..." /></div>
+          <div>
+            <label className={LABEL}>3D Model URL <span className="normal-case font-normal">(optional .glb)</span></label>
+            <input className={INPUT} value={form.modelUrl} onChange={(e) => set("modelUrl", e.target.value)} placeholder="https://your-cdn.com/model.glb" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Type</label>
+              <select className={INPUT} value={form.type} onChange={(e) => set("type", e.target.value as ProductType)}>
+                {PRODUCT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div><label className={LABEL}>Price (₹)</label><input type="number" className={INPUT} value={form.price} onChange={(e) => set("price", parseFloat(e.target.value) || 0)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Category</label>
+              <input className={INPUT} value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="single-origin" list="add-cat-dl" />
+              <datalist id="add-cat-dl">{categories.map((c) => <option key={c._id} value={c.slug} />)}</datalist>
+            </div>
+            <div><label className={LABEL}>Origin</label><input className={INPUT} value={form.origin} onChange={(e) => set("origin", e.target.value)} placeholder="e.g. Ethiopia" /></div>
+          </div>
+          {(form.type === "beans" || form.type === "bags") && (
+            <div>
+              <label className={LABEL}>Roast Level</label>
+              <div className="flex gap-2">
+                {ROAST_LEVELS.map((level) => (
+                  <button key={level} onClick={() => set("roastLevel", level)}
+                    className={`flex-1 py-2 rounded-xl border-2 capitalize font-bold text-xs transition-all ${form.roastLevel === level ? "bg-[#5A5A40] text-white border-[#5A5A40]" : "border-stone-200 text-stone-400"}`}
+                  >{level}</button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div><label className={LABEL}>Flavor Notes <span className="normal-case font-normal">(comma separated)</span></label><input className={INPUT} value={form.flavorNotes} onChange={(e) => set("flavorNotes", e.target.value)} placeholder="chocolate, citrus" /></div>
+          <div><label className={LABEL}>Tags <span className="normal-case font-normal">(comma separated)</span></label><input className={INPUT} value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="morning-brew, espresso" /></div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={onCancel} className="px-5 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-200 transition-all text-sm">Cancel</button>
+            <button onClick={handleSave} disabled={saving || !form.name}
+              className="flex items-center gap-2 bg-[#5A5A40] text-white px-8 py-2.5 rounded-xl font-bold hover:brightness-110 disabled:opacity-50 text-sm"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? "Saving…" : "Save Product"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── 7-day bar chart ──────────────────────────────────────────────────────────
+function BarChart({ data }: { data: { date: string; count: number }[] }) {
+  const max = Math.max(...data.map((d) => d.count), 1);
+  return (
+    <div className="flex items-end gap-1.5 h-28 w-full pt-4">
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          {d.count > 0 && <span className="text-[10px] font-bold text-stone-500">{d.count}</span>}
+          <div
+            className="w-full rounded-t-lg bg-natural-accent/60 hover:bg-natural-accent transition-colors"
+            style={{ height: `${Math.max((d.count / max) * 80, d.count > 0 ? 4 : 2)}px` }}
+          />
+          <span className="text-[10px] text-stone-400">{d.date}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Analytics view ───────────────────────────────────────────────────────────
+function AnalyticsView({
+  sessions,
+  products,
+}: {
+  sessions: any[];
+  products: Product[];
+}) {
+  const pageStats = useQuery((api as any).pageViews.getStats) as any;
+
   const completionRate =
     sessions.length > 0
       ? Math.round(
@@ -591,123 +818,197 @@ function AnalyticsView({ sessions }: { sessions: any[] }) {
         )
       : 0;
 
-  const stats = [
+  const ratedProducts = products.filter((p) => p.rating && p.reviewCount);
+  const avgRating =
+    ratedProducts.length > 0
+      ? (
+          ratedProducts.reduce((sum, p) => sum + (p.rating ?? 0), 0) /
+          ratedProducts.length
+        ).toFixed(1)
+      : "–";
+  const totalReviews = ratedProducts.reduce(
+    (sum, p) => sum + (p.reviewCount ?? 0),
+    0
+  );
+
+  const formatDuration = (secs: number) => {
+    if (!secs) return "–";
+    if (secs < 60) return `${secs}s`;
+    return `${Math.floor(secs / 60)}m ${secs % 60}s`;
+  };
+
+  const siteStats = [
     {
-      label: "Total Sessions",
-      value: sessions.length,
-      icon: <Users className="w-5 h-5" />,
+      label: "Total Visits",
+      value: pageStats?.totalViews?.toLocaleString() ?? "–",
+      icon: <Eye className="w-5 h-5" />,
       color: "bg-blue-50 text-blue-600",
+      sub: pageStats ? `${pageStats.todayViews} today` : "collecting data…",
     },
     {
-      label: "Completion Rate",
-      value: `${completionRate}%`,
-      icon: <CheckCircle2 className="w-5 h-5" />,
-      color: "bg-green-50 text-green-600",
+      label: "Unique Visitors",
+      value: pageStats?.uniqueSessions?.toLocaleString() ?? "–",
+      icon: <Users className="w-5 h-5" />,
+      color: "bg-violet-50 text-violet-600",
+      sub: pageStats ? `${pageStats.weekViews} this week` : "",
     },
     {
-      label: "Conversion Lift",
-      value: "14.2%",
-      icon: <TrendingUp className="w-5 h-5" />,
+      label: "Avg Time on Site",
+      value: formatDuration(pageStats?.avgDurationSec ?? 0),
+      icon: <Clock className="w-5 h-5" />,
+      color: "bg-emerald-50 text-emerald-600",
+      sub: "per session",
+    },
+    {
+      label: "Avg Rating",
+      value: avgRating,
+      icon: <Star className="w-5 h-5" />,
       color: "bg-amber-50 text-amber-600",
+      sub: `${totalReviews} reviews`,
     },
+  ];
+
+  const widgetStats = [
+    { label: "AI Sessions", value: sessions.length, icon: <BarChart2 className="w-5 h-5" />, color: "bg-sky-50 text-sky-600" },
+    { label: "Completion Rate", value: `${completionRate}%`, icon: <CheckCircle2 className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
+    { label: "Conversion Lift", value: "14.2%", icon: <TrendingUp className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
+    { label: "Catalog Size", value: products.length, icon: <Package className="w-5 h-5" />, color: "bg-stone-50 text-stone-600" },
   ];
 
   return (
     <div className="p-8 space-y-12">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="bg-white border border-stone-100 p-8 rounded-3xl shadow-sm space-y-4"
-          >
-            <div
-              className={`${stat.color} w-12 h-12 rounded-2xl flex items-center justify-center`}
-            >
-              {stat.icon}
+      <section>
+        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+          <Globe className="w-5 h-5 text-natural-accent" /> Website Traffic
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {siteStats.map((stat, i) => (
+            <div key={i} className="bg-white border border-stone-100 p-5 rounded-3xl shadow-sm">
+              <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center mb-3`}>{stat.icon}</div>
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-400">{stat.label}</p>
+              <h4 className="text-3xl font-extrabold mt-1">{stat.value}</h4>
+              {stat.sub && <p className="text-xs text-stone-400 mt-0.5">{stat.sub}</p>}
             </div>
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-stone-400">
-                {stat.label}
-              </p>
-              <h4 className="text-4xl font-extrabold">{stat.value}</h4>
+          ))}
+        </div>
+        {pageStats?.dailyViews?.length > 0 ? (
+          <div className="bg-white border border-stone-100 rounded-3xl p-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">7-Day Traffic</p>
+            <BarChart data={pageStats.dailyViews} />
+          </div>
+        ) : (
+          <div className="bg-stone-50 border border-dashed border-stone-200 rounded-3xl p-8 text-center">
+            <Globe className="w-10 h-10 text-stone-200 mx-auto mb-3" />
+            <p className="font-bold text-stone-500">Traffic data will appear after visitors load the site</p>
+            <p className="text-xs text-stone-400 mt-1">Page views are tracked automatically on every visit.</p>
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+          <ShoppingBag className="w-5 h-5 text-natural-accent" /> Sales &amp; Revenue
+        </h3>
+        <div className="bg-stone-50 border border-dashed border-stone-200 rounded-3xl p-8 text-center">
+          <ShoppingBag className="w-10 h-10 text-stone-200 mx-auto mb-3" />
+          <p className="font-bold text-stone-500">Order system is coming in the next phase</p>
+          <p className="text-sm text-stone-400 mt-1">Sales totals, revenue, order history and refunds will be tracked here once the checkout pipeline is live.</p>
+          <span className="mt-4 inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-bold">Phase 2</span>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-natural-accent" /> AI Discovery Widget
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {widgetStats.map((stat, i) => (
+            <div key={i} className="bg-white border border-stone-100 p-5 rounded-3xl shadow-sm">
+              <div className={`${stat.color} w-10 h-10 rounded-xl flex items-center justify-center mb-3`}>{stat.icon}</div>
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-400">{stat.label}</p>
+              <h4 className="text-3xl font-extrabold mt-1">{stat.value}</h4>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+          <Star className="w-5 h-5 text-natural-accent" /> Reviews Summary
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white border border-stone-100 p-6 rounded-3xl">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Average Rating</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl font-extrabold">{avgRating}</span>
+              <span className="text-stone-400 font-medium">/ 5</span>
+            </div>
+            <div className="flex gap-0.5 mt-2">
+              {[1,2,3,4,5].map((s) => (
+                <Star key={s} className={`w-4 h-4 ${avgRating !== "–" && s <= Math.round(parseFloat(avgRating)) ? "fill-amber-400 text-amber-400" : "text-stone-200"}`} />
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+          <div className="bg-white border border-stone-100 p-6 rounded-3xl">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Total Reviews</p>
+            <span className="text-5xl font-extrabold">{totalReviews.toLocaleString()}</span>
+            <p className="text-xs text-stone-400 mt-2">Across {ratedProducts.length} rated products</p>
+          </div>
+          <div className="bg-white border border-stone-100 p-6 rounded-3xl">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Top-Rated Products</p>
+            <div className="space-y-2 mt-1">
+              {[...products].filter((p) => p.rating).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3).map((p) => (
+                <div key={p._id} className="flex items-center justify-between">
+                  <span className="text-sm font-medium truncate max-w-[140px]">{p.name}</span>
+                  <span className="flex items-center gap-1 text-xs font-bold text-amber-600"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{p.rating}</span>
+                </div>
+              ))}
+              {products.filter((p) => p.rating).length === 0 && <p className="text-xs text-stone-400">No rated products yet. Add ratings via Edit.</p>}
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div className="space-y-6">
-        <h3 className="text-2xl font-bold flex items-center gap-2">
-          <ListIcon className="w-6 h-6 text-[#5A5A40]" />
-          Recent Interactions
+      <section>
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <ListIcon className="w-5 h-5 text-natural-accent" /> Recent AI Sessions
         </h3>
         <div className="bg-white border border-stone-100 rounded-3xl overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-stone-50 border-b border-stone-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Timestamp
-                </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Preferences
-                </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Match Count
-                </th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-stone-400 text-right">
-                  Action
-                </th>
+                <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-stone-400">Time</th>
+                <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-stone-400">Preferences</th>
+                <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-stone-400">Matches</th>
+                <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-widest text-stone-400 text-right">Status</th>
               </tr>
             </thead>
             <tbody>
-              {sessions.map((session: any) => (
-                <tr
-                  key={session._id}
-                  className="border-b last:border-0 border-stone-50 hover:bg-stone-50/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm font-medium text-stone-500">
-                    {session._creationTime
-                      ? new Date(session._creationTime).toLocaleString()
-                      : "Just now"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2 flex-wrap">
-                      {Object.entries(session.answers || {})
-                        .slice(0, 3)
-                        .map(([k, v]: any) => (
-                          <span
-                            key={k}
-                            className="px-2 py-1 bg-stone-100 rounded text-[10px] font-bold text-stone-600 uppercase tracking-tight"
-                          >
-                            {v.toString()}
-                          </span>
-                        ))}
+              {sessions.slice(0, 20).map((session: any) => (
+                <tr key={session._id} className="border-b last:border-0 border-stone-50 hover:bg-stone-50/50 transition-colors">
+                  <td className="px-5 py-3.5 text-xs text-stone-500">{session._creationTime ? new Date(session._creationTime).toLocaleString() : "Just now"}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex gap-1.5 flex-wrap">
+                      {Object.entries(session.answers || {}).slice(0, 3).map(([k, v]: any) => (
+                        <span key={k} className="px-2 py-0.5 bg-stone-100 rounded text-[10px] font-bold text-stone-600 uppercase tracking-tight">{v.toString()}</span>
+                      ))}
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-bold text-sm">
-                    {session.recommendations?.length || 0} Products
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-[#5A5A40] font-bold text-xs hover:underline">
-                      View Log
-                    </button>
+                  <td className="px-5 py-3.5 font-bold text-sm">{session.recommendations?.length || 0}</td>
+                  <td className="px-5 py-3.5 text-right">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${session.completed ? "bg-green-50 text-green-700" : "bg-stone-100 text-stone-500"}`}>
+                      {session.completed ? "Completed" : "Partial"}
+                    </span>
                   </td>
                 </tr>
               ))}
               {sessions.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-stone-400"
-                  >
-                    No sessions recorded yet. Use the "Find My Match" widget to
-                    generate data.
-                  </td>
-                </tr>
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-stone-400 text-sm">No sessions yet. Use the &ldquo;Find My Match&rdquo; widget.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

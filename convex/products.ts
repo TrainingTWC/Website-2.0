@@ -33,6 +33,7 @@ export const add = mutation({
     category: v.string(),
     price: v.number(),
     imageUrl: v.string(),
+    modelUrl: v.optional(v.string()),
     tags: v.array(v.string()),
     roastLevel: v.optional(
       v.union(
@@ -70,7 +71,23 @@ export const update = mutation({
     id: v.id("products"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    type: v.optional(v.union(v.literal("beans"), v.literal("bags"), v.literal("merch"))),
+    category: v.optional(v.string()),
     price: v.optional(v.number()),
+    imageUrl: v.optional(v.string()),
+    modelUrl: v.optional(v.string()),
+    roastLevel: v.optional(
+      v.union(
+        v.literal("light"),
+        v.literal("medium"),
+        v.literal("medium-dark"),
+        v.literal("dark")
+      )
+    ),
+    origin: v.optional(v.string()),
+    weight: v.optional(v.string()),
+    flavorNotes: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
     stockStatus: v.optional(
       v.union(
         v.literal("in-stock"),
@@ -78,9 +95,8 @@ export const update = mutation({
         v.literal("low-stock")
       )
     ),
-    tags: v.optional(v.array(v.string())),
-    flavorNotes: v.optional(v.array(v.string())),
-    imageUrl: v.optional(v.string()),
+    rating: v.optional(v.number()),
+    reviewCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
