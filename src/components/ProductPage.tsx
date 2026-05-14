@@ -213,7 +213,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
       {/* ── Hero — full viewport, all info without scrolling ─────────── */}
       <div
         className={`relative overflow-hidden ${theme.fg} flex flex-col`}
-        style={{ minHeight: "100dvh", paddingTop: "clamp(56px,8vw,80px)" }}
+        style={{ minHeight: "100dvh", paddingTop: "clamp(12px,1.5vw,20px)" }}
       >
         {/* Decorative blur orbs */}
         <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`}>
@@ -313,7 +313,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
                     src={product.imageUrl}
                     blur={product.imageBlur}
                     alt={product.name}
-                    className="object-contain"
+                    className="object-cover object-center"
                     wrapperClassName="w-full h-full"
                     priority
                   />
@@ -358,7 +358,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
                     src={product.imageUrl}
                     blur={product.imageBlur}
                     alt={product.name}
-                    className="object-contain"
+                    className="object-cover object-center"
                     wrapperClassName="w-full h-full"
                     priority
                   />
@@ -373,7 +373,7 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
                     src={product.imageUrl}
                     blur={product.imageBlur}
                     alt=""
-                    className="object-contain scale-x-[-1]"
+                    className="object-cover object-center scale-x-[-1]"
                     wrapperClassName="w-full h-full"
                   />
                 </div>
