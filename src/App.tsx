@@ -976,8 +976,9 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
       className="group space-y-5 preserve-3d"
     >
       <div
-        className="aspect-[4/5] bg-natural-paper rounded-[2rem] border border-natural-border overflow-hidden shadow-sm group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d"
+        className="aspect-[4/5] bg-natural-paper rounded-[2rem] border border-natural-border overflow-hidden shadow-sm group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d cursor-pointer"
         style={{ transform: "translateZ(20px)" }}
+        onClick={() => navigateTo({ product: slugify(product.name) })}
       >
         <SmartImage
           src={product.imageUrl}
@@ -988,7 +989,7 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
         />
         {/* Quick-add button */}
         <div
-          onClick={() => onAddToCart(product.name)}
+          onClick={(e) => { e.stopPropagation(); onAddToCart(product.name); }}
           className="absolute top-5 right-5 bg-white/90 backdrop-blur p-3 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 cursor-pointer hover:bg-natural-accent hover:text-white"
         >
           <ShoppingCart className="w-5 h-5" />
