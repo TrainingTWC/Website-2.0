@@ -332,19 +332,26 @@ export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
   const n = chapters.length;
 
   return (
-    // One viewport per card — no tail. The last card stays pinned through
-    // the final viewport so there's no empty gap before the next section.
+    // One viewport per card — the last card stays pinned through the
+    // final viewport so there's no empty gap before the next section.
     <div ref={ref} style={{ height: `${n * 100}vh` }} className="relative">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {chapters.map((c, i) => (
-          <ChapterCard
-            key={`${c.eyebrow}-${i}`}
-            index={i}
-            total={n}
-            progress={smooth}
-            config={c}
-          />
-        ))}
+      {/* Perspective wrapper — gives every child a real 3D camera so
+          rotateY / translateZ on the cards reads as depth, not 2D shear. */}
+      <div
+        className="sticky top-0 h-screen overflow-hidden"
+        style={{ perspective: "1400px", perspectiveOrigin: "50% 50%" }}
+      >
+        <div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
+          {chapters.map((c, i) => (
+            <ChapterCard
+              key={`${c.eyebrow}-${i}`}
+              index={i}
+              total={n}
+              progress={smooth}
+              config={c}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -361,48 +368,106 @@ function ChapterCard({
   progress: MotionValue<number>;
   config: ChapterConfig;
 }) {
-  // Each card claims a 1/total slice of master scroll progress.
-  // The morph between adjacent cards happens in a generous shared window
-  // (~40% of a slice). Inside that window each *content layer*
-  // (background tint, wordmark, product image, copy column) cross-fades
-  // independently — so the user sees the bg colour smoothly bleed into
-  // the next bg colour, the image dissolve into the next image, and the
-  // text swap to the next text. No whole-card blur, no whole-card scale.
+  // ── Choreography ──────────────────────────────────────────────────
+  //
+  // Each card owns one full viewport of scroll (slice = 1/total). Inside
+  // that slice the card lives through three phases:
+  //
+  //   ┌── ENTER ──┬───────── HOLD (parallax) ─────────┬── EXIT ──┐
+  //   start                                                       end
+  //   0%         15%                                  85%       100%
+  //
+  // Strict single-occupancy: a card's PRODUCT, COPY and WORDMARK are
+  // 100% transparent outside [start, end]. So at any given moment only
+  // ONE card's content (one product, one paragraph, one wordmark) is on
+  // screen — never two products fighting in the middle of the viewport.
+  //
+  // The only thing that crossfades across cards is the BACKGROUND
+  // COLOUR LAYER — that one overlaps adjacent cards so the room repaints
+  // smoothly while the swap happens.
+  //
+  // Motion within the slice:
+  //   • PRODUCT slides in from the RIGHT (translateX +60%, rotateY −24°,
+  //     translateZ −500px) → flies past camera to centre → slides out
+  //     LEFT with mirrored 3D values. Always the same direction so the
+  //     deck reads as a conveyor moving right→left.
+  //   • COPY slides in from the LEFT, exits to the RIGHT — so it crosses
+  //     the product on every transition. Same 3D tilt + Z recede.
+  //   • WORDMARK rides with the product (also right→left) but at half
+  //     the magnitude for a parallax-cinema feel.
+  //   • BACKGROUND COLOUR uses a wider window: it begins fading in well
+  //     before the card's content arrives and fades out well after it
+  //     leaves, so the colour wash flows continuously.
+  // ──────────────────────────────────────────────────────────────────
+
   const isFirst = index === 0;
   const isLast = index === total - 1;
   const seg = 1 / total;
   const start = index * seg;
   const end = start + seg;
-  const MORPH = 0.4; // fraction of a slice spent crossfading
-  const morphStart = start + seg * (1 - MORPH);
-  const enterStart = isFirst ? 0 : start - seg * MORPH;
-  const enterEnd = isFirst ? 0 : start;
 
-  // Local 0→1 progress drives per-card parallax. Starts during the enter
-  // window so incoming content is already in motion the moment it's
-  // visible.
-  const local = useTransform(progress, [enterStart, morphStart], [0, 1]);
+  // Content visibility window — content is fully transparent outside.
+  // Enter and exit each take 15% of the slice.
+  const enterStart = start;
+  const enterEnd = start + seg * 0.18;
+  const exitStart = end - seg * 0.18;
+  const exitEnd = end;
 
-  // ONE crossfade curve, applied independently to each content layer.
-  // First card: starts visible, fades out across its morph window.
-  // Last card: fades in across its enter window, stays visible.
-  // Middle cards: fade in across enter window, hold, fade out across morph.
-  const layerOpacity = useTransform(
+  // Background colour window — overlaps adjacent cards by ~30% of a slice
+  // on each side so the colour bleed is gentle.
+  const bgEnterStart = isFirst ? 0 : start - seg * 0.3;
+  const bgEnterEnd = isFirst ? 0 : start + seg * 0.05;
+  const bgExitStart = isLast ? 1 : end - seg * 0.05;
+  const bgExitEnd = isLast ? 1 : end + seg * 0.3;
+
+  const bgOpacity = useTransform(
     progress,
     isFirst
-      ? [0, morphStart, end]
+      ? [bgExitStart, bgExitEnd]
       : isLast
-      ? [enterStart, enterEnd, 1]
-      : [enterStart, enterEnd, morphStart, end],
-    isFirst ? [1, 1, 0] : isLast ? [0, 1, 1] : [0, 1, 1, 0],
+      ? [bgEnterStart, bgEnterEnd]
+      : [bgEnterStart, bgEnterEnd, bgExitStart, bgExitEnd],
+    isFirst ? [1, 0] : isLast ? [0, 1] : [0, 1, 1, 0],
   );
 
-  // Parallax band values
-  const bigTextY = useTransform(local, [0, 1], ["20%", "-50%"]);
-  const productY = useTransform(local, [0, 1], ["10%", "-20%"]);
-  const productScale = useTransform(local, [0, 0.4, 1], [0.85, 1, 1.08]);
-  const productRotate = useTransform(local, [0, 1], [-6, 6]);
-  const copyY = useTransform(local, [0.05, 0.25], [40, 0]);
+  // Content opacity: hard window, content vanishes completely outside
+  // [enterStart, exitEnd]. Small ramps at the very edges so the cut
+  // isn't binary.
+  const contentOpacity = useTransform(
+    progress,
+    [enterStart, enterStart + seg * 0.06, exitEnd - seg * 0.06, exitEnd],
+    [0, 1, 1, 0],
+  );
+
+  // Slice-local progress 0→1 for parallax / motion across the visible window.
+  const local = useTransform(progress, [enterStart, exitEnd], [0, 1]);
+
+  // ── Product transforms ────────────────────────────────────────────
+  // Enters from the right (positive X, slight negative rotateY so the
+  // right edge faces camera), flies through centre, exits left mirrored.
+  // translateZ dips negative at the edges so it feels like the product
+  // is travelling past the camera, not pasted onto a flat wall.
+  const productX = useTransform(local, [0, 0.18, 0.82, 1], ["60%", "0%", "0%", "-60%"]);
+  const productRotateY = useTransform(local, [0, 0.18, 0.82, 1], [-24, 0, 0, 24]);
+  const productZ = useTransform(local, [0, 0.18, 0.82, 1], [-500, 0, 0, -500]);
+  // Subtle vertical drift while held (the "hover" parallax beat).
+  const productY = useTransform(local, [0.18, 0.82], ["8%", "-8%"]);
+  const productRotate = useTransform(local, [0.18, 0.82], [-4, 4]);
+
+  // ── Copy transforms ───────────────────────────────────────────────
+  // Mirrors the product: enters from the LEFT, exits to the RIGHT, so
+  // the two halves of the page cross each other on every transition.
+  const copyX = useTransform(local, [0, 0.18, 0.82, 1], ["-50%", "0%", "0%", "50%"]);
+  const copyRotateY = useTransform(local, [0, 0.18, 0.82, 1], [20, 0, 0, -20]);
+  const copyZ = useTransform(local, [0, 0.18, 0.82, 1], [-400, 0, 0, -400]);
+  const copyY = useTransform(local, [0.18, 0.82], ["3%", "-3%"]);
+
+  // ── Wordmark transform ────────────────────────────────────────────
+  // Travels with the product (right→left) but at HALF magnitude so it
+  // reads as a deeper parallax layer behind everything.
+  const wordmarkX = useTransform(local, [0, 0.18, 0.82, 1], ["30%", "0%", "0%", "-30%"]);
+  const wordmarkY = useTransform(local, [0.18, 0.82], ["12%", "-30%"]);
+  const wordmarkZ = useTransform(local, [0, 0.18, 0.82, 1], [-300, -50, -50, -300]);
 
   const { eyebrow, index: indexLabel, title, body, callouts, product, align = "left", theme = "light", onProductClick } = config;
   const dark = theme === "dark";
@@ -416,25 +481,25 @@ function ChapterCard({
     : "bg-natural-paper border-natural-border text-natural-text";
 
   return (
-    // Wrapper itself never animates — it's pinned and always present.
-    // Every visible layer inside owns its own crossfade opacity, so the
-    // background colour bleeds into the next, the image dissolves into
-    // the next image, and the copy swaps to the next copy — all as
-    // independent layers rather than "a whole card with blur".
     <div
       style={{ zIndex: index }}
       className={`absolute inset-0 ${fg} overflow-hidden pointer-events-none`}
     >
-      {/* Layer 1 — background colour wash. Its opacity crossfades so the
-          card-1 paper bleeds into the card-2 dark bg as you scroll. */}
+      {/* BG colour layer — wide overlapping window for smooth repaint. */}
       <motion.div
-        style={{ opacity: layerOpacity }}
+        style={{ opacity: bgOpacity }}
         className={`absolute inset-0 ${bg}`}
       />
 
-      {/* Layer 2 — editorial wordmark */}
+      {/* Wordmark — travels with the product, half magnitude. */}
       <motion.div
-        style={{ y: bigTextY, opacity: layerOpacity }}
+        style={{
+          x: wordmarkX,
+          y: wordmarkY,
+          z: wordmarkZ,
+          opacity: contentOpacity,
+          transformStyle: "preserve-3d",
+        }}
         className="absolute inset-x-0 top-0 pointer-events-none select-none flex justify-center"
       >
         <span
@@ -444,17 +509,29 @@ function ChapterCard({
         </span>
       </motion.div>
 
-      {/* Pinned stage — full height of the card */}
-      <div className="absolute inset-0 flex items-center overflow-hidden pointer-events-auto">
+      {/* Stage — 3D world. */}
+      <div
+        className="absolute inset-0 flex items-center overflow-hidden pointer-events-auto"
+        style={{ transformStyle: "preserve-3d" }}
+      >
         <div
           className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
             align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
           }`}
+          style={{ transformStyle: "preserve-3d" }}
         >
-          {/* Layer 3 — product still-life. Its OWN opacity crossfade so
-              the image visibly dissolves into the next product image. */}
+          {/* Product still-life — flies in from RIGHT, out to LEFT. */}
           <motion.div
-            style={{ y: productY, scale: productScale, rotate: productRotate, opacity: layerOpacity }}
+            style={{
+              x: productX,
+              y: productY,
+              z: productZ,
+              rotateY: productRotateY,
+              rotate: productRotate,
+              opacity: contentOpacity,
+              transformStyle: "preserve-3d",
+              transformOrigin: "50% 50%",
+            }}
             className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
           >
             {product ? (
@@ -478,10 +555,17 @@ function ChapterCard({
             )}
           </motion.div>
 
-          {/* Layer 4 — copy column. Independent opacity crossfade so the
-              text swaps to the next chapter's text without any blur. */}
+          {/* Copy column — flies in from LEFT, out to RIGHT. Crosses the product. */}
           <motion.div
-            style={{ opacity: layerOpacity, y: copyY }}
+            style={{
+              x: copyX,
+              y: copyY,
+              z: copyZ,
+              rotateY: copyRotateY,
+              opacity: contentOpacity,
+              transformStyle: "preserve-3d",
+              transformOrigin: "50% 50%",
+            }}
             className={`relative space-y-6 ${align === "right" ? "lg:order-1" : "lg:order-2"}`}
           >
             <div className="flex items-center gap-3">
