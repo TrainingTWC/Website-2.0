@@ -641,10 +641,10 @@ export function SipForecast({
                 className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
               >
                 <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                  style={{ background: `${accentHex}33` }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white/90 ring-1 ring-white/30"
+                  style={{ boxShadow: `0 0 28px ${accentHex}55` }}
                 >
-                  <TIIcon className="w-7 h-7" />
+                  <TIIcon className="w-9 h-9" />
                 </div>
                 <p className="text-white/60 text-sm max-w-xs leading-relaxed">
                   Choose your style and flavors — we'll craft the recipe around this specific bag.

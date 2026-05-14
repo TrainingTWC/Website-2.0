@@ -512,10 +512,10 @@ export function BrewingStudio({
                 className="m-auto text-center max-w-xs relative z-10"
               >
                 <div
-                  className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5"
-                  style={{ background: `${accentHex}1a`, boxShadow: `0 0 32px ${accentHex}22` }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-5 bg-white/90 ring-1 ring-white/30"
+                  style={{ boxShadow: `0 0 32px ${accentHex}55` }}
                 >
-                  <TIIcon className="w-7 h-7" />
+                  <TIIcon className="w-9 h-9" />
                 </div>
                 <p className="font-serif italic text-xl leading-snug text-white/75">
                   {mode === "brew" ? "Your recipe will appear here." : "Your drink build will appear here."}
