@@ -1205,14 +1205,21 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
   // MotionValue tracking scrollLeft — updated via native scroll event so parallax
   // image transforms bypass React reconciliation entirely (direct DOM updates).
   const scrollX = useMotionValue(0);
+  const viewportW = useMotionValue(0);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => scrollX.set(el.scrollLeft);
+    const onResize = () => viewportW.set(el.clientWidth);
+    onResize();
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [scrollX]);
+    window.addEventListener("resize", onResize);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [scrollX, viewportW]);
 
   // rAF inertia loop — friction 0.93 gives a buttery coast that stops naturally
   const runInertia = useCallback(() => {
@@ -1300,7 +1307,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
       data-lenis-prevent
     >
       {products.map((p, i) => (
-        <HScrollCard key={p._id} product={p} index={i} scrollX={scrollX} onAddToCart={onAddToCart} />
+        <HScrollCard key={p._id} product={p} index={i} scrollX={scrollX} viewportW={viewportW} onAddToCart={onAddToCart} />
       ))}
     </div>
   );
@@ -1308,15 +1315,23 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
 
 // ── HScrollCard — card in the horizontal scroll row with image parallax ──────
 function HScrollCard({
-  product, index, scrollX, onAddToCart,
+  product, index, scrollX, viewportW, onAddToCart,
 }: {
   product: Product;
   index: number;
   scrollX: MotionValue<number>;
+  viewportW: MotionValue<number>;
   onAddToCart: (name: string) => void;
 }) {
-  // Image moves at 12% of card speed (opposite direction) = depth parallax
-  const imageX = useTransform(scrollX, (sl) => (index * HSCROLL_CARD_STRIDE - sl) * 0.05);
+  // Parallax centred on the visible viewport: the card currently nearest the
+  // viewport centre gets ≈ 0 offset (image fully centred), neighbours drift
+  // a few pixels for a depth feel. Factor is small so 4 visible cards all
+  // remain visually centred within their frames.
+  const imageX = useTransform([scrollX, viewportW] as const, ([sl, vw]) => {
+    const cardCentre = index * HSCROLL_CARD_STRIDE + HSCROLL_CARD_STRIDE / 2;
+    const viewCentre = (sl as number) + (vw as number) / 2;
+    return (cardCentre - viewCentre) * 0.03;
+  });
   return (
     <div className="flex-shrink-0 w-48 sm:w-56 md:w-64">
       <ProductCard product={product} onAddToCart={onAddToCart} imageParallaxX={imageX} />

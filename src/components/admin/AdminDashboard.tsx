@@ -34,7 +34,8 @@ import { useQuery, useMutation } from "convex/react";
 import { useProducts } from "../../lib/useProducts";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import type { Product, ProductType, RoastLevel } from "../../types";
+import type { Product, ProductType, RoastLevel, MainCategory, SubCategory } from "../../types";
+import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../../types";
 import { SalesAnalytics } from "./SalesAnalytics";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
@@ -62,6 +63,8 @@ interface ProductFormData {
   description: string;
   type: ProductType;
   category: string;
+  mainCategory: MainCategory;
+  subCategory: SubCategory;
   price: number;
   imageUrl: string;
   modelUrl: string;
@@ -77,11 +80,14 @@ interface ProductFormData {
 }
 
 function productToFormData(p: Product): ProductFormData {
+  const tax = resolveTaxonomy(p);
   return {
     name: p.name,
     description: p.description,
     type: p.type,
     category: p.category,
+    mainCategory: tax.mainCategory,
+    subCategory: tax.subCategory,
     price: p.price,
     imageUrl: p.imageUrl,
     modelUrl: p.modelUrl ?? "",
@@ -103,6 +109,8 @@ function defaultFormData(): ProductFormData {
     description: "",
     type: "beans",
     category: "single-origin",
+    mainCategory: "coffee",
+    subCategory: "beans",
     price: 1499,
     imageUrl: "",
     modelUrl: "",
@@ -128,6 +136,8 @@ function formDataToProductPayload(form: ProductFormData) {
     description: form.description,
     type: form.type,
     category: form.category,
+    mainCategory: form.mainCategory,
+    subCategory: form.subCategory,
     price: form.price,
     imageUrl: form.imageUrl,
     modelUrl: form.modelUrl || undefined,
@@ -593,6 +603,37 @@ function ProductEditor({
                 </div>
                 <div><label className={LABEL}>Price (₹)</label><input type="number" className={INPUT} value={form.price} onChange={(e) => set("price", parseFloat(e.target.value) || 0)} /></div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={LABEL}>Main Category</label>
+                  <select
+                    className={INPUT}
+                    value={form.mainCategory}
+                    onChange={(e) => {
+                      const main = e.target.value as MainCategory;
+                      set("mainCategory", main);
+                      // Reset subCategory to first option in the new main bucket.
+                      set("subCategory", SUBCATEGORIES[main][0].value);
+                    }}
+                  >
+                    {MAIN_CATEGORIES.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={LABEL}>Sub-Category</label>
+                  <select
+                    className={INPUT}
+                    value={form.subCategory}
+                    onChange={(e) => set("subCategory", e.target.value as SubCategory)}
+                  >
+                    {SUBCATEGORIES[form.mainCategory].map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
             <div className="space-y-4">
               <div>
@@ -745,6 +786,36 @@ function AddProductForm({ categories, onSave, onCancel }: {
               </select>
             </div>
             <div><label className={LABEL}>Price (₹)</label><input type="number" className={INPUT} value={form.price} onChange={(e) => set("price", parseFloat(e.target.value) || 0)} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Main Category</label>
+              <select
+                className={INPUT}
+                value={form.mainCategory}
+                onChange={(e) => {
+                  const main = e.target.value as MainCategory;
+                  set("mainCategory", main);
+                  set("subCategory", SUBCATEGORIES[main][0].value);
+                }}
+              >
+                {MAIN_CATEGORIES.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL}>Sub-Category</label>
+              <select
+                className={INPUT}
+                value={form.subCategory}
+                onChange={(e) => set("subCategory", e.target.value as SubCategory)}
+              >
+                {SUBCATEGORIES[form.mainCategory].map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

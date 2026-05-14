@@ -31,6 +31,20 @@ export const add = mutation({
     description: v.string(),
     type: v.union(v.literal("beans"), v.literal("bags"), v.literal("merch")),
     category: v.string(),
+    mainCategory: v.optional(
+      v.union(v.literal("coffee"), v.literal("merch"))
+    ),
+    subCategory: v.optional(
+      v.union(
+        v.literal("beans"),
+        v.literal("ecb"),
+        v.literal("drinkware"),
+        v.literal("bags"),
+        v.literal("keychains"),
+        v.literal("chocolates-nuts"),
+        v.literal("brewing-tools")
+      )
+    ),
     price: v.number(),
     imageUrl: v.string(),
     modelUrl: v.optional(v.string()),
@@ -73,6 +87,20 @@ export const update = mutation({
     description: v.optional(v.string()),
     type: v.optional(v.union(v.literal("beans"), v.literal("bags"), v.literal("merch"))),
     category: v.optional(v.string()),
+    mainCategory: v.optional(
+      v.union(v.literal("coffee"), v.literal("merch"))
+    ),
+    subCategory: v.optional(
+      v.union(
+        v.literal("beans"),
+        v.literal("ecb"),
+        v.literal("drinkware"),
+        v.literal("bags"),
+        v.literal("keychains"),
+        v.literal("chocolates-nuts"),
+        v.literal("brewing-tools")
+      )
+    ),
     price: v.optional(v.number()),
     imageUrl: v.optional(v.string()),
     modelUrl: v.optional(v.string()),

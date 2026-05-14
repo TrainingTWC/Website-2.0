@@ -7,7 +7,8 @@ import { SmartImage } from "./SmartImage";
 import { DiscoveryWidget } from "./widget/DiscoveryWidget";
 import { GalaxySweep } from "./GalaxySweep";
 import { slugify } from "../lib/slug";
-import type { Product } from "../types";
+import type { Product, MainCategory, SubCategory } from "../types";
+import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../types";
 
 interface ShopPageProps {
   cart: { productId: string; qty: number }[];
@@ -16,15 +17,8 @@ interface ShopPageProps {
   onGoToCart: () => void;
 }
 
-type TypeFilter = "all" | "beans" | "bags" | "merch";
+type MainFilter = "all" | MainCategory;
 type SortMode = "default" | "price-asc" | "price-desc";
-
-const TYPE_LABELS: Record<TypeFilter, string> = {
-  all: "All",
-  beans: "Beans",
-  bags: "Bags",
-  merch: "Merch",
-};
 
 function goToStorefront() {
   window.history.pushState({ scrollY: 0 }, "", window.location.pathname);
@@ -131,7 +125,8 @@ function ProductCard({
 export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: ShopPageProps) {
   const products = useProducts();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [mainFilter, setMainFilter] = useState<MainFilter>("all");
+  const [subFilter, setSubFilter] = useState<SubCategory | "all">("all");
   const [sortBy, setSortBy] = useState<SortMode>("default");
   const [aiOpen, setAiOpen] = useState(false);
   const [tiSweep, setTiSweep] = useState<{ x: number; y: number } | null>(null);
@@ -148,7 +143,12 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
   const filtered = useMemo<Product[]>(() => {
     if (!products) return [];
     let list: Product[] = products;
-    if (typeFilter !== "all") list = list.filter((p) => p.type === typeFilter);
+    if (mainFilter !== "all") {
+      list = list.filter((p) => resolveTaxonomy(p).mainCategory === mainFilter);
+    }
+    if (subFilter !== "all") {
+      list = list.filter((p) => resolveTaxonomy(p).subCategory === subFilter);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -162,7 +162,7 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
     if (sortBy === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
     else if (sortBy === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
     return list;
-  }, [products, typeFilter, search, sortBy]);
+  }, [products, mainFilter, subFilter, search, sortBy]);
 
   // Bring AI picks to top
   const displayProducts = useMemo<Product[]>(() => {
@@ -237,13 +237,24 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
         </div>
 
         {/* Filter chips + sort */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          {(Object.entries(TYPE_LABELS) as [TypeFilter, string][]).map(([key, label]) => (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          {/* Tier 1 — main category */}
+          <button
+            onClick={() => { setMainFilter("all"); setSubFilter("all"); }}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              mainFilter === "all"
+                ? "bg-natural-accent text-white border-natural-accent"
+                : "border-natural-border text-natural-text/60 hover:text-natural-text hover:border-natural-text/30 bg-transparent"
+            }`}
+          >
+            All
+          </button>
+          {MAIN_CATEGORIES.map(({ value, label }) => (
             <button
-              key={key}
-              onClick={() => setTypeFilter(key)}
+              key={value}
+              onClick={() => { setMainFilter(value); setSubFilter("all"); }}
               className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                typeFilter === key
+                mainFilter === value
                   ? "bg-natural-accent text-white border-natural-accent"
                   : "border-natural-border text-natural-text/60 hover:text-natural-text hover:border-natural-text/30 bg-transparent"
               }`}
@@ -264,6 +275,35 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
             </select>
           </div>
         </div>
+
+        {/* Tier 2 — subcategory chips (only when a main category is picked) */}
+        {mainFilter !== "all" && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setSubFilter("all")}
+              className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                subFilter === "all"
+                  ? "bg-natural-text text-white border-natural-text"
+                  : "border-natural-border text-natural-text/55 hover:text-natural-text hover:border-natural-text/30 bg-transparent"
+              }`}
+            >
+              All {MAIN_CATEGORIES.find((m) => m.value === mainFilter)?.label}
+            </button>
+            {SUBCATEGORIES[mainFilter].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setSubFilter(value)}
+                className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                  subFilter === value
+                    ? "bg-natural-text text-white border-natural-text"
+                    : "border-natural-border text-natural-text/55 hover:text-natural-text hover:border-natural-text/30 bg-transparent"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Content ─────────────────────────────────────────────── */}
