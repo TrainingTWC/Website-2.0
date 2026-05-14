@@ -191,7 +191,7 @@ export function AdminDashboard() {
         {activeTab === "inventory" && (
           <InventoryManager />
         )}
-        {activeTab === "analytics" && <SalesAnalytics />}
+        {activeTab === "analytics" && <CombinedAnalytics />}
         {activeTab === "rules" && <RulesManager />}
         {activeTab === "orders" && <OrdersView />}
       </div>
@@ -803,6 +803,18 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
 }
 
 // ─── Analytics view ───────────────────────────────────────────────────────────
+function CombinedAnalytics() {
+  const sessions = (useQuery(api.sessions.list) ?? []) as any[];
+  const products = (useQuery(api.products.list) ?? []) as Product[];
+  return (
+    <div>
+      <SalesAnalytics />
+      <div className="border-t border-natural-border" />
+      <AnalyticsView sessions={sessions} products={products} />
+    </div>
+  );
+}
+
 function AnalyticsView({
   sessions,
   products,
