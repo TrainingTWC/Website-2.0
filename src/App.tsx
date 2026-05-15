@@ -480,8 +480,8 @@ function Storefront() {
 
   // Nav click — page routes first, then scroll to section
   const handleNavTo = useCallback((target: string) => {
-    if (target === "editorial") {
-      navigateTo({ page: "editorial" });
+    if (target === "third-circle") {
+      navigateTo({ page: "third-circle" });
       return;
     }
     if (activeProductId) {
@@ -839,7 +839,7 @@ const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.Compo
   { key: "bags", label: "Coffee Bags", target: "section-coffee-ecb", Icon: Package },
   { key: "merch", label: "Merch", target: "section-merch-drinkware", Icon: ShoppingBag },
   { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
-  { key: "editorial", label: "Third Circle", target: "editorial", Icon: Newspaper },
+  { key: "editorial", label: "Third Circle", target: "third-circle", Icon: Newspaper },
 ];
 
 function useActiveSection(): string {
@@ -894,6 +894,7 @@ function MorphingHeader({
   onOpenCart,
   onNavTo,
   cartCount = 0,
+  activeOverride,
 }: {
   headerBg: any;
   headerBorder: any;
@@ -902,8 +903,10 @@ function MorphingHeader({
   onOpenCart: () => void;
   onNavTo: (target: string) => void;
   cartCount?: number;
+  activeOverride?: string;
 }) {
-  const active = useActiveSection();
+  const sectionActive = useActiveSection();
+  const active = activeOverride ?? sectionActive;
   const { scrollY } = useScroll();
   const [compact, setCompact] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => {

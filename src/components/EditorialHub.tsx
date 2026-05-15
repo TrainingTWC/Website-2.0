@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "motion/react";
 import { CountdownTimer } from "./CountdownTimer";
@@ -108,9 +108,11 @@ function useToast() {
 function ClaimOfferButton({
   post,
   discount,
+  onCard = false,
 }: {
   post: Post;
   discount: Discount | undefined;
+  onCard?: boolean;
 }) {
   const claimDiscount = useMutation(convexApi.discounts.claimDiscount);
   const [loading, setLoading] = useState(false);
@@ -186,10 +188,14 @@ function ClaimOfferButton({
         <button
           onClick={handleClaim}
           disabled={disabled}
-          className={`backdrop-blur-md border border-white/20 text-white rounded-xl px-4 py-2 font-semibold text-sm shadow-lg transition flex items-center gap-2
-            ${disabled
-              ? "bg-white/5 opacity-40 cursor-not-allowed"
-              : "bg-white/10 hover:bg-white/20 cursor-pointer"
+          className={`border rounded-xl px-4 py-2 font-semibold text-sm shadow transition flex items-center gap-2
+            ${onCard
+              ? disabled
+                ? "bg-natural-muted border-natural-border text-natural-text/30 cursor-not-allowed"
+                : "bg-natural-accent/10 border-natural-accent text-natural-accent hover:bg-natural-accent hover:text-white cursor-pointer"
+              : disabled
+                ? "bg-white/5 border-white/20 text-white opacity-40 cursor-not-allowed"
+                : "bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 cursor-pointer"
             }`}
         >
           <Tag className="w-3.5 h-3.5" />
@@ -200,7 +206,33 @@ function ClaimOfferButton({
   );
 }
 
-// ── Post card ─────────────────────────────────────────────────
+// ── Skeleton card ───────────────────────────────────────────
+function SkeletonCard({ large }: { large: boolean }) {
+  return (
+    <div className={`rounded-3xl overflow-hidden bg-natural-paper border border-natural-border ${large ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}>
+      <div className={`bg-natural-muted animate-pulse ${large ? "aspect-16/7" : "aspect-3/2"}`} />
+      <div className="p-5 space-y-3">
+        <div className="h-5 bg-natural-muted animate-pulse rounded-lg w-3/4" />
+        <div className="h-3 bg-natural-muted animate-pulse rounded-lg w-1/2" />
+        <div className="h-3 bg-natural-muted animate-pulse rounded-lg w-1/4" />
+      </div>
+    </div>
+  );
+}
+
+// ── Session cache helpers ─────────────────────────────────
+const CACHE_KEY = "twc_third_circle_posts";
+function getCachedPosts(): Post[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as Post[]) : null;
+  } catch { return null; }
+}
+function setCachedPosts(posts: Post[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(posts)); } catch {}
+}
+
+// ── Post card with 3D tilt ───────────────────────────────────
 function PostCard({
   post,
   discountMap,
@@ -214,6 +246,22 @@ function PostCard({
   onOpen: (post: Post) => void;
   onProductClick: (id: string) => void;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 180, damping: 22 });
+  const sy = useSpring(my, { stiffness: 180, damping: 22 });
+  const rotateY = useTransform(sx, [-1, 1], [-6, 6]);
+  const rotateX = useTransform(sy, [-1, 1], [4, -4]);
+
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const r = cardRef.current.getBoundingClientRect();
+    mx.set(((e.clientX - r.left) / r.width) * 2 - 1);
+    my.set(((e.clientY - r.top) / r.height) * 2 - 1);
+  };
+  const onLeave = () => { mx.set(0); my.set(0); };
+
   const discount = post.discountId ? discountMap.get(post.discountId) : undefined;
   const isExpired = post.expiresAt ? post.expiresAt < Date.now() : false;
 
@@ -221,11 +269,15 @@ function PostCard({
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className={`relative rounded-3xl overflow-hidden bg-natural-paper border border-natural-border group cursor-pointer ${large ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{ rotateX, rotateY, transformPerspective: 1200 }}
+      className={`relative rounded-3xl overflow-hidden bg-natural-paper border border-natural-border group cursor-pointer preserve-3d ${large ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}
       onClick={() => {
         if (post.type === "product-launch" && post.linkedProductId) {
           onProductClick(post.linkedProductId);
@@ -235,7 +287,7 @@ function PostCard({
       }}
     >
       {/* Cover image */}
-      <div className={`relative overflow-hidden ${large ? "aspect-[16/7]" : "aspect-[3/2]"}`}>
+      <div className={`relative overflow-hidden ${large ? "aspect-16/7" : "aspect-3/2"}`}>
         {post.coverImageUrl ? (
           <img
             src={post.coverImageUrl}
@@ -243,11 +295,11 @@ function PostCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-natural-muted to-natural-stone" />
+          <div className="w-full h-full bg-linear-to-br from-natural-muted to-natural-stone" />
         )}
-        {/* Dark gradient overlay for flash-sale */}
+        {/* Gradient overlay on flash-sale */}
         {post.type === "flash-sale" && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
         )}
         {/* Type badge */}
         <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${TYPE_BADGE[post.type]}`}>
@@ -271,11 +323,11 @@ function PostCard({
               <span className="text-[10px] text-natural-text/40 uppercase tracking-wider font-bold">Ends in</span>
               <CountdownTimer expiresAt={post.expiresAt} />
             </div>
-            <ClaimOfferButton post={post} discount={discount} />
+            <ClaimOfferButton post={post} discount={discount} onCard />
           </div>
         )}
         {post.type === "flash-sale" && !post.expiresAt && discount && (
-          <ClaimOfferButton post={post} discount={discount} />
+          <ClaimOfferButton post={post} discount={discount} onCard />
         )}
 
         {/* Product launch CTA */}
@@ -408,9 +460,22 @@ export function EditorialHub({
   onProductClick: (productId: string) => void;
   onPostOpen: (postId: string) => void;
 }) {
-  const postsRaw = useQuery(convexApi.posts.listPublished) ?? [];
+  const postsRaw = useQuery(convexApi.posts.listPublished);
   const discountsRaw = useQuery(convexApi.discounts.listDiscounts) ?? [];
   const [filter, setFilter] = useState<FilterType>("all");
+
+  // Session cache: show cached posts immediately while Convex loads
+  const [cachedPosts, setCachedPostsState] = useState<Post[]>(() => getCachedPosts() ?? []);
+  const loading = postsRaw === undefined;
+
+  // Whenever fresh data arrives, update the session cache
+  const livePosts = postsRaw as Post[] | undefined;
+  if (livePosts && livePosts.length > 0 && JSON.stringify(livePosts) !== JSON.stringify(cachedPosts)) {
+    setCachedPostsState(livePosts);
+    setCachedPosts(livePosts);
+  }
+
+  const posts = livePosts ?? cachedPosts;
 
   // Build discount lookup map
   const discountMap = useMemo(() => {
@@ -418,8 +483,6 @@ export function EditorialHub({
     for (const d of discountsRaw as Discount[]) map.set(d._id, d);
     return map;
   }, [discountsRaw]);
-
-  const posts = postsRaw as Post[];
 
   // Separate champions for the band
   const champions = posts.filter((p) => p.type === "champion");
@@ -433,8 +496,8 @@ export function EditorialHub({
     });
   }, [posts, filter]);
 
-  // Hero = first published post overall (including champions)
   const hero = posts[0];
+  const showSkeleton = loading && cachedPosts.length === 0;
 
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text">
@@ -445,8 +508,12 @@ export function EditorialHub({
           <h1 className="font-serif font-black text-5xl md:text-6xl tracking-tight">Third Circle</h1>
         </div>
 
-        {/* Hero */}
-        <HeroSection hero={hero} />
+        {/* Hero — skeleton while loading */}
+        {showSkeleton ? (
+          <div className="w-full h-[55vh] md:h-[65vh] rounded-3xl bg-natural-muted animate-pulse" />
+        ) : (
+          <HeroSection hero={hero} />
+        )}
 
         {/* Category filter pills — solid bg so content scrolling behind is hidden */}
         <div className="sticky top-[72px] z-10 flex gap-2 flex-wrap bg-natural-bg py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-natural-border/40">
@@ -465,8 +532,12 @@ export function EditorialHub({
           ))}
         </div>
 
-        {/* Magazine grid */}
-        {gridPosts.length === 0 ? (
+        {/* Magazine grid — skeletons while loading, real cards once ready */}
+        {showSkeleton ? (
+          <div className="grid grid-cols-12 gap-6">
+            {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} large={i % 3 === 0} />)}
+          </div>
+        ) : gridPosts.length === 0 ? (
           <div className="py-24 text-center text-natural-text/30 text-lg font-serif">
             {filter === "all" ? "No posts yet." : `No ${FILTER_LABELS[filter].toLowerCase()} posts yet.`}
           </div>
@@ -474,7 +545,6 @@ export function EditorialHub({
           <div className="grid grid-cols-12 gap-6">
             <AnimatePresence mode="popLayout">
               {gridPosts.map((post, i) => {
-                // Every 3rd card (index 0, 3, 6…) is large
                 const large = i % 3 === 0;
                 return (
                   <PostCard
@@ -492,7 +562,7 @@ export function EditorialHub({
         )}
 
         {/* Champions band */}
-        {(filter === "all" || filter === "champion") && champions.length > 0 && (
+        {!showSkeleton && (filter === "all" || filter === "champion") && champions.length > 0 && (
           <section className="space-y-4">
             <h2 className="font-serif font-bold text-2xl">Champions</h2>
             <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none">

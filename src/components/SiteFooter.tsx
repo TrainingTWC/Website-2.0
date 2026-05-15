@@ -57,7 +57,7 @@ export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
               <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Company</h4>
               <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("our-story")}>Our Story</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("editorial")}>Third Circle</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("third-circle")}>Third Circle</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors">Contact</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors">Careers</span>
               </div>
