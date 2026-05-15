@@ -12,6 +12,8 @@ const INPUT =
   "w-full px-4 py-3 rounded-xl border border-stone-200 outline-none focus:ring-2 ring-natural-accent/20 bg-white text-sm";
 const LABEL =
   "block text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5";
+const PANEL =
+  "rounded-3xl border border-white/55 bg-white/60 backdrop-blur-xl shadow-[0_20px_60px_rgba(20,20,20,0.08)] p-6 space-y-4";
 
 interface StoryStat { value: string; label: string }
 interface StorySlide { storageId?: string; url: string }
@@ -31,20 +33,48 @@ const EMPTY: StoryValue = {
 };
 
 export function HomeContentCMS() {
+  const jumpTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const nav = [
+    { id: "cms-chapters", label: "Editorial Chapters" },
+    { id: "cms-hero", label: "Hero Text" },
+    { id: "cms-banner", label: "Banner Slides" },
+    { id: "cms-sections", label: "Section Headings" },
+    { id: "cms-story", label: "Our Story" },
+  ];
+
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h3 className="text-2xl font-serif font-bold text-stone-800">Home Page Content</h3>
-        <p className="text-sm text-stone-500 mt-1">
+    <div className="relative p-8 space-y-8">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0)_60%)]" />
+
+      <div className="relative rounded-3xl border border-white/55 bg-white/65 backdrop-blur-xl p-6 shadow-[0_24px_70px_rgba(24,24,24,0.08)]">
+        <h3 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-stone-800">Home Experience Studio</h3>
+        <p className="text-sm text-stone-500 mt-2 max-w-2xl">
           Edit the copy, stats, and slideshow images shown on the storefront homepage.
         </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {nav.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => jumpTo(n.id)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-stone-200/80 bg-white/70 hover:bg-white transition"
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <HeroEditor />
-      <SectionHeadingsEditor />
-      <BannerSlidesEditor />
-      <ChaptersEditor />
-      <StoryEditor />
+      <div id="cms-chapters"><ChaptersEditor /></div>
+      <div id="cms-hero"><HeroEditor /></div>
+      <div id="cms-banner"><BannerSlidesEditor /></div>
+      <div id="cms-sections"><SectionHeadingsEditor /></div>
+      <div id="cms-story"><StoryEditor /></div>
     </div>
   );
 }
@@ -206,7 +236,7 @@ function StoryEditor() {
   }
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-6">
+    <section className={`${PANEL} space-y-6`}>
       <header className="flex items-center justify-between">
         <div>
           <h4 className="text-lg font-bold text-stone-800">"Our Story" section</h4>
@@ -457,7 +487,7 @@ function HeroEditor() {
   if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+    <section className={PANEL}>
       <header className="flex items-center justify-between">
         <div>
           <h4 className="text-lg font-bold text-stone-800">Hero text (cinematic banner)</h4>
@@ -549,7 +579,7 @@ function SectionHeadingsEditor() {
   ];
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+    <section className={PANEL}>
       <header className="flex items-center justify-between">
         <div>
           <h4 className="text-lg font-bold text-stone-800">Section headings</h4>
@@ -723,7 +753,7 @@ function BannerSlidesEditor() {
   if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+    <section className={PANEL}>
       <header className="flex items-center justify-between">
         <div>
           <h4 className="text-lg font-bold text-stone-800">Hero banner slideshow</h4>
@@ -1043,7 +1073,7 @@ function ChaptersEditor() {
   if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+    <section className={PANEL}>
       <header className="flex items-center justify-between">
         <div>
           <h4 className="text-lg font-bold text-stone-800">Editorial chapters (5-card deck)</h4>

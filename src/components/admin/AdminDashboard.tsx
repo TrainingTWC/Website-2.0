@@ -160,7 +160,7 @@ function formDataToProductPayload(form: ProductFormData) {
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders" | "editorial" | "home">(
-    "analytics"
+    "home"
   );
   const products = useProducts();
   const sessions = useQuery(api.sessions.list);
@@ -175,25 +175,27 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="relative space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0)_55%)]" />
+
+      <header className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 rounded-3xl border border-white/55 bg-white/65 backdrop-blur-xl p-6 shadow-[0_24px_80px_rgba(17,17,17,0.09)]">
         <div>
-          <h2 className="text-5xl font-serif font-bold tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-stone-900">
             Merchant Control
           </h2>
-          <p className="text-natural-text opacity-50 mt-2 font-medium">
+          <p className="text-natural-text/65 mt-2 font-medium">
             Manage catalog, categories, media and monitor site performance.
           </p>
         </div>
-        <div className="flex bg-natural-muted rounded-2xl p-1 border border-natural-stone shadow-inner">
+        <div className="flex flex-wrap bg-white/70 rounded-2xl p-1 border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === tab.id
-                  ? "bg-natural-accent text-white shadow-lg"
-                  : "hover:bg-natural-stone/40"
+                  ? "bg-natural-accent text-white shadow-[0_10px_24px_rgba(90,90,64,0.35)]"
+                  : "text-stone-700 hover:bg-white/85"
               }`}
             >
               {tab.icon}
@@ -203,7 +205,8 @@ export function AdminDashboard() {
         </div>
       </header>
 
-      <div className="bg-white rounded-[3rem] border border-natural-border shadow-sm min-h-[60vh] overflow-hidden">
+      <div className="relative bg-white/62 backdrop-blur-xl rounded-[2.2rem] border border-white/60 shadow-[0_26px_80px_rgba(15,15,15,0.1)] min-h-[60vh] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0)_45%)]" />
         {activeTab === "inventory" && (
           <InventoryManager />
         )}
