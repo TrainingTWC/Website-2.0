@@ -1583,6 +1583,74 @@ function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void
   );
 }
 
+// ── Our Story slideshow + parallax ───────────────────────────
+const OUR_STORY_SLIDES = [
+  asset("assets/our-story.png"),   // placeholder 1 — replace via admin
+  asset("assets/our-story.png"),   // placeholder 2
+  asset("assets/our-story.png"),   // placeholder 3
+];
+
+function OurStoryImage() {
+  const [idx, setIdx] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const springX = useSpring(rawX, { stiffness: 55, damping: 18 });
+  const springY = useSpring(rawY, { stiffness: 55, damping: 18 });
+  const imgX = useTransform(springX, [-1, 1], ["-14px", "14px"]);
+  const imgY = useTransform(springY, [-1, 1], ["-10px", "10px"]);
+
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % OUR_STORY_SLIDES.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  function onMove(e: React.MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    rawX.set(((e.clientX - r.left) / r.width) * 2 - 1);
+    rawY.set(((e.clientY - r.top) / r.height) * 2 - 1);
+  }
+  function onLeave() { rawX.set(0); rawY.set(0); }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative aspect-square rounded-[3rem] overflow-hidden cursor-default"
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+    >
+      <motion.div
+        className="absolute inset-[-4%] w-[108%] h-[108%]"
+        style={{ x: imgX, y: imgY }}
+      >
+        <AnimatePresence mode="crossfade">
+          <motion.img
+            key={idx}
+            src={OUR_STORY_SLIDES[idx]}
+            alt="Our story"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full object-cover"
+          />
+        </AnimatePresence>
+      </motion.div>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {OUR_STORY_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIdx(i)}
+            className={`h-1.5 rounded-full transition-all ${
+              i === idx ? "bg-white w-4" : "bg-white/50 w-1.5"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   // Bucket products by the new two-tier taxonomy. `resolveTaxonomy` honours
@@ -1630,8 +1698,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
     { title: "Drinkware",               target: "section-merch-drinkware",  items: merchDrinkware, span: "md:col-span-3 md:row-span-1", accent: "from-emerald-100 via-emerald-50 to-natural-paper" },
     { title: "Bags",                    target: "section-merch-bags",       items: merchBags,      span: "md:col-span-2 md:row-span-1", accent: "from-rose-50 to-natural-paper" },
     { title: "Keychains & Accessories", target: "section-merch-keychains",  items: merchKeychains, span: "md:col-span-2 md:row-span-1", accent: "from-sky-50 to-natural-paper" },
-    { title: "Chocolates & Nuts",       target: "section-merch-chocolates", items: merchChocolates, span: "md:col-span-1 md:row-span-1", accent: "from-yellow-50 to-natural-paper" },
-    { title: "Brewing Tools",           target: "section-merch-brewing",    items: merchBrewing,    span: "md:col-span-1 md:row-span-1", accent: "from-slate-100 to-natural-paper" },
+    { title: "Chocolates & Nuts",       target: "section-merch-chocolates", items: merchChocolates, span: "md:col-span-2 md:row-span-1", accent: "from-yellow-50 to-natural-paper" },
+    { title: "Brewing Tools",           target: "section-merch-brewing",    items: merchBrewing,    span: "md:col-span-2 md:row-span-1", accent: "from-slate-100 to-natural-paper" },
   ].filter((t) => t.items.length > 0);
 
   // All sections in display order — rendered as <HScrollRow>s below the bento.
@@ -1813,13 +1881,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
               ))}
             </div>
           </div>
-          <div className="aspect-square rounded-[3rem] overflow-hidden">
-            <img
-              src={asset("assets/our-story.png")}
-              alt="Coffee roasting process"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <OurStoryImage />
         </div>
       </section>
 
