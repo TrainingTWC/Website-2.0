@@ -570,8 +570,9 @@ v2.0 Phase 2 (orders table must exist for firstOrderOnly check — already shipp
 
 ---
 
-## Phase 2 — Magazine Editorial Hub (Frontend)
+## Phase 2 — Magazine Editorial Hub (Frontend) ✅ COMPLETE
 
+**Commit:** 7156db4  
 **Goal:** Users land on `?page=editorial` and experience a premium magazine-style hub — full-bleed hero, asymmetric grid, category filters, live countdown timers on flash sales, champion spotlights, and a glassmorphism "Claim Offer" button on offer cards that applies the discount to their cart session.
 
 **Requirements covered:** HUB-01, HUB-02, HUB-03, HUB-04, HUB-05, HUB-06, HUB-07, HUB-08, HUB-09, OFF-06, OFF-07, OFF-08
