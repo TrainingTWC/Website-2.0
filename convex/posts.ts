@@ -1,13 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-// ── Resolve cover URL: prefers stored URL, falls back to resolving storageId ─
+// ── Resolve cover URL: storageId is source-of-truth, URL is legacy fallback ──
 async function resolveCoverUrl(ctx: any, post: any): Promise<string | undefined> {
-  if (post.coverImageUrl) return post.coverImageUrl;
+  // If a storageId exists, ALWAYS prefer it — it's the freshest upload.
+  // Stale coverImageUrl values (from seeds or prior edits) would otherwise win.
   if (post.coverImageStorageId) {
     const url = await ctx.storage.getUrl(post.coverImageStorageId);
-    return url ?? undefined;
+    if (url) return url;
   }
+  if (post.coverImageUrl) return post.coverImageUrl;
   return undefined;
 }
 
