@@ -67,6 +67,13 @@ export const createPost = mutation({
 export const updatePost = mutation({
   args: {
     id: v.id("posts"),
+    type: v.optional(v.union(
+      v.literal("flash-sale"),
+      v.literal("product-launch"),
+      v.literal("cafe-news"),
+      v.literal("brand-story"),
+      v.literal("champion")
+    )),
     headline: v.optional(v.string()),
     subhead: v.optional(v.string()),
     body: v.optional(v.string()),
