@@ -175,28 +175,44 @@ function PostsManager() {
       // Show a local preview immediately
       const localPreview = URL.createObjectURL(file);
       setPreviewUrl(localPreview);
+
+      // Step 1: get a one-time upload URL from Convex
       const uploadUrl = await generateUploadUrl();
+
+      // Step 2: PUT the file bytes to that URL
       const result = await fetch(uploadUrl, {
-        method: "PUT",
+        method: "POST",
         body: file,
         headers: { "Content-Type": file.type },
       });
-      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
-      const { storageId } = await result.json();
-      if (!storageId) throw new Error("No storageId returned from upload");
+      if (!result.ok) {
+        const txt = await result.text().catch(() => "");
+        throw new Error(`Upload PUT failed (${result.status}): ${txt.slice(0, 120)}`);
+      }
+      const json = await result.json();
+      const storageId = json?.storageId;
+      if (!storageId) throw new Error(`No storageId in upload response: ${JSON.stringify(json).slice(0, 120)}`);
 
-      // Fetch the real served CDN URL to confirm the file is reachable end-to-end
-      const cdnUrl = await convex.query(convexApi.posts.getStorageUrl, { storageId });
-      if (!cdnUrl) throw new Error("Storage returned no URL for the uploaded file");
-
-      // Swap the blob preview for the real CDN URL — visible proof it persisted
-      URL.revokeObjectURL(localPreview);
-      setPreviewUrl(cdnUrl);
+      // Step 3: capture storageId in form — this is the only thing the DB needs
       setForm((f) => ({ ...f, coverImageStorageId: storageId, coverImageUrl: "" }));
       setUploadStatus("success");
+
+      // Step 4 (best-effort): swap blob preview for the real CDN URL.
+      // Failure here is non-fatal — the storageId is already captured.
+      try {
+        const cdnUrl = await convex.query(convexApi.posts.getStorageUrl, { storageId });
+        if (cdnUrl) {
+          URL.revokeObjectURL(localPreview);
+          setPreviewUrl(cdnUrl);
+        }
+      } catch {
+        // ignore — backend resolveCoverUrl will hydrate the URL on next read
+      }
     } catch (e: any) {
       setUploadStatus("error");
       setError(e?.message ?? "Image upload failed. Try again.");
+      // eslint-disable-next-line no-console
+      console.error("[EditorialCMS] upload failed:", e);
     } finally {
       setUploading(false);
     }
@@ -549,9 +565,9 @@ function PostsManager() {
                       </p>
                     )}
                     {uploadStatus === "error" && (
-                      <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5 font-semibold">
-                        <span className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px]">!</span>
-                        Upload failed. Try a smaller file or check your connection.
+                      <p className="text-xs text-red-600 mt-2 flex items-start gap-1.5 font-semibold">
+                        <span className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px] flex-shrink-0 mt-0.5">!</span>
+                        <span className="break-all">{error || "Upload failed."}</span>
                       </p>
                     )}
                     {form.coverImageStorageId && uploadStatus !== "uploading" && (
