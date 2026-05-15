@@ -486,8 +486,8 @@ Phase 2 of v2.0 (orders must exist in Convex — already shipped); `support.ts` 
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Convex data layer: schema extension + posts.ts + discounts.ts + orders.ts update
-- [ ] 01-02-PLAN.md — Admin CMS frontend: Editorial tab + EditorialCMS component (Posts + Discounts)
+- [x] 01-01-PLAN.md — Convex data layer: schema extension + posts.ts + discounts.ts + orders.ts update
+- [x] 01-02-PLAN.md — Admin CMS frontend: Editorial tab + EditorialCMS component (Posts + Discounts)
 
 1. **`convex/schema.ts`** — Add three new tables
 

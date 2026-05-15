@@ -4,7 +4,7 @@ name: The Editorial Hub — Offers, News & Promotions
 status: in-progress
 progress:
   phases_total: 3
-  phases_done: 0
+  phases_done: 1
 ---
 
 # STATE.md
@@ -12,13 +12,13 @@ progress:
 ## Current Position
 
 Milestone: v4.0 — The Editorial Hub — Offers, News & Promotions — **IN PROGRESS**
-Phase: 0 of 3 phases started
-Status: Planning complete — ready for Phase 1 execution
-Last activity: 2026-05-15 — v4.0 milestone initialized
+Phase: 1 of 3 phases complete
+Status: Phase 1 (Data Layer + Admin CMS) shipped — ready for Phase 2
+Last activity: 2026-05-15 — Phase 1 execution complete (commits 636fee7, 2da7044)
 
 ## Completed Phases
 
-(none yet)
+- Phase 1 (Data Layer + Admin CMS) — ✅ shipped — commits `636fee7`, `2da7044`
 
 ## Decisions This Milestone
 
