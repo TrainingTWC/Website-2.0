@@ -117,6 +117,7 @@ function PostsManager() {
   const togglePublish = useMutation(convexApi.posts.togglePublish);
   const deletePost = useMutation(convexApi.posts.deletePost);
   const generateUploadUrl = useMutation(convexApi.posts.generateUploadUrl);
+  const getStorageUrl = useMutation(convexApi.posts.getStorageUrl);
 
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<(typeof posts)[0] | null>(null);
@@ -167,7 +168,8 @@ function PostsManager() {
         headers: { "Content-Type": file.type },
       });
       const { storageId } = await result.json();
-      setForm((f) => ({ ...f, coverImageStorageId: storageId }));
+      const url = await getStorageUrl({ storageId: storageId as any });
+      setForm((f) => ({ ...f, coverImageStorageId: storageId, coverImageUrl: url ?? "" }));
     } catch (e) {
       setError("Image upload failed. Try again.");
     } finally {

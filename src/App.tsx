@@ -539,9 +539,9 @@ function Storefront() {
       return (
         <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
           <MorphingHeader
-            headerBg={headerBg}
-            headerBorder={headerBorder}
-            headerShadow={headerShadow}
+            headerBg="rgba(250,249,246,1)"
+            headerBorder="rgba(201,192,183,0.5)"
+            headerShadow="0 2px 12px -4px rgba(44,24,16,0.10)"
             onOpenTI={(e) => { e.stopPropagation(); navigateTo({ page: "ti" }); }}
             onOpenCart={() => {}}
             onNavTo={handleNavTo}
@@ -564,9 +564,9 @@ function Storefront() {
     return (
       <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
         <MorphingHeader
-          headerBg={headerBg}
-          headerBorder={headerBorder}
-          headerShadow={headerShadow}
+          headerBg="rgba(250,249,246,1)"
+          headerBorder="rgba(201,192,183,0.5)"
+          headerShadow="0 2px 12px -4px rgba(44,24,16,0.10)"
           onOpenTI={(e) => { e.stopPropagation(); navigateTo({ page: "ti" }); }}
           onOpenCart={() => {}}
           onNavTo={handleNavTo}

@@ -349,9 +349,12 @@ function PostCard({
 }
 
 // ── Champion card ─────────────────────────────────────────────
-function ChampionCard({ post }: { post: Post }) {
+function ChampionCard({ post, onOpen }: { post: Post; onOpen?: (post: Post) => void }) {
   return (
-    <div className="min-w-[220px] max-w-[220px] bg-natural-paper rounded-2xl border border-natural-border p-4 flex-shrink-0 space-y-3">
+    <div
+      className="min-w-[220px] max-w-[220px] bg-natural-paper rounded-2xl border border-natural-border p-4 shrink-0 space-y-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+      onClick={() => onOpen?.(post)}
+    >
       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-100 to-rose-300 flex items-center justify-center text-2xl font-serif font-bold text-rose-700 overflow-hidden">
         {post.coverImageUrl ? (
           <img src={post.coverImageUrl} alt={post.personName} className="w-full h-full object-cover rounded-full" />
@@ -501,12 +504,7 @@ export function EditorialHub({
 
   return (
     <div className="min-h-screen bg-natural-bg text-natural-text">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
-        {/* Page title */}
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent mb-2">Third Wave Coffee</p>
-          <h1 className="font-serif font-black text-5xl md:text-6xl tracking-tight">Third Circle</h1>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 space-y-10">
 
         {/* Hero — skeleton while loading */}
         {showSkeleton ? (
@@ -515,8 +513,8 @@ export function EditorialHub({
           <HeroSection hero={hero} />
         )}
 
-        {/* Category filter pills — solid bg so content scrolling behind is hidden */}
-        <div className="sticky top-[72px] z-10 flex gap-2 flex-wrap bg-natural-bg py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-natural-border/40">
+        {/* Category filter pills */}
+        <div className="sticky top-[72px] z-20 flex gap-2 flex-wrap bg-natural-bg py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-natural-border/40">
           {(Object.keys(FILTER_LABELS) as FilterType[]).map((f) => (
             <button
               key={f}
@@ -567,7 +565,7 @@ export function EditorialHub({
             <h2 className="font-serif font-bold text-2xl">Champions</h2>
             <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none">
               {champions.map((c) => (
-                <ChampionCard key={c._id} post={c} />
+                <ChampionCard key={c._id} post={c} onOpen={(p) => onPostOpen(p._id)} />
               ))}
             </div>
           </section>

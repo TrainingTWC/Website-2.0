@@ -1,6 +1,16 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// ── Resolve cover URL: prefers stored URL, falls back to resolving storageId ─
+async function resolveCoverUrl(ctx: any, post: any): Promise<string | undefined> {
+  if (post.coverImageUrl) return post.coverImageUrl;
+  if (post.coverImageStorageId) {
+    const url = await ctx.storage.getUrl(post.coverImageStorageId);
+    return url ?? undefined;
+  }
+  return undefined;
+}
+
 // ── Public: published posts for the frontend hub ──────────────────────────
 export const listPublished = query({
   args: {},
@@ -11,9 +21,11 @@ export const listPublished = query({
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
       .take(100);
-    // Filter out expired posts client-side after bounded fetch
-    return posts.filter(
+    const visible = posts.filter(
       (p) => p.expiresAt === undefined || p.expiresAt > now
+    );
+    return await Promise.all(
+      visible.map(async (p) => ({ ...p, coverImageUrl: await resolveCoverUrl(ctx, p) }))
     );
   },
 });
@@ -22,7 +34,10 @@ export const listPublished = query({
 export const listAll = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("posts").order("desc").take(200);
+    const posts = await ctx.db.query("posts").order("desc").take(200);
+    return await Promise.all(
+      posts.map(async (p) => ({ ...p, coverImageUrl: await resolveCoverUrl(ctx, p) }))
+    );
   },
 });
 
@@ -127,8 +142,8 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// ── Get storage URL from storage ID ──────────────────────────────────────
-export const getStorageUrl = query({
+// ── Get storage URL from storage ID (mutation so it can be called imperatively) ─
+export const getStorageUrl = mutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
     return await ctx.storage.getUrl(args.storageId);
