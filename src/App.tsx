@@ -35,6 +35,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Newspaper,
 } from "lucide-react";
 import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
@@ -820,7 +821,7 @@ const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.Compo
   { key: "bags", label: "Coffee Bags", target: "section-coffee-ecb", Icon: Package },
   { key: "merch", label: "Merch", target: "section-merch-drinkware", Icon: ShoppingBag },
   { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
-  { key: "editorial", label: "Journal", target: "editorial", Icon: BookOpen },
+  { key: "editorial", label: "Third Circle", target: "editorial", Icon: Newspaper },
 ];
 
 function useActiveSection(): string {

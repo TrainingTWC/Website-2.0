@@ -321,7 +321,7 @@ function HeroSection({ hero }: { hero: Post | undefined }) {
   if (!hero) {
     return (
       <div className="w-full h-[50vh] bg-gradient-to-br from-natural-stone to-natural-muted rounded-3xl flex items-end p-10">
-        <h1 className="font-serif font-black text-5xl md:text-7xl text-natural-text/20">Journal</h1>
+        <h1 className="font-serif font-black text-5xl md:text-7xl text-natural-text/20">Third Circle</h1>
       </div>
     );
   }
@@ -402,7 +402,7 @@ export function EditorialHub({
         {/* Page title */}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent mb-2">Third Wave Coffee</p>
-          <h1 className="font-serif font-black text-5xl md:text-6xl tracking-tight">Journal</h1>
+          <h1 className="font-serif font-black text-5xl md:text-6xl tracking-tight">Third Circle</h1>
         </div>
 
         {/* Hero */}
