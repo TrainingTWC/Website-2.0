@@ -53,6 +53,8 @@ import { SiteFooter } from "./components/SiteFooter";
 import { GalaxySweep } from "./components/GalaxySweep";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterDeck } from "./components/Cinematic";
+import { EditorialHub } from "./components/EditorialHub";
+import { PostDetail } from "./components/PostDetail";
 import { slugify } from "./lib/slug";
 import { asset } from "./lib/asset";
 import type { Product } from "./types";
@@ -475,8 +477,12 @@ function Storefront() {
     if (product) addToCart(product._id);
   }, [products, addToCart]);
 
-  // Nav click — if product page is open, close it first then scroll to section
+  // Nav click — page routes first, then scroll to section
   const handleNavTo = useCallback((target: string) => {
+    if (target === "editorial") {
+      navigateTo({ page: "editorial" });
+      return;
+    }
     if (activeProductId) {
       navigateTo({ product: null });
       setTimeout(() => scrollTo(target), 560);
@@ -520,6 +526,40 @@ function Storefront() {
           onClose={() => navigateTo({ page: null })}
           onNavigateToProduct={(slug) => navigateTo({ page: null, product: slug })}
           onAddToCart={(productId) => addToCart(productId)}
+        />
+      </div>
+    );
+  }
+
+  // ── Full-page route: Editorial Hub / Journal ─────────────────
+  if (page === "editorial") {
+    const postId = params.get("post");
+    if (postId) {
+      return (
+        <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+          <div className="flex-1">
+            <PostDetail
+              postId={postId}
+              onBack={() => navigateTo({ page: "editorial", post: null })}
+              onProductClick={(id) => navigateTo({ page: null, product: id, post: null })}
+            />
+          </div>
+          <SiteFooter
+            onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
+        <div className="flex-1">
+          <EditorialHub
+            onProductClick={(id) => navigateTo({ page: null, product: id })}
+            onPostOpen={(id) => navigateTo({ page: "editorial", post: id })}
+          />
+        </div>
+        <SiteFooter
+          onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
       </div>
     );
@@ -780,6 +820,7 @@ const NAV_ITEMS: { key: string; label: string; target: string; Icon: React.Compo
   { key: "bags", label: "Coffee Bags", target: "section-coffee-ecb", Icon: Package },
   { key: "merch", label: "Merch", target: "section-merch-drinkware", Icon: ShoppingBag },
   { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
+  { key: "editorial", label: "Journal", target: "editorial", Icon: BookOpen },
 ];
 
 function useActiveSection(): string {
