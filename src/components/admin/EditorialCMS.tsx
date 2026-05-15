@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -123,12 +123,15 @@ function PostsManager() {
   const [form, setForm] = useState<PostFormState>(defaultPostForm());
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [error, setError] = useState("");
+  const convex = useConvex();
 
   function openNew() {
     setEditingPost(null);
     setForm(defaultPostForm());
     setPreviewUrl("");
+    setUploadStatus("idle");
     setError("");
     setShowForm(true);
   }
@@ -159,12 +162,15 @@ function PostsManager() {
     });
     // Use the resolved URL from the query for preview only
     setPreviewUrl(post.coverImageUrl ?? "");
+    setUploadStatus("idle");
     setError("");
     setShowForm(true);
   }
 
   async function handleImageUpload(file: File) {
     setUploading(true);
+    setUploadStatus("uploading");
+    setError("");
     try {
       // Show a local preview immediately
       const localPreview = URL.createObjectURL(file);
@@ -175,12 +181,22 @@ function PostsManager() {
         body: file,
         headers: { "Content-Type": file.type },
       });
+      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
       const { storageId } = await result.json();
-      // Save the new storageId AND clear any external URL so the backend
-      // resolves the URL from the new storageId (otherwise the old URL wins).
+      if (!storageId) throw new Error("No storageId returned from upload");
+
+      // Fetch the real served CDN URL to confirm the file is reachable end-to-end
+      const cdnUrl = await convex.query(convexApi.posts.getStorageUrl, { storageId });
+      if (!cdnUrl) throw new Error("Storage returned no URL for the uploaded file");
+
+      // Swap the blob preview for the real CDN URL — visible proof it persisted
+      URL.revokeObjectURL(localPreview);
+      setPreviewUrl(cdnUrl);
       setForm((f) => ({ ...f, coverImageStorageId: storageId, coverImageUrl: "" }));
-    } catch (e) {
-      setError("Image upload failed. Try again.");
+      setUploadStatus("success");
+    } catch (e: any) {
+      setUploadStatus("error");
+      setError(e?.message ?? "Image upload failed. Try again.");
     } finally {
       setUploading(false);
     }
@@ -520,8 +536,26 @@ function PostsManager() {
                       }}
                       disabled={uploading}
                     />
-                    {uploading && (
-                      <p className="text-xs text-stone-400 mt-1 animate-pulse">Uploading image…</p>
+                    {uploadStatus === "uploading" && (
+                      <p className="text-xs text-amber-600 mt-2 animate-pulse flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                        Uploading image…
+                      </p>
+                    )}
+                    {uploadStatus === "success" && (
+                      <p className="text-xs text-green-600 mt-2 flex items-center gap-1.5 font-semibold">
+                        <span className="w-4 h-4 rounded-full bg-green-500 text-white flex items-center justify-center text-[9px]">✓</span>
+                        Upload complete — image saved. Click “Save Changes” to publish.
+                      </p>
+                    )}
+                    {uploadStatus === "error" && (
+                      <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5 font-semibold">
+                        <span className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-[9px]">!</span>
+                        Upload failed. Try a smaller file or check your connection.
+                      </p>
+                    )}
+                    {form.coverImageStorageId && uploadStatus !== "uploading" && (
+                      <p className="text-[10px] text-stone-300 mt-1 font-mono truncate">storageId: {form.coverImageStorageId}</p>
                     )}
                   </div>
 
