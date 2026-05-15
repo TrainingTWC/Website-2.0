@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "motion/react";
 import { CountdownTimer } from "./CountdownTimer";
 import { Tag } from "lucide-react";
 import { api } from "../../convex/_generated/api";
@@ -318,28 +318,68 @@ function ChampionCard({ post }: { post: Post }) {
 
 // ── Hero section ──────────────────────────────────────────────
 function HeroSection({ hero }: { hero: Post | undefined }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll parallax — image drifts up slower than the page
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
+  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+
+  // Mouse parallax
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const springX = useSpring(rawX, { stiffness: 60, damping: 20 });
+  const springY = useSpring(rawY, { stiffness: 60, damping: 20 });
+  const textX = useTransform(springX, [-1, 1], ["-8px", "8px"]);
+  const textY = useTransform(springY, [-1, 1], ["-6px", "6px"]);
+  const imgParallaxX = useTransform(springX, [-1, 1], ["-12px", "12px"]);
+  const imgParallaxY = useTransform(springY, [-1, 1], ["-8px", "8px"]);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    rawX.set(((e.clientX - rect.left) / rect.width) * 2 - 1);
+    rawY.set(((e.clientY - rect.top) / rect.height) * 2 - 1);
+  }
+  function handleMouseLeave() { rawX.set(0); rawY.set(0); }
+
   if (!hero) {
     return (
-      <div className="w-full h-[50vh] bg-gradient-to-br from-natural-stone to-natural-muted rounded-3xl flex items-end p-10">
+      <div className="w-full h-[50vh] bg-linear-to-br from-natural-stone to-natural-muted rounded-3xl flex items-end p-10">
         <h1 className="font-serif font-black text-5xl md:text-7xl text-natural-text/20">Third Circle</h1>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-[55vh] md:h-[65vh] rounded-3xl overflow-hidden">
-      {hero.coverImageUrl ? (
-        <img
-          src={hero.coverImageUrl}
-          alt={hero.headline}
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-natural-stone to-[#2a2a1e]" />
-      )}
-      {/* Bottom-to-top gradient for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 space-y-3">
+    <div
+      ref={containerRef}
+      className="relative w-full h-[55vh] md:h-[65vh] rounded-3xl overflow-hidden cursor-default"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Parallax image — slightly oversized so drift doesn't show edges */}
+      <motion.div
+        className="absolute inset-[-3%] w-[106%] h-[106%]"
+        style={{ y: imgY, x: imgParallaxX }}
+      >
+        {hero.coverImageUrl ? (
+          <img
+            src={hero.coverImageUrl}
+            alt={hero.headline}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-linear-to-br from-natural-stone to-[#2a2a1e]" />
+        )}
+      </motion.div>
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+
+      {/* Text — moves opposite direction to image for depth */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 p-8 md:p-12 space-y-3"
+        style={{ x: textX, y: textY }}
+      >
         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${TYPE_BADGE[hero.type]}`}>
           {TYPE_LABEL[hero.type]}
         </span>
@@ -355,7 +395,7 @@ function HeroSection({ hero }: { hero: Post | undefined }) {
             <CountdownTimer expiresAt={hero.expiresAt} className="text-white text-sm" />
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -408,8 +448,8 @@ export function EditorialHub({
         {/* Hero */}
         <HeroSection hero={hero} />
 
-        {/* Category filter pills */}
-        <div className="sticky top-20 z-10 flex gap-2 flex-wrap bg-natural-bg/80 backdrop-blur-md py-3 -mx-4 px-4 sm:-mx-6 sm:px-6">
+        {/* Category filter pills — solid bg so content scrolling behind is hidden */}
+        <div className="sticky top-[72px] z-10 flex gap-2 flex-wrap bg-natural-bg py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-natural-border/40">
           {(Object.keys(FILTER_LABELS) as FilterType[]).map((f) => (
             <button
               key={f}
