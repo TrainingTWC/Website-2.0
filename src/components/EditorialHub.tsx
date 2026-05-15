@@ -293,6 +293,9 @@ function PostCard({
             src={post.coverImageUrl}
             alt={post.headline}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            loading={large ? "eager" : "lazy"}
+            decoding="async"
+            {...(large ? { fetchPriority: "high" as const } : {})}
           />
         ) : (
           <div className="w-full h-full bg-linear-to-br from-natural-muted to-natural-stone" />
@@ -357,7 +360,7 @@ function ChampionCard({ post, onOpen }: { post: Post; onOpen?: (post: Post) => v
     >
       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-100 to-rose-300 flex items-center justify-center text-2xl font-serif font-bold text-rose-700 overflow-hidden">
         {post.coverImageUrl ? (
-          <img src={post.coverImageUrl} alt={post.personName} className="w-full h-full object-cover rounded-full" />
+          <img src={post.coverImageUrl} alt={post.personName} className="w-full h-full object-cover rounded-full" loading="lazy" decoding="async" />
         ) : (
           post.personName?.[0] ?? "?"
         )}
@@ -421,6 +424,9 @@ function HeroSection({ hero }: { hero: Post | undefined }) {
             src={hero.coverImageUrl}
             alt={hero.headline}
             className="w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
         ) : (
           <div className="w-full h-full bg-linear-to-br from-natural-stone to-[#2a2a1e]" />

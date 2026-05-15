@@ -121,12 +121,14 @@ function PostsManager() {
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<(typeof posts)[0] | null>(null);
   const [form, setForm] = useState<PostFormState>(defaultPostForm());
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   function openNew() {
     setEditingPost(null);
     setForm(defaultPostForm());
+    setPreviewUrl("");
     setError("");
     setShowForm(true);
   }
@@ -139,7 +141,9 @@ function PostsManager() {
       subhead: post.subhead ?? "",
       body: post.body,
       coverImageStorageId: post.coverImageStorageId ?? "",
-      coverImageUrl: post.coverImageUrl ?? "",
+      // If the post has a storageId, the URL is derived server-side; don't echo it
+      // back into the form (would cause stale URL to win over new uploads).
+      coverImageUrl: post.coverImageStorageId ? "" : (post.coverImageUrl ?? ""),
       status: post.status as PostStatus,
       publishAt: post.publishAt
         ? new Date(post.publishAt).toISOString().slice(0, 16)
@@ -153,6 +157,8 @@ function PostsManager() {
       personRole: post.personRole ?? "",
       personStory: post.personStory ?? "",
     });
+    // Use the resolved URL from the query for preview only
+    setPreviewUrl(post.coverImageUrl ?? "");
     setError("");
     setShowForm(true);
   }
@@ -162,7 +168,7 @@ function PostsManager() {
     try {
       // Show a local preview immediately
       const localPreview = URL.createObjectURL(file);
-      setForm((f) => ({ ...f, coverImageUrl: localPreview }));
+      setPreviewUrl(localPreview);
       const uploadUrl = await generateUploadUrl();
       const result = await fetch(uploadUrl, {
         method: "PUT",
@@ -170,9 +176,9 @@ function PostsManager() {
         headers: { "Content-Type": file.type },
       });
       const { storageId } = await result.json();
-      // Keep the local preview visible; storageId is what gets saved to DB
-      // Backend resolveCoverUrl resolves the real URL from storageId on reads
-      setForm((f) => ({ ...f, coverImageStorageId: storageId }));
+      // Save the new storageId AND clear any external URL so the backend
+      // resolves the URL from the new storageId (otherwise the old URL wins).
+      setForm((f) => ({ ...f, coverImageStorageId: storageId, coverImageUrl: "" }));
     } catch (e) {
       setError("Image upload failed. Try again.");
     } finally {
@@ -191,9 +197,9 @@ function PostsManager() {
       coverImageStorageId: form.coverImageStorageId
         ? (form.coverImageStorageId as Id<"_storage">)
         : undefined,
-      // Never send blob: URLs to the backend — the storageId is enough;
-      // backend resolveCoverUrl resolves the real CDN URL from it
-      coverImageUrl: form.coverImageUrl?.startsWith("blob:") ? undefined : (form.coverImageUrl || undefined),
+      // Send empty string to explicitly clear stale URLs in the DB (Convex
+      // patch only skips `undefined`, so empty string actually overwrites).
+      coverImageUrl: form.coverImageUrl ?? "",
       status: form.status,
       publishAt: form.publishAt ? new Date(form.publishAt).getTime() : undefined,
       expiresAt: form.expiresAt ? new Date(form.expiresAt).getTime() : undefined,
@@ -215,6 +221,7 @@ function PostsManager() {
       }
       setShowForm(false);
       setForm(defaultPostForm());
+      setPreviewUrl("");
     } catch (e: any) {
       setError(e?.message ?? "Failed to save post");
     }
@@ -306,7 +313,7 @@ function PostsManager() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/20 z-40"
-              onClick={() => setShowForm(false)}
+              onClick={() => { setShowForm(false); setPreviewUrl(""); }}
             />
             <motion.div
               initial={{ x: "100%" }}
@@ -321,7 +328,7 @@ function PostsManager() {
                     {editingPost ? "Edit Post" : "New Post"}
                   </h3>
                   <button
-                    onClick={() => setShowForm(false)}
+                    onClick={() => { setShowForm(false); setPreviewUrl(""); }}
                     className="text-stone-400 hover:text-stone-600 transition"
                   >
                     ✕
@@ -494,11 +501,13 @@ function PostsManager() {
                   {/* Cover image upload */}
                   <div>
                     <label className={LABEL}>Cover Image</label>
-                    {form.coverImageUrl && (
+                    {(previewUrl || form.coverImageUrl) && (
                       <img
-                        src={form.coverImageUrl}
+                        src={previewUrl || form.coverImageUrl}
                         alt="Cover preview"
                         className="w-full h-32 object-cover rounded-xl mb-2"
+                        loading="lazy"
+                        decoding="async"
                       />
                     )}
                     <input
