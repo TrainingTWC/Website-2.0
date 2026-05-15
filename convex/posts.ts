@@ -142,8 +142,8 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// ── Get storage URL from storage ID (mutation so it can be called imperatively) ─
-export const getStorageUrl = mutation({
+// ── Get storage URL from storage ID ──────────────────────────────────────
+export const getStorageUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
     return await ctx.storage.getUrl(args.storageId);

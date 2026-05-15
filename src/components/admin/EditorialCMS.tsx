@@ -117,7 +117,6 @@ function PostsManager() {
   const togglePublish = useMutation(convexApi.posts.togglePublish);
   const deletePost = useMutation(convexApi.posts.deletePost);
   const generateUploadUrl = useMutation(convexApi.posts.generateUploadUrl);
-  const getStorageUrl = useMutation(convexApi.posts.getStorageUrl);
 
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<(typeof posts)[0] | null>(null);
@@ -161,6 +160,9 @@ function PostsManager() {
   async function handleImageUpload(file: File) {
     setUploading(true);
     try {
+      // Show a local preview immediately
+      const localPreview = URL.createObjectURL(file);
+      setForm((f) => ({ ...f, coverImageUrl: localPreview }));
       const uploadUrl = await generateUploadUrl();
       const result = await fetch(uploadUrl, {
         method: "PUT",
@@ -168,8 +170,9 @@ function PostsManager() {
         headers: { "Content-Type": file.type },
       });
       const { storageId } = await result.json();
-      const url = await getStorageUrl({ storageId: storageId as any });
-      setForm((f) => ({ ...f, coverImageStorageId: storageId, coverImageUrl: url ?? "" }));
+      // Keep the local preview visible; storageId is what gets saved to DB
+      // Backend resolveCoverUrl resolves the real URL from storageId on reads
+      setForm((f) => ({ ...f, coverImageStorageId: storageId }));
     } catch (e) {
       setError("Image upload failed. Try again.");
     } finally {
@@ -188,7 +191,9 @@ function PostsManager() {
       coverImageStorageId: form.coverImageStorageId
         ? (form.coverImageStorageId as Id<"_storage">)
         : undefined,
-      coverImageUrl: form.coverImageUrl || undefined,
+      // Never send blob: URLs to the backend — the storageId is enough;
+      // backend resolveCoverUrl resolves the real CDN URL from it
+      coverImageUrl: form.coverImageUrl?.startsWith("blob:") ? undefined : (form.coverImageUrl || undefined),
       status: form.status,
       publishAt: form.publishAt ? new Date(form.publishAt).getTime() : undefined,
       expiresAt: form.expiresAt ? new Date(form.expiresAt).getTime() : undefined,

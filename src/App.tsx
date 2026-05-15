@@ -484,6 +484,13 @@ function Storefront() {
       navigateTo({ page: "third-circle" });
       return;
     }
+    // If we're on a sub-page (editorial, product, etc.), go home first then scroll
+    const currentPage = new URLSearchParams(window.location.search).get("page");
+    if (currentPage) {
+      navigateTo({ page: null, product: null, post: null });
+      setTimeout(() => scrollTo(target), 560);
+      return;
+    }
     if (activeProductId) {
       navigateTo({ product: null });
       setTimeout(() => scrollTo(target), 560);
@@ -1481,22 +1488,19 @@ type BentoTileData = {
   title: string;
   target: string;
   items: Product[];
-  span: string;
+  span: string;   // kept for backwards compat, not used in new layout
   accent: string;
 };
-function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void }) {
-  // Tall tiles get a full-bleed hero layout, short tiles stay compact.
-  const isTall = tile.span.includes("row-span-2");
+function BentoTile({ tile, onClick, tall = false }: { tile: BentoTileData; onClick: () => void; tall?: boolean }) {
   const heroProduct = tile.items[0];
-  const samples = tile.items.slice(0, isTall ? 4 : 3);
+  const samples = tile.items.slice(0, tall ? 4 : 3);
 
-  if (isTall && heroProduct) {
+  if (tall && heroProduct) {
     return (
       <button
         onClick={onClick}
-        className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} text-left transition-all hover:shadow-2xl hover:-translate-y-0.5 hover:border-natural-accent/40 ${tile.span} min-h-[260px] md:min-h-0 flex flex-col`}
+        className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} text-left transition-all hover:shadow-2xl hover:-translate-y-0.5 hover:border-natural-accent/40 w-full h-full flex flex-col`}
       >
-        {/* Full-bleed hero image */}
         <div className="relative flex-1 overflow-hidden">
           <SmartImage
             src={heroProduct.imageUrl}
@@ -1505,37 +1509,27 @@ function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void
             className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
             wrapperClassName="absolute inset-0"
           />
-          {/* Gradient scrim so the copy stays legible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-          {/* Stack of thumbnail peeks bottom-right */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/10 to-transparent" />
           <div className="absolute bottom-3 right-3 flex -space-x-2">
             {samples.slice(1).map((p, idx) => (
               <div
                 key={p._id}
-                className="w-10 h-10 rounded-xl bg-white/90 border-2 border-white shadow-md overflow-hidden"
+                className="w-12 h-12 rounded-xl bg-white/90 border-2 border-white shadow-md overflow-hidden"
                 style={{ zIndex: samples.length - idx }}
               >
-                <SmartImage
-                  src={p.imageUrl}
-                  blur={p.imageBlur}
-                  alt=""
-                  className="object-cover"
-                  wrapperClassName="w-full h-full"
-                />
+                <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover" wrapperClassName="w-full h-full" />
               </div>
             ))}
           </div>
         </div>
-        {/* Copy band */}
-        <div className="relative p-4 sm:p-5 bg-white/85 backdrop-blur-sm">
+        <div className="relative p-4 sm:p-5 bg-white/85 backdrop-blur-sm shrink-0">
           <h3 className="text-lg sm:text-xl font-serif font-bold leading-tight">{tile.title}</h3>
           <div className="flex items-center justify-between mt-1.5">
-            <p className="text-[11px] sm:text-xs text-natural-text/60 font-medium">
+            <p className="text-xs text-natural-text/60 font-medium">
               {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
             </p>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
-              Browse
-              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+              Browse <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
             </span>
           </div>
         </div>
@@ -1546,37 +1540,35 @@ function BentoTile({ tile, onClick }: { tile: BentoTileData; onClick: () => void
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-gradient-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 ${tile.span} min-h-[140px] md:min-h-0 flex items-center gap-3 sm:gap-4`}
+      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 w-full h-full min-h-[140px] flex items-center gap-4`}
     >
-      <div className="relative flex -space-x-2 sm:-space-x-3 shrink-0">
+      {/* Product image fan — absolute-positioned so text never gets squeezed */}
+      <div className="relative shrink-0" style={{ width: `${44 + Math.max(0, samples.length - 1) * 16}px`, height: '64px' }}>
         {samples.length === 0 ? (
-          <div className="w-12 h-14 rounded-xl bg-natural-paper border border-natural-border" />
+          <div className="w-14 h-16 rounded-xl bg-natural-paper border border-natural-border" />
         ) : (
           samples.map((p, idx) => (
             <div
               key={p._id}
-              className="w-12 h-14 sm:w-14 sm:h-18 rounded-xl sm:rounded-2xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
-              style={{ zIndex: samples.length - idx, transform: `rotate(${(idx - 1) * 4}deg)` }}
+              className="absolute w-14 h-16 sm:w-16 sm:h-[72px] rounded-xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
+              style={{
+                left: `${idx * 16}px`,
+                zIndex: samples.length - idx,
+                transform: `rotate(${(idx - Math.floor(samples.length / 2)) * 5}deg)`,
+              }}
             >
-              <SmartImage
-                src={p.imageUrl}
-                blur={p.imageBlur}
-                alt=""
-                className="object-cover"
-                wrapperClassName="w-full h-full"
-              />
+              <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover" wrapperClassName="w-full h-full" />
             </div>
           ))
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-base sm:text-lg font-serif font-bold leading-tight">{tile.title}</h3>
-        <p className="text-[11px] sm:text-xs text-natural-text/60 font-medium mt-0.5">
+      <div className="flex-1 min-w-0 pl-1">
+        <h3 className="font-serif font-bold text-sm sm:text-base leading-tight break-words">{tile.title}</h3>
+        <p className="text-[11px] text-natural-text/60 font-medium mt-0.5">
           {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
         </p>
-        <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
-          Browse
-          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+        <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-natural-accent">
+          Browse <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
         </div>
       </div>
     </button>
@@ -1822,13 +1814,38 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
             {allTiles.length} categories
           </span>
         </div>
-        <div
-          className="grid grid-cols-1 md:grid-cols-6 gap-3 sm:gap-4 md:auto-rows-[180px]"
-          style={{ gridAutoFlow: "dense" }}
-        >
-          {allTiles.map((t) => (
-            <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
-          ))}
+        <div className="space-y-3 sm:space-y-4">
+          {/* Row 1: hero tile + 2 stacked side tiles */}
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4" style={{ minHeight: '360px' }}>
+            {/* Hero — Beans */}
+            {allTiles[0] && (
+              <div className="md:flex-[3] flex flex-col min-h-[260px] md:min-h-0">
+                <BentoTile tile={allTiles[0]} onClick={() => scrollTo(allTiles[0].target)} tall />
+              </div>
+            )}
+            {/* Side stack — next 2 tiles */}
+            {allTiles.slice(1, 3).length > 0 && (
+              <div className="md:flex-[2] flex flex-col gap-3 sm:gap-4">
+                {allTiles.slice(1, 3).map((t) => (
+                  <div key={t.target} className="flex-1">
+                    <BentoTile tile={t} onClick={() => scrollTo(t.target)} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Row 2+: remaining tiles in a clean even grid */}
+          {allTiles.slice(3).length > 0 && (
+            <div className={`grid gap-3 sm:gap-4 grid-cols-2 ${
+              allTiles.slice(3).length <= 2 ? 'sm:grid-cols-2' :
+              allTiles.slice(3).length === 3 ? 'sm:grid-cols-3' :
+              'sm:grid-cols-2 md:grid-cols-4'
+            }`}>
+              {allTiles.slice(3).map((t) => (
+                <BentoTile key={t.target} tile={t} onClick={() => scrollTo(t.target)} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
