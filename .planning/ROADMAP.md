@@ -463,4 +463,254 @@ Phase 2 of v2.0 (orders must exist in Convex — already shipped); `support.ts` 
 
 ---
 *Roadmap created: 2026-05-14*
-*Next step: `/gsd-execute-phase 1`*
+*v3.0 shipped: 2026-05-15*
+
+---
+
+# Roadmap: v4.0 — The Editorial Hub: Offers, News & Promotions
+
+**Milestone:** v4.0
+**Continuing from:** v3.0 (complete)
+**Phase numbering:** 1–3
+**Mode:** Planned
+**Granularity:** Coarse — 3 phases
+
+---
+
+## Phase 1 — Data Layer + Admin CMS
+
+**Goal:** The Convex backend holds all editorial content, discounts, and champion entries. The merchant can create, edit, publish, and delete every piece of content from the Admin Dashboard's new "Editorial" tab — without touching code.
+
+**Requirements covered:** EDI-01, EDI-02, EDI-03, EDI-04, EDI-05, OFF-01, OFF-02, OFF-03, OFF-04, OFF-05, CMS-01, CMS-02, CMS-03, CMS-04, CMS-05
+
+### Tasks
+
+1. **`convex/schema.ts`** — Add three new tables
+
+   `posts` table:
+   - `type`: `v.union(v.literal("flash-sale"), v.literal("product-launch"), v.literal("cafe-news"), v.literal("brand-story"), v.literal("champion"))`
+   - `headline`: `v.string()`
+   - `subhead`: `v.optional(v.string())`
+   - `body`: `v.string()`
+   - `coverImageStorageId`: `v.optional(v.id("_storage"))`
+   - `coverImageUrl`: `v.optional(v.string())`
+   - `status`: `v.union(v.literal("draft"), v.literal("published"), v.literal("scheduled"))`
+   - `publishAt`: `v.optional(v.number())` (epoch ms)
+   - `expiresAt`: `v.optional(v.number())` (epoch ms)
+   - `linkedProductId`: `v.optional(v.id("products"))`
+   - `discountId`: `v.optional(v.id("discounts"))` (flash-sale only)
+   - `personName`: `v.optional(v.string())` (champion only)
+   - `personRole`: `v.optional(v.string())` (champion only)
+   - `personStory`: `v.optional(v.string())` (champion only)
+   - Indexes: `by_status`, `by_type`, `by_publishAt`
+
+   `discounts` table:
+   - `code`: `v.string()` (unique)
+   - `discountType`: `v.union(v.literal("percent"), v.literal("flat"))`
+   - `amount`: `v.number()`
+   - `firstOrderOnly`: `v.boolean()`
+   - `expiresAt`: `v.optional(v.number())`
+   - `maxUses`: `v.optional(v.number())`
+   - `usageCount`: `v.number()` (default 0)
+   - Index: `by_code`
+
+   `orders` table — add optional field: `discountCode`: `v.optional(v.string())`
+
+2. **`convex/posts.ts`** — New module
+   - `listPublished` query: returns all posts with `status: "published"` and (`expiresAt` undefined OR `expiresAt > Date.now()`), ordered by `publishAt` desc
+   - `listAll` query (admin): returns all posts regardless of status, ordered by `_creationTime` desc
+   - `getPost` query: by `_id`
+   - `createPost` mutation: validates required fields by type, inserts, returns `_id`
+   - `updatePost` mutation: accepts `_id` + partial update object, patches
+   - `deletePost` mutation: deletes by `_id`
+   - `generateUploadUrl` mutation: calls `ctx.storage.generateUploadUrl()` for cover image upload
+
+3. **`convex/discounts.ts`** — New module
+   - `listDiscounts` query (admin): returns all discounts
+   - `validateDiscount` query: accepts `{ code, customerPhone, customerEmail }` — checks: exists, not expired, usageCount < maxUses, firstOrderOnly check (queries orders table for matching phone/email with non-cancelled status); returns `{ valid: boolean, reason?: string, discountType?, amount? }`
+   - `claimDiscount` mutation: atomically patches `usageCount += 1`; throws `ConvexError` if ineligible
+   - `createDiscount` mutation: validates uniqueness of `code`, inserts
+   - `deleteDiscount` mutation: deletes by `_id`
+
+4. **`src/components/admin/AdminDashboard.tsx`** — Add "Editorial" tab
+   - New "Editorial" tab (icon: `Newspaper` from lucide-react) alongside Products, Orders, Analytics
+   - Renders `<EditorialCMS />` sub-component when active
+
+5. **`src/components/admin/EditorialCMS.tsx`** — New admin sub-component
+
+   **Posts tab (default):**
+   - Post list table: headline, type badge (color-coded), status badge, publishAt date, actions (Edit / Toggle Publish / Delete)
+   - "New Post" button opens a creation form modal/panel
+   - Post form fields: type selector (dropdown), headline, subhead, body (textarea), cover image upload (file input → `generateUploadUrl` → PUT → store ID), publishAt (datetime-local), expiresAt (datetime-local, optional), linked product (select from products list, optional), linked discount (select from discounts list, only shown when type = flash-sale)
+   - Champion type shows extra fields: personName, personRole, personStory
+   - Submit calls `createPost` or `updatePost`; delete calls `deletePost` with confirm dialog
+
+   **Discounts sub-tab:**
+   - Discount list table: code, type, amount, firstOrderOnly badge, expiresAt, maxUses, usageCount
+   - "New Discount" button opens a simple creation form: code (text), type (percent/flat), amount (number), firstOrderOnly (checkbox), expiresAt (optional), maxUses (optional)
+   - Delete button with confirm dialog
+
+### Success Criteria
+
+- `posts`, `discounts` tables exist and accept all field types in Convex dashboard
+- Admin can create a flash-sale post linked to a discount code, publish it, and see it in the list
+- Admin can create a discount code with firstOrderOnly=true and see usageCount tick up
+- `validateDiscount` returns `{ valid: false, reason: "expired" }` for a past-expiry code
+- `validateDiscount` returns `{ valid: false, reason: "first-order-only" }` for a repeat customer
+- Cover image upload: admin selects image → upload completes → post saved with `coverImageStorageId`
+- Post delete removes the document from the table immediately
+
+### Depends On
+
+v2.0 Phase 2 (orders table must exist for firstOrderOnly check — already shipped)
+
+---
+
+## Phase 2 — Magazine Editorial Hub (Frontend)
+
+**Goal:** Users land on `?page=editorial` and experience a premium magazine-style hub — full-bleed hero, asymmetric grid, category filters, live countdown timers on flash sales, champion spotlights, and a glassmorphism "Claim Offer" button on offer cards that applies the discount to their cart session.
+
+**Requirements covered:** HUB-01, HUB-02, HUB-03, HUB-04, HUB-05, HUB-06, HUB-07, HUB-08, HUB-09, OFF-06, OFF-07, OFF-08
+
+### Tasks
+
+1. **`src/components/EditorialHub.tsx`** — New full-page component
+
+   **Hero section:**
+   - Full-bleed hero (100vw, 70vh) using the most recently published post's `coverImageUrl`
+   - Overlay with post `headline` and `subhead` in large serif-inspired type
+   - If the hero post is a flash-sale, show the countdown timer in the hero overlay
+   - Gradient overlay bottom-to-top (dark → transparent) for legibility
+
+   **Category filter pills:**
+   - Sticky below hero: `All` | `Offers` | `News` | `Stories` | `Champions`
+   - Active pill uses `natural-accent` background; inactive uses `natural-paper` with border
+   - Filtering is client-side — no re-fetch
+
+   **Magazine grid:**
+   - CSS grid with `grid-cols-12` — large cards span 8 cols, small cards span 4 cols; alternates so every 3rd card is large
+   - Mobile: single-column
+   - Cards: cover image (aspect 3/2), type badge top-left, headline, subhead (2-line clamp), date
+   - Flash-sale cards: `CountdownTimer` component (see below), glassmorphism "Claim Offer" button
+   - Product-launch cards: link to `?product=<slug>`
+   - Brand-story / café-news cards: open post detail modal or navigate to `?page=editorial&post=<id>`
+   - Hidden cards: posts with `expiresAt < Date.now()` (flash sales only)
+
+   **Champions band:**
+   - Horizontal scroll row of champion cards below the main grid (or filtered in-grid when Champions filter active)
+   - Card: circular photo, personName, personRole, personStory (3-line clamp), favourite product chip
+
+2. **`src/components/CountdownTimer.tsx`** — Reusable component
+   - Props: `expiresAt: number` (epoch ms)
+   - Displays: `HH:MM:SS` or `Xd Xh Xm` depending on remaining time
+   - Updates every second via `setInterval` in `useEffect`; clears on unmount
+   - When expired: shows "Sale ended" and stops ticking
+   - Styling: monospace digits, `natural-accent` color
+
+3. **Glassmorphism "Claim Offer" button**
+   - Appears only on flash-sale post cards and only when `expiresAt > Date.now()`
+   - Style: `backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-xl px-4 py-2 font-semibold shadow-lg hover:bg-white/20 transition`
+   - Click flow:
+     - Calls `validateDiscount` query with the post's linked discount code (uses anonymous phone/email `""` for non-first-order codes; for firstOrderOnly codes shows a "This offer is for first-time orders only" tooltip instead of validating)
+     - If valid: calls `claimDiscount` mutation → stores `{ code, discountType, amount, claimedAt }` in `localStorage` key `twc_active_discount` → shows a toast "Offer applied ✓ [code] — save ₹X off your order"
+     - If another discount already active: shows a confirmation dialog "Replace your current offer [OLD_CODE] with [NEW_CODE]?" — on confirm, replaces localStorage; on cancel, does nothing
+     - If invalid (expired, maxUses): button is disabled and shows tooltip with reason
+
+4. **Wire route into `src/App.tsx`**
+   - Add `?page=editorial` route check (alongside existing checkout / order-portal routes)
+   - If `?page=editorial&post=<id>`, render `<PostDetail postId={id} />` (inline modal over the hub)
+   - Add "Journal" link to the site navigation (header desktop nav + mobile menu)
+
+5. **`src/components/PostDetail.tsx`** — Full post view
+   - Full-bleed cover image header (60vh)
+   - Type badge, headline in large type, subhead, body (preserving line breaks)
+   - For flash-sale: embed `CountdownTimer` and the glassmorphism "Claim Offer" button
+   - For product-launch: "Shop now →" CTA linking to `?product=<slug>`
+   - Back button navigates to `?page=editorial`
+
+### Success Criteria
+
+- Editorial Hub renders all published posts in the magazine grid; no expired flash-sale cards visible
+- Category filter correctly hides/shows posts by type
+- Flash-sale card shows live countdown — seconds decrement in real time
+- Clicking "Claim Offer" on a valid, non-expired offer stores discount in localStorage and shows toast
+- Clicking "Claim Offer" when another offer is active triggers replace confirmation
+- Disabled "Claim Offer" on expired offer shows tooltip "This offer has ended"
+- Champions band renders all champion-type posts with photo and favourite product chip
+- Post detail view renders body text with correct formatting
+- `?page=editorial` route works from direct URL
+
+### Depends On
+
+Phase 1 (posts and discounts tables + queries must exist)
+
+---
+
+## Phase 3 — Discount Cart Integration
+
+**Goal:** The active discount claimed from the Editorial Hub is reflected everywhere money is shown — the cart drawer, the checkout summary, and the final order record — creating a complete, seamless discount redemption flow.
+
+**Requirements covered:** OFF-09, DISC-01, DISC-02, DISC-03
+
+### Tasks
+
+1. **`src/lib/useCart.ts`** — Extend with discount awareness
+   - Add `activeDiscount: { code: string; discountType: "percent" | "flat"; amount: number } | null` derived by reading `twc_active_discount` from `localStorage`
+   - Add `clearDiscount()` function: removes `twc_active_discount` key from localStorage
+   - Add `discountedSubtotal` computed value: apply discount to `subtotal` (`percent`: `subtotal * (1 - amount/100)`, `flat`: `max(0, subtotal - amount)`)
+   - `clearCart()` now also calls `clearDiscount()` (so discount is removed on order completion)
+
+2. **`src/components/CartDrawer.tsx`** — Show active discount
+   - If `activeDiscount` is set, render an "Active offer" section between the item list and the subtotal line:
+     - Glassmorphism pill: `[CODE] ✓` with a × remove button (calls `clearDiscount()`)
+     - Strike-through original subtotal
+     - Discounted subtotal in `natural-accent` color
+     - Savings line: "You save ₹X" or "You save X%"
+   - "Checkout" CTA still navigates to `?view=checkout` — discount is in localStorage, CheckoutPage reads it
+
+3. **`src/components/CheckoutPage.tsx`** — Show discount in order summary
+   - Read `activeDiscount` from `useCart()`
+   - Order summary section shows: subtotal, discount line (`−₹X` / `−X% [CODE]` in green), total after discount
+   - "Place Order" button passes `discountCode` to `submitOrder` mutation
+
+4. **`convex/orders.ts`** — Accept and re-validate discount at submit time
+   - `submitOrder` mutation: if `discountCode` is provided in the payload:
+     - Re-calls the same validation logic as `validateDiscount` (server-side re-check)
+     - If valid: calls `claimDiscount`-equivalent logic (increments `usageCount`) — note: `claimDiscount` was already called at "Claim Offer" click time in Phase 2, so this is a safety double-check; if `usageCount` would exceed `maxUses`, reject with `ConvexError("Discount no longer valid")`
+     - Stores `discountCode` on the order document
+     - Applies discount to the stored `subtotal` field (server-computed, not trusting client total)
+   - `submitOrder` without `discountCode` behaves as before
+
+5. **`src/components/OrderConfirmation.tsx`** — Show discount applied
+   - If order has `discountCode`, show a "Discount applied: [CODE] — saved ₹X" line in the order summary
+
+### Success Criteria
+
+- Cart drawer shows discount pill, savings, and discounted total when `twc_active_discount` is set
+- Removing the discount pill via × clears localStorage and hides the section immediately
+- Checkout order summary shows original subtotal, discount line, and discounted total
+- `submitOrder` stores `discountCode` on the Convex order document
+- If `maxUses` was just reached between claim and checkout, server rejects with a clear error message ("Discount no longer valid — it was claimed by another user")
+- `clearCart()` also clears `twc_active_discount` from localStorage
+- OrderConfirmation shows "saved ₹X" line when discount was used
+- Discount is not applied if cart is empty at checkout (UI-level guard)
+
+### Depends On
+
+Phase 1 (discounts table + mutations); Phase 2 (`twc_active_discount` localStorage key must be written by Claim Offer flow)
+
+---
+
+## Milestone Completion Criteria (v4.0)
+
+- [ ] EDI-01 through EDI-05 verified (Phase 1)
+- [ ] OFF-01 through OFF-05 verified (Phase 1)
+- [ ] CMS-01 through CMS-05 verified (Phase 1)
+- [ ] HUB-01 through HUB-09 verified (Phase 2)
+- [ ] OFF-06 through OFF-08 verified (Phase 2)
+- [ ] OFF-09, DISC-01 through DISC-03 verified (Phase 3)
+- [ ] End-to-end: admin creates flash sale + discount → user claims offer → discount shown in cart → order submitted with discount code stored → admin sees discount code on order
+
+---
+*Roadmap created: 2026-05-15*
+*Next step: `/gsd-plan-phase 1`*

@@ -127,6 +127,151 @@ Requirements for Milestone v2.0 — Own eShop (No Shopify).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| CART-01 | Phase 1 | ✅ shipped |
+| CART-02 | Phase 1 | ✅ shipped |
+| CART-03 | Phase 1 | ✅ shipped |
+| CART-04 | Phase 1 | ✅ shipped |
+| CART-05 | Phase 1 | ✅ shipped |
+| CHK-01 | Phase 1 | ✅ shipped |
+| CHK-02 | Phase 1 | ✅ shipped |
+| CHK-03 | Phase 1 | ✅ shipped |
+| CHK-04 | Phase 1 | ✅ shipped |
+| ORD-01 | Phase 2 | ✅ shipped |
+| ORD-02 | Phase 2 | ✅ shipped |
+| ORD-03 | Phase 2 | ✅ shipped |
+| ADM-01 | Phase 2 | ✅ shipped |
+| ADM-02 | Phase 2 | ✅ shipped |
+| ADM-03 | Phase 2 | ✅ shipped |
+| PAY-01 | Phase 3 | ⏳ pending |
+| PAY-02 | Phase 3 | ⏳ pending |
+| PAY-03 | Phase 3 | ⏳ pending |
+| PAY-04 | Phase 3 | ⏳ pending |
+
+---
+
+## v4.0 Requirements
+
+Requirements for Milestone v4.0 — The Editorial Hub: Offers, News & Promotions.
+
+**Constraints:**
+- All content fully dynamic — no static/seeded editorial data
+- Discount validation server-side only — client never computes discount math
+- Only one active discount per cart session at a time
+- Cover images stored in Convex Storage (same pattern as product images)
+- No email subscription feature in this milestone
+- No new npm dependencies for layout — Tailwind grid covers magazine layout needs
+
+### Editorial Content (Data Layer)
+
+- [ ] **EDI-01**: A `posts` Convex table supports five content types: `flash-sale`, `product-launch`, `cafe-news`, `brand-story`, `champion`
+- [ ] **EDI-02**: Each post has: `type`, `headline`, `subhead`, `body`, `coverImageStorageId`, `status` (`draft` | `published` | `scheduled`), `publishAt`, `expiresAt` (optional), `linkedProductId` (optional)
+- [ ] **EDI-03**: Flash-sale posts reference a `discountId` linking to the discounts table
+- [ ] **EDI-04**: Champion posts have extended fields: `personName`, `personRole`, `personStory`, `favouriteProductId`
+- [ ] **EDI-05**: A `convex/posts.ts` module exposes: `listPublished` query, `getPost` query, `createPost` mutation, `updatePost` mutation, `deletePost` mutation
+
+### Discounts
+
+- [ ] **OFF-01**: A `discounts` Convex table holds: `code` (unique string), `type` (`percent` | `flat`), `amount` (number), `firstOrderOnly` (boolean), `expiresAt` (optional), `maxUses` (optional), `usageCount` (number, default 0)
+- [ ] **OFF-02**: A `validateDiscount` Convex query checks a code and returns eligibility: valid/invalid, type, amount, reason for rejection (expired, max uses reached, first-order restriction)
+- [ ] **OFF-03**: A `claimDiscount` Convex mutation atomically increments `usageCount` and returns the discount details; fails with `ConvexError` if ineligible
+- [ ] **OFF-04**: Claimed discount code is stored on the order record at submit time so admin can see which code was used per order
+- [ ] **OFF-05**: First-order-only validation checks whether the phone/email has any prior non-cancelled orders before allowing the code
+
+### Claim Offer UX
+
+- [ ] **OFF-06**: Offer and flash-sale post cards display a glassmorphism "Claim Offer" button
+- [ ] **OFF-07**: Clicking "Claim Offer" calls `claimDiscount`, shows a "Offer applied ✓" toast, and stores the active discount in `localStorage` under `twc_active_discount`
+- [ ] **OFF-08**: Only one discount can be active at a time — claiming a new offer replaces any previously active discount (with a confirmation if one is already active)
+- [ ] **OFF-09**: Active discount is cleared from `localStorage` when the order is successfully submitted
+
+### Magazine Editorial Hub (Frontend)
+
+- [ ] **HUB-01**: An Editorial Hub page exists at `?page=editorial` with a full-bleed hero pulled from the most recent featured published post
+- [ ] **HUB-02**: A magazine-style asymmetric grid displays all published posts — mix of large hero cards and smaller supporting cards (Monocle/Kinfolk aesthetic)
+- [ ] **HUB-03**: Category filter pills let users filter by: All | Offers | News | Stories | Champions
+- [ ] **HUB-04**: Flash-sale cards display a live countdown timer (client-side, counts down to `expiresAt`); expired cards are hidden from the public grid
+- [ ] **HUB-05**: Product-launch cards link to the product's detail page
+- [ ] **HUB-06**: Brand-story and café-news cards open a full post detail view (inline expand or `?page=editorial&post=<id>`)
+- [ ] **HUB-07**: Champions section is a dedicated band within the hub showing champion cards with photo, name, role, and favourite product
+- [ ] **HUB-08**: A "Journal" or "Offers & News" nav link in the site header/footer leads to `?page=editorial`
+- [ ] **HUB-09**: Each published post with `expiresAt` in the past is auto-hidden from the public grid (no admin action required)
+
+### Admin CMS
+
+- [ ] **CMS-01**: The Admin Dashboard gains an "Editorial" tab alongside the existing Products, Orders, and Analytics tabs
+- [ ] **CMS-02**: The Editorial tab shows a post list with columns: headline, type badge, status badge, publishAt, actions (edit/delete/toggle publish)
+- [ ] **CMS-03**: A post creation/edit form supports all fields: type selector, headline, subhead, body, cover image upload (Convex Storage), publishAt datetime, expiresAt datetime (optional), linked product (for launch/champion types), linked discount (for flash-sale type)
+- [ ] **CMS-04**: A Discounts sub-tab allows creating, viewing, and deleting discount codes with all fields visible (code, type, amount, firstOrderOnly, expiresAt, maxUses, current usageCount)
+- [ ] **CMS-05**: Champions management is handled via the post creation form (type = champion) — no separate UI needed
+
+### Cart Discount Display
+
+- [ ] **DISC-01**: Cart Drawer shows an "Active offer" section if `twc_active_discount` is set in localStorage: discount code badge, savings amount (calculated client-side for display only), strike-through subtotal, and a × to remove the discount
+- [ ] **DISC-02**: Checkout page order summary shows the discount applied: original subtotal, discount line (−₹X or −X%), and discounted total
+- [ ] **DISC-03**: `submitOrder` mutation accepts an optional `discountCode` field and stores it on the order record; server re-validates the discount before accepting it
+
+### Out of Scope (v4.0)
+
+| Feature | Reason |
+|---------|--------|
+| Email newsletter subscription | Explicitly out of scope for this milestone |
+| Comment / reaction system on posts | Adds auth complexity; defer |
+| Scheduled post auto-publishing | Admin manually publishes for now |
+| Push notifications for flash sales | Native mobile not in scope |
+| Discount stacking | One active at a time by design |
+| Affiliate / referral codes | Future milestone |
+
+## v4.0 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| EDI-01 | Phase 1 | Pending |
+| EDI-02 | Phase 1 | Pending |
+| EDI-03 | Phase 1 | Pending |
+| EDI-04 | Phase 1 | Pending |
+| EDI-05 | Phase 1 | Pending |
+| OFF-01 | Phase 1 | Pending |
+| OFF-02 | Phase 1 | Pending |
+| OFF-03 | Phase 1 | Pending |
+| CMS-01 | Phase 1 | Pending |
+| CMS-02 | Phase 1 | Pending |
+| CMS-03 | Phase 1 | Pending |
+| CMS-04 | Phase 1 | Pending |
+| CMS-05 | Phase 1 | Pending |
+| OFF-04 | Phase 1 | Pending |
+| OFF-05 | Phase 1 | Pending |
+| HUB-01 | Phase 2 | Pending |
+| HUB-02 | Phase 2 | Pending |
+| HUB-03 | Phase 2 | Pending |
+| HUB-04 | Phase 2 | Pending |
+| HUB-05 | Phase 2 | Pending |
+| HUB-06 | Phase 2 | Pending |
+| HUB-07 | Phase 2 | Pending |
+| HUB-08 | Phase 2 | Pending |
+| HUB-09 | Phase 2 | Pending |
+| OFF-06 | Phase 2 | Pending |
+| OFF-07 | Phase 2 | Pending |
+| OFF-08 | Phase 2 | Pending |
+| OFF-09 | Phase 3 | Pending |
+| DISC-01 | Phase 3 | Pending |
+| DISC-02 | Phase 3 | Pending |
+| DISC-03 | Phase 3 | Pending |
+
+**Coverage:**
+- v4.0 requirements: 31 total
+- Mapped to phases: 31
+- Unmapped: 0 ✓
+
+---
+*Requirements updated: 2026-05-15*
+| Email / SMS notifications | Phase 3+ |
+| Multi-currency | INR only |
+| Inventory auto-depletion | Manual stock management for now |
+
+## v2.0 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
 | CART-01 | Phase 1 | Pending |
 | CART-02 | Phase 1 | Pending |
 | CART-03 | Phase 1 | Pending |

@@ -62,21 +62,21 @@ Every customer leaves with a coffee recommendation that feels personally curated
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
 
-## Current Milestone: v2.0 — Own eShop (No Shopify)
+## Current Milestone: v4.0 — The Editorial Hub
 
-**Goal:** Build a fully self-hosted eShop within the existing React + Convex stack — cart, guest checkout, order capture, Razorpay payment, and admin order queue. Zero dependency on Shopify or any external eCommerce platform.
+**Goal:** Build a fully dynamic, CMS-driven Offers & News section that feels like a premium coffee magazine — flash sales, discount codes, product launches, café news, brand stories, and a Champions spotlight — all managed from the existing Admin Dashboard, with a glassmorphism "Claim Offer" mechanic that applies one discount at a time to the cart.
 
 **Target features:**
-- `useCart` hook with localStorage persistence
-- "Add to Cart" on product cards and product detail pages
-- Cart drawer (slide-in panel) with quantity controls
-- Guest checkout form: Name, Phone, Email, Address, Pincode
-- Convex `orders` table + `submitOrder` mutation
-- Order confirmation screen with order number
-- Admin dashboard Orders tab (order queue, detail view)
-- Razorpay payment integration with server-side webhook verification
+- `posts` — content type supporting flash-sale, product-launch, cafe-news, brand-story, champion
+- `discounts` — promo codes (percent/flat, firstOrderOnly or all-users, expiry, usage limits), validated server-side
+- `champions` — staff spotlight entries (name, role, story, photo, favourite product)
+- Admin Dashboard "Editorial" tab: create/edit/publish posts, manage discounts, manage champions
+- Editorial Hub page (`?page=editorial`): magazine-style full-bleed grid, category filters, countdown timers on flash sales
+- Glassmorphism "Claim Offer" button on offer cards → applies discount to cart with "Offer applied ✓" toast; one discount at a time
+- Cart Drawer: shows applied discount code badge, savings, strike-through subtotal
+- Checkout: discount reflected in order total; stored on order record
 
-## Evolution
+**Phase numbering:** 1–3 (reset for new milestone)
 
 This document evolves at phase transitions and milestone boundaries.
 
