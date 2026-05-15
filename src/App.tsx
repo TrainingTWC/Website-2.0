@@ -41,6 +41,8 @@ import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useProducts } from "./lib/useProducts";
 import { useStoryContent } from "./lib/useStoryContent";
+import { useBannerSlides, useHeroContent, useSectionsContent } from "./lib/useSiteContent";
+import { DataBanner } from "./components/DataBanner";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -1414,7 +1416,18 @@ function HScrollCard({
 }
 
 // ── Catalog parallax banner ────────────────────────────────────
-function CatalogBanner() {
+function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string }) {
+  const eyebrowText = eyebrow ?? "The Collection";
+  // title may contain a period — if it ends with one we'll italicize the last word
+  const t = title ?? "Choose your\nritual.";
+  const [titleHead, titleTail] = (() => {
+    const parts = t.split(/\n/);
+    if (parts.length >= 2) return [parts[0], parts.slice(1).join(" ")];
+    // single line — italicize last word
+    const words = t.trim().split(/\s+/);
+    if (words.length <= 1) return [t, ""];
+    return [words.slice(0, -1).join(" "), words[words.length - 1]];
+  })();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -1463,13 +1476,13 @@ function CatalogBanner() {
             className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-natural-accent"
           >
             <span className="h-px w-8 bg-natural-accent/40" />
-            The Collection
+            {eyebrowText}
             <span className="h-px w-8 bg-natural-accent/40" />
           </motion.span>
 
           <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] mt-5 tracking-tight text-natural-text">
-            Choose your<br />
-            <em className="font-serif italic font-light">ritual.</em>
+            {titleHead}{titleTail ? <br /> : null}
+            {titleTail ? <em className="font-serif italic font-light">{titleTail}</em> : null}
           </h2>
 
           <motion.p
@@ -1663,6 +1676,9 @@ function OurStoryImage({ slides }: { slides?: string[] }) {
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
   const story = useStoryContent();
+  const heroContent = useHeroContent();
+  const sectionsContent = useSectionsContent();
+  const cmsBannerSlides = useBannerSlides();
   // Bucket products by the new two-tier taxonomy. `resolveTaxonomy` honours
   // explicit fields and falls back to legacy `type` so un-migrated rows still
   // land in a sensible bucket.
@@ -1729,10 +1745,12 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const heroSlides = [
-    <FizzBanner key="fizz" />,
-    <DessertsBanner key="desserts" />,
-  ];
+  const heroSlides = cmsBannerSlides.length > 0
+    ? cmsBannerSlides.map((slide, i) => <DataBanner key={`cms-${i}`} slide={slide} />)
+    : [
+        <FizzBanner key="fizz" />,
+        <DessertsBanner key="desserts" />,
+      ];
 
   return (
     <div>
@@ -1740,6 +1758,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       <CinematicHero
         slides={heroSlides}
         onScrollHint={goToCatalog}
+        hero={heroContent}
       />
 
       {/* ── Curtain into editorial chapter 01 ──────────────────── */}
@@ -1817,7 +1836,10 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
             be a blank stretch of identical color, reading as dead space. ── */}
 
       {/* ── Catalog intro — parallax editorial banner ──────────── */}
-      <CatalogBanner />
+      <CatalogBanner
+        eyebrow={sectionsContent.catalogBanner.eyebrow}
+        title={sectionsContent.catalogBanner.title}
+      />
 
       <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
 
@@ -1825,8 +1847,8 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       <section id="categories" className="space-y-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">Shop the catalog</p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black mt-2">Pick your aisle.</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">{sectionsContent.categories.eyebrow}</p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black mt-2">{sectionsContent.categories.title}</h2>
           </div>
           <span className="hidden sm:inline text-xs text-natural-text/40 font-bold uppercase tracking-widest">
             {allTiles.length} categories

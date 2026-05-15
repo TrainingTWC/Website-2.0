@@ -31,10 +31,19 @@ import { BannerSlideshow } from "./BannerSlideshow";
 export function CinematicHero({
   slides,
   onScrollHint,
+  hero,
 }: {
   slides: ReactNode[];
   onScrollHint: () => void;
+  hero?: {
+    eyebrow: string;
+    wordmarkLine1: string;
+    wordmarkLine2: string;
+  };
 }) {
+  const eyebrow = hero?.eyebrow ?? "A daily ritual · est. 2016";
+  const wordmarkLine1 = hero?.wordmarkLine1 ?? "THIRD WAVE";
+  const wordmarkLine2 = hero?.wordmarkLine2 ?? "coffee.";
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -86,10 +95,10 @@ export function CinematicHero({
         className="absolute inset-x-0 top-[14%] text-center pointer-events-none select-none"
       >
         <span className="block font-serif font-black text-[clamp(4rem,16vw,15rem)] leading-[0.85] tracking-tight text-white/[0.07]">
-          THIRD WAVE
+          {wordmarkLine1}
         </span>
         <span className="block font-serif font-black italic text-[clamp(3rem,14vw,13rem)] leading-[0.85] tracking-tight text-white/[0.1] -mt-4">
-          coffee.
+          {wordmarkLine2}
         </span>
       </motion.h1>
 
@@ -104,7 +113,7 @@ export function CinematicHero({
         >
           <span className="h-px w-10 bg-amber-300/70" />
           <span className="text-[10px] font-bold tracking-[0.45em] uppercase text-amber-200/90">
-            A daily ritual · est. 2016
+            {eyebrow}
           </span>
           <span className="h-px w-10 bg-amber-300/70" />
         </motion.div>

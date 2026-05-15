@@ -38,6 +38,9 @@ export function HomeContentCMS() {
         </p>
       </div>
 
+      <HeroEditor />
+      <SectionHeadingsEditor />
+      <BannerSlidesEditor />
       <StoryEditor />
     </div>
   );
@@ -401,6 +404,468 @@ function StoryEditor() {
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Hero text editor — eyebrow + 2-line wordmark
+// ═══════════════════════════════════════════════════════════════════════════
+interface HeroValue {
+  eyebrow: string;
+  wordmarkLine1: string;
+  wordmarkLine2: string;
+}
+const HERO_DEFAULTS: HeroValue = {
+  eyebrow: "A daily ritual · est. 2016",
+  wordmarkLine1: "THIRD WAVE",
+  wordmarkLine2: "coffee.",
+};
+
+function HeroEditor() {
+  const entry = useQuery(convexApi.siteContent.get, { key: "hero" });
+  const setContent = useMutation(convexApi.siteContent.set);
+  const [form, setForm] = useState<HeroValue>(HERO_DEFAULTS);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (entry === undefined) return;
+    if (entry === null) { setForm(HERO_DEFAULTS); return; }
+    const v = entry.value as Partial<HeroValue> | null;
+    setForm({
+      eyebrow: v?.eyebrow ?? HERO_DEFAULTS.eyebrow,
+      wordmarkLine1: v?.wordmarkLine1 ?? HERO_DEFAULTS.wordmarkLine1,
+      wordmarkLine2: v?.wordmarkLine2 ?? HERO_DEFAULTS.wordmarkLine2,
+    });
+  }, [entry]);
+
+  async function handleSave() {
+    setStatus("saving"); setError("");
+    try {
+      await setContent({ key: "hero", json: JSON.stringify(form) });
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (e: any) {
+      setStatus("error"); setError(e?.message ?? "Failed to save");
+    }
+  }
+
+  if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-bold text-stone-800">Hero text (cinematic banner)</h4>
+          <p className="text-xs text-stone-500">Eyebrow tagline and the giant background wordmark at the top of the homepage.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {status === "saved" && <span className="text-xs text-green-600 font-bold">✓ Saved</span>}
+          {status === "error" && <span className="text-xs text-red-600 font-bold">! {error}</span>}
+          <button
+            onClick={handleSave}
+            disabled={status === "saving"}
+            className="flex items-center gap-2 bg-natural-accent text-white rounded-xl px-4 py-2 text-sm font-bold hover:opacity-90 transition disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {status === "saving" ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label className={LABEL}>Eyebrow</label>
+          <input value={form.eyebrow} onChange={(e) => setForm((f) => ({ ...f, eyebrow: e.target.value }))} className={INPUT} />
+        </div>
+        <div>
+          <label className={LABEL}>Wordmark line 1</label>
+          <input value={form.wordmarkLine1} onChange={(e) => setForm((f) => ({ ...f, wordmarkLine1: e.target.value }))} className={INPUT} />
+        </div>
+        <div>
+          <label className={LABEL}>Wordmark line 2 (italic)</label>
+          <input value={form.wordmarkLine2} onChange={(e) => setForm((f) => ({ ...f, wordmarkLine2: e.target.value }))} className={INPUT} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Section headings editor
+// ═══════════════════════════════════════════════════════════════════════════
+interface SectionHeading { eyebrow: string; title: string }
+interface SectionsValue {
+  catalogBanner: SectionHeading;
+  categories: SectionHeading;
+}
+const SECTIONS_DEFAULTS: SectionsValue = {
+  catalogBanner: { eyebrow: "The Collection", title: "Choose your\nritual." },
+  categories: { eyebrow: "Shop the catalog", title: "Pick your aisle." },
+};
+
+function SectionHeadingsEditor() {
+  const entry = useQuery(convexApi.siteContent.get, { key: "sections" });
+  const setContent = useMutation(convexApi.siteContent.set);
+  const [form, setForm] = useState<SectionsValue>(SECTIONS_DEFAULTS);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (entry === undefined) return;
+    if (entry === null) { setForm(SECTIONS_DEFAULTS); return; }
+    const v = entry.value as Partial<SectionsValue> | null;
+    setForm({
+      catalogBanner: {
+        eyebrow: v?.catalogBanner?.eyebrow ?? SECTIONS_DEFAULTS.catalogBanner.eyebrow,
+        title: v?.catalogBanner?.title ?? SECTIONS_DEFAULTS.catalogBanner.title,
+      },
+      categories: {
+        eyebrow: v?.categories?.eyebrow ?? SECTIONS_DEFAULTS.categories.eyebrow,
+        title: v?.categories?.title ?? SECTIONS_DEFAULTS.categories.title,
+      },
+    });
+  }, [entry]);
+
+  async function handleSave() {
+    setStatus("saving"); setError("");
+    try {
+      await setContent({ key: "sections", json: JSON.stringify(form) });
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (e: any) {
+      setStatus("error"); setError(e?.message ?? "Failed to save");
+    }
+  }
+
+  if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
+
+  const sections: { key: keyof SectionsValue; label: string; note: string }[] = [
+    { key: "catalogBanner", label: "Catalog intro banner", note: "Big parallax banner before the category grid. Use a newline in Title to break across two lines — the second line is italic." },
+    { key: "categories", label: "Categories grid header", note: "Sits above the bento tile grid." },
+  ];
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-bold text-stone-800">Section headings</h4>
+          <p className="text-xs text-stone-500">Eyebrows and titles for the major homepage sections.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {status === "saved" && <span className="text-xs text-green-600 font-bold">✓ Saved</span>}
+          {status === "error" && <span className="text-xs text-red-600 font-bold">! {error}</span>}
+          <button
+            onClick={handleSave}
+            disabled={status === "saving"}
+            className="flex items-center gap-2 bg-natural-accent text-white rounded-xl px-4 py-2 text-sm font-bold hover:opacity-90 transition disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {status === "saving" ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </header>
+      <div className="space-y-4">
+        {sections.map(({ key, label, note }) => (
+          <div key={key} className="rounded-xl border border-stone-200 bg-white p-4 space-y-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-stone-600">{label}</p>
+              <p className="text-[11px] text-stone-400">{note}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Eyebrow</label>
+                <input
+                  value={form[key].eyebrow}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: { ...f[key], eyebrow: e.target.value } }))}
+                  className={INPUT}
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Title</label>
+                <textarea
+                  value={form[key].title}
+                  rows={2}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: { ...f[key], title: e.target.value } }))}
+                  className={INPUT}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Banner slideshow editor — hero banner CRUD
+// ═══════════════════════════════════════════════════════════════════════════
+interface BannerSlide {
+  storageId?: string;
+  url?: string;             // resolved on read; not persisted when storageId present
+  partner?: string;
+  headline: string;
+  headlineItalic?: string;
+  subhead?: string;
+  tagline?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+  gradientOpacity?: number;
+}
+
+const BANNER_EMPTY: BannerSlide = {
+  partner: "",
+  headline: "NEW HEADLINE",
+  headlineItalic: "",
+  subhead: "",
+  tagline: "",
+  gradientFrom: "#1a3a8a",
+  gradientTo: "#ff6fa4",
+  gradientOpacity: 0.6,
+};
+
+function BannerSlidesEditor() {
+  const entry = useQuery(convexApi.siteContent.get, { key: "banner.slides" });
+  const setContent = useMutation(convexApi.siteContent.set);
+  const generateUploadUrl = useMutation(convexApi.siteContent.generateUploadUrl);
+  const convex = useConvex();
+
+  const [slides, setSlides] = useState<BannerSlide[]>([]);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (entry === undefined) return;
+    if (entry === null) { setSlides([]); return; }
+    const v = entry.value as { slides?: BannerSlide[] } | null;
+    setSlides(Array.isArray(v?.slides) ? v!.slides : []);
+  }, [entry]);
+
+  async function handleSave() {
+    setStatus("saving"); setError("");
+    try {
+      // Only persist storageId when present (drop transient url)
+      const toSave = slides.map((s) => {
+        const { url, ...rest } = s;
+        return s.storageId ? rest : { ...rest, url };
+      });
+      await setContent({ key: "banner.slides", json: JSON.stringify({ slides: toSave }) });
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (e: any) {
+      setStatus("error"); setError(e?.message ?? "Failed to save");
+    }
+  }
+
+  async function handleImageUpload(file: File, idx: number) {
+    setUploadingIdx(idx); setError("");
+    try {
+      const localPreview = URL.createObjectURL(file);
+      setSlides((arr) => {
+        const next = [...arr];
+        next[idx] = { ...next[idx], url: localPreview, storageId: undefined };
+        return next;
+      });
+
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Upload failed (${res.status}): ${txt.slice(0, 120)}`);
+      }
+      const { storageId } = await res.json();
+      if (!storageId) throw new Error("No storageId returned from upload");
+
+      let cdnUrl = "";
+      try {
+        cdnUrl = await convex.query(convexApi.siteContent.getStorageUrl, { storageId });
+      } catch { /* backend will resolve on read */ }
+
+      URL.revokeObjectURL(localPreview);
+      setSlides((arr) => {
+        const next = [...arr];
+        next[idx] = { ...next[idx], storageId, url: cdnUrl || localPreview };
+        return next;
+      });
+    } catch (e: any) {
+      setError(e?.message ?? "Upload failed");
+      // eslint-disable-next-line no-console
+      console.error("[BannerSlidesEditor] upload failed:", e);
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  function addSlide() { setSlides((arr) => [...arr, { ...BANNER_EMPTY }]); }
+  function removeSlide(i: number) { setSlides((arr) => arr.filter((_, idx) => idx !== i)); }
+  function moveSlide(i: number, dir: -1 | 1) {
+    setSlides((arr) => {
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return arr;
+      const next = [...arr];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+  function update<K extends keyof BannerSlide>(i: number, key: K, val: BannerSlide[K]) {
+    setSlides((arr) => arr.map((s, idx) => (idx === i ? { ...s, [key]: val } : s)));
+  }
+
+  if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-bold text-stone-800">Hero banner slideshow</h4>
+          <p className="text-xs text-stone-500">
+            The rotating banner inside the cinematic hero. Leave empty to fall back to the original built-in banners (Schweppes + Third Rush).
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {status === "saved" && <span className="text-xs text-green-600 font-bold">✓ Saved</span>}
+          {status === "error" && <span className="text-xs text-red-600 font-bold">! {error}</span>}
+          <button
+            onClick={addSlide}
+            className="flex items-center gap-1 text-xs font-bold text-natural-accent hover:underline"
+          >
+            <Plus className="w-3 h-3" /> Add slide
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={status === "saving"}
+            className="flex items-center gap-2 bg-natural-accent text-white rounded-xl px-4 py-2 text-sm font-bold hover:opacity-90 transition disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {status === "saving" ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </header>
+
+      {slides.length === 0 ? (
+        <p className="text-xs text-stone-400 italic">No CMS banner slides yet. Add one to override the defaults.</p>
+      ) : (
+        <div className="space-y-4">
+          {slides.map((slide, i) => (
+            <div key={i} className="rounded-xl border border-stone-200 bg-white p-4 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
+              {/* image */}
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-stone-200 bg-stone-100 aspect-[4/5]">
+                  {slide.url ? (
+                    <img src={slide.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-300 text-xs">No image</div>
+                  )}
+                  {uploadingIdx === i && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold animate-pulse">Uploading…</span>
+                    </div>
+                  )}
+                  <div className="absolute top-1 left-1 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                </div>
+                <label className="block text-center px-2 py-1 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 cursor-pointer">
+                  {slide.storageId || slide.url ? "Replace image" : "Upload image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImageUpload(f, i);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => moveSlide(i, -1)}
+                      disabled={i === 0}
+                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                    >←</button>
+                    <button
+                      onClick={() => moveSlide(i, 1)}
+                      disabled={i === slides.length - 1}
+                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                    >→</button>
+                  </div>
+                  <button
+                    onClick={() => removeSlide(i)}
+                    className="text-stone-400 hover:text-red-500 transition p-1"
+                    title="Remove slide"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* fields */}
+              <div className="space-y-2">
+                <div>
+                  <label className={LABEL}>Partner / Eyebrow (small uppercase line)</label>
+                  <input value={slide.partner ?? ""} onChange={(e) => update(i, "partner", e.target.value)} className={INPUT} placeholder="THIRD WAVE × Partner" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className={LABEL}>Headline</label>
+                    <input value={slide.headline} onChange={(e) => update(i, "headline", e.target.value)} className={INPUT} />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Headline italic (optional)</label>
+                    <input value={slide.headlineItalic ?? ""} onChange={(e) => update(i, "headlineItalic", e.target.value)} className={INPUT} placeholder="FIZZ." />
+                  </div>
+                </div>
+                <div>
+                  <label className={LABEL}>Subheading</label>
+                  <input value={slide.subhead ?? ""} onChange={(e) => update(i, "subhead", e.target.value)} className={INPUT} />
+                </div>
+                <div>
+                  <label className={LABEL}>Tagline (pill text)</label>
+                  <input value={slide.tagline ?? ""} onChange={(e) => update(i, "tagline", e.target.value)} className={INPUT} placeholder="In stores now" />
+                </div>
+                <div className="grid grid-cols-3 gap-2 items-end">
+                  <div>
+                    <label className={LABEL}>Gradient from</label>
+                    <input
+                      type="color"
+                      value={slide.gradientFrom ?? "#1a3a8a"}
+                      onChange={(e) => update(i, "gradientFrom", e.target.value)}
+                      className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Gradient to</label>
+                    <input
+                      type="color"
+                      value={slide.gradientTo ?? "#ff6fa4"}
+                      onChange={(e) => update(i, "gradientTo", e.target.value)}
+                      className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Overlay opacity</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min={0}
+                      max={1}
+                      value={slide.gradientOpacity ?? 0.6}
+                      onChange={(e) => update(i, "gradientOpacity", Number(e.target.value))}
+                      className={INPUT}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
