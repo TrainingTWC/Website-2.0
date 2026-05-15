@@ -533,7 +533,7 @@ function Storefront() {
   }
 
   // ── Full-page route: Editorial Hub / Journal ─────────────────
-  if (page === "editorial") {
+  if (page === "third-circle") {
     const postId = params.get("post");
     if (postId) {
       return (
@@ -546,11 +546,12 @@ function Storefront() {
             onOpenCart={() => {}}
             onNavTo={handleNavTo}
             cartCount={cartCount}
+            activeOverride="editorial"
           />
           <div className="flex-1 pt-20">
             <PostDetail
               postId={postId}
-              onBack={() => navigateTo({ page: "editorial", post: null })}
+              onBack={() => navigateTo({ page: "third-circle", post: null })}
               onProductClick={(id) => navigateTo({ page: null, product: id, post: null })}
             />
           </div>
@@ -570,11 +571,12 @@ function Storefront() {
           onOpenCart={() => {}}
           onNavTo={handleNavTo}
           cartCount={cartCount}
+          activeOverride="editorial"
         />
         <div className="flex-1 pt-20">
           <EditorialHub
             onProductClick={(id) => navigateTo({ page: null, product: id })}
-            onPostOpen={(id) => navigateTo({ page: "editorial", post: id })}
+            onPostOpen={(id) => navigateTo({ page: "third-circle", post: id })}
           />
         </div>
         <SiteFooter
