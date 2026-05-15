@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft, Package, MapPin, MessageCircle, X, Send,
-  CheckCircle, Truck, Clock, Ban, ChevronRight, Mail, ShoppingBag,
+  CheckCircle, Truck, Clock, Ban, ChevronRight, Mail, ShoppingBag, User,
 } from "lucide-react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -42,7 +42,15 @@ function stepIndex(status: string) {
 // ──────────────────────────────────────────────────────────────────────────────
 // Lookup screen — two tabs: Order ID | Email / Phone
 // ──────────────────────────────────────────────────────────────────────────────
-function LookupScreen({ onFound }: { onFound: (id: string) => void }) {
+type ContactOrder = NonNullable<ReturnType<typeof useQuery<typeof api.orders.getOrdersByContact>>>[-1];
+
+function LookupScreen({
+  onFound,
+  onFoundByContact,
+}: {
+  onFound: (id: string) => void;
+  onFoundByContact: (orders: ContactOrder[], contact: string) => void;
+}) {
   const [tab, setTab] = useState<"orderId" | "contact">("orderId");
 
   // Order ID tab
@@ -59,6 +67,13 @@ function LookupScreen({ onFound }: { onFound: (id: string) => void }) {
     api.orders.getOrdersByContact,
     contactSubmitted ? { contact: contactValue.trim() } : "skip"
   );
+
+  // Auto-navigate to My Orders dashboard as soon as results arrive
+  useEffect(() => {
+    if (contactSubmitted && ordersByContact && ordersByContact.length > 0) {
+      onFoundByContact(ordersByContact as ContactOrder[], contactValue.trim());
+    }
+  }, [ordersByContact, contactSubmitted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleTabChange(t: "orderId" | "contact") {
     setTab(t);
@@ -200,35 +215,10 @@ function LookupScreen({ onFound }: { onFound: (id: string) => void }) {
                 </div>
               )}
 
-              {/* Results list */}
+              {/* Results found → spinner stays until useEffect navigates away */}
               {contactSubmitted && ordersByContact && ordersByContact.length > 0 && (
-                <div className="space-y-2 mt-1">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-natural-text/40">
-                    {ordersByContact.length} order{ordersByContact.length !== 1 ? "s" : ""} found
-                  </p>
-                  {ordersByContact.map((order) => (
-                    <button
-                      key={order._id}
-                      onClick={() => onFound(order.orderId)}
-                      className="w-full flex items-center justify-between bg-natural-bg border border-natural-border rounded-xl px-4 py-3.5 hover:border-natural-accent hover:bg-natural-accent/5 transition-all group text-left"
-                    >
-                      <div>
-                        <p className="font-mono font-bold text-sm text-natural-text tracking-wider">
-                          {order.orderId}
-                        </p>
-                        <p className="text-xs text-natural-text/50 mt-0.5">
-                          ₹{order.total.toLocaleString("en-IN")} &middot;{" "}
-                          {order.items.length} item{order.items.length !== 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status] ?? ""}`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-natural-text/30 group-hover:text-natural-accent transition-colors" />
-                      </div>
-                    </button>
-                  ))}
+                <div className="flex items-center justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-natural-accent border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </div>
@@ -243,6 +233,117 @@ function LookupScreen({ onFound }: { onFound: (id: string) => void }) {
       >
         <ShoppingBag className="w-4 h-4" /> Continue Shopping
       </button>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// My Orders — full order management dashboard (after email/phone login)
+// ──────────────────────────────────────────────────────────────────────────────
+function MyOrdersScreen({
+  orders,
+  contact,
+  onViewOrder,
+  onBack,
+}: {
+  orders: ContactOrder[];
+  contact: string;
+  onViewOrder: (orderId: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="min-h-screen bg-natural-bg pb-24">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-natural-bg/95 backdrop-blur-sm border-b border-natural-border">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-natural-text/65 hover:text-natural-text transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-natural-text/40 leading-none">My Orders</p>
+            <p className="text-natural-text text-sm font-medium truncate mt-0.5">{contact}</p>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-natural-accent/10 flex items-center justify-center">
+            <User className="w-4 h-4 text-natural-accent" />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        {/* Summary strip */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-natural-text">
+            {orders.length} order{orders.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+
+        {/* Order cards */}
+        {orders.map((order) => (
+          <motion.button
+            key={order._id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => onViewOrder(order.orderId)}
+            className="w-full bg-natural-paper border border-natural-border rounded-2xl p-5 hover:border-natural-accent hover:shadow-md transition-all group text-left"
+          >
+            {/* Top row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono font-bold text-sm text-natural-text tracking-wider">{order.orderId}</p>
+                <p className="text-natural-text/45 text-xs mt-0.5">
+                  {new Date(order._creationTime).toLocaleDateString("en-IN", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLORS[order.status] ?? "bg-natural-stone/10 text-natural-text/60"}` }>
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-natural-text/30 group-hover:text-natural-accent transition-colors" />
+              </div>
+            </div>
+
+            {/* Items preview */}
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {order.items.slice(0, 3).map((item, i) => (
+                  <img
+                    key={i}
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-9 h-9 rounded-lg object-cover border-2 border-natural-paper"
+                  />
+                ))}
+                {order.items.length > 3 && (
+                  <div className="w-9 h-9 rounded-lg bg-natural-muted border-2 border-natural-paper flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-natural-text/60">+{order.items.length - 3}</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-natural-text/55 text-xs ml-1">
+                {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+              </p>
+              <p className="ml-auto text-natural-text font-semibold text-sm">
+                ₹{order.total.toLocaleString("en-IN")}
+              </p>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Continue shopping */}
+      <div className="max-w-2xl mx-auto px-4">
+        <button
+          onClick={goToStorefront}
+          className="w-full flex items-center justify-center gap-2 bg-natural-accent text-white rounded-2xl py-4 font-bold text-sm hover:opacity-90 transition-opacity"
+        >
+          <ShoppingBag className="w-4 h-4" /> Continue Shopping
+        </button>
+      </div>
     </div>
   );
 }
@@ -640,23 +741,65 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Public export — orchestrates lookup ↔ detail navigation
+// Public export — orchestrates lookup ↔ my-orders ↔ detail navigation
 // ──────────────────────────────────────────────────────────────────────────────
 export function OrderPortal({ initialOrderId }: OrderPortalProps) {
+  type View = "lookup" | "my-orders" | "order-detail";
+  const [view, setView] = useState<View>(initialOrderId ? "order-detail" : "lookup");
   const [orderId, setOrderId] = useState<string | undefined>(initialOrderId);
+  const [contactOrders, setContactOrders] = useState<ContactOrder[]>([]);
+  const [contactQuery, setContactQuery] = useState("");
+  // Track where order-detail was entered from so Back goes to the right place
+  const [detailFrom, setDetailFrom] = useState<"lookup" | "my-orders">("lookup");
 
-  function handleFound(id: string) {
+  function handleFoundById(id: string) {
     window.history.pushState({}, "", `${window.location.pathname}?page=order-portal&id=${id}`);
     setOrderId(id);
+    setDetailFrom("lookup");
+    setView("order-detail");
   }
 
-  function handleBack() {
+  function handleFoundByContact(orders: ContactOrder[], contact: string) {
+    window.history.pushState({}, "", `${window.location.pathname}?page=order-portal&contact=1`);
+    setContactOrders(orders);
+    setContactQuery(contact);
+    setView("my-orders");
+  }
+
+  function handleViewOrder(id: string) {
+    window.history.pushState({}, "", `${window.location.pathname}?page=order-portal&id=${id}`);
+    setOrderId(id);
+    setDetailFrom("my-orders");
+    setView("order-detail");
+  }
+
+  function handleBackFromDetail() {
+    if (detailFrom === "my-orders") {
+      window.history.pushState({}, "", `${window.location.pathname}?page=order-portal&contact=1`);
+      setView("my-orders");
+    } else {
+      window.history.pushState({}, "", `${window.location.pathname}?page=order-portal`);
+      setView("lookup");
+    }
+  }
+
+  function handleBackFromMyOrders() {
     window.history.pushState({}, "", `${window.location.pathname}?page=order-portal`);
-    setOrderId(undefined);
+    setView("lookup");
   }
 
-  if (orderId) {
-    return <OrderDetail orderId={orderId} onBack={handleBack} />;
+  if (view === "order-detail" && orderId) {
+    return <OrderDetail orderId={orderId} onBack={handleBackFromDetail} />;
   }
-  return <LookupScreen onFound={handleFound} />;
+  if (view === "my-orders") {
+    return (
+      <MyOrdersScreen
+        orders={contactOrders}
+        contact={contactQuery}
+        onViewOrder={handleViewOrder}
+        onBack={handleBackFromMyOrders}
+      />
+    );
+  }
+  return <LookupScreen onFound={handleFoundById} onFoundByContact={handleFoundByContact} />;
 }
