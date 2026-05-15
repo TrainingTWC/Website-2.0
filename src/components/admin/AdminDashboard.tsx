@@ -29,6 +29,7 @@ import {
   Box,
   Filter,
   Sparkles,
+  Newspaper,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { useProducts } from "../../lib/useProducts";
@@ -37,6 +38,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { Product, ProductType, RoastLevel, MainCategory, SubCategory } from "../../types";
 import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../../types";
 import { SalesAnalytics } from "./SalesAnalytics";
+import { EditorialCMS } from "./EditorialCMS";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -155,7 +157,7 @@ function formDataToProductPayload(form: ProductFormData) {
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders">(
+  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders" | "editorial">(
     "analytics"
   );
   const products = useProducts();
@@ -166,6 +168,7 @@ export function AdminDashboard() {
     { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
     { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
     { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
+    { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
   ];
 
   return (
@@ -204,6 +207,7 @@ export function AdminDashboard() {
         {activeTab === "analytics" && <CombinedAnalytics />}
         {activeTab === "rules" && <RulesManager />}
         {activeTab === "orders" && <OrdersView />}
+        {activeTab === "editorial" && <EditorialCMS />}
       </div>
     </div>
   );
