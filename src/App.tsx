@@ -538,7 +538,16 @@ function Storefront() {
     if (postId) {
       return (
         <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
-          <div className="flex-1">
+          <MorphingHeader
+            headerBg={headerBg}
+            headerBorder={headerBorder}
+            headerShadow={headerShadow}
+            onOpenTI={(e) => { e.stopPropagation(); navigateTo({ page: "ti" }); }}
+            onOpenCart={() => {}}
+            onNavTo={handleNavTo}
+            cartCount={cartCount}
+          />
+          <div className="flex-1 pt-20">
             <PostDetail
               postId={postId}
               onBack={() => navigateTo({ page: "editorial", post: null })}
@@ -553,7 +562,16 @@ function Storefront() {
     }
     return (
       <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
-        <div className="flex-1">
+        <MorphingHeader
+          headerBg={headerBg}
+          headerBorder={headerBorder}
+          headerShadow={headerShadow}
+          onOpenTI={(e) => { e.stopPropagation(); navigateTo({ page: "ti" }); }}
+          onOpenCart={() => {}}
+          onNavTo={handleNavTo}
+          cartCount={cartCount}
+        />
+        <div className="flex-1 pt-20">
           <EditorialHub
             onProductClick={(id) => navigateTo({ page: null, product: id })}
             onPostOpen={(id) => navigateTo({ page: "editorial", post: id })}
