@@ -41,7 +41,7 @@ import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useProducts } from "./lib/useProducts";
 import { useStoryContent } from "./lib/useStoryContent";
-import { useBannerSlides, useHeroContent, useSectionsContent } from "./lib/useSiteContent";
+import { useBannerSlides, useHeroContent, useSectionsContent, useChapters } from "./lib/useSiteContent";
 import { DataBanner } from "./components/DataBanner";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
@@ -57,6 +57,7 @@ import { SiteFooter } from "./components/SiteFooter";
 import { GalaxySweep } from "./components/GalaxySweep";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterDeck } from "./components/Cinematic";
+import type { ChapterConfig } from "./components/Cinematic";
 import { EditorialHub } from "./components/EditorialHub";
 import { PostDetail } from "./components/PostDetail";
 import { slugify } from "./lib/slug";
@@ -1679,6 +1680,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
   const heroContent = useHeroContent();
   const sectionsContent = useSectionsContent();
   const cmsBannerSlides = useBannerSlides();
+  const cmsChapters = useChapters();
   // Bucket products by the new two-tier taxonomy. `resolveTaxonomy` honours
   // explicit fields and falls back to legacy `type` so un-migrated rows still
   // land in a sensible bucket.
@@ -1767,7 +1769,29 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
       {/* ── Chapter deck: 5 stacked cards. Each scrolls through its
             own parallax pass, then flips out to reveal the next. ── */}
       <ChapterDeck
-        chapters={[
+        chapters={cmsChapters
+          ? cmsChapters.map<ChapterConfig>((c) => {
+              const linked = c.productSlug ? products.find((p) => slugify(p.name) === c.productSlug) : undefined;
+              return {
+                index: c.index,
+                eyebrow: c.eyebrow,
+                title: (
+                  <>
+                    {c.titleHead}
+                    {c.titleItalic ? <><br /><em className="font-serif italic font-light">{c.titleItalic}</em></> : null}
+                  </>
+                ),
+                body: c.body,
+                callouts: c.callouts ?? [],
+                product: linked,
+                imageUrl: c.imageUrl,
+                imageAlt: c.eyebrow,
+                align: c.align,
+                theme: c.theme,
+                onProductClick: linked ? () => navigateTo({ product: slugify(linked.name) }) : undefined,
+              };
+            })
+          : [
           {
             index: "01 / 05",
             eyebrow: "Sourcing",

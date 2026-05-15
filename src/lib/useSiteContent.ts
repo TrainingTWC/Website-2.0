@@ -35,6 +35,20 @@ export interface SectionsContent {
   categories: SectionHeading;
 }
 
+export interface ChapterData {
+  storageId?: string;
+  imageUrl?: string;       // custom override; if absent and productSlug set, the product's image is used
+  productSlug?: string;    // slugified product name for click-through + fallback image
+  index: string;           // "01 / 05"
+  eyebrow: string;         // "Sourcing"
+  titleHead: string;       // "Single origins."
+  titleItalic?: string;    // "Patient craft."
+  body: string;
+  callouts: string[];
+  align: "left" | "right";
+  theme: "light" | "dark";
+}
+
 // ─── Defaults ───────────────────────────────────────────────────────────────
 const DEFAULT_HERO: HeroContent = {
   eyebrow: "A daily ritual · est. 2016",
@@ -91,3 +105,15 @@ export function useSectionsContent(): SectionsContent {
 }
 
 export { DEFAULT_HERO, DEFAULT_SECTIONS };
+
+// ─── Chapters hook ──────────────────────────────────────────────────────────
+// Returns null if no CMS chapters have been saved yet (caller falls back to
+// the original hardcoded chapter deck).
+export function useChapters(): ChapterData[] | null {
+  const entry = useQuery(convexApi.siteContent.get, { key: "chapters" });
+  if (entry === undefined) return null;          // still loading
+  if (entry === null) return null;
+  const v = entry.value as { chapters?: ChapterData[] } | null;
+  if (!v || !Array.isArray(v.chapters) || v.chapters.length === 0) return null;
+  return v.chapters;
+}

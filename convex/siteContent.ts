@@ -1,20 +1,31 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-// ── Resolve slide URLs from storageIds (if any) ─────────────────────────────
-// Slides may be stored as { storageId } only — we hydrate the URL on read.
-async function hydrateSlides(ctx: any, parsed: any) {
-  if (!parsed || !Array.isArray(parsed.slides)) return parsed;
-  const slides = await Promise.all(
-    parsed.slides.map(async (s: any) => {
-      if (s?.storageId) {
-        const url = await ctx.storage.getUrl(s.storageId);
-        return { ...s, url: url ?? s.url ?? "" };
+// ── Resolve storageIds → URLs for any array of {storageId} items ────────────
+// Walks known array fields and resolves their URLs on read. Persisted entries
+// only need to carry the storageId — the CDN URL is filled in here.
+async function hydrateArray(ctx: any, arr: any[], urlKey: string = "url") {
+  return await Promise.all(
+    arr.map(async (item: any) => {
+      if (item?.storageId) {
+        const url = await ctx.storage.getUrl(item.storageId);
+        return { ...item, [urlKey]: url ?? item[urlKey] ?? "" };
       }
-      return s;
+      return item;
     })
   );
-  return { ...parsed, slides };
+}
+
+async function hydrateSlides(ctx: any, parsed: any) {
+  if (!parsed || typeof parsed !== "object") return parsed;
+  const out: any = { ...parsed };
+  if (Array.isArray(parsed.slides)) {
+    out.slides = await hydrateArray(ctx, parsed.slides, "url");
+  }
+  if (Array.isArray(parsed.chapters)) {
+    out.chapters = await hydrateArray(ctx, parsed.chapters, "imageUrl");
+  }
+  return out;
 }
 
 // ── Get a single content entry by key ─────────────────────────────────────

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Plus, Trash2, Save, ImagePlus } from "lucide-react";
+import { useProducts } from "../../lib/useProducts";
+import { slugify } from "../../lib/slug";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const convexApi = api as any;
@@ -41,6 +43,7 @@ export function HomeContentCMS() {
       <HeroEditor />
       <SectionHeadingsEditor />
       <BannerSlidesEditor />
+      <ChaptersEditor />
       <StoryEditor />
     </div>
   );
@@ -859,6 +862,392 @@ function BannerSlidesEditor() {
                       onChange={(e) => update(i, "gradientOpacity", Number(e.target.value))}
                       className={INPUT}
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Chapters editor — the 5 (or any N) editorial chapter cards in ChapterDeck
+// ═══════════════════════════════════════════════════════════════════════════
+interface ChapterValue {
+  storageId?: string;
+  imageUrl?: string;
+  productSlug?: string;
+  index: string;
+  eyebrow: string;
+  titleHead: string;
+  titleItalic?: string;
+  body: string;
+  callouts: string[];
+  align: "left" | "right";
+  theme: "light" | "dark";
+}
+
+const CHAPTER_EMPTY: ChapterValue = {
+  index: "01 / 01",
+  eyebrow: "New chapter",
+  titleHead: "Chapter title.",
+  titleItalic: "",
+  body: "Body copy.",
+  callouts: [],
+  align: "left",
+  theme: "light",
+};
+
+const CHAPTER_DEFAULTS: ChapterValue[] = [
+  {
+    index: "01 / 05", eyebrow: "Sourcing", titleHead: "Single origins.", titleItalic: "Patient craft.",
+    body: "Every harvest is hand-selected from partner farms across the Western Ghats and beyond. Beans rest, breathe, then meet our roasters for a slow, deliberate transformation.",
+    callouts: ["Direct trade", "Hand-picked", "Estate-grown", "Traceable"],
+    align: "left", theme: "light",
+  },
+  {
+    index: "02 / 05", eyebrow: "Craft", titleHead: "The art of", titleItalic: "roasting.",
+    body: "Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self — then packed whole, ground, or as Easy Coffee Bags ready to brew.",
+    callouts: ["Small batch", "Slow roasted", "Cupped daily", "Brew-ready"],
+    align: "right", theme: "dark",
+  },
+  {
+    index: "03 / 05", eyebrow: "Brewing", titleHead: "Built to", titleItalic: "brew.",
+    body: "Grinders that whisper, presses that bloom, kettles tuned for that gooseneck pour. The tools we trust to coax the best out of every roast — now in your kitchen.",
+    callouts: ["Curated", "Barista-tested", "Coffee-first", "Built to last"],
+    align: "left", theme: "light",
+  },
+  {
+    index: "04 / 05", eyebrow: "Drinkware", titleHead: "The vessel", titleItalic: "matters.",
+    body: "Ceramic that keeps the crema, double-walls that hold the heat, tumblers that travel as well as you do. Cups, mugs and bottles we'd reach for first thing in the morning.",
+    callouts: ["Hand-finished", "Built for daily use", "Travel-ready"],
+    align: "right", theme: "dark",
+  },
+  {
+    index: "05 / 05", eyebrow: "Ritual", titleHead: "Pour. Pause.", titleItalic: "Repeat.",
+    body: "From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day. Bags, keychains and trinkets that carry the ritual with you.",
+    callouts: ["Carry it everywhere", "Made to share", "Everyday joy"],
+    align: "left", theme: "light",
+  },
+];
+
+function ChaptersEditor() {
+  const entry = useQuery(convexApi.siteContent.get, { key: "chapters" });
+  const setContent = useMutation(convexApi.siteContent.set);
+  const generateUploadUrl = useMutation(convexApi.siteContent.generateUploadUrl);
+  const convex = useConvex();
+  const products = useProducts() ?? [];
+
+  const [chapters, setChapters] = useState<ChapterValue[]>([]);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (entry === undefined) return;
+    if (entry === null) { setChapters([]); return; }
+    const v = entry.value as { chapters?: ChapterValue[] } | null;
+    setChapters(Array.isArray(v?.chapters) ? v!.chapters : []);
+  }, [entry]);
+
+  async function handleSave() {
+    setStatus("saving"); setError("");
+    try {
+      const toSave = chapters.map((c) => {
+        const { imageUrl, ...rest } = c;
+        return c.storageId ? rest : { ...rest, imageUrl };
+      });
+      await setContent({ key: "chapters", json: JSON.stringify({ chapters: toSave }) });
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (e: any) {
+      setStatus("error"); setError(e?.message ?? "Failed to save");
+    }
+  }
+
+  async function handleImageUpload(file: File, idx: number) {
+    setUploadingIdx(idx); setError("");
+    try {
+      const localPreview = URL.createObjectURL(file);
+      setChapters((arr) => {
+        const next = [...arr];
+        next[idx] = { ...next[idx], imageUrl: localPreview, storageId: undefined };
+        return next;
+      });
+
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Upload failed (${res.status}): ${txt.slice(0, 120)}`);
+      }
+      const { storageId } = await res.json();
+      if (!storageId) throw new Error("No storageId returned from upload");
+
+      let cdnUrl = "";
+      try {
+        cdnUrl = await convex.query(convexApi.siteContent.getStorageUrl, { storageId });
+      } catch { /* hydrated on read */ }
+
+      URL.revokeObjectURL(localPreview);
+      setChapters((arr) => {
+        const next = [...arr];
+        next[idx] = { ...next[idx], storageId, imageUrl: cdnUrl || localPreview };
+        return next;
+      });
+    } catch (e: any) {
+      setError(e?.message ?? "Upload failed");
+      // eslint-disable-next-line no-console
+      console.error("[ChaptersEditor] upload failed:", e);
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  function loadDefaults() {
+    setChapters(CHAPTER_DEFAULTS.map((c) => ({ ...c, callouts: [...c.callouts] })));
+  }
+  function addChapter() {
+    setChapters((arr) => [...arr, { ...CHAPTER_EMPTY, index: `0${arr.length + 1} / 0${arr.length + 1}` }]);
+  }
+  function removeChapter(i: number) { setChapters((arr) => arr.filter((_, idx) => idx !== i)); }
+  function moveChapter(i: number, dir: -1 | 1) {
+    setChapters((arr) => {
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return arr;
+      const next = [...arr];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+  function update<K extends keyof ChapterValue>(i: number, key: K, val: ChapterValue[K]) {
+    setChapters((arr) => arr.map((c, idx) => (idx === i ? { ...c, [key]: val } : c)));
+  }
+  function updateCallout(ci: number, ki: number, val: string) {
+    setChapters((arr) => arr.map((c, idx) => idx === ci ? { ...c, callouts: c.callouts.map((x, j) => j === ki ? val : x) } : c));
+  }
+  function addCallout(ci: number) {
+    setChapters((arr) => arr.map((c, idx) => idx === ci ? { ...c, callouts: [...c.callouts, ""] } : c));
+  }
+  function removeCallout(ci: number, ki: number) {
+    setChapters((arr) => arr.map((c, idx) => idx === ci ? { ...c, callouts: c.callouts.filter((_, j) => j !== ki) } : c));
+  }
+
+  if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-stone-50/40 p-6 space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-bold text-stone-800">Editorial chapters (5-card deck)</h4>
+          <p className="text-xs text-stone-500">
+            The big scroll-pinned chapter cards on the homepage. Leave empty to keep the built-in defaults
+            (Sourcing → Craft → Brewing → Drinkware → Ritual).
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {status === "saved" && <span className="text-xs text-green-600 font-bold">✓ Saved</span>}
+          {status === "error" && <span className="text-xs text-red-600 font-bold">! {error}</span>}
+          {chapters.length === 0 && (
+            <button
+              onClick={loadDefaults}
+              className="text-xs font-bold text-stone-700 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200"
+            >
+              Load defaults
+            </button>
+          )}
+          <button
+            onClick={addChapter}
+            className="flex items-center gap-1 text-xs font-bold text-natural-accent hover:underline"
+          >
+            <Plus className="w-3 h-3" /> Add chapter
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={status === "saving"}
+            className="flex items-center gap-2 bg-natural-accent text-white rounded-xl px-4 py-2 text-sm font-bold hover:opacity-90 transition disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {status === "saving" ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </header>
+
+      {chapters.length === 0 ? (
+        <p className="text-xs text-stone-400 italic">No CMS chapters yet. Add chapters or click "Load defaults" to start from the existing 5-card deck.</p>
+      ) : (
+        <div className="space-y-4">
+          {chapters.map((ch, i) => (
+            <div key={i} className="rounded-xl border border-stone-200 bg-white p-4 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
+              {/* Image column */}
+              <div className="space-y-2">
+                <div className="relative rounded-lg overflow-hidden border border-stone-200 bg-stone-100 aspect-[4/5]">
+                  {ch.imageUrl ? (
+                    <img src={ch.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : ch.productSlug && products.find((p) => slugify(p.name) === ch.productSlug)?.imageUrl ? (
+                    <img
+                      src={products.find((p) => slugify(p.name) === ch.productSlug)!.imageUrl}
+                      alt=""
+                      className="w-full h-full object-cover opacity-60"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-300 text-xs">No image</div>
+                  )}
+                  {uploadingIdx === i && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold animate-pulse">Uploading…</span>
+                    </div>
+                  )}
+                  <div className="absolute top-1 left-1 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                </div>
+
+                <label className="block text-center px-2 py-1 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 cursor-pointer">
+                  <ImagePlus className="w-3 h-3 inline-block mr-1" />
+                  {ch.storageId || ch.imageUrl ? "Replace image" : "Upload image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImageUpload(f, i);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                {ch.imageUrl && (
+                  <button
+                    onClick={() => { update(i, "imageUrl", undefined); update(i, "storageId", undefined); }}
+                    className="block w-full text-center px-2 py-1 rounded text-xs text-stone-500 hover:text-red-500"
+                  >
+                    Clear custom image
+                  </button>
+                )}
+
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => moveChapter(i, -1)}
+                      disabled={i === 0}
+                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                    >←</button>
+                    <button
+                      onClick={() => moveChapter(i, 1)}
+                      disabled={i === chapters.length - 1}
+                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                    >→</button>
+                  </div>
+                  <button
+                    onClick={() => removeChapter(i)}
+                    className="text-stone-400 hover:text-red-500 transition p-1"
+                    title="Remove chapter"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Fields column */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-2">
+                  <div>
+                    <label className={LABEL}>Index</label>
+                    <input value={ch.index} onChange={(e) => update(i, "index", e.target.value)} className={INPUT} placeholder="01 / 05" />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Eyebrow (also the giant background word)</label>
+                    <input value={ch.eyebrow} onChange={(e) => update(i, "eyebrow", e.target.value)} className={INPUT} placeholder="Sourcing" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className={LABEL}>Title (first line)</label>
+                    <input value={ch.titleHead} onChange={(e) => update(i, "titleHead", e.target.value)} className={INPUT} placeholder="Single origins." />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Title (italic line, optional)</label>
+                    <input value={ch.titleItalic ?? ""} onChange={(e) => update(i, "titleItalic", e.target.value)} className={INPUT} placeholder="Patient craft." />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={LABEL}>Body</label>
+                  <textarea value={ch.body} rows={3} onChange={(e) => update(i, "body", e.target.value)} className={INPUT} />
+                </div>
+
+                {/* Callouts */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className={LABEL}>Callout chips</label>
+                    <button
+                      onClick={() => addCallout(i)}
+                      className="text-xs font-bold text-natural-accent hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {ch.callouts.map((c, ki) => (
+                      <div key={ki} className="flex items-center gap-1 bg-stone-50 rounded-lg border border-stone-200 pl-2">
+                        <input
+                          value={c}
+                          onChange={(e) => updateCallout(i, ki, e.target.value)}
+                          className="px-1 py-1 text-xs bg-transparent outline-none w-32"
+                          placeholder="Callout"
+                        />
+                        <button
+                          onClick={() => removeCallout(i, ki)}
+                          className="px-1.5 text-stone-400 hover:text-red-500 text-xs"
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className={LABEL}>Align</label>
+                    <select
+                      value={ch.align}
+                      onChange={(e) => update(i, "align", e.target.value as "left" | "right")}
+                      className={INPUT}
+                    >
+                      <option value="left">Image left / Text right</option>
+                      <option value="right">Image right / Text left</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={LABEL}>Theme</label>
+                    <select
+                      value={ch.theme}
+                      onChange={(e) => update(i, "theme", e.target.value as "light" | "dark")}
+                      className={INPUT}
+                    >
+                      <option value="light">Light (paper)</option>
+                      <option value="dark">Dark (espresso)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={LABEL}>Linked product (click target & fallback image)</label>
+                    <select
+                      value={ch.productSlug ?? ""}
+                      onChange={(e) => update(i, "productSlug", e.target.value || undefined)}
+                      className={INPUT}
+                    >
+                      <option value="">— None —</option>
+                      {products.map((p) => (
+                        <option key={p._id} value={slugify(p.name)}>{p.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
