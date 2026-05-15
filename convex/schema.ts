@@ -186,4 +186,19 @@ export default defineSchema({
     maxUses: v.optional(v.number()),
     usageCount: v.number(),             // starts at 0
   }).index("by_code", ["code"]),
+
+  // ── Site content: editable copy + media for homepage sections ────────────
+  // Generic key/value store so we can add fields without schema migrations.
+  // Examples:
+  //   key="story.headline"     value={ text: "From bean to cup..." }
+  //   key="story.body"         value={ paragraphs: ["...", "..."] }
+  //   key="story.stats"        value={ stats: [{value:"12+",label:"Origins"}, ...] }
+  //   key="story.slides"       value={ slides: [{ storageId, url }, ...] }
+  siteContent: defineTable({
+    key: v.string(),
+    // We allow arbitrary JSON. Convex doesn't expose v.any() for nested unknown
+    // shapes cleanly, so we use a stringified JSON blob + parse on read.
+    json: v.string(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

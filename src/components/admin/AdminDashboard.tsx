@@ -30,6 +30,7 @@ import {
   Filter,
   Sparkles,
   Newspaper,
+  Home as HomeIcon,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { useProducts } from "../../lib/useProducts";
@@ -39,6 +40,7 @@ import type { Product, ProductType, RoastLevel, MainCategory, SubCategory } from
 import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../../types";
 import { SalesAnalytics } from "./SalesAnalytics";
 import { EditorialCMS } from "./EditorialCMS";
+import { HomeContentCMS } from "./HomeContentCMS";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -157,7 +159,7 @@ function formDataToProductPayload(form: ProductFormData) {
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders" | "editorial">(
+  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders" | "editorial" | "home">(
     "analytics"
   );
   const products = useProducts();
@@ -169,6 +171,7 @@ export function AdminDashboard() {
     { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
     { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
     { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
+    { id: "home", label: "Home", icon: <HomeIcon className="w-4 h-4" /> },
   ];
 
   return (
@@ -208,6 +211,7 @@ export function AdminDashboard() {
         {activeTab === "rules" && <RulesManager />}
         {activeTab === "orders" && <OrdersView />}
         {activeTab === "editorial" && <EditorialCMS />}
+        {activeTab === "home" && <HomeContentCMS />}
       </div>
     </div>
   );

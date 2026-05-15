@@ -40,6 +40,7 @@ import {
 import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useProducts } from "./lib/useProducts";
+import { useStoryContent } from "./lib/useStoryContent";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -1143,7 +1144,7 @@ function ProductCard({ product, onAddToCart, imageParallaxX }: {
               src={product.imageUrl}
               blur={product.imageBlur}
               alt={product.name}
-              className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+              className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
               wrapperClassName="w-full h-full"
             />
           </motion.div>
@@ -1152,7 +1153,7 @@ function ProductCard({ product, onAddToCart, imageParallaxX }: {
             src={product.imageUrl}
             blur={product.imageBlur}
             alt={product.name}
-            className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
             wrapperClassName="absolute inset-0"
           />
         )}
@@ -1540,31 +1541,40 @@ function BentoTile({ tile, onClick, tall = false }: { tile: BentoTileData; onCli
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} p-4 sm:p-5 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 w-full h-full min-h-[140px] flex items-center gap-4`}
+      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 w-full h-full min-h-[140px] flex`}
     >
-      {/* Product image fan — absolute-positioned so text never gets squeezed */}
-      <div className="relative shrink-0" style={{ width: `${44 + Math.max(0, samples.length - 1) * 16}px`, height: '64px' }}>
-        {samples.length === 0 ? (
-          <div className="w-14 h-16 rounded-xl bg-natural-paper border border-natural-border" />
+      {/* Image block — fills the LEFT half with the hero product */}
+      <div className="relative w-2/5 min-w-[110px] shrink-0 overflow-hidden">
+        {heroProduct ? (
+          <SmartImage
+            src={heroProduct.imageUrl}
+            blur={heroProduct.imageBlur}
+            alt=""
+            className="object-cover object-center transition-transform duration-700 group-hover:scale-110"
+            wrapperClassName="absolute inset-0"
+          />
         ) : (
-          samples.map((p, idx) => (
-            <div
-              key={p._id}
-              className="absolute w-14 h-16 sm:w-16 sm:h-[72px] rounded-xl bg-natural-paper border-2 border-white shadow-md overflow-hidden"
-              style={{
-                left: `${idx * 16}px`,
-                zIndex: samples.length - idx,
-                transform: `rotate(${(idx - Math.floor(samples.length / 2)) * 5}deg)`,
-              }}
-            >
-              <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover" wrapperClassName="w-full h-full" />
-            </div>
-          ))
+          <div className="absolute inset-0 bg-natural-paper" />
+        )}
+        {/* Thumbnail stack for secondary products — bottom-right corner */}
+        {samples.length > 1 && (
+          <div className="absolute bottom-2 right-2 flex -space-x-1.5">
+            {samples.slice(1, 3).map((p, idx) => (
+              <div
+                key={p._id}
+                className="w-7 h-7 rounded-md bg-white border border-white shadow-sm overflow-hidden"
+                style={{ zIndex: samples.length - idx }}
+              >
+                <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover object-center" wrapperClassName="w-full h-full" />
+              </div>
+            ))}
+          </div>
         )}
       </div>
-      <div className="flex-1 min-w-0 pl-1">
-        <h3 className="font-serif font-bold text-sm sm:text-base leading-tight break-words">{tile.title}</h3>
-        <p className="text-[11px] text-natural-text/60 font-medium mt-0.5">
+      {/* Text block — right side, vertically centered, fills height */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center p-4 sm:p-5 gap-1">
+        <h3 className="font-serif font-bold text-base sm:text-lg leading-tight break-words">{tile.title}</h3>
+        <p className="text-[11px] text-natural-text/60 font-medium">
           {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
         </p>
         <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-natural-accent">
@@ -1576,13 +1586,12 @@ function BentoTile({ tile, onClick, tall = false }: { tile: BentoTileData; onCli
 }
 
 // ── Our Story slideshow + parallax ───────────────────────────
-const OUR_STORY_SLIDES = [
-  asset("assets/our-story.png"),   // placeholder 1 — replace via admin
-  asset("assets/our-story.png"),   // placeholder 2
-  asset("assets/our-story.png"),   // placeholder 3
+const FALLBACK_STORY_SLIDES = [
+  asset("assets/our-story.png"),
 ];
 
-function OurStoryImage() {
+function OurStoryImage({ slides }: { slides?: string[] }) {
+  const list = slides && slides.length > 0 ? slides : FALLBACK_STORY_SLIDES;
   const [idx, setIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const rawX = useMotionValue(0);
@@ -1593,9 +1602,15 @@ function OurStoryImage() {
   const imgY = useTransform(springY, [-1, 1], ["-10px", "10px"]);
 
   useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % OUR_STORY_SLIDES.length), 4000);
+    if (list.length <= 1) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % list.length), 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [list.length]);
+
+  // Keep idx in range if slides shrink
+  useEffect(() => {
+    if (idx >= list.length) setIdx(0);
+  }, [list.length, idx]);
 
   function onMove(e: React.MouseEvent<HTMLDivElement>) {
     const r = e.currentTarget.getBoundingClientRect();
@@ -1617,8 +1632,8 @@ function OurStoryImage() {
       >
         <AnimatePresence mode="crossfade">
           <motion.img
-            key={idx}
-            src={OUR_STORY_SLIDES[idx]}
+            key={`${idx}-${list[idx]}`}
+            src={list[idx]}
             alt="Our story"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1628,23 +1643,26 @@ function OurStoryImage() {
           />
         </AnimatePresence>
       </motion.div>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {OUR_STORY_SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIdx(i)}
-            className={`h-1.5 rounded-full transition-all ${
-              i === idx ? "bg-white w-4" : "bg-white/50 w-1.5"
-            }`}
-          />
-        ))}
-      </div>
+      {list.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {list.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className={`h-1.5 rounded-full transition-all ${
+                i === idx ? "bg-white w-4" : "bg-white/50 w-1.5"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddToCart: (name: string) => void }) {
+  const story = useStoryContent();
   // Bucket products by the new two-tier taxonomy. `resolveTaxonomy` honours
   // explicit fields and falls back to legacy `type` so un-migrated rows still
   // land in a sensible bucket.
@@ -1869,26 +1887,16 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">
               Our Story
             </span>
-            <h3 className="text-3xl sm:text-5xl font-serif font-bold leading-[1.1]">
-              From bean to cup,<br />with intention.
+            <h3 className="text-3xl sm:text-5xl font-serif font-bold leading-[1.1] whitespace-pre-line">
+              {story.headline}
             </h3>
             <div className="space-y-4 text-natural-text/70 leading-relaxed">
-              <p>
-                Third Wave Coffee was born from a simple belief: everyone deserves a great cup of coffee. We set out to build something special — a coffee experience that focuses on quality, from farm to cup.
-              </p>
-              <p>
-                We source directly from farms across Ethiopia, Colombia, Guatemala, and India. Every batch is roasted in small lots at our facility in Bangalore, packed within 48 hours, and shipped to your doorstep at peak freshness.
-              </p>
-              <p>
-                Whether you're a pour-over purist, an espresso devotee, or someone who just wants great coffee without the fuss — we've got you.
-              </p>
+              {story.paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
             </div>
             <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-4">
-              {[
-                { value: "12+", label: "Origins" },
-                { value: "48hr", label: "Roast-to-ship" },
-                { value: "4.7★", label: "Avg. rating" },
-              ].map((stat) => (
+              {story.stats.map((stat) => (
                 <div key={stat.label}>
                   <div className="text-2xl sm:text-3xl font-extrabold">{stat.value}</div>
                   <div className="text-xs font-bold uppercase tracking-widest text-natural-text/40 mt-1">
@@ -1898,7 +1906,7 @@ function DemoStorefront({ products, onAddToCart }: { products: Product[]; onAddT
               ))}
             </div>
           </div>
-          <OurStoryImage />
+          <OurStoryImage slides={story.slides.map((s) => s.url).filter(Boolean)} />
         </div>
       </section>
 
