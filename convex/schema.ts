@@ -135,7 +135,55 @@ export default defineSchema({
       message: v.string(),
       ts: v.number(),
     }))),
+    discountCode: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),  // denormalized for index queries
+    customerEmail: v.optional(v.string()),  // denormalized for index queries
   })
     .index("by_status", ["status"])
-    .index("by_orderId", ["orderId"]),
+    .index("by_orderId", ["orderId"])
+    .index("by_customerPhone", ["customerPhone"])
+    .index("by_customerEmail", ["customerEmail"]),
+
+  // ── Editorial posts ──────────────────────────────────────────────────────
+  posts: defineTable({
+    type: v.union(
+      v.literal("flash-sale"),
+      v.literal("product-launch"),
+      v.literal("cafe-news"),
+      v.literal("brand-story"),
+      v.literal("champion")
+    ),
+    headline: v.string(),
+    subhead: v.optional(v.string()),
+    body: v.string(),
+    coverImageStorageId: v.optional(v.id("_storage")),
+    coverImageUrl: v.optional(v.string()),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("published"),
+      v.literal("scheduled")
+    ),
+    publishAt: v.optional(v.number()),   // epoch ms
+    expiresAt: v.optional(v.number()),   // epoch ms
+    linkedProductId: v.optional(v.id("products")),
+    discountId: v.optional(v.id("discounts")),  // flash-sale only
+    // champion-only fields
+    personName: v.optional(v.string()),
+    personRole: v.optional(v.string()),
+    personStory: v.optional(v.string()),
+  })
+    .index("by_status", ["status"])
+    .index("by_type", ["type"])
+    .index("by_status_and_type", ["status", "type"]),
+
+  // ── Discount codes ────────────────────────────────────────────────────────
+  discounts: defineTable({
+    code: v.string(),
+    discountType: v.union(v.literal("percent"), v.literal("flat")),
+    amount: v.number(),
+    firstOrderOnly: v.boolean(),
+    expiresAt: v.optional(v.number()),  // epoch ms
+    maxUses: v.optional(v.number()),
+    usageCount: v.number(),             // starts at 0
+  }).index("by_code", ["code"]),
 });

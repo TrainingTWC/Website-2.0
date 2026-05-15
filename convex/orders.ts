@@ -39,6 +39,7 @@ export const submitOrder = mutation({
     shipping: v.number(),
     total: v.number(),
     paymentMethod: v.optional(v.string()),
+    discountCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const orderId = `TWC-${randomAlphaNum(8)}`;
@@ -51,6 +52,9 @@ export const submitOrder = mutation({
       total: args.total,
       status: "pending",
       paymentMethod: args.paymentMethod,
+      discountCode: args.discountCode,
+      customerPhone: args.customer.phone,
+      customerEmail: args.customer.email,
     });
     return { orderId };
   },
