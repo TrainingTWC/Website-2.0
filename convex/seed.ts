@@ -40,10 +40,15 @@ export const seedFromScript = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // Delete existing products to re-seed cleanly
-    const existing = await ctx.db.query("products").collect();
-    for (const doc of existing) {
-      await ctx.db.delete(doc._id);
+    // Guard: only seed if the table is empty.
+    // This makes the script safe to re-run — it won't wipe products that
+    // were added or deleted via the admin dashboard.
+    const existing = await ctx.db.query("products").take(1);
+    if (existing.length > 0) {
+      return {
+        seeded: false,
+        message: `Skipped — ${existing.length > 0 ? "products already exist" : ""}. Delete all products from the admin dashboard first if you want to force a full re-seed.`,
+      };
     }
 
     // Insert new products
