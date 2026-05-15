@@ -4,7 +4,6 @@ import {
   useScroll,
   useTransform,
   useSpring,
-  useInView,
   MotionValue,
 } from "motion/react";
 import { ArrowDown } from "lucide-react";
@@ -322,118 +321,27 @@ export type ChapterConfig = {
 };
 
 export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
-  // Simple vertical stack — each chapter is its own full-height section,
-  // one after the other. No pinning, no 3D conveyor, no morphing.
-  // A light fade/slide on enter is the only motion.
+  // Plain vertical stack — each chapter is a full ChapterReveal section
+  // (sticky pinned stage + parallax wordmark + product Y/scale/rotate +
+  // copy fade), one after another. No 3D conveyor, no morphing, just
+  // the original editorial parallax brought back card-by-card.
   return (
     <div className="relative">
       {chapters.map((c, i) => (
-        <ChapterSection key={`${c.eyebrow}-${i}`} config={c} />
+        <ChapterReveal
+          key={`${c.eyebrow}-${i}`}
+          index={c.index}
+          eyebrow={c.eyebrow}
+          title={c.title}
+          body={c.body}
+          callouts={c.callouts}
+          product={c.product}
+          align={c.align}
+          theme={c.theme}
+          onProductClick={c.onProductClick}
+        />
       ))}
     </div>
-  );
-}
-
-function ChapterSection({ config }: { config: ChapterConfig }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20% 0px -20% 0px" });
-
-  const {
-    eyebrow,
-    index: indexLabel,
-    title,
-    body,
-    callouts,
-    product,
-    align = "left",
-    theme = "light",
-    onProductClick,
-  } = config;
-  const dark = theme === "dark";
-  const bg = dark ? "bg-[#1A0F08]" : "bg-natural-paper";
-  const fg = dark ? "text-white" : "text-natural-text";
-  const subtle = dark ? "text-white/55" : "text-natural-text/55";
-  const accent = dark ? "text-amber-300" : "text-natural-accent";
-  const bigText = dark ? "text-white/[0.05]" : "text-natural-text/[0.05]";
-  const chipBg = dark
-    ? "bg-white/10 border-white/20 text-white"
-    : "bg-natural-paper border-natural-border text-natural-text";
-
-  return (
-    <section
-      ref={ref}
-      className={`relative min-h-screen flex items-center overflow-hidden ${bg} ${fg}`}
-    >
-      {/* Big background wordmark */}
-      <div className="absolute inset-x-0 top-0 pointer-events-none select-none flex justify-center">
-        <span
-          className={`font-serif font-black text-[clamp(7rem,22vw,22rem)] leading-[0.85] tracking-tight ${bigText} whitespace-nowrap`}
-        >
-          {eyebrow.toUpperCase()}
-        </span>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center ${
-          align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
-        }`}
-      >
-        {/* Product still-life */}
-        <div className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}>
-          {product ? (
-            <button
-              data-cursor="zoom"
-              onClick={onProductClick}
-              className="block w-full max-w-[200px] sm:max-w-xs lg:max-w-md mx-auto aspect-[4/5] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
-            >
-              <SmartImage
-                src={product.imageUrl}
-                blur={product.imageBlur}
-                alt={product.name}
-                className="object-cover group-hover:scale-110 transition-transform duration-[1.6s]"
-                wrapperClassName="w-full h-full"
-                priority
-              />
-            </button>
-          ) : (
-            <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-[2.5rem] bg-natural-muted" />
-          )}
-        </div>
-
-        {/* Copy column */}
-        <div
-          className={`relative space-y-6 ${align === "right" ? "lg:order-1" : "lg:order-2"}`}
-        >
-          <div className="flex items-center gap-3">
-            <span className={`text-xs font-mono font-bold tracking-[0.3em] ${accent}`}>
-              {indexLabel}
-            </span>
-            <span className="h-px w-10 bg-current opacity-30" />
-            <span className={`text-[10px] font-bold tracking-[0.4em] uppercase ${subtle}`}>
-              {eyebrow}
-            </span>
-          </div>
-
-          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] tracking-tight">
-            {title}
-          </h2>
-          <p className={`text-sm sm:text-base lg:text-lg leading-relaxed max-w-md ${subtle}`}>
-            {body}
-          </p>
-
-          <div className="flex flex-wrap gap-2 pt-2">
-            {callouts.map((c, i) => (
-              <FloatingChip key={c} index={i} className={`${chipBg} backdrop-blur-sm`}>
-                {c}
-              </FloatingChip>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-    </section>
   );
 }
 
