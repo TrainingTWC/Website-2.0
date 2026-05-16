@@ -353,34 +353,86 @@ function Storefront() {
       return id;
     })();
 
-    // Resolve geo once per session (cached) via free IP API
-    async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
+    // Resolve geo once per session (cached).
+    // Tries GPS first → reverse-geocode via Nominatim. Falls back to IP lookup if denied/unavailable.
+    async function reverseGeocode(lat: number, lon: number): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
       try {
-        const cached = sessionStorage.getItem("brewmatch:geo");
-        if (cached) return JSON.parse(cached);
-        const res = await fetch("https://ipwho.is/?fields=success,country,country_code,region,city", { signal: AbortSignal.timeout(2500) });
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+          { signal: AbortSignal.timeout(4000), headers: { "Accept-Language": "en" } }
+        );
         if (!res.ok) return {};
         const data = await res.json();
-        if (!data || data.success === false) return {};
-        const geo = {
-          country: data.country || undefined,
-          countryCode: data.country_code || undefined,
-          region: data.region || undefined,
-          city: data.city || undefined,
+        const a = data?.address ?? {};
+        return {
+          country: a.country || undefined,
+          countryCode: a.country_code ? String(a.country_code).toUpperCase() : undefined,
+          region: a.state || a.region || undefined,
+          city: a.city || a.town || a.village || a.suburb || a.county || undefined,
         };
-        sessionStorage.setItem("brewmatch:geo", JSON.stringify(geo));
-        return geo;
       } catch {
         return {};
       }
     }
 
+    async function getGpsGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string } | null> {
+      if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 6000,
+            maximumAge: 10 * 60 * 1000,
+          });
+        });
+        const geo = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        return Object.keys(geo).length > 0 ? geo : null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function getIpGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
+      try {
+        const res = await fetch("https://ipwho.is/?fields=success,country,country_code,region,city", { signal: AbortSignal.timeout(2500) });
+        if (!res.ok) return {};
+        const data = await res.json();
+        if (!data || data.success === false) return {};
+        return {
+          country: data.country || undefined,
+          countryCode: data.country_code || undefined,
+          region: data.region || undefined,
+          city: data.city || undefined,
+        };
+      } catch {
+        return {};
+      }
+    }
+
+    async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; source?: string }> {
+      try {
+        const cached = sessionStorage.getItem("brewmatch:geo");
+        if (cached) return JSON.parse(cached);
+      } catch { /* ignore */ }
+      const gps = await getGpsGeo();
+      if (gps) {
+        const out = { ...gps, source: "gps" };
+        try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
+        return out;
+      }
+      const ip = await getIpGeo();
+      const out = { ...ip, source: "ip" };
+      try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
+      return out;
+    }
+
     resolveGeo().then((geo) => {
+      const { source: _source, ...geoFields } = geo;
       recordPageView({
         path: window.location.pathname,
         sessionId,
         referrer: document.referrer || undefined,
-        ...geo,
+        ...geoFields,
       }).then((id: any) => { pvId = id; });
     });
 
