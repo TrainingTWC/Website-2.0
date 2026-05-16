@@ -28,16 +28,17 @@ export interface NavGroup {
 }
 
 export interface AdminShellProps {
-  brand: string;                       // "Third Wave"
-  panelLabel: string;                  // "Merchant" | "Super Admin"
-  panelAccent?: "olive" | "espresso";  // visual differentiator
+  brand: string;
+  panelLabel: string;
+  panelAccent?: "olive" | "espresso";
   navGroups: NavGroup[];
   activeId: string;
   onNavigate: (id: string) => void;
   user?: { name: string; email: string; role?: string };
+  notifications?: { id: string; icon: ReactNode; title: string; body: string; time: string; unread?: boolean }[];
   workspaceTitle: string;
   workspaceSubtitle?: string;
-  workspaceActions?: ReactNode;        // top-right of workspace (e.g. "Add product")
+  workspaceActions?: ReactNode;
   children: ReactNode;
 }
 
@@ -61,6 +62,7 @@ export function AdminShell({
   activeId,
   onNavigate,
   user,
+  notifications = [],
   workspaceTitle,
   workspaceSubtitle,
   workspaceActions,
@@ -293,20 +295,37 @@ export function AdminShell({
               <div className="relative">
                 <IconBtn ariaLabel="Notifications" onClick={() => setOpenPopover(openPopover === "bell" ? null : "bell")}>
                   <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  {notifications.some((n) => n.unread) && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  )}
                 </IconBtn>
                 <AnimatePresence>
                   {openPopover === "bell" && (
                     <Popover popoverRef={popoverRef} onClose={() => setOpenPopover(null)} title="Notifications">
-                      <div className="px-4 py-6 text-center">
-                        <div className="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center mb-3">
-                          <Bell className="w-4 h-4 text-stone-400" />
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center">
+                          <div className="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center mb-3">
+                            <Bell className="w-4 h-4 text-stone-400" />
+                          </div>
+                          <p className="text-sm font-bold text-stone-800">You're all caught up.</p>
+                          <p className="text-xs text-stone-500 mt-1">New orders, low-stock alerts and team activity will show up here.</p>
                         </div>
-                        <p className="text-sm font-bold text-stone-800">You're all caught up.</p>
-                        <p className="text-xs text-stone-500 mt-1">
-                          New orders, low-stock alerts and team activity will show up here.
-                        </p>
-                      </div>
+                      ) : (
+                        <div className="divide-y divide-stone-100">
+                          {notifications.map((n) => (
+                            <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition ${n.unread ? "bg-amber-50/50" : ""}`}>
+                              <div className="mt-0.5 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0 text-stone-500">
+                                {n.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-stone-800">{n.title}</p>
+                                <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{n.body}</p>
+                              </div>
+                              <span className="text-[10px] text-stone-400 shrink-0">{n.time}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </Popover>
                   )}
                 </AnimatePresence>

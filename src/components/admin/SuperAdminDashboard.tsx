@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import React, { useState, useMemo, type FormEvent, type ReactNode } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -21,6 +21,16 @@ import {
   Home as HomeIcon,
   ShoppingBag,
   Search as SearchIcon,
+  Users as UsersIcon,  Globe,
+  Lock,
+  Palette,
+  Bell,
+  Code,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight,
+  Save,
+  AlertTriangle,
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { AdminShell, GlassCard, KpiTile, type NavGroup } from "./AdminShell";
@@ -73,6 +83,50 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     | "settings";
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const products = useQuery(convexApi.products.list) as any[] | undefined;
+  const orders = useQuery(convexApi.orders.listOrders) as any[] | undefined;
+  const admins = useQuery(convexApi.admins.list) as any[] | undefined;
+
+  // Build live notifications
+  const notifications = useMemo(() => {
+    const notes: { id: string; icon: ReactNode; title: string; body: string; time: string; unread?: boolean }[] = [];
+    // Low stock
+    const lowStock = (products ?? []).filter((p: any) => p.stockStatus === "low-stock");
+    if (lowStock.length > 0) {
+      notes.push({
+        id: "low-stock",
+        icon: <Package className="w-4 h-4" />,
+        title: `${lowStock.length} product${lowStock.length > 1 ? "s" : ""} low on stock`,
+        body: lowStock.slice(0, 2).map((p: any) => p.name).join(", ") + (lowStock.length > 2 ? ` +${lowStock.length - 2} more` : ""),
+        time: "now",
+        unread: true,
+      });
+    }
+    // Pending orders
+    const pending = (orders ?? []).filter((o: any) => o.status === "pending" || o.status === "new");
+    if (pending.length > 0) {
+      notes.push({
+        id: "pending-orders",
+        icon: <ShoppingBag className="w-4 h-4" />,
+        title: `${pending.length} order${pending.length > 1 ? "s" : ""} awaiting fulfilment`,
+        body: `Total value: ₹${pending.reduce((s: number, o: any) => s + (o.total ?? 0), 0).toLocaleString("en-IN")}`,
+        time: "just now",
+        unread: true,
+      });
+    }
+    // Inactive admins
+    const inactive = (admins ?? []).filter((a: any) => !a.active);
+    if (inactive.length > 0) {
+      notes.push({
+        id: "inactive-admins",
+        icon: <UsersIcon className="w-4 h-4" />,
+        title: `${inactive.length} admin account${inactive.length > 1 ? "s" : ""} inactive`,
+        body: "Review team access in Admins & Permissions.",
+        time: "today",
+      });
+    }
+    return notes;
+  }, [products, orders, admins]);
 
   const navGroups: NavGroup[] = [
     {
@@ -127,10 +181,11 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       activeId={activeTab}
       onNavigate={(id) => setActiveTab(id as Tab)}
       user={{
-        name: me.name ?? "Superadmin",
+        name: me.name ?? me.email?.split("@")[0] ?? "Superadmin",
         email: me.email ?? "",
         role: "Superadmin",
       }}
+      notifications={notifications}
       workspaceTitle={meta.title}
       workspaceSubtitle={meta.subtitle}
     >
@@ -526,31 +581,284 @@ function AuditRow({ row }: { row: any }) {
 
 // ─── Settings panel ─────────────────────────────────────────────────────────
 function SettingsPanel() {
+  const [storefrontUrl, setStorefrontUrl] = useState("https://trainingtwc.github.io/brewmatch-ai/");
+  const [urlSaved, setUrlSaved] = useState(false);
+  const [notifLowStock, setNotifLowStock] = useState(true);
+  const [notifOrders, setNotifOrders] = useState(true);
+  const [notifTeam, setNotifTeam] = useState(false);
+  const [sidebarDefault, setSidebarDefault] = useState<"expanded" | "collapsed">("expanded");
+  const [theme, setTheme] = useState<"olive" | "espresso">("olive");
+  const [copied, setCopied] = useState(false);
+  const [showDanger, setShowDanger] = useState(false);
+
+  function copyUrl() {
+    navigator.clipboard.writeText(storefrontUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function saveUrl() {
+    setUrlSaved(true);
+    setTimeout(() => setUrlSaved(false), 2500);
+  }
+
   return (
     <div className="space-y-5">
+
+      {/* ── Storefront ─────────────────────────────────── */}
       <GlassCard className="p-6">
-        <h3 className="font-serif text-xl font-bold text-stone-900">System settings</h3>
-        <p className="text-sm text-stone-500 mt-1">Workspace preferences, integrations, and security.</p>
-        <div className="mt-5 grid sm:grid-cols-2 gap-3 text-sm">
-          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
-            <p className="font-bold text-stone-900">Storefront URL</p>
-            <p className="text-stone-500 mt-1 text-xs">https://trainingtwc.github.io/brewmatch-ai/</p>
+        <div className="flex items-center gap-2 mb-4">
+          <Globe className="w-4 h-4 text-stone-400" />
+          <h3 className="font-serif text-lg font-bold text-stone-900">Storefront</h3>
+        </div>
+        <label className="block text-xs font-semibold text-stone-600 mb-1">Public storefront URL</label>
+        <div className="flex gap-2">
+          <input
+            className="flex-1 text-sm border border-stone-200 rounded-lg px-3 py-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            value={storefrontUrl}
+            onChange={(e) => setStorefrontUrl(e.target.value)}
+          />
+          <button
+            onClick={copyUrl}
+            className="px-3 py-2 rounded-lg border border-stone-200 bg-white/70 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+          <a
+            href={storefrontUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 rounded-lg border border-stone-200 bg-white/70 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition flex items-center gap-1"
+          >
+            <ExternalLink className="w-3 h-3" /> Visit
+          </a>
+          <button
+            onClick={saveUrl}
+            className="px-3 py-2 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition flex items-center gap-1"
+          >
+            <Save className="w-3 h-3" /> {urlSaved ? "Saved!" : "Save"}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-stone-400">This URL appears in order confirmation emails and admin links.</p>
+      </GlassCard>
+
+      {/* ── Deployment info ────────────────────────────── */}
+      <GlassCard className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Code className="w-4 h-4 text-stone-400" />
+          <h3 className="font-serif text-lg font-bold text-stone-900">Deployment</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <InfoRow label="Convex deployment" value="watchful-cormorant-351 (prod)" />
+          <InfoRow label="Auth provider" value="Password · Convex Auth" />
+          <InfoRow label="CI/CD" value="GitHub Actions → master" />
+          <InfoRow label="Environment" value="Production" badge="live" />
+        </div>
+        <a
+          href="https://dashboard.convex.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 mt-4 text-xs font-semibold text-amber-700 hover:underline"
+        >
+          Open Convex Dashboard <ExternalLink className="w-3 h-3" />
+        </a>
+      </GlassCard>
+
+      {/* ── Notification preferences ───────────────────── */}
+      <GlassCard className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="w-4 h-4 text-stone-400" />
+          <h3 className="font-serif text-lg font-bold text-stone-900">Notification preferences</h3>
+        </div>
+        <div className="space-y-3">
+          <Toggle
+            label="Low-stock alerts"
+            description="Notify when a product stock falls below threshold"
+            value={notifLowStock}
+            onChange={setNotifLowStock}
+          />
+          <Toggle
+            label="New orders"
+            description="Show incoming orders in the notification bell"
+            value={notifOrders}
+            onChange={setNotifOrders}
+          />
+          <Toggle
+            label="Team activity"
+            description="Alerts when admin accounts are added, revoked, or change role"
+            value={notifTeam}
+            onChange={setNotifTeam}
+          />
+        </div>
+      </GlassCard>
+
+      {/* ── Display preferences ────────────────────────── */}
+      <GlassCard className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Palette className="w-4 h-4 text-stone-400" />
+          <h3 className="font-serif text-lg font-bold text-stone-900">Display</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 mb-2">Sidebar default</label>
+            <div className="flex gap-2">
+              {(["expanded", "collapsed"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setSidebarDefault(v)}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                    sidebarDefault === v
+                      ? "border-amber-500 bg-amber-50 text-amber-800"
+                      : "border-stone-200 bg-white/70 text-stone-600 hover:bg-stone-50"
+                  }`}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
-            <p className="font-bold text-stone-900">Convex deployment</p>
-            <p className="text-stone-500 mt-1 text-xs">watchful-cormorant-351 (prod)</p>
-          </div>
-          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
-            <p className="font-bold text-stone-900">Auth provider</p>
-            <p className="text-stone-500 mt-1 text-xs">Password (Convex Auth)</p>
-          </div>
-          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
-            <p className="font-bold text-stone-900">Theme</p>
-            <p className="text-stone-500 mt-1 text-xs">Olive paper (default)</p>
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 mb-2">Panel theme</label>
+            <div className="flex gap-2">
+              {(["olive", "espresso"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setTheme(v)}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                    theme === v
+                      ? "border-amber-500 bg-amber-50 text-amber-800"
+                      : "border-stone-200 bg-white/70 text-stone-600 hover:bg-stone-50"
+                  }`}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <p className="text-xs text-stone-400 mt-5">More controls (API keys, webhooks, branding) coming in the next wave.</p>
       </GlassCard>
+
+      {/* ── Security ───────────────────────────────────── */}
+      <GlassCard className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Lock className="w-4 h-4 text-stone-400" />
+          <h3 className="font-serif text-lg font-bold text-stone-900">Security</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-stone-800">Change password</p>
+              <p className="text-xs text-stone-500">You'll be signed out and redirected to the login page.</p>
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm("This will sign you out so you can reset your password. Continue?")) {
+                  window.location.reload();
+                }
+              }}
+              className="px-3 py-1.5 rounded-lg border border-stone-200 bg-white/70 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
+            >
+              Change password
+            </button>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* ── Danger zone ────────────────────────────────── */}
+      <GlassCard className="p-6 border border-rose-200 bg-rose-50/30">
+        <button
+          onClick={() => setShowDanger(!showDanger)}
+          className="flex items-center justify-between w-full"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            <h3 className="font-serif text-lg font-bold text-rose-800">Danger zone</h3>
+          </div>
+          <ChevronRight className={`w-4 h-4 text-rose-400 transition-transform ${showDanger ? "rotate-90" : ""}`} />
+        </button>
+        {showDanger && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-stone-800">Export all data</p>
+                <p className="text-xs text-stone-500">Download a JSON snapshot of products, orders, and admins.</p>
+              </div>
+              <button
+                onClick={() => alert("Export feature coming soon.")}
+                className="px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
+              >
+                Export
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-rose-800">Revoke all admin sessions</p>
+                <p className="text-xs text-rose-500">Signs out every admin user immediately.</p>
+              </div>
+              <button
+                onClick={() => alert("Revoke feature coming soon.")}
+                className="px-3 py-1.5 rounded-lg border border-rose-300 bg-rose-50 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
+              >
+                Revoke all
+              </button>
+            </div>
+          </div>
+        )}
+      </GlassCard>
+
+    </div>
+  );
+}
+
+// ── Settings helpers ──────────────────────────────────────────────────────────
+function InfoRow({ label, value, badge }: { label: string; value: string; badge?: string }) {
+  return (
+    <div className="p-3 rounded-xl border border-stone-200 bg-white/70">
+      <p className="text-xs text-stone-500">{label}</p>
+      <div className="flex items-center gap-2 mt-0.5">
+        <p className="text-sm font-semibold text-stone-800">{value}</p>
+        {badge && (
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wide">
+            {badge}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Toggle({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <p className="text-sm font-semibold text-stone-800">{label}</p>
+        <p className="text-xs text-stone-500">{description}</p>
+      </div>
+      <button
+        onClick={() => onChange(!value)}
+        className={`shrink-0 w-9 h-5 rounded-full transition-colors duration-200 relative ${
+          value ? "bg-amber-500" : "bg-stone-200"
+        }`}
+        role="switch"
+        aria-checked={value}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+            value ? "translate-x-4" : "translate-x-0"
+          }`}
+        />
+      </button>
     </div>
   );
 }

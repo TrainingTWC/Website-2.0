@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Package,
@@ -44,6 +44,7 @@ import { HomeContentCMS } from "./HomeContentCMS";
 import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { LayoutDashboard } from "lucide-react";
+import type { AdminMe } from "./AdminAuthGate";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -161,10 +162,40 @@ function formDataToProductPayload(form: ProductFormData) {
 }
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
-export function AdminDashboard() {
+export function AdminDashboard({ me }: { me?: AdminMe }) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "settings"
   >("overview");
+
+  const products = (useQuery(api.products.list) ?? []) as any[];
+  const orders = useQuery((api as any).orders.listOrders) as any[] | undefined;
+
+  const notifications = useMemo(() => {
+    const notes: { id: string; icon: React.ReactNode; title: string; body: string; time: string; unread?: boolean }[] = [];
+    const lowStock = products.filter((p) => p.stockStatus === "low-stock");
+    if (lowStock.length > 0) {
+      notes.push({
+        id: "low-stock",
+        icon: <Package className="w-4 h-4" />,
+        title: `${lowStock.length} product${lowStock.length > 1 ? "s" : ""} low on stock`,
+        body: lowStock.slice(0, 2).map((p) => p.name).join(", ") + (lowStock.length > 2 ? ` +${lowStock.length - 2} more` : ""),
+        time: "now",
+        unread: true,
+      });
+    }
+    const pending = (orders ?? []).filter((o) => o.status === "pending");
+    if (pending.length > 0) {
+      notes.push({
+        id: "pending-orders",
+        icon: <ShoppingBag className="w-4 h-4" />,
+        title: `${pending.length} order${pending.length > 1 ? "s" : ""} awaiting fulfilment`,
+        body: `Total value: ₹${pending.reduce((s: number, o: any) => s + (o.total ?? 0), 0).toLocaleString("en-IN")}`,
+        time: "just now",
+        unread: true,
+      });
+    }
+    return notes;
+  }, [products, orders]);
 
   const navGroups: NavGroup[] = [
     {
@@ -213,7 +244,12 @@ export function AdminDashboard() {
       navGroups={navGroups}
       activeId={activeTab}
       onNavigate={(id) => setActiveTab(id as typeof activeTab)}
-      user={{ name: "Merchant", email: "ops@thirdwavecoffee.in", role: "Admin" }}
+      user={{
+        name: me?.name ?? me?.email?.split("@")[0] ?? "Merchant",
+        email: me?.email ?? "",
+        role: me?.admin?.role === "superadmin" ? "Superadmin" : "Admin",
+      }}
+      notifications={notifications}
       workspaceTitle={meta.title}
       workspaceSubtitle={meta.subtitle}
     >
