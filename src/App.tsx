@@ -1513,9 +1513,9 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
       style={{ perspective: "600px" }}
     >
       {/* Feathered top edge — page bg fades into dark */}
-      <div className="absolute inset-x-0 top-0 h-36 bg-linear-to-b from-[#FAF9F6] via-[#FAF9F6]/60 to-transparent z-20 pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-[#FAF9F6] to-transparent z-20 pointer-events-none" />
       {/* Feathered bottom edge */}
-      <div className="absolute inset-x-0 bottom-0 h-36 bg-linear-to-t from-[#FAF9F6] via-[#FAF9F6]/60 to-transparent z-20 pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#FAF9F6] to-transparent z-20 pointer-events-none" />
 
       {/* Parallax warm colour wash */}
       <motion.div
