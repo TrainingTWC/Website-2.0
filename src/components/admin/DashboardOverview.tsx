@@ -23,7 +23,7 @@ const fmt = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 0 
  * Loyalty App connect card (placeholder) + Cost analysis + Goal + Recent.
  */
 export function DashboardOverview() {
-  const overview = useQuery(convexApi.analytics.overview);
+  const overview = useQuery(convexApi.analytics.getSalesOverview);
   const products = useQuery(convexApi.products.list);
   const allOrders = useQuery(convexApi.orders.listOrders);
   const recentOrders = useMemo(() => (allOrders ?? []).slice(0, 12), [allOrders]);
