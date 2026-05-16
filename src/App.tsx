@@ -352,8 +352,38 @@ function Storefront() {
       if (!id) { id = Math.random().toString(36).slice(2); sessionStorage.setItem("brewmatch:sid", id); }
       return id;
     })();
-    recordPageView({ path: window.location.pathname, sessionId, referrer: document.referrer || undefined })
-      .then((id: any) => { pvId = id; });
+
+    // Resolve geo once per session (cached) via free IP API
+    async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
+      try {
+        const cached = sessionStorage.getItem("brewmatch:geo");
+        if (cached) return JSON.parse(cached);
+        const res = await fetch("https://ipwho.is/?fields=success,country,country_code,region,city", { signal: AbortSignal.timeout(2500) });
+        if (!res.ok) return {};
+        const data = await res.json();
+        if (!data || data.success === false) return {};
+        const geo = {
+          country: data.country || undefined,
+          countryCode: data.country_code || undefined,
+          region: data.region || undefined,
+          city: data.city || undefined,
+        };
+        sessionStorage.setItem("brewmatch:geo", JSON.stringify(geo));
+        return geo;
+      } catch {
+        return {};
+      }
+    }
+
+    resolveGeo().then((geo) => {
+      recordPageView({
+        path: window.location.pathname,
+        sessionId,
+        referrer: document.referrer || undefined,
+        ...geo,
+      }).then((id: any) => { pvId = id; });
+    });
+
     const handleUnload = () => {
       if (pvId) {
         const duration = Math.round((Date.now() - start) / 1000);

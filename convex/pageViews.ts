@@ -6,12 +6,20 @@ export const record = mutation({
     path: v.string(),
     sessionId: v.string(),
     referrer: v.optional(v.string()),
+    country: v.optional(v.string()),
+    countryCode: v.optional(v.string()),
+    region: v.optional(v.string()),
+    city: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pageViews", {
       path: args.path,
       sessionId: args.sessionId,
       referrer: args.referrer,
+      country: args.country,
+      countryCode: args.countryCode,
+      region: args.region,
+      city: args.city,
       timestamp: Date.now(),
     });
   },
@@ -72,6 +80,33 @@ export const getStats = query({
       pathCounts[v.path] = (pathCounts[v.path] ?? 0) + 1;
     }
 
+    // Geo aggregation
+    const countryCounts: Record<string, { count: number; code?: string }> = {};
+    const cityCounts: Record<string, { count: number; country?: string }> = {};
+    for (const v of views) {
+      if (v.country) {
+        const c = countryCounts[v.country] ?? { count: 0, code: v.countryCode };
+        c.count += 1;
+        if (!c.code && v.countryCode) c.code = v.countryCode;
+        countryCounts[v.country] = c;
+      }
+      if (v.city) {
+        const key = v.city;
+        const c = cityCounts[key] ?? { count: 0, country: v.country };
+        c.count += 1;
+        cityCounts[key] = c;
+      }
+    }
+    const topCountries = Object.entries(countryCounts)
+      .map(([name, info]) => ({ name, count: info.count, code: info.code }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+    const topCities = Object.entries(cityCounts)
+      .map(([name, info]) => ({ name, count: info.count, country: info.country }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+    const knownGeo = views.filter((v) => v.country).length;
+
     return {
       totalViews: views.length,
       todayViews: todayViews.length,
@@ -80,6 +115,9 @@ export const getStats = query({
       avgDurationSec,
       dailyViews,
       pathCounts,
+      topCountries,
+      topCities,
+      knownGeo,
     };
   },
 });

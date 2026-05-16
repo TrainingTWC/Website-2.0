@@ -934,6 +934,59 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
   );
 }
 
+// ─── Geo list (top countries / cities) ────────────────────────────────────────
+function flagEmoji(code: string): string {
+  if (!code || code.length !== 2) return "";
+  const A = 0x1f1e6;
+  return String.fromCodePoint(...code.toUpperCase().split("").map((c) => A + c.charCodeAt(0) - 65));
+}
+
+function GeoList({
+  title,
+  rows,
+  renderLabel,
+  total,
+}: {
+  title: string;
+  rows: { name: string; count: number; code?: string; country?: string }[];
+  renderLabel: (row: any) => React.ReactNode;
+  total: number;
+}) {
+  const max = rows[0]?.count ?? 1;
+  return (
+    <div className="bg-white border border-stone-100 rounded-3xl p-6">
+      <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-4">{title}</p>
+      {rows.length === 0 ? (
+        <p className="text-sm text-stone-400">No data yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row, i) => {
+            const pct = (row.count / max) * 100;
+            const share = total > 0 ? Math.round((row.count / total) * 100) : 0;
+            return (
+              <div key={i}>
+                <div className="flex items-center justify-between text-sm font-semibold text-stone-700 mb-1">
+                  <span className="flex-1 min-w-0 truncate">{renderLabel(row)}</span>
+                  <span className="ml-3 shrink-0 tabular-nums">
+                    {row.count}
+                    <span className="text-stone-400 font-normal text-xs"> · {share}%</span>
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                  <div
+                    className="h-full bg-natural-accent/70 rounded-full transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Analytics view ───────────────────────────────────────────────────────────
 export function CombinedAnalytics() {
   const sessions = (useQuery(api.sessions.list) ?? []) as any[];
@@ -1054,6 +1107,46 @@ function AnalyticsView({
             <Globe className="w-10 h-10 text-stone-200 mx-auto mb-3" />
             <p className="font-bold text-stone-500">Traffic data will appear after visitors load the site</p>
             <p className="text-xs text-stone-400 mt-1">Page views are tracked automatically on every visit.</p>
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-natural-accent" /> Visitors by Geography
+        </h3>
+        {pageStats?.knownGeo > 0 ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            <GeoList
+              title="Top Countries"
+              rows={pageStats.topCountries ?? []}
+              renderLabel={(r: any) => (
+                <span className="flex items-center gap-2">
+                  {r.code && (
+                    <span className="text-base leading-none">{flagEmoji(r.code)}</span>
+                  )}
+                  <span>{r.name}</span>
+                </span>
+              )}
+              total={pageStats.knownGeo}
+            />
+            <GeoList
+              title="Top Cities"
+              rows={pageStats.topCities ?? []}
+              renderLabel={(r: any) => (
+                <span>
+                  {r.name}
+                  {r.country && <span className="text-stone-400 font-normal"> · {r.country}</span>}
+                </span>
+              )}
+              total={pageStats.knownGeo}
+            />
+          </div>
+        ) : (
+          <div className="bg-stone-50 border border-dashed border-stone-200 rounded-3xl p-8 text-center">
+            <MapPin className="w-10 h-10 text-stone-200 mx-auto mb-3" />
+            <p className="font-bold text-stone-500">Geography data will appear after visitors load the site</p>
+            <p className="text-xs text-stone-400 mt-1">Country, region and city are detected via IP on each visit.</p>
           </div>
         )}
       </section>

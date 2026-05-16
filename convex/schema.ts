@@ -81,6 +81,10 @@ export default defineSchema({
     referrer: v.optional(v.string()),
     timestamp: v.number(),
     duration: v.optional(v.number()), // seconds on page
+    country: v.optional(v.string()),
+    countryCode: v.optional(v.string()),
+    region: v.optional(v.string()),
+    city: v.optional(v.string()),
   }).index("by_timestamp", ["timestamp"]),
 
   // Custom product categories
