@@ -141,7 +141,7 @@ export function AdminShell({
         <motion.aside
           initial={false}
           animate={{ width: collapsed ? 76 : 264 }}
-          transition={{ type: "spring", stiffness: 260, damping: 28 }}
+          transition={{ type: "tween", ease: [0.4, 0, 0.2, 1], duration: 0.22 }}
           className="sticky top-0 h-screen p-4 hidden md:flex flex-col"
         >
           <div className="relative flex flex-col h-full rounded-[1.8rem] border border-white/55 bg-white/55 backdrop-blur-2xl shadow-[0_24px_60px_rgba(20,20,20,0.08)] overflow-hidden">
@@ -149,8 +149,8 @@ export function AdminShell({
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0)_30%)]" />
 
             {/* Brand */}
-            <div className={`relative pt-5 pb-4 flex items-center gap-3 ${collapsed ? "justify-center px-3" : "px-5"}`}>
-              <div className={`w-9 h-9 rounded-xl ${accentBg} text-white flex items-center justify-center shadow-[0_8px_18px_rgba(90,90,64,0.35)]`}>
+            <div className={`relative pt-5 pb-4 flex items-center ${collapsed ? "justify-center" : "px-5 gap-3"}`}>
+              <div className={`shrink-0 w-9 h-9 rounded-xl ${accentBg} text-white flex items-center justify-center shadow-[0_8px_18px_rgba(90,90,64,0.35)]`}>
                 <img src={asset("logo.png")} alt="" className="w-6 h-6 object-contain invert" />
               </div>
               <AnimatePresence initial={false}>

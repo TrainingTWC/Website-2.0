@@ -7,6 +7,7 @@ import {
   ScrollText,
   Shield,
   TrendingUp,
+  BarChart2,
   UserPlus,
   Mail,
   MoreVertical,
@@ -135,7 +136,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       label: "Command",
       items: [
         { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: "deep-analytics", label: "Deep Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+        { id: "deep-analytics", label: "Site Analytics", icon: <BarChart2 className="w-4 h-4" /> },
       ],
     },
     {
@@ -167,7 +168,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
     home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
     rules: { title: "Logic Rules", subtitle: "Tune recommendation and discovery logic." },
-    "deep-analytics": { title: "Deep Analytics", subtitle: "Behavioural insights, cohorts, and trend analysis." },
+    "deep-analytics": { title: "Site Analytics", subtitle: "Traffic, behavioural insights, cohorts, and trend analysis." },
     admins: { title: "Admins & Permissions", subtitle: "Invite teammates, set roles, control which sections they can access." },
     audit: { title: "Audit Log", subtitle: "Every admin action — invites, revocations, configuration changes." },
     settings: { title: "Settings", subtitle: "System preferences, security, and integrations." },
