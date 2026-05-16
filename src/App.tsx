@@ -1484,12 +1484,10 @@ function HScrollCard({
 // ── Catalog parallax banner ────────────────────────────────────
 function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string }) {
   const eyebrowText = eyebrow ?? "The Collection";
-  // title may contain a period — if it ends with one we'll italicize the last word
   const t = title ?? "Choose your\nritual.";
   const [titleHead, titleTail] = (() => {
     const parts = t.split(/\n/);
     if (parts.length >= 2) return [parts[0], parts.slice(1).join(" ")];
-    // single line — italicize last word
     const words = t.trim().split(/\s+/);
     if (words.length <= 1) return [t, ""];
     return [words.slice(0, -1).join(" "), words[words.length - 1]];
@@ -1500,38 +1498,42 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
     offset: ["start end", "end start"],
   });
 
-  // Three depth layers — slowest to fastest
   const wordmarkY = useTransform(scrollYProgress, [0, 1], ["30%", "-30%"]);
   const headingY  = useTransform(scrollYProgress, [0, 1], ["18%", "-18%"]);
   const subY      = useTransform(scrollYProgress, [0, 1], ["10%", "-10%"]);
-
-  // Soft fade in as section enters
-  const opacity = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
+  const opacity   = useTransform(scrollYProgress, [0, 0.18, 0.82, 1], [0, 1, 1, 0]);
+  // Parallax colour wash — moves slower than content, faster than wordmark
+  const washY     = useTransform(scrollYProgress, [0, 1], ["40%", "-40%"]);
+  const washOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
 
   return (
     <div
       ref={ref}
-      className="relative overflow-hidden bg-natural-paper border-y border-natural-border"
+      className="relative overflow-hidden bg-[#1A0F08]"
       style={{ perspective: "600px" }}
     >
-      {/* Extremely subtle warm tint top-right */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_0%,rgba(160,120,60,0.07)_0%,transparent_60%)] pointer-events-none" />
+      {/* Parallax warm colour wash */}
+      <motion.div
+        style={{ y: washY, opacity: washOpacity }}
+        className="absolute inset-0 pointer-events-none"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,rgba(160,100,40,0.55)_0%,rgba(80,40,10,0.35)_45%,transparent_75%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,rgba(200,140,60,0.18)_0%,transparent_55%)]" />
+      </motion.div>
 
-      {/* Layer 1 — ghost wordmark (slowest, furthest back) */}
+      {/* Ghost wordmark */}
       <motion.div
         style={{ y: wordmarkY }}
         className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none select-none overflow-hidden"
       >
-        <span className="font-serif font-black text-[clamp(5rem,20vw,18rem)] leading-none tracking-tight text-natural-text/[0.04]">
+        <span className="font-serif font-black text-[clamp(5rem,20vw,18rem)] leading-none tracking-tight text-white/[0.05]">
           COLLECTION
         </span>
       </motion.div>
 
-      {/* Layer 2 — horizontal rule accent lines */}
-      <div className="absolute inset-y-0 left-0 w-px bg-natural-border/60" />
-      <div className="absolute inset-y-0 right-0 w-px bg-natural-border/60" />
+      <div className="absolute inset-y-0 left-0 w-px bg-white/10" />
+      <div className="absolute inset-y-0 right-0 w-px bg-white/10" />
 
-      {/* Layer 3 — foreground copy (fastest) */}
       <motion.div
         style={{ opacity }}
         className="relative py-24 sm:py-32 px-4 sm:px-6 md:px-12"
@@ -1539,21 +1541,21 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
         <motion.div style={{ y: headingY }} className="text-center max-w-3xl mx-auto">
           <motion.span
             style={{ y: subY }}
-            className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-natural-accent"
+            className="inline-flex items-center gap-3 text-[10px] font-bold tracking-[0.45em] uppercase text-amber-300/80"
           >
-            <span className="h-px w-8 bg-natural-accent/40" />
+            <span className="h-px w-8 bg-amber-300/30" />
             {eyebrowText}
-            <span className="h-px w-8 bg-natural-accent/40" />
+            <span className="h-px w-8 bg-amber-300/30" />
           </motion.span>
 
-          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] mt-5 tracking-tight text-natural-text">
+          <h2 className="font-serif font-black text-4xl sm:text-5xl md:text-7xl leading-[0.95] mt-5 tracking-tight text-white">
             {titleHead}{titleTail ? <br /> : null}
-            {titleTail ? <em className="font-serif italic font-light">{titleTail}</em> : null}
+            {titleTail ? <em className="font-serif italic font-light text-amber-200/80">{titleTail}</em> : null}
           </h2>
 
           <motion.p
             style={{ y: subY }}
-            className="text-natural-text/50 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
+            className="text-white/50 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
           >
             Every coffee, every bag, every cup — handpicked by our master roasters.
           </motion.p>
@@ -1573,91 +1575,60 @@ type BentoTileData = {
 };
 function BentoTile({ tile, onClick, tall = false }: { tile: BentoTileData; onClick: () => void; tall?: boolean }) {
   const heroProduct = tile.items[0];
-  const samples = tile.items.slice(0, tall ? 4 : 3);
-
-  if (tall && heroProduct) {
-    return (
-      <button
-        onClick={onClick}
-        className={`group relative overflow-hidden rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} text-left transition-all hover:shadow-2xl hover:-translate-y-0.5 hover:border-natural-accent/40 w-full h-full flex flex-col`}
-      >
-        <div className="relative flex-1 overflow-hidden">
-          <SmartImage
-            src={heroProduct.imageUrl}
-            blur={heroProduct.imageBlur}
-            alt=""
-            className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
-            wrapperClassName="absolute inset-0"
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/10 to-transparent" />
-          <div className="absolute bottom-3 right-3 flex -space-x-2">
-            {samples.slice(1).map((p, idx) => (
-              <div
-                key={p._id}
-                className="w-12 h-12 rounded-xl bg-white/90 border-2 border-white shadow-md overflow-hidden"
-                style={{ zIndex: samples.length - idx }}
-              >
-                <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover" wrapperClassName="w-full h-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="relative p-4 sm:p-5 bg-white/85 backdrop-blur-sm shrink-0">
-          <h3 className="text-lg sm:text-xl font-serif font-bold leading-tight">{tile.title}</h3>
-          <div className="flex items-center justify-between mt-1.5">
-            <p className="text-xs text-natural-text/60 font-medium">
-              {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
-            </p>
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-natural-accent">
-              Browse <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-            </span>
-          </div>
-        </div>
-      </button>
-    );
-  }
+  const samples = tile.items.slice(1, tall ? 4 : 3);
 
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-natural-border bg-linear-to-br ${tile.accent} text-left transition-all hover:shadow-xl hover:-translate-y-0.5 hover:border-natural-accent/30 w-full h-full min-h-[140px] flex`}
+      className={`group relative overflow-hidden ${
+        tall ? "rounded-3xl" : "rounded-2xl sm:rounded-3xl"
+      } text-left transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5 w-full h-full ${
+        tall ? "min-h-105" : "min-h-40"
+      } flex flex-col`}
     >
-      {/* Image block — fills the LEFT half with the hero product */}
-      <div className="relative w-2/5 min-w-[110px] shrink-0 overflow-hidden">
-        {heroProduct ? (
-          <SmartImage
-            src={heroProduct.imageUrl}
-            blur={heroProduct.imageBlur}
-            alt=""
-            className="object-cover object-center transition-transform duration-700 group-hover:scale-110"
-            wrapperClassName="absolute inset-0"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-natural-paper" />
-        )}
-        {/* Thumbnail stack for secondary products — bottom-right corner */}
-        {samples.length > 1 && (
-          <div className="absolute bottom-2 right-2 flex -space-x-1.5">
-            {samples.slice(1, 3).map((p, idx) => (
-              <div
-                key={p._id}
-                className="w-7 h-7 rounded-md bg-white border border-white shadow-sm overflow-hidden"
-                style={{ zIndex: samples.length - idx }}
-              >
-                <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover object-center" wrapperClassName="w-full h-full" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {/* Text block — right side, vertically centered, fills height */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center p-4 sm:p-5 gap-1">
-        <h3 className="font-serif font-bold text-base sm:text-lg leading-tight break-words">{tile.title}</h3>
-        <p className="text-[11px] text-natural-text/60 font-medium">
-          {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
-        </p>
-        <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-natural-accent">
-          Browse <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+      {/* Full-bleed image */}
+      {heroProduct ? (
+        <SmartImage
+          src={heroProduct.imageUrl}
+          blur={heroProduct.imageBlur}
+          alt={tile.title}
+          className="object-cover transition-transform duration-[1.4s] group-hover:scale-105"
+          wrapperClassName="absolute inset-0"
+        />
+      ) : (
+        <div className={`absolute inset-0 bg-linear-to-br ${tile.accent}`} />
+      )}
+
+      {/* Scrim — heavy at bottom, light at top */}
+      <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-black/10" />
+
+      {/* Thumbnail stack — top-right */}
+      {samples.length > 0 && (
+        <div className="absolute top-3 right-3 flex -space-x-2 z-10">
+          {samples.map((p, idx) => (
+            <div
+              key={p._id}
+              className="w-9 h-9 rounded-xl bg-white/90 border-2 border-white shadow-md overflow-hidden"
+              style={{ zIndex: samples.length - idx }}
+            >
+              <SmartImage src={p.imageUrl} blur={p.imageBlur} alt="" className="object-cover" wrapperClassName="w-full h-full" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Text overlay — bottom */}
+      <div className="relative mt-auto p-4 sm:p-5 z-10">
+        <h3 className={`font-serif font-bold leading-tight text-white ${
+          tall ? "text-xl sm:text-2xl" : "text-base sm:text-lg"
+        }`}>{tile.title}</h3>
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-xs text-white/60 font-medium">
+            {tile.items.length} {tile.items.length === 1 ? "option" : "options"}
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-amber-300">
+            Browse <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+          </span>
         </div>
       </div>
     </button>
