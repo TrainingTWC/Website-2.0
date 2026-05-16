@@ -32,6 +32,8 @@ import {
   ChevronRight,
   Save,
   AlertTriangle,
+  Trash2,
+  ShieldAlert,
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { AdminShell, GlassCard, KpiTile, type NavGroup } from "./AdminShell";
@@ -787,48 +789,283 @@ function SettingsPanel({
       </GlassCard>
 
       {/* ── Danger zone ────────────────────────────────── */}
+      <DangerZone />
+
+    </div>
+  );
+}
+
+// ── Danger Zone ───────────────────────────────────────────────────────────────
+const BADGE = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-100 text-stone-500 tabular-nums";
+
+interface DangerAction {
+  label: string;
+  description: string;
+  countKey?: string;
+  mutationKey: string;
+  confirm: string; // typed confirmation required
+}
+
+const INDIVIDUAL: DangerAction[] = [
+  { label: "Analytics & Page Views", description: "All visit tracking, GPS/IP locations, daily charts.", countKey: "pageViews", mutationKey: "dangerZone:clearPageViews", confirm: "clear analytics" },
+  { label: "AI Sessions", description: "Discovery widget session results.", countKey: "sessions", mutationKey: "dangerZone:clearSessions", confirm: "clear sessions" },
+  { label: "AI Cache", description: "Cached AI recommendation responses.", countKey: "aiCache", mutationKey: "dangerZone:clearAiCache", confirm: "clear cache" },
+  { label: "Orders", description: "All customer order records.", countKey: "orders", mutationKey: "dangerZone:clearOrders", confirm: "clear orders" },
+  { label: "Discounts", description: "All discount codes.", countKey: "discounts", mutationKey: "dangerZone:clearDiscounts", confirm: "clear discounts" },
+  { label: "Products", description: "All products in the catalog.", countKey: "products", mutationKey: "dangerZone:clearProducts", confirm: "clear products" },
+  { label: "Categories", description: "All product categories.", countKey: "categories", mutationKey: "dangerZone:clearCategories", confirm: "clear categories" },
+  { label: "Blog / Editorial Posts", description: "All editorial and blog posts.", countKey: "posts", mutationKey: "dangerZone:clearPosts", confirm: "clear posts" },
+  { label: "Audit Log", description: "All admin action logs.", countKey: "auditLog", mutationKey: "dangerZone:clearAuditLog", confirm: "clear audit log" },
+];
+
+const GROUPS = [
+  { label: "Reset Analytics", description: "Wipes page views, AI sessions and AI cache.", mutationKey: "dangerZone:resetAnalytics", confirm: "reset analytics", color: "amber" },
+  { label: "Reset Orders", description: "Wipes all orders and discount codes.", mutationKey: "dangerZone:resetOrders", confirm: "reset orders", color: "orange" },
+  { label: "Reset Catalog", description: "Wipes products, categories and editorial posts.", mutationKey: "dangerZone:resetCatalog", confirm: "reset catalog", color: "red" },
+];
+
+function DangerModal({
+  label,
+  confirmPhrase,
+  extraField,
+  onConfirm,
+  onClose,
+  busy,
+}: {
+  label: string;
+  confirmPhrase: string;
+  extraField?: { label: string; value: string; onChange: (v: string) => void };
+  onConfirm: () => void;
+  onClose: () => void;
+  busy: boolean;
+}) {
+  const [typed, setTyped] = useState("");
+  const matches = typed === confirmPhrase;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md space-y-5 border border-rose-200">
+        <div className="flex items-center gap-3">
+          <ShieldAlert className="w-6 h-6 text-rose-500 flex-shrink-0" />
+          <h3 className="text-lg font-bold text-rose-800">{label}</h3>
+        </div>
+        <p className="text-sm text-stone-600">This action is <strong>irreversible</strong>. Type <code className="px-1.5 py-0.5 bg-rose-50 text-rose-700 rounded font-mono text-xs">{confirmPhrase}</code> to confirm.</p>
+        {extraField && (
+          <input
+            className="w-full p-2.5 rounded-xl border border-stone-200 text-sm outline-none focus:ring-2 ring-rose-300 font-mono"
+            value={extraField.value}
+            onChange={(e) => extraField.onChange(e.target.value)}
+            placeholder={extraField.label}
+          />
+        )}
+        <input
+          className="w-full p-2.5 rounded-xl border border-stone-200 text-sm outline-none focus:ring-2 ring-rose-300 font-mono"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          placeholder={`Type "${confirmPhrase}"`}
+        />
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose} className="px-5 py-2 rounded-xl text-sm font-bold text-stone-500 hover:bg-stone-100 transition">Cancel</button>
+          <button
+            disabled={!matches || busy}
+            onClick={onConfirm}
+            className="px-5 py-2 rounded-xl text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 transition flex items-center gap-2"
+          >
+            {busy ? <><RefreshCw className="w-4 h-4 animate-spin" /> Working…</> : <><Trash2 className="w-4 h-4" /> Confirm delete</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DangerZone() {
+  const [open, setOpen] = useState(false);
+  const [modal, setModal] = useState<{ action?: DangerAction; group?: typeof GROUPS[0]; nuke?: boolean } | null>(null);
+  const [nukePhrase, setNukePhrase] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const counts = useQuery((api as any).dangerZone.getTableCounts) as any;
+  const clearPageViews = useMutation((api as any).dangerZone.clearPageViews);
+  const clearSessions = useMutation((api as any).dangerZone.clearSessions);
+  const clearOrders = useMutation((api as any).dangerZone.clearOrders);
+  const clearAiCache = useMutation((api as any).dangerZone.clearAiCache);
+  const clearAuditLog = useMutation((api as any).dangerZone.clearAuditLog);
+  const clearDiscounts = useMutation((api as any).dangerZone.clearDiscounts);
+  const clearProducts = useMutation((api as any).dangerZone.clearProducts);
+  const clearCategories = useMutation((api as any).dangerZone.clearCategories);
+  const clearPosts = useMutation((api as any).dangerZone.clearPosts);
+  const resetAnalytics = useMutation((api as any).dangerZone.resetAnalytics);
+  const resetOrders = useMutation((api as any).dangerZone.resetOrders);
+  const resetCatalog = useMutation((api as any).dangerZone.resetCatalog);
+  const nukeEverything = useMutation((api as any).dangerZone.nukeEverything);
+
+  const mutMap: Record<string, (...args: any[]) => Promise<any>> = {
+    "dangerZone:clearPageViews": clearPageViews,
+    "dangerZone:clearSessions": clearSessions,
+    "dangerZone:clearOrders": clearOrders,
+    "dangerZone:clearAiCache": clearAiCache,
+    "dangerZone:clearAuditLog": clearAuditLog,
+    "dangerZone:clearDiscounts": clearDiscounts,
+    "dangerZone:clearProducts": clearProducts,
+    "dangerZone:clearCategories": clearCategories,
+    "dangerZone:clearPosts": clearPosts,
+    "dangerZone:resetAnalytics": resetAnalytics,
+    "dangerZone:resetOrders": resetOrders,
+    "dangerZone:resetCatalog": resetCatalog,
+  };
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function runMutation(key: string, extraArgs?: Record<string, any>) {
+    setBusy(true);
+    try {
+      const fn = mutMap[key];
+      if (fn) {
+        const result = await fn(extraArgs ?? {});
+        const total = typeof result === "number" ? result : Object.values(result as Record<string, number>).reduce((a, b) => a + b, 0);
+        showToast(`✓ Deleted ${total} records`);
+      }
+    } catch (e: any) {
+      showToast(`Error: ${e?.message || "unknown"}`);
+    } finally {
+      setBusy(false);
+      setModal(null);
+    }
+  }
+
+  async function runNuke() {
+    setBusy(true);
+    try {
+      const result = await nukeEverything({ confirmPhrase: "WIPE EVERYTHING" });
+      const total = Object.values(result as Record<string, number>).reduce((a, b) => a + b, 0);
+      showToast(`✓ Site wiped — ${total} records deleted`);
+    } catch (e: any) {
+      showToast(`Error: ${e?.message || "unknown"}`);
+    } finally {
+      setBusy(false);
+      setModal(null);
+    }
+  }
+
+  return (
+    <>
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-stone-800 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-xl">
+          {toast}
+        </div>
+      )}
+
+      {/* Modal */}
+      {modal && (
+        modal.nuke ? (
+          <DangerModal
+            label="Wipe Entire Site"
+            confirmPhrase="WIPE EVERYTHING"
+            busy={busy}
+            onClose={() => setModal(null)}
+            onConfirm={runNuke}
+          />
+        ) : modal.action ? (
+          <DangerModal
+            label={`Delete: ${modal.action.label}`}
+            confirmPhrase={modal.action.confirm}
+            busy={busy}
+            onClose={() => setModal(null)}
+            onConfirm={() => runMutation(modal.action!.mutationKey)}
+          />
+        ) : modal.group ? (
+          <DangerModal
+            label={modal.group.label}
+            confirmPhrase={modal.group.confirm}
+            busy={busy}
+            onClose={() => setModal(null)}
+            onConfirm={() => runMutation(modal.group!.mutationKey)}
+          />
+        ) : null
+      )}
+
       <GlassCard className="p-6 border border-rose-200 bg-rose-50/30">
-        <button
-          onClick={() => setShowDanger(!showDanger)}
-          className="flex items-center justify-between w-full"
-        >
+        <button onClick={() => setOpen(!open)} className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-500" />
-            <h3 className="font-serif text-lg font-bold text-rose-800">Danger zone</h3>
+            <h3 className="font-serif text-lg font-bold text-rose-800">Danger Zone</h3>
           </div>
-          <ChevronRight className={`w-4 h-4 text-rose-400 transition-transform ${showDanger ? "rotate-90" : ""}`} />
+          <ChevronRight className={`w-4 h-4 text-rose-400 transition-transform ${open ? "rotate-90" : ""}`} />
         </button>
-        {showDanger && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-stone-800">Export all data</p>
-                <p className="text-xs text-stone-500">Download a JSON snapshot of products, orders, and admins.</p>
+
+        {open && (
+          <div className="mt-5 space-y-6">
+            {/* Individual */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-rose-400 mb-3">Clear individual tables</p>
+              <div className="space-y-2">
+                {INDIVIDUAL.map((item) => (
+                  <div key={item.mutationKey} className="flex items-center justify-between gap-4 bg-white/60 rounded-2xl px-4 py-3 border border-rose-100">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-stone-800 flex items-center gap-2">
+                        {item.label}
+                        {counts && item.countKey && (
+                          <span className={BADGE}>{counts[item.countKey]} rows</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-stone-400">{item.description}</p>
+                    </div>
+                    <button
+                      onClick={() => setModal({ action: item })}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-300 bg-rose-50 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Clear
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button
-                onClick={() => alert("Export feature coming soon.")}
-                className="px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
-              >
-                Export
-              </button>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-rose-800">Revoke all admin sessions</p>
-                <p className="text-xs text-rose-500">Signs out every admin user immediately.</p>
+
+            {/* Groups */}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-rose-400 mb-3">Group resets</p>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {GROUPS.map((g) => (
+                  <button
+                    key={g.mutationKey}
+                    onClick={() => setModal({ group: g })}
+                    className="text-left p-4 rounded-2xl border border-rose-200 bg-white/60 hover:bg-rose-50 transition group"
+                  >
+                    <p className="text-sm font-bold text-rose-800 group-hover:underline">{g.label}</p>
+                    <p className="text-xs text-stone-400 mt-1">{g.description}</p>
+                  </button>
+                ))}
               </div>
-              <button
-                onClick={() => alert("Revoke feature coming soon.")}
-                className="px-3 py-1.5 rounded-lg border border-rose-300 bg-rose-50 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
-              >
-                Revoke all
-              </button>
+            </div>
+
+            {/* Nuclear */}
+            <div className="border-t border-rose-200 pt-5">
+              <div className="flex items-start justify-between gap-6 bg-rose-100/60 rounded-2xl p-5 border border-rose-300">
+                <div>
+                  <p className="text-sm font-bold text-rose-900 flex items-center gap-2"><ShieldAlert className="w-4 h-4" /> Wipe Entire Site</p>
+                  <p className="text-xs text-rose-700 mt-1">Permanently deletes ALL data across every table. Use before going live for a clean slate. Cannot be undone.</p>
+                  {counts && (
+                    <p className="text-xs text-rose-400 mt-2 font-mono">
+                      Total: {Object.values(counts as Record<string, number>).reduce((a, b) => a + b, 0)} rows across all tables
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setModal({ nuke: true })}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 active:scale-95 transition"
+                >
+                  <Trash2 className="w-4 h-4" /> Wipe everything
+                </button>
+              </div>
             </div>
           </div>
         )}
       </GlassCard>
-
-    </div>
+    </>
   );
 }
 

@@ -14,6 +14,7 @@ import type * as auth from "../auth.js";
 import type * as authAdmin from "../authAdmin.js";
 import type * as cache from "../cache.js";
 import type * as categories from "../categories.js";
+import type * as dangerZone from "../dangerZone.js";
 import type * as discounts from "../discounts.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   authAdmin: typeof authAdmin;
   cache: typeof cache;
   categories: typeof categories;
+  dangerZone: typeof dangerZone;
   discounts: typeof discounts;
   http: typeof http;
   migrations: typeof migrations;
