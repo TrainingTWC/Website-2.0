@@ -228,8 +228,10 @@ export function ChapterReveal({
     ? "bg-white/10 border-white/20 text-white"
     : "bg-natural-paper border-natural-border text-natural-text";
 
+  const hasImage = !!(imageUrl || product?.imageUrl);
+
   return (
-    <section ref={ref} className={`relative min-h-screen ${bg} ${fg} overflow-hidden`}>
+    <section ref={ref} className={`relative ${hasImage ? "min-h-screen" : "min-h-[60vh]"} ${bg} ${fg} overflow-hidden`}>
       {/* Background editorial wordmark — slowest moving */}
       <motion.div
         style={{ y: bigTextY }}
@@ -243,7 +245,7 @@ export function ChapterReveal({
       </motion.div>
 
       {/* Sticky pinned stage */}
-      <div className="sticky top-0 h-screen flex items-center overflow-hidden">
+      <div className={`sticky top-0 ${hasImage ? "h-screen" : "h-auto py-20"} flex items-center overflow-hidden`}>
         <div
           className={`relative w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${
             align === "right" ? "lg:[grid-template-columns:1fr_1.2fr]" : "lg:[grid-template-columns:1.2fr_1fr]"
