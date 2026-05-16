@@ -947,6 +947,13 @@ export function CombinedAnalytics() {
   );
 }
 
+// ─── Site-only analytics (traffic + AI) — no sales, for Site Analytics tab ──
+export function SiteAnalytics() {
+  const sessions = (useQuery(api.sessions.list) ?? []) as any[];
+  const products = (useQuery(api.products.list) ?? []) as Product[];
+  return <AnalyticsView sessions={sessions} products={products} />;
+}
+
 function AnalyticsView({
   sessions,
   products,
@@ -1049,18 +1056,6 @@ function AnalyticsView({
             <p className="text-xs text-stone-400 mt-1">Page views are tracked automatically on every visit.</p>
           </div>
         )}
-      </section>
-
-      <section>
-        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5 text-natural-accent" /> Sales &amp; Revenue
-        </h3>
-        <div className="bg-stone-50 border border-dashed border-stone-200 rounded-3xl p-8 text-center">
-          <ShoppingBag className="w-10 h-10 text-stone-200 mx-auto mb-3" />
-          <p className="font-bold text-stone-500">Order system is coming in the next phase</p>
-          <p className="text-sm text-stone-400 mt-1">Sales totals, revenue, order history and refunds will be tracked here once the checkout pipeline is live.</p>
-          <span className="mt-4 inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-bold">Phase 2</span>
-        </div>
       </section>
 
       <section>

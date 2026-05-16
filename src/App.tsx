@@ -157,7 +157,7 @@ function MerchantGate() {
   return (
     <div className="font-sans">
       <AdminAuthGate panelLabel="Merchant">
-        {() => <AdminDashboard />}
+        {(me) => <AdminDashboard me={me} />}
       </AdminAuthGate>
     </div>
   );

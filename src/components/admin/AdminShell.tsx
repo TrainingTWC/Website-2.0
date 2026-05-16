@@ -153,21 +153,14 @@ export function AdminShell({
               <div className={`shrink-0 w-9 h-9 rounded-xl ${accentBg} text-white flex items-center justify-center shadow-[0_8px_18px_rgba(90,90,64,0.35)]`}>
                 <img src={asset("logo.png")} alt="" className="w-6 h-6 object-contain invert" />
               </div>
-              <AnimatePresence initial={false}>
-                {!collapsed && (
-                  <motion.div
-                    key="brand"
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -6 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex flex-col leading-none"
-                  >
-                    <span className="text-[15px] font-bold tracking-tight text-stone-900">{brand}</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500 mt-0.5">{panelLabel}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div
+                className={`flex flex-col leading-none overflow-hidden transition-[opacity,transform] duration-150 ${
+                  collapsed ? "opacity-0 -translate-x-1 w-0" : "opacity-100 translate-x-0"
+                }`}
+              >
+                <span className="text-[15px] font-bold tracking-tight text-stone-900 whitespace-nowrap">{brand}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500 mt-0.5 whitespace-nowrap">{panelLabel}</span>
+              </div>
             </div>
 
             {/* Nav */}
@@ -198,21 +191,14 @@ export function AdminShell({
                             <span className={`absolute ${ collapsed ? "left-0 right-0 bottom-0 h-0.5 w-5 mx-auto rounded-t-full" : "left-0 top-2 bottom-2 w-1 rounded-r-full"} ${accentBg}`} />
                           )}
                           <span className={`shrink-0 ${ active ? "text-stone-900" : "text-stone-500 group-hover:text-stone-700"}`}>{it.icon}</span>
-                          <AnimatePresence initial={false}>
-                            {!collapsed && (
-                              <motion.span
-                                key="lbl"
-                                initial={{ opacity: 0, x: -4 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -4 }}
-                                transition={{ duration: 0.12 }}
-                                className="flex-1 text-left truncate"
-                              >
-                                {it.label}
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                          {!collapsed && typeof it.badge !== "undefined" && (
+                          <span
+                            className={`flex-1 text-left truncate transition-opacity duration-150 ${
+                              collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+                            }`}
+                          >
+                            {it.label}
+                          </span>
+                          {typeof it.badge !== "undefined" && !collapsed && (
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                               active ? `${accentBg} text-white` : "bg-stone-200 text-stone-600"
                             }`}>
@@ -228,24 +214,33 @@ export function AdminShell({
             </nav>
 
             {/* Upgrade / pro card */}
-            {!collapsed && (
-              <div className="relative mx-3 mb-3 mt-2 rounded-2xl p-4 bg-gradient-to-br from-[#5A5A40] to-[#3a3a28] text-white shadow-[0_18px_36px_rgba(50,50,40,0.35)] overflow-hidden">
-                <div className="pointer-events-none absolute -top-8 -right-8 w-28 h-28 rounded-full bg-amber-300/30 blur-2xl" />
-                <Shield className="w-5 h-5 mb-2 text-amber-200" />
-                <p className="text-sm font-bold leading-tight">Premium controls</p>
-                <p className="text-[11px] text-white/70 mt-1 leading-snug">Deeper analytics &amp; admin access lives in Super Admin.</p>
-              </div>
-            )}
+            <div
+              className={`relative mx-3 mb-3 mt-2 rounded-2xl p-4 bg-gradient-to-br from-[#5A5A40] to-[#3a3a28] text-white shadow-[0_18px_36px_rgba(50,50,40,0.35)] overflow-hidden transition-all duration-200 ${
+                collapsed ? "opacity-0 max-h-0 mt-0 mb-0 p-0 pointer-events-none" : "opacity-100 max-h-48"
+              }`}
+            >
+              <div className="pointer-events-none absolute -top-8 -right-8 w-28 h-28 rounded-full bg-amber-300/30 blur-2xl" />
+              <Shield className="w-5 h-5 mb-2 text-amber-200" />
+              <p className="text-sm font-bold leading-tight whitespace-nowrap">Premium controls</p>
+              <p className="text-[11px] text-white/70 mt-1 leading-snug">Deeper analytics &amp; admin access lives in Super Admin.</p>
+            </div>
 
             {/* Collapse toggle */}
             <button
               onClick={() => setCollapsed(!collapsed)}
+              title={collapsed ? "Expand sidebar" : undefined}
               className={`relative mx-3 mb-3 flex items-center text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500 hover:text-stone-800 py-2 rounded-xl hover:bg-white/55 transition ${
                 collapsed ? "justify-center px-2" : "gap-2 px-3"
               }`}
             >
               {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              {!collapsed && "Collapse"}
+              <span
+                className={`transition-opacity duration-150 whitespace-nowrap ${
+                  collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+                }`}
+              >
+                Collapse
+              </span>
             </button>
           </div>
         </motion.aside>

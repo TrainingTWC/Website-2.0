@@ -42,6 +42,7 @@ import { HomeContentCMS } from "./HomeContentCMS";
 import {
   InventoryManager,
   CombinedAnalytics,
+  SiteAnalytics,
   RulesManager,
   OrdersView,
 } from "./AdminDashboard";
@@ -196,12 +197,12 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     >
       {activeTab === "overview" && <SuperOverview />}
       {activeTab === "inventory" && <InventoryManager />}
-      {activeTab === "merchant-analytics" && <CombinedAnalytics />}
+      {activeTab === "merchant-analytics" && <SalesAnalytics />}
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}
       {activeTab === "home" && <HomeContentCMS />}
       {activeTab === "rules" && <RulesManager />}
-      {activeTab === "deep-analytics" && <SalesAnalytics />}
+      {activeTab === "deep-analytics" && <SiteAnalytics />}
       {activeTab === "admins" && <AdminsManager />}
       {activeTab === "audit" && <AuditLogViewer />}
       {activeTab === "settings" && (
