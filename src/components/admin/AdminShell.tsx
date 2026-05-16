@@ -139,7 +139,7 @@ export function AdminShell({
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0)_30%)]" />
 
             {/* Brand */}
-            <div className="relative px-5 pt-5 pb-4 flex items-center gap-3">
+            <div className={`relative pt-5 pb-4 flex items-center gap-3 ${collapsed ? "justify-center px-3" : "px-5"}`}>
               <div className={`w-9 h-9 rounded-xl ${accentBg} text-white flex items-center justify-center shadow-[0_8px_18px_rgba(90,90,64,0.35)]`}>
                 <img src={asset("logo.png")} alt="" className="w-6 h-6 object-contain invert" />
               </div>
@@ -161,12 +161,13 @@ export function AdminShell({
             </div>
 
             {/* Nav */}
-            <nav className="relative flex-1 overflow-y-auto px-3 py-2 space-y-5">
+            <nav className="relative flex-1 overflow-y-auto px-3 py-2 space-y-4">
               {navGroups.map((group, gi) => (
                 <div key={gi}>
                   {group.label && !collapsed && (
                     <p className="px-3 mb-1 text-[10px] font-bold tracking-[0.18em] uppercase text-stone-400">{group.label}</p>
                   )}
+                  {group.label && collapsed && <div className="mb-1 mx-3 h-px bg-stone-200/70" />}
                   <div className="space-y-0.5">
                     {group.items.map((it) => {
                       const active = it.id === activeId;
@@ -174,16 +175,19 @@ export function AdminShell({
                         <button
                           key={it.id}
                           onClick={() => onNavigate(it.id)}
-                          className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          title={collapsed ? it.label : undefined}
+                          className={`group relative w-full flex items-center py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            collapsed ? "justify-center px-2" : "gap-3 px-3"
+                          } ${
                             active
                               ? "bg-white/85 text-stone-900 shadow-[0_8px_20px_rgba(15,15,15,0.06)] border border-white"
                               : "text-stone-600 hover:text-stone-900 hover:bg-white/55"
                           }`}
                         >
                           {active && (
-                            <span className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full ${accentBg}`} />
+                            <span className={`absolute ${ collapsed ? "left-0 right-0 bottom-0 h-0.5 w-5 mx-auto rounded-t-full" : "left-0 top-2 bottom-2 w-1 rounded-r-full"} ${accentBg}`} />
                           )}
-                          <span className={active ? "text-stone-900" : "text-stone-500"}>{it.icon}</span>
+                          <span className={`shrink-0 ${ active ? "text-stone-900" : "text-stone-500 group-hover:text-stone-700"}`}>{it.icon}</span>
                           <AnimatePresence initial={false}>
                             {!collapsed && (
                               <motion.span
@@ -226,7 +230,10 @@ export function AdminShell({
             {/* Collapse toggle */}
             <button
               onClick={() => setCollapsed((c) => !c)}
-              className="relative mx-3 mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500 hover:text-stone-800 px-3 py-2 rounded-xl hover:bg-white/55"
+              title={collapsed ? "Expand sidebar" : undefined}
+              className={`relative mx-3 mb-3 flex items-center text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500 hover:text-stone-800 py-2 rounded-xl hover:bg-white/55 transition ${
+                collapsed ? "justify-center px-2" : "gap-2 px-3"
+              }`}
             >
               {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
               {!collapsed && "Collapse"}
