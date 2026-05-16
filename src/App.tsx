@@ -1509,24 +1509,47 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
   return (
     <div
       ref={ref}
-      className="relative overflow-hidden bg-[#1A0F08]"
+      className="relative overflow-hidden bg-natural-paper"
       style={{ perspective: "600px" }}
     >
-      {/* Feathered top edge — page bg fades into dark */}
-      <div className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-[#FAF9F6] to-transparent z-20 pointer-events-none" />
-      {/* Feathered bottom edge */}
-      <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#FAF9F6] to-transparent z-20 pointer-events-none" />
+      {/* Dark layer is MASKED so its edges fade organically into the cream
+          page on every side — no hard rectangle, no overlays needed. */}
+      <div
+        className="absolute inset-0 bg-[#1A0F08] pointer-events-none"
+        style={{
+          WebkitMaskImage:
+            "radial-gradient(ellipse 90% 75% at 50% 50%, #000 55%, transparent 100%)",
+          maskImage:
+            "radial-gradient(ellipse 90% 75% at 50% 50%, #000 55%, transparent 100%)",
+        }}
+      />
 
-      {/* Parallax warm colour wash */}
+      {/* Parallax warm colour wash — also masked so it never shows a hard edge */}
       <motion.div
         style={{ y: washY, opacity: washOpacity }}
         className="absolute inset-0 pointer-events-none"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,rgba(160,100,40,0.55)_0%,rgba(80,40,10,0.35)_45%,transparent_75%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,rgba(200,140,60,0.18)_0%,transparent_55%)]" />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_55%,rgba(180,110,50,0.55)_0%,rgba(80,40,10,0.30)_45%,transparent_75%)]"
+          style={{
+            WebkitMaskImage:
+              "radial-gradient(ellipse 95% 80% at 50% 50%, #000 50%, transparent 100%)",
+            maskImage:
+              "radial-gradient(ellipse 95% 80% at 50% 50%, #000 50%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,rgba(220,160,80,0.18)_0%,transparent_55%)]"
+          style={{
+            WebkitMaskImage:
+              "radial-gradient(ellipse 95% 80% at 50% 50%, #000 50%, transparent 100%)",
+            maskImage:
+              "radial-gradient(ellipse 95% 80% at 50% 50%, #000 50%, transparent 100%)",
+          }}
+        />
       </motion.div>
 
-      {/* Ghost wordmark */}
+      {/* Ghost wordmark — also masked to fade out at edges */}
       <motion.div
         style={{ y: wordmarkY }}
         className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none select-none overflow-hidden"
@@ -1536,12 +1559,9 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
         </span>
       </motion.div>
 
-      <div className="absolute inset-y-0 left-0 w-px bg-white/10" />
-      <div className="absolute inset-y-0 right-0 w-px bg-white/10" />
-
       <motion.div
         style={{ opacity }}
-        className="relative py-24 sm:py-32 px-4 sm:px-6 md:px-12"
+        className="relative py-32 sm:py-40 px-4 sm:px-6 md:px-12"
       >
         <motion.div style={{ y: headingY }} className="text-center max-w-3xl mx-auto">
           <motion.span
@@ -1560,7 +1580,7 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
 
           <motion.p
             style={{ y: subY }}
-            className="text-white/50 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
+            className="text-white/55 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
           >
             Every coffee, every bag, every cup — handpicked by our master roasters.
           </motion.p>
