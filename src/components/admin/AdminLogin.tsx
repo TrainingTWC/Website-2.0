@@ -13,7 +13,7 @@ import { asset } from "../../lib/asset";
  * out superadmin can recover without using the Convex dashboard.
  */
 export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string }) {
-  const { signIn } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
   const purgeEmail = useMutation(convexApi.authAdmin.purgeEmail);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,12 +47,17 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setLoading(true);
     try {
       await trySignIn();
-    } catch {
+    } catch (signInErr: any) {
       try {
         await trySignUp();
-      } catch {
+      } catch (signUpErr: any) {
+        const msg =
+          signUpErr?.data?.toString?.() ??
+          signUpErr?.message ??
+          signInErr?.message ??
+          "Unknown error";
         setError(
-          "Couldn't sign in or create the account. If you forgot the password, use 'Reset & set new password' below."
+          `Couldn't sign in or create the account. Server said: ${msg}. If you forgot the password, use 'Reset & set new password' below.`
         );
       }
     } finally {
@@ -67,13 +72,27 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
       setError("Enter the email and a new password first.");
       return;
     }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     setLoading(true);
     try {
+      // Clear any stale browser session referencing the soon-to-be-deleted user.
+      try { await signOut(); } catch {}
       const result = await purgeEmail({ email: email.trim().toLowerCase() });
-      setInfo(`Cleared ${result.removed.authAccounts} old auth row(s). Creating fresh account…`);
+      setInfo(
+        `Cleared ${result.removed.authAccounts} authAccount(s), ${result.removed.users} user(s), ${result.removed.admins} admin row(s). Creating fresh account…`
+      );
+      // Tiny delay so Convex commits the deletes before signUp re-reads.
+      await new Promise((r) => setTimeout(r, 400));
       await trySignUp();
     } catch (err: any) {
-      setError(err?.message ?? "Reset failed. Try again.");
+      const msg =
+        err?.data?.toString?.() ??
+        err?.message ??
+        "Reset failed. Try again.";
+      setError(`Reset failed: ${msg}`);
     } finally {
       setLoading(false);
     }
