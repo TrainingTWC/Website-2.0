@@ -45,6 +45,8 @@ import { useBannerSlides, useHeroContent, useSectionsContent, useChapters } from
 import { DataBanner } from "./components/DataBanner";
 import { DiscoveryWidget } from "./components/widget/DiscoveryWidget";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { SuperAdminDashboard } from "./components/admin/SuperAdminDashboard";
+import { AdminAuthGate } from "./components/admin/AdminAuthGate";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
@@ -150,90 +152,23 @@ function ToastContainer({ toasts }: { toasts: { id: number; text: string; icon?:
   );
 }
 
-// ── Password Gate for Merchant Panel ─────────────────────────
+// ── Admin Panel routes (Convex Auth gated) ───────────────────
 function MerchantGate() {
-  const [password, setPassword] = useState("");
-  const [unlocked, setUnlocked] = useState(false);
-  const [error, setError] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const correct = import.meta.env.VITE_MERCHANT_PASSWORD ?? "twc2026";
-    if (password === correct) {
-      setUnlocked(true);
-      setError(false);
-    } else {
-      setError(true);
-      setPassword("");
-    }
-  };
-
-  if (unlocked) {
-    return (
-      <div className="font-sans">
-        <AdminDashboard />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-natural-bg flex items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="bg-natural-paper border border-natural-border rounded-[2.5rem] shadow-2xl p-12 w-full max-w-md"
-      >
-        <div className="flex flex-col items-center gap-6 mb-10">
-          <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-16 w-auto" />
-          <div className="text-center">
-            <h2 className="text-2xl font-serif font-bold">Merchant Panel</h2>
-            <p className="text-sm text-natural-text/50 mt-1 font-sans">Enter your access password to continue.</p>
-          </div>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-text/30" />
-            <input
-              ref={inputRef}
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(false); }}
-              placeholder="Password"
-              className={`w-full pl-11 pr-11 py-4 rounded-2xl border bg-white font-sans text-sm outline-none transition-all ${
-                error ? "border-red-400 ring-2 ring-red-100" : "border-natural-border focus:border-natural-accent focus:ring-2 focus:ring-natural-accent/20"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-natural-text/30 hover:text-natural-text/60 transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          {error && (
-            <p className="text-red-500 text-xs font-sans pl-1">Incorrect password. Please try again.</p>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-natural-accent text-white py-4 rounded-2xl font-serif font-bold text-sm hover:bg-natural-text transition-colors active:scale-95"
-          >
-            Access Panel
-          </button>
-        </form>
-        <p className="text-center mt-6">
-          <a href="/" className="text-xs text-natural-text/40 hover:text-natural-accent transition-colors font-sans">
-            ← Back to Storefront
-          </a>
-        </p>
-      </motion.div>
+    <div className="font-sans">
+      <AdminAuthGate panelLabel="Merchant">
+        {() => <AdminDashboard />}
+      </AdminAuthGate>
+    </div>
+  );
+}
+
+function SuperAdminGate() {
+  return (
+    <div className="font-sans">
+      <AdminAuthGate panelLabel="Super Admin" requireSuperadmin>
+        {(me) => <SuperAdminDashboard me={me} />}
+      </AdminAuthGate>
     </div>
   );
 }
@@ -291,6 +226,9 @@ export default function App() {
   const params = useUrlQuery();
   if (params.get("panel") === "merchant") {
     return <MerchantGate />;
+  }
+  if (params.get("panel") === "superadmin") {
+    return <SuperAdminGate />;
   }
 
   return (

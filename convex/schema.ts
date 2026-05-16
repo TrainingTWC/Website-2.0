@@ -1,7 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
+
   products: defineTable({
     name: v.string(),
     description: v.string(),
@@ -201,4 +204,47 @@ export default defineSchema({
     json: v.string(),
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
+
+  // ── Admin RBAC ──────────────────────────────────────────────────────────
+  // Maps Convex Auth users to admin roles + per-section permissions.
+  admins: defineTable({
+    userId: v.id("users"),
+    email: v.string(),
+    name: v.optional(v.string()),
+    role: v.union(
+      v.literal("superadmin"),
+      v.literal("admin"),
+      v.literal("editor"),
+      v.literal("viewer")
+    ),
+    permissions: v.object({
+      overview: v.boolean(),
+      inventory: v.boolean(),
+      orders: v.boolean(),
+      analytics: v.boolean(),
+      editorial: v.boolean(),
+      home: v.boolean(),
+      rules: v.boolean(),
+      customers: v.boolean(),
+      settings: v.boolean(),
+    }),
+    active: v.boolean(),
+    invitedBy: v.optional(v.id("users")),
+    invitedAt: v.number(),
+    lastSeenAt: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_email", ["email"]),
+
+  // ── Audit log ───────────────────────────────────────────────────────────
+  auditLog: defineTable({
+    adminUserId: v.id("users"),
+    adminEmail: v.string(),
+    action: v.string(),         // "admin.invite", "product.update", etc.
+    target: v.optional(v.string()), // entity affected
+    metadata: v.optional(v.string()), // JSON blob
+    timestamp: v.number(),
+  })
+    .index("by_admin", ["adminUserId"])
+    .index("by_timestamp", ["timestamp"]),
 });

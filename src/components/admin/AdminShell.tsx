@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import {
   Search,
   Bell,
@@ -8,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  LogOut,
 } from "lucide-react";
 import { asset } from "../../lib/asset";
 
@@ -64,6 +66,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [query, setQuery] = useState("");
+  const { signOut } = useAuthActions();
 
   const accentBg = panelAccent === "espresso" ? "bg-[#3a2418]" : "bg-natural-accent";
   const orbA = panelAccent === "espresso" ? "bg-amber-400/25" : "bg-amber-300/30";
@@ -215,6 +218,14 @@ export function AdminShell({
             <div className="relative flex items-center gap-1.5 ml-auto">
               <IconBtn ariaLabel="Notifications"><Bell className="w-4 h-4" /></IconBtn>
               <IconBtn ariaLabel="Settings"><Settings className="w-4 h-4" /></IconBtn>
+              <button
+                onClick={() => signOut()}
+                aria-label="Sign out"
+                title="Sign out"
+                className="w-9 h-9 rounded-xl bg-white/65 border border-white/70 text-stone-600 hover:text-rose-600 hover:bg-white flex items-center justify-center transition"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
 
               {user && (
                 <div className="hidden sm:flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-white/65 border border-white/70">

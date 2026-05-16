@@ -8,10 +8,13 @@
  * @module
  */
 
+import type * as admins from "../admins.js";
 import type * as analytics from "../analytics.js";
+import type * as auth from "../auth.js";
 import type * as cache from "../cache.js";
 import type * as categories from "../categories.js";
 import type * as discounts from "../discounts.js";
+import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
 import type * as orders from "../orders.js";
 import type * as pageViews from "../pageViews.js";
@@ -31,10 +34,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admins: typeof admins;
   analytics: typeof analytics;
+  auth: typeof auth;
   cache: typeof cache;
   categories: typeof categories;
   discounts: typeof discounts;
+  http: typeof http;
   migrations: typeof migrations;
   orders: typeof orders;
   pageViews: typeof pageViews;
