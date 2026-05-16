@@ -11,9 +11,23 @@ import {
 } from "lucide-react";
 import { PRODUCT_PERSONALITIES } from "../../convex/productContext";
 import { SmartImage } from "./SmartImage";
-// Lazy-load the 3D viewer — three.js is large, only needed for one product
+// Lazy-load the 3D viewer — three.js is large, only needed for one product.
+// On chunk-load failure (stale cache after new deploy) reload once to pick up
+// the new index.html, preventing a white screen.
 const ProductHero3D = lazy(() =>
-  import("./ProductHero3D").then((m) => ({ default: m.ProductHero3D }))
+  import("./ProductHero3D")
+    .then((m) => ({ default: m.ProductHero3D }))
+    .catch(() => {
+      const key = "chunk_reload_at";
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last > 10_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+      // Return a no-op component so Suspense resolves without crashing
+      const Noop = () => null;
+      return { default: Noop as React.ComponentType<any> };
+    })
 );
 import { PersonalitySection } from "./PersonalitySection";
 import { BrewingStudio } from "./BrewingStudio";
