@@ -41,6 +41,9 @@ import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../../types";
 import { SalesAnalytics } from "./SalesAnalytics";
 import { EditorialCMS } from "./EditorialCMS";
 import { HomeContentCMS } from "./HomeContentCMS";
+import { AdminShell, type NavGroup } from "./AdminShell";
+import { DashboardOverview } from "./DashboardOverview";
+import { LayoutDashboard } from "lucide-react";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -159,64 +162,67 @@ function formDataToProductPayload(form: ProductFormData) {
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"inventory" | "analytics" | "rules" | "orders" | "editorial" | "home">(
-    "home"
-  );
-  const products = useProducts();
-  const sessions = useQuery(api.sessions.list);
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home"
+  >("overview");
 
-  const tabs = [
-    { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
-    { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
-    { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
-    { id: "home", label: "Home", icon: <HomeIcon className="w-4 h-4" /> },
+  const navGroups: NavGroup[] = [
+    {
+      label: "Workspace",
+      items: [
+        { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+        { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+        { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: "Catalog",
+      items: [
+        { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
+        { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
+        { id: "home", label: "Home CMS", icon: <HomeIcon className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: "System",
+      items: [
+        { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
+      ],
+    },
   ];
 
+  const titles: Record<typeof activeTab, { title: string; subtitle: string }> = {
+    overview: { title: "Dashboard", subtitle: "Bird's-eye view of revenue, orders, inventory and customers." },
+    inventory: { title: "Inventory", subtitle: "Manage products, stock levels and categories." },
+    analytics: { title: "Analytics", subtitle: "Sales performance, traffic and behavioural insights." },
+    rules: { title: "Logic Rules", subtitle: "Tune recommendation and discovery logic." },
+    orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
+    editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
+    home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
+  };
+
+  const meta = titles[activeTab];
+
   return (
-    <div className="relative space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0)_55%)]" />
-
-      <header className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 rounded-3xl border border-white/55 bg-white/65 backdrop-blur-xl p-6 shadow-[0_24px_80px_rgba(17,17,17,0.09)]">
-        <div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-stone-900">
-            Merchant Control
-          </h2>
-          <p className="text-natural-text/65 mt-2 font-medium">
-            Manage catalog, categories, media and monitor site performance.
-          </p>
-        </div>
-        <div className="flex flex-wrap bg-white/70 rounded-2xl p-1 border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                activeTab === tab.id
-                  ? "bg-natural-accent text-white shadow-[0_10px_24px_rgba(90,90,64,0.35)]"
-                  : "text-stone-700 hover:bg-white/85"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <div className="relative bg-white/62 backdrop-blur-xl rounded-[2.2rem] border border-white/60 shadow-[0_26px_80px_rgba(15,15,15,0.1)] min-h-[60vh] overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35)_0%,rgba(255,255,255,0)_45%)]" />
-        {activeTab === "inventory" && (
-          <InventoryManager />
-        )}
-        {activeTab === "analytics" && <CombinedAnalytics />}
-        {activeTab === "rules" && <RulesManager />}
-        {activeTab === "orders" && <OrdersView />}
-        {activeTab === "editorial" && <EditorialCMS />}
-        {activeTab === "home" && <HomeContentCMS />}
-      </div>
-    </div>
+    <AdminShell
+      brand="Third Wave"
+      panelLabel="Merchant"
+      panelAccent="olive"
+      navGroups={navGroups}
+      activeId={activeTab}
+      onNavigate={(id) => setActiveTab(id as typeof activeTab)}
+      user={{ name: "Merchant", email: "ops@thirdwavecoffee.in", role: "Admin" }}
+      workspaceTitle={meta.title}
+      workspaceSubtitle={meta.subtitle}
+    >
+      {activeTab === "overview" && <DashboardOverview />}
+      {activeTab === "inventory" && <InventoryManager />}
+      {activeTab === "analytics" && <CombinedAnalytics />}
+      {activeTab === "rules" && <RulesManager />}
+      {activeTab === "orders" && <OrdersView />}
+      {activeTab === "editorial" && <EditorialCMS />}
+      {activeTab === "home" && <HomeContentCMS />}
+    </AdminShell>
   );
 }
 

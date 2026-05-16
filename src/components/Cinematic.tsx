@@ -271,7 +271,7 @@ export function ChapterReveal({
               </button>
             ) : product ? (
               <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-[2.5rem] bg-natural-muted" />
-            )}
+            ) : null}
           </motion.div>
 
           {/* Copy column */}

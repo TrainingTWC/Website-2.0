@@ -176,20 +176,8 @@ function MerchantGate() {
 
   if (unlocked) {
     return (
-      <div className="min-h-screen bg-natural-bg text-natural-text font-sans">
-        <header className="fixed top-0 left-0 right-0 z-50 bg-natural-paper/90 backdrop-blur-md border-b border-natural-border px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <a href={asset("")} className="flex items-center gap-3">
-              <img src={asset("logo.png")} alt="Third Wave Coffee" className="h-10 w-auto" />
-            </a>
-            <span className="text-sm font-serif font-bold text-natural-accent uppercase tracking-widest">Merchant Panel</span>
-          </div>
-        </header>
-        <main className="pt-24 pb-12 px-6">
-          <div className="max-w-7xl mx-auto">
-            <AdminDashboard />
-          </div>
-        </main>
+      <div className="font-sans">
+        <AdminDashboard />
       </div>
     );
   }
