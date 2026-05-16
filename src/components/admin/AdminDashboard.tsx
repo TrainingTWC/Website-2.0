@@ -1115,7 +1115,7 @@ function AnalyticsView({
             </span>
           )}
         </h3>
-        {pageStats?.knownGeo > 0 ? (
+        {pageStats && (pageStats.knownGeo > 0 || pageStats.mapPoints?.length > 0) ? (
           <div className="space-y-4">
             {pageStats.mapPoints?.length > 0 && <VisitorMap points={pageStats.mapPoints} />}
             <div className="grid md:grid-cols-2 gap-4">

@@ -397,38 +397,90 @@ function Storefront() {
     }
 
     async function getIpGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; lat?: number; lon?: number }> {
+      // Try multiple endpoints — they fail/rate-limit/CORS-block at different times.
+      try {
+        const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(2500) });
+        if (res.ok) {
+          const d = await res.json();
+          if (d && !d.error && d.country_name) {
+            return {
+              country: d.country_name,
+              countryCode: d.country_code,
+              region: d.region,
+              city: d.city,
+              lat: typeof d.latitude === "number" ? d.latitude : undefined,
+              lon: typeof d.longitude === "number" ? d.longitude : undefined,
+            };
+          }
+        }
+      } catch { /* try next */ }
       try {
         const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(2500) });
-        if (!res.ok) return {};
-        const data = await res.json();
-        if (!data || data.success === false) return {};
-        return {
-          country: data.country || undefined,
-          countryCode: data.country_code || undefined,
-          region: data.region || undefined,
-          city: data.city || undefined,
-          lat: typeof data.latitude === "number" ? data.latitude : undefined,
-          lon: typeof data.longitude === "number" ? data.longitude : undefined,
-        };
-      } catch {
-        return {};
-      }
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.success !== false && d.country) {
+            return {
+              country: d.country,
+              countryCode: d.country_code,
+              region: d.region,
+              city: d.city,
+              lat: typeof d.latitude === "number" ? d.latitude : undefined,
+              lon: typeof d.longitude === "number" ? d.longitude : undefined,
+            };
+          }
+        }
+      } catch { /* try next */ }
+      try {
+        const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          const { ip } = await res.json();
+          if (ip) {
+            const r2 = await fetch(`https://ipapi.co/${ip}/json/`, { signal: AbortSignal.timeout(2500) });
+            if (r2.ok) {
+              const d = await r2.json();
+              if (d && d.country_name) {
+                return {
+                  country: d.country_name,
+                  countryCode: d.country_code,
+                  region: d.region,
+                  city: d.city,
+                  lat: typeof d.latitude === "number" ? d.latitude : undefined,
+                  lon: typeof d.longitude === "number" ? d.longitude : undefined,
+                };
+              }
+            }
+          }
+        }
+      } catch { /* give up */ }
+      return {};
     }
 
     async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; locality?: string; postcode?: string; lat?: number; lon?: number; geoSource?: string }> {
       try {
         const cached = sessionStorage.getItem("brewmatch:geo");
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Only use cache if it has actual geo data; otherwise retry below.
+          if (parsed && parsed.country) return parsed;
+        }
       } catch { /* ignore */ }
       const gps = await getGpsGeo();
-      if (gps) {
+      if (gps && gps.country) {
         const out = { ...gps, geoSource: "gps" };
         try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
         return out;
       }
       const ip = await getIpGeo();
+      // If IP gave us coords but no city, try reverse-geocoding those coords.
+      if (ip.lat != null && ip.lon != null && (!ip.city || !ip.locality)) {
+        const rev = await reverseGeocode(ip.lat, ip.lon);
+        Object.assign(ip, { ...rev });
+      }
       const out = { ...ip, geoSource: "ip" };
-      try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
+      // Cache only if we actually got something useful — otherwise retry next page.
+      if (ip.country) {
+        try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
+      }
       return out;
     }
 
