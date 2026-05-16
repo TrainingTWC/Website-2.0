@@ -39,6 +39,9 @@ export interface AdminShellProps {
   workspaceTitle: string;
   workspaceSubtitle?: string;
   workspaceActions?: ReactNode;
+  /** Controlled collapsed state. If omitted, AdminShell manages it internally. */
+  collapsed?: boolean;
+  onCollapsedChange?: (v: boolean) => void;
   children: ReactNode;
 }
 
@@ -66,9 +69,16 @@ export function AdminShell({
   workspaceTitle,
   workspaceSubtitle,
   workspaceActions,
+  collapsed: collapsedProp,
+  onCollapsedChange,
   children,
 }: AdminShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsedInternal, setCollapsedInternal] = useState(false);
+  const collapsed = collapsedProp !== undefined ? collapsedProp : collapsedInternal;
+  function setCollapsed(v: boolean) {
+    setCollapsedInternal(v);
+    onCollapsedChange?.(v);
+  }
   const [query, setQuery] = useState("");
   const [openPopover, setOpenPopover] = useState<null | "bell" | "settings" | "add" | "search">(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -229,8 +239,7 @@ export function AdminShell({
 
             {/* Collapse toggle */}
             <button
-              onClick={() => setCollapsed((c) => !c)}
-              title={collapsed ? "Expand sidebar" : undefined}
+              onClick={() => setCollapsed(!collapsed)}
               className={`relative mx-3 mb-3 flex items-center text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500 hover:text-stone-800 py-2 rounded-xl hover:bg-white/55 transition ${
                 collapsed ? "justify-center px-2" : "gap-2 px-3"
               }`}
@@ -361,7 +370,7 @@ export function AdminShell({
                       <div className="p-2 text-sm">
                         <button
                           onClick={() => {
-                            setCollapsed((c) => !c);
+                            setCollapsed(!collapsed);
                             setOpenPopover(null);
                           }}
                           className="w-full text-left px-3 py-2 rounded-lg hover:bg-stone-100 transition"

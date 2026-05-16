@@ -83,6 +83,8 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     | "settings";
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [theme, setTheme] = useState<"olive" | "espresso">("espresso");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const products = useQuery(convexApi.products.list) as any[] | undefined;
   const orders = useQuery(convexApi.orders.listOrders) as any[] | undefined;
   const admins = useQuery(convexApi.admins.list) as any[] | undefined;
@@ -176,7 +178,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     <AdminShell
       brand="Third Wave"
       panelLabel="Super Admin"
-      panelAccent="espresso"
+      panelAccent={theme}
       navGroups={navGroups}
       activeId={activeTab}
       onNavigate={(id) => setActiveTab(id as Tab)}
@@ -186,6 +188,8 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
         role: "Superadmin",
       }}
       notifications={notifications}
+      collapsed={sidebarCollapsed}
+      onCollapsedChange={setSidebarCollapsed}
       workspaceTitle={meta.title}
       workspaceSubtitle={meta.subtitle}
     >
@@ -199,7 +203,14 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       {activeTab === "deep-analytics" && <SalesAnalytics />}
       {activeTab === "admins" && <AdminsManager />}
       {activeTab === "audit" && <AuditLogViewer />}
-      {activeTab === "settings" && <SettingsPanel />}
+      {activeTab === "settings" && (
+        <SettingsPanel
+          theme={theme}
+          onThemeChange={setTheme}
+          sidebarDefault={sidebarCollapsed ? "collapsed" : "expanded"}
+          onSidebarDefaultChange={(v) => setSidebarCollapsed(v === "collapsed")}
+        />
+      )}
     </AdminShell>
   );
 }
@@ -580,14 +591,22 @@ function AuditRow({ row }: { row: any }) {
 }
 
 // ─── Settings panel ─────────────────────────────────────────────────────────
-function SettingsPanel() {
+function SettingsPanel({
+  theme,
+  onThemeChange,
+  sidebarDefault,
+  onSidebarDefaultChange,
+}: {
+  theme: "olive" | "espresso";
+  onThemeChange: (v: "olive" | "espresso") => void;
+  sidebarDefault: "expanded" | "collapsed";
+  onSidebarDefaultChange: (v: "expanded" | "collapsed") => void;
+}) {
   const [storefrontUrl, setStorefrontUrl] = useState("https://trainingtwc.github.io/brewmatch-ai/");
   const [urlSaved, setUrlSaved] = useState(false);
   const [notifLowStock, setNotifLowStock] = useState(true);
   const [notifOrders, setNotifOrders] = useState(true);
   const [notifTeam, setNotifTeam] = useState(false);
-  const [sidebarDefault, setSidebarDefault] = useState<"expanded" | "collapsed">("expanded");
-  const [theme, setTheme] = useState<"olive" | "espresso">("olive");
   const [copied, setCopied] = useState(false);
   const [showDanger, setShowDanger] = useState(false);
 
@@ -706,7 +725,7 @@ function SettingsPanel() {
               {(["expanded", "collapsed"] as const).map((v) => (
                 <button
                   key={v}
-                  onClick={() => setSidebarDefault(v)}
+                  onClick={() => onSidebarDefaultChange(v)}
                   className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
                     sidebarDefault === v
                       ? "border-amber-500 bg-amber-50 text-amber-800"
@@ -724,7 +743,7 @@ function SettingsPanel() {
               {(["olive", "espresso"] as const).map((v) => (
                 <button
                   key={v}
-                  onClick={() => setTheme(v)}
+                  onClick={() => onThemeChange(v)}
                   className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
                     theme === v
                       ? "border-amber-500 bg-amber-50 text-amber-800"
