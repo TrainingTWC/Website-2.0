@@ -254,24 +254,26 @@ export function ChapterReveal({
             style={{ y: productY, scale: productScale, rotate: productRotate }}
             className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
           >
-            {imageUrl ? (
-              <button
-                data-cursor="zoom"
-                onClick={onProductClick}
-                className="block w-full max-w-[200px] sm:max-w-xs lg:max-w-md mx-auto aspect-[4/5] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
-              >
-                <img
-                  src={imageUrl}
-                  alt={imageAlt ?? eyebrow}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.6s]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <MacroBeam progress={scrollYProgress} />
-              </button>
-            ) : product ? (
-              <div className="w-full max-w-md mx-auto aspect-[4/5] rounded-[2.5rem] bg-natural-muted" />
-            ) : null}
+            {(() => {
+              const resolvedImage = imageUrl || product?.imageUrl;
+              if (!resolvedImage) return null;
+              return (
+                <button
+                  data-cursor="zoom"
+                  onClick={onProductClick}
+                  className="block w-full max-w-[200px] sm:max-w-xs lg:max-w-md mx-auto aspect-[4/5] rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-natural-muted shadow-2xl group"
+                >
+                  <img
+                    src={resolvedImage}
+                    alt={imageAlt ?? product?.name ?? eyebrow}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.6s]"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <MacroBeam progress={scrollYProgress} />
+                </button>
+              );
+            })()}
           </motion.div>
 
           {/* Copy column */}
