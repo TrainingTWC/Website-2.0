@@ -10,6 +10,11 @@ export const record = mutation({
     countryCode: v.optional(v.string()),
     region: v.optional(v.string()),
     city: v.optional(v.string()),
+    locality: v.optional(v.string()),
+    postcode: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lon: v.optional(v.number()),
+    geoSource: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("pageViews", {
@@ -20,6 +25,11 @@ export const record = mutation({
       countryCode: args.countryCode,
       region: args.region,
       city: args.city,
+      locality: args.locality,
+      postcode: args.postcode,
+      lat: args.lat,
+      lon: args.lon,
+      geoSource: args.geoSource,
       timestamp: Date.now(),
     });
   },
@@ -83,6 +93,8 @@ export const getStats = query({
     // Geo aggregation
     const countryCounts: Record<string, { count: number; code?: string }> = {};
     const cityCounts: Record<string, { count: number; country?: string }> = {};
+    const regionCounts: Record<string, { count: number; country?: string }> = {};
+    const localityCounts: Record<string, { count: number; city?: string }> = {};
     for (const v of views) {
       if (v.country) {
         const c = countryCounts[v.country] ?? { count: 0, code: v.countryCode };
@@ -91,10 +103,19 @@ export const getStats = query({
         countryCounts[v.country] = c;
       }
       if (v.city) {
-        const key = v.city;
-        const c = cityCounts[key] ?? { count: 0, country: v.country };
+        const c = cityCounts[v.city] ?? { count: 0, country: v.country };
         c.count += 1;
-        cityCounts[key] = c;
+        cityCounts[v.city] = c;
+      }
+      if (v.region) {
+        const c = regionCounts[v.region] ?? { count: 0, country: v.country };
+        c.count += 1;
+        regionCounts[v.region] = c;
+      }
+      if (v.locality) {
+        const c = localityCounts[v.locality] ?? { count: 0, city: v.city };
+        c.count += 1;
+        localityCounts[v.locality] = c;
       }
     }
     const topCountries = Object.entries(countryCounts)
@@ -105,7 +126,39 @@ export const getStats = query({
       .map(([name, info]) => ({ name, count: info.count, country: info.country }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
+    const topRegions = Object.entries(regionCounts)
+      .map(([name, info]) => ({ name, count: info.count, country: info.country }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+    const topLocalities = Object.entries(localityCounts)
+      .map(([name, info]) => ({ name, count: info.count, city: info.city }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
     const knownGeo = views.filter((v) => v.country).length;
+
+    // Map points clustered by ~1km grid so we don't ship every view
+    const pointMap = new Map<string, { lat: number; lon: number; count: number; label: string; source?: string }>();
+    for (const v of views) {
+      if (v.lat == null || v.lon == null) continue;
+      const key = `${v.lat.toFixed(2)}|${v.lon.toFixed(2)}`;
+      const existing = pointMap.get(key);
+      const label = [v.locality, v.city, v.region, v.country].filter(Boolean).join(", ") || "Unknown";
+      if (existing) {
+        existing.count += 1;
+      } else {
+        pointMap.set(key, {
+          lat: Number(v.lat.toFixed(4)),
+          lon: Number(v.lon.toFixed(4)),
+          count: 1,
+          label,
+          source: v.geoSource,
+        });
+      }
+    }
+    const mapPoints = Array.from(pointMap.values()).sort((a, b) => b.count - a.count).slice(0, 500);
+
+    const gpsCount = views.filter((v) => v.geoSource === "gps").length;
+    const ipCount = views.filter((v) => v.geoSource === "ip").length;
 
     return {
       totalViews: views.length,
@@ -117,7 +170,12 @@ export const getStats = query({
       pathCounts,
       topCountries,
       topCities,
+      topRegions,
+      topLocalities,
       knownGeo,
+      mapPoints,
+      gpsCount,
+      ipCount,
     };
   },
 });

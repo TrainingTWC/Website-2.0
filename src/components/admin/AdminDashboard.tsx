@@ -45,6 +45,7 @@ import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { LayoutDashboard } from "lucide-react";
 import { ImagePicker } from "./ImagePicker";
+import { VisitorMap } from "./VisitorMap";
 import type { AdminMe } from "./AdminAuthGate";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
@@ -1108,39 +1109,69 @@ function AnalyticsView({
       <section>
         <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
           <MapPin className="w-5 h-5 text-natural-accent" /> Visitors by Geography
+          {pageStats && (pageStats.gpsCount > 0 || pageStats.ipCount > 0) && (
+            <span className="text-xs font-normal text-stone-400 ml-2">
+              {pageStats.gpsCount} GPS · {pageStats.ipCount} IP
+            </span>
+          )}
         </h3>
         {pageStats?.knownGeo > 0 ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            <GeoList
-              title="Top Countries"
-              rows={pageStats.topCountries ?? []}
-              renderLabel={(r: any) => (
-                <span className="flex items-center gap-2">
-                  {r.code && (
-                    <span className="text-base leading-none">{flagEmoji(r.code)}</span>
-                  )}
-                  <span>{r.name}</span>
-                </span>
-              )}
-              total={pageStats.knownGeo}
-            />
-            <GeoList
-              title="Top Cities"
-              rows={pageStats.topCities ?? []}
-              renderLabel={(r: any) => (
-                <span>
-                  {r.name}
-                  {r.country && <span className="text-stone-400 font-normal"> · {r.country}</span>}
-                </span>
-              )}
-              total={pageStats.knownGeo}
-            />
+          <div className="space-y-4">
+            {pageStats.mapPoints?.length > 0 && <VisitorMap points={pageStats.mapPoints} />}
+            <div className="grid md:grid-cols-2 gap-4">
+              <GeoList
+                title="Top Countries"
+                rows={pageStats.topCountries ?? []}
+                renderLabel={(r: any) => (
+                  <span className="flex items-center gap-2">
+                    {r.code && (
+                      <span className="text-base leading-none">{flagEmoji(r.code)}</span>
+                    )}
+                    <span>{r.name}</span>
+                  </span>
+                )}
+                total={pageStats.knownGeo}
+              />
+              <GeoList
+                title="Top Regions / States"
+                rows={pageStats.topRegions ?? []}
+                renderLabel={(r: any) => (
+                  <span>
+                    {r.name}
+                    {r.country && <span className="text-stone-400 font-normal"> · {r.country}</span>}
+                  </span>
+                )}
+                total={pageStats.knownGeo}
+              />
+              <GeoList
+                title="Top Cities"
+                rows={pageStats.topCities ?? []}
+                renderLabel={(r: any) => (
+                  <span>
+                    {r.name}
+                    {r.country && <span className="text-stone-400 font-normal"> · {r.country}</span>}
+                  </span>
+                )}
+                total={pageStats.knownGeo}
+              />
+              <GeoList
+                title="Top Localities"
+                rows={pageStats.topLocalities ?? []}
+                renderLabel={(r: any) => (
+                  <span>
+                    {r.name}
+                    {r.city && <span className="text-stone-400 font-normal"> · {r.city}</span>}
+                  </span>
+                )}
+                total={pageStats.knownGeo}
+              />
+            </div>
           </div>
         ) : (
           <div className="bg-stone-50 border border-dashed border-stone-200 rounded-3xl p-8 text-center">
             <MapPin className="w-10 h-10 text-stone-200 mx-auto mb-3" />
             <p className="font-bold text-stone-500">Geography data will appear after visitors load the site</p>
-            <p className="text-xs text-stone-400 mt-1">Country, region and city are detected via IP on each visit.</p>
+            <p className="text-xs text-stone-400 mt-1">GPS is used when allowed; otherwise IP-based location is used.</p>
           </div>
         )}
       </section>

@@ -85,6 +85,11 @@ export default defineSchema({
     countryCode: v.optional(v.string()),
     region: v.optional(v.string()),
     city: v.optional(v.string()),
+    locality: v.optional(v.string()),
+    postcode: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lon: v.optional(v.number()),
+    geoSource: v.optional(v.string()), // "gps" | "ip"
   }).index("by_timestamp", ["timestamp"]),
 
   // Custom product categories

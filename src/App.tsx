@@ -355,10 +355,10 @@ function Storefront() {
 
     // Resolve geo once per session (cached).
     // Tries GPS first → reverse-geocode via Nominatim. Falls back to IP lookup if denied/unavailable.
-    async function reverseGeocode(lat: number, lon: number): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
+    async function reverseGeocode(lat: number, lon: number): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; locality?: string; postcode?: string }> {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
           { signal: AbortSignal.timeout(4000), headers: { "Accept-Language": "en" } }
         );
         if (!res.ok) return {};
@@ -367,15 +367,17 @@ function Storefront() {
         return {
           country: a.country || undefined,
           countryCode: a.country_code ? String(a.country_code).toUpperCase() : undefined,
-          region: a.state || a.region || undefined,
-          city: a.city || a.town || a.village || a.suburb || a.county || undefined,
+          region: a.state || a.region || a.state_district || undefined,
+          city: a.city || a.town || a.municipality || a.village || a.county || undefined,
+          locality: a.suburb || a.neighbourhood || a.hamlet || a.quarter || a.city_district || undefined,
+          postcode: a.postcode || undefined,
         };
       } catch {
         return {};
       }
     }
 
-    async function getGpsGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string } | null> {
+    async function getGpsGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; locality?: string; postcode?: string; lat?: number; lon?: number } | null> {
       if (typeof navigator === "undefined" || !navigator.geolocation) return null;
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -385,16 +387,18 @@ function Storefront() {
             maximumAge: 10 * 60 * 1000,
           });
         });
-        const geo = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        return Object.keys(geo).length > 0 ? geo : null;
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const geo = await reverseGeocode(lat, lon);
+        return { ...geo, lat, lon };
       } catch {
         return null;
       }
     }
 
-    async function getIpGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string }> {
+    async function getIpGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; lat?: number; lon?: number }> {
       try {
-        const res = await fetch("https://ipwho.is/?fields=success,country,country_code,region,city", { signal: AbortSignal.timeout(2500) });
+        const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(2500) });
         if (!res.ok) return {};
         const data = await res.json();
         if (!data || data.success === false) return {};
@@ -403,36 +407,37 @@ function Storefront() {
           countryCode: data.country_code || undefined,
           region: data.region || undefined,
           city: data.city || undefined,
+          lat: typeof data.latitude === "number" ? data.latitude : undefined,
+          lon: typeof data.longitude === "number" ? data.longitude : undefined,
         };
       } catch {
         return {};
       }
     }
 
-    async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; source?: string }> {
+    async function resolveGeo(): Promise<{ country?: string; countryCode?: string; region?: string; city?: string; locality?: string; postcode?: string; lat?: number; lon?: number; geoSource?: string }> {
       try {
         const cached = sessionStorage.getItem("brewmatch:geo");
         if (cached) return JSON.parse(cached);
       } catch { /* ignore */ }
       const gps = await getGpsGeo();
       if (gps) {
-        const out = { ...gps, source: "gps" };
+        const out = { ...gps, geoSource: "gps" };
         try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
         return out;
       }
       const ip = await getIpGeo();
-      const out = { ...ip, source: "ip" };
+      const out = { ...ip, geoSource: "ip" };
       try { sessionStorage.setItem("brewmatch:geo", JSON.stringify(out)); } catch { /* ignore */ }
       return out;
     }
 
     resolveGeo().then((geo) => {
-      const { source: _source, ...geoFields } = geo;
       recordPageView({
         path: window.location.pathname,
         sessionId,
         referrer: document.referrer || undefined,
-        ...geoFields,
+        ...geo,
       }).then((id: any) => { pvId = id; });
     });
 
