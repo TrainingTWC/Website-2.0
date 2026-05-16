@@ -11,6 +11,7 @@
 import type * as admins from "../admins.js";
 import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
+import type * as authAdmin from "../authAdmin.js";
 import type * as cache from "../cache.js";
 import type * as categories from "../categories.js";
 import type * as discounts from "../discounts.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   admins: typeof admins;
   analytics: typeof analytics;
   auth: typeof auth;
+  authAdmin: typeof authAdmin;
   cache: typeof cache;
   categories: typeof categories;
   discounts: typeof discounts;
