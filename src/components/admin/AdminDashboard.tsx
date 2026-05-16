@@ -44,6 +44,7 @@ import { HomeContentCMS } from "./HomeContentCMS";
 import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { LayoutDashboard } from "lucide-react";
+import { ImagePicker } from "./ImagePicker";
 import type { AdminMe } from "./AdminAuthGate";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
@@ -737,15 +738,8 @@ function ProductEditor({
         {tab === "media" && (
           <div className="max-w-2xl space-y-6">
             <div>
-              <label className={LABEL}>Product Image URL</label>
-              <input className={INPUT} value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://..." />
-              {form.imageUrl && (
-                <div className="mt-3 flex items-start gap-4">
-                  <img src={form.imageUrl} alt="preview" className="w-24 h-24 rounded-2xl object-cover border border-stone-200 flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  <p className="text-xs text-stone-400 mt-1">Paste a direct URL (.jpg .png .webp). Use a CDN or Cloudinary for best performance.</p>
-                </div>
-              )}
+              <label className={LABEL}>Product Image</label>
+              <ImagePicker value={form.imageUrl} onChange={(url) => set("imageUrl", url)} />
             </div>
             <div>
               <label className={LABEL}>3D Model URL <span className="normal-case font-normal">(GLB/GLTF file)</span></label>
@@ -832,7 +826,7 @@ function AddProductForm({ categories, onSave, onCancel }: {
         <div className="space-y-4">
           <div><label className={LABEL}>Product Name *</label><input className={INPUT} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Ethiopian Yirgacheffe" /></div>
           <div><label className={LABEL}>Description</label><textarea className={`${INPUT} h-24 resize-none`} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Flavor notes, roast process…" /></div>
-          <div><label className={LABEL}>Image URL</label><input className={INPUT} value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://..." /></div>
+          <div><label className={LABEL}>Image</label><ImagePicker value={form.imageUrl} onChange={(url) => set("imageUrl", url)} /></div>
           <div>
             <label className={LABEL}>3D Model URL <span className="normal-case font-normal">(optional .glb)</span></label>
             <input className={INPUT} value={form.modelUrl} onChange={(e) => set("modelUrl", e.target.value)} placeholder="https://your-cdn.com/model.glb" />

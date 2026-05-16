@@ -1,6 +1,19 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// Generate a short-lived upload URL for image uploads from the admin panel.
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
+});
+
+// Resolve a storageId returned from an upload into a public CDN URL.
+export const getStorageUrl = mutation({
+  args: { storageId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId as any);
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
