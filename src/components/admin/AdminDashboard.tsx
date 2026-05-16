@@ -163,7 +163,7 @@ function formDataToProductPayload(form: ProductFormData) {
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home"
+    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "settings"
   >("overview");
 
   const navGroups: NavGroup[] = [
@@ -187,6 +187,7 @@ export function AdminDashboard() {
       label: "System",
       items: [
         { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
+        { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
       ],
     },
   ];
@@ -199,6 +200,7 @@ export function AdminDashboard() {
     orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
     home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
+    settings: { title: "Settings", subtitle: "Workspace preferences and integrations." },
   };
 
   const meta = titles[activeTab];
@@ -222,12 +224,18 @@ export function AdminDashboard() {
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}
       {activeTab === "home" && <HomeContentCMS />}
+      {activeTab === "settings" && (
+        <div className="rounded-2xl border border-stone-200 bg-white/70 p-6 text-sm text-stone-600">
+          <p className="font-bold text-stone-900 text-base mb-1">Workspace settings</p>
+          <p>Detailed configuration lives in the Super Admin panel. Switch with the panel selector or ask a superadmin for access.</p>
+        </div>
+      )}
     </AdminShell>
   );
 }
 
 // ─── Inventory manager ────────────────────────────────────────────────────────
-function InventoryManager() {
+export function InventoryManager() {
   const products = (useQuery(api.products.list) ?? []) as Product[];
   const categories = useQuery((api as any).categories.list) as
     | Category[]
@@ -891,7 +899,7 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
 }
 
 // ─── Analytics view ───────────────────────────────────────────────────────────
-function CombinedAnalytics() {
+export function CombinedAnalytics() {
   const sessions = (useQuery(api.sessions.list) ?? []) as any[];
   const products = (useQuery(api.products.list) ?? []) as Product[];
   return (
@@ -1115,7 +1123,7 @@ function AnalyticsView({
   );
 }
 
-function RulesManager() {
+export function RulesManager() {
   return (
     <div className="p-12 text-center space-y-4">
       <div className="bg-stone-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -1177,7 +1185,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: "bg-red-50 text-red-600",
 };
 
-function OrdersView() {
+export function OrdersView() {
   const orders = useQuery((api as any).orders.listOrders) as Order[] | undefined;
   const updateStatus = useMutation((api as any).orders.updateStatus);
   const [expanded, setExpanded] = useState<string | null>(null);

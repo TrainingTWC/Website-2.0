@@ -155,31 +155,52 @@ export const bootstrap = mutation({
     const email = (user.email ?? "").toLowerCase();
 
     if (!admin) {
-      // If no admins exist at all yet, the FIRST authenticated user becomes
-      // the seed superadmin. After that, only invited emails get access.
-      const anyAdmin = await ctx.db.query("admins").first();
-
-      if (!anyAdmin) {
-        const id = await ctx.db.insert("admins", {
+      // 1. Look for a pre-invite (admin row with matching email but no userId yet).
+      const invite = await ctx.db
+        .query("admins")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .first();
+      if (invite && !invite.userId) {
+        await ctx.db.patch(invite._id, {
           userId,
-          email,
-          name: user.name,
-          role: "superadmin",
-          permissions: FULL_PERMS,
-          active: true,
-          invitedAt: Date.now(),
+          name: invite.name ?? user.name,
           lastSeenAt: Date.now(),
         });
         await ctx.db.insert("auditLog", {
           adminUserId: userId,
           adminEmail: email,
-          action: "admin.bootstrap.superadmin",
-          target: id,
+          action: "admin.invite.claimed",
+          target: invite._id,
           timestamp: Date.now(),
         });
-        admin = await ctx.db.get(id);
+        admin = await ctx.db.get(invite._id);
+      } else if (!invite) {
+        // 2. No invite and no existing admin row at all → first user wins.
+        const anyAdmin = await ctx.db.query("admins").first();
+        if (!anyAdmin) {
+          const id = await ctx.db.insert("admins", {
+            userId,
+            email,
+            name: user.name,
+            role: "superadmin",
+            permissions: FULL_PERMS,
+            active: true,
+            invitedAt: Date.now(),
+            lastSeenAt: Date.now(),
+          });
+          await ctx.db.insert("auditLog", {
+            adminUserId: userId,
+            adminEmail: email,
+            action: "admin.bootstrap.superadmin",
+            target: id,
+            timestamp: Date.now(),
+          });
+          admin = await ctx.db.get(id);
+        } else {
+          return { ok: false, reason: "not-invited" as const };
+        }
       } else {
-        // Admins already exist but this user wasn't pre-invited.
+        // Invite exists but already linked to a different user.
         return { ok: false, reason: "not-invited" as const };
       }
     } else {
@@ -223,12 +244,6 @@ export const invite = mutation({
     const email = args.email.trim().toLowerCase();
     if (!email.includes("@")) throw new ConvexError("Invalid email.");
 
-    // Try to find an existing auth user with this email.
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", email))
-      .first();
-
     // Already-invited admin?
     const existing = await ctx.db
       .query("admins")
@@ -236,16 +251,16 @@ export const invite = mutation({
       .first();
     if (existing) throw new ConvexError("Already invited.");
 
-    if (!existingUser) {
-      throw new ConvexError(
-        "User must sign up first with this email, then be invited."
-      );
-    }
+    // If the user has already signed up with this email, link immediately.
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("email", (q) => q.eq("email", email))
+      .first();
 
     const id = await ctx.db.insert("admins", {
-      userId: existingUser._id,
+      userId: existingUser?._id,
       email,
-      name: args.name ?? existingUser.name,
+      name: args.name ?? existingUser?.name,
       role: args.role,
       permissions: args.permissions ?? permsForRole(args.role),
       active: true,

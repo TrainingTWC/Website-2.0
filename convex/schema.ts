@@ -208,7 +208,7 @@ export default defineSchema({
   // ── Admin RBAC ──────────────────────────────────────────────────────────
   // Maps Convex Auth users to admin roles + per-section permissions.
   admins: defineTable({
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     email: v.string(),
     name: v.optional(v.string()),
     role: v.union(

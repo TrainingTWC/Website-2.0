@@ -16,11 +16,24 @@ import {
   ShieldCheck,
   Crown,
   Eye,
+  Package,
+  Newspaper,
+  Home as HomeIcon,
+  ShoppingBag,
+  Search as SearchIcon,
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { AdminShell, GlassCard, KpiTile, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { SalesAnalytics } from "./SalesAnalytics";
+import { EditorialCMS } from "./EditorialCMS";
+import { HomeContentCMS } from "./HomeContentCMS";
+import {
+  InventoryManager,
+  CombinedAnalytics,
+  RulesManager,
+  OrdersView,
+} from "./AdminDashboard";
 import type { AdminMe } from "./AdminAuthGate";
 
 const convexApi = api as any;
@@ -46,14 +59,38 @@ const ROLE_META: Record<Role, { label: string; icon: any; tone: string }> = {
 };
 
 export function SuperAdminDashboard({ me }: { me: AdminMe }) {
-  const [activeTab, setActiveTab] = useState<"overview" | "admins" | "audit" | "analytics">("overview");
+  type Tab =
+    | "overview"
+    | "inventory"
+    | "merchant-analytics"
+    | "orders"
+    | "editorial"
+    | "home"
+    | "rules"
+    | "deep-analytics"
+    | "admins"
+    | "audit"
+    | "settings";
+
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const navGroups: NavGroup[] = [
     {
       label: "Command",
       items: [
         { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: "analytics", label: "Deep Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+        { id: "deep-analytics", label: "Deep Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+      ],
+    },
+    {
+      label: "Merchant",
+      items: [
+        { id: "merchant-analytics", label: "Sales Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+        { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
+        { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
+        { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
+        { id: "home", label: "Home CMS", icon: <HomeIcon className="w-4 h-4" /> },
+        { id: "rules", label: "Logic Rules", icon: <SearchIcon className="w-4 h-4" /> },
       ],
     },
     {
@@ -61,15 +98,23 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       items: [
         { id: "admins", label: "Admins", icon: <Users className="w-4 h-4" /> },
         { id: "audit", label: "Audit Log", icon: <ScrollText className="w-4 h-4" /> },
+        { id: "settings", label: "Settings", icon: <Shield className="w-4 h-4" /> },
       ],
     },
   ];
 
-  const titles: Record<typeof activeTab, { title: string; subtitle: string }> = {
+  const titles: Record<Tab, { title: string; subtitle: string }> = {
     overview: { title: "Super Admin", subtitle: "Top-level controls, governance, and full visibility into the storefront." },
+    inventory: { title: "Inventory", subtitle: "Manage products, stock levels and categories." },
+    "merchant-analytics": { title: "Sales Analytics", subtitle: "Revenue, conversion, and merchant performance." },
+    orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
+    editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
+    home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
+    rules: { title: "Logic Rules", subtitle: "Tune recommendation and discovery logic." },
+    "deep-analytics": { title: "Deep Analytics", subtitle: "Behavioural insights, cohorts, and trend analysis." },
     admins: { title: "Admins & Permissions", subtitle: "Invite teammates, set roles, control which sections they can access." },
     audit: { title: "Audit Log", subtitle: "Every admin action — invites, revocations, configuration changes." },
-    analytics: { title: "Deep Analytics", subtitle: "Sales performance, conversion, and behavioural insights." },
+    settings: { title: "Settings", subtitle: "System preferences, security, and integrations." },
   };
   const meta = titles[activeTab];
 
@@ -80,7 +125,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       panelAccent="espresso"
       navGroups={navGroups}
       activeId={activeTab}
-      onNavigate={(id) => setActiveTab(id as typeof activeTab)}
+      onNavigate={(id) => setActiveTab(id as Tab)}
       user={{
         name: me.name ?? "Superadmin",
         email: me.email ?? "",
@@ -90,9 +135,16 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       workspaceSubtitle={meta.subtitle}
     >
       {activeTab === "overview" && <SuperOverview />}
+      {activeTab === "inventory" && <InventoryManager />}
+      {activeTab === "merchant-analytics" && <CombinedAnalytics />}
+      {activeTab === "orders" && <OrdersView />}
+      {activeTab === "editorial" && <EditorialCMS />}
+      {activeTab === "home" && <HomeContentCMS />}
+      {activeTab === "rules" && <RulesManager />}
+      {activeTab === "deep-analytics" && <SalesAnalytics />}
       {activeTab === "admins" && <AdminsManager />}
       {activeTab === "audit" && <AuditLogViewer />}
-      {activeTab === "analytics" && <SalesAnalytics />}
+      {activeTab === "settings" && <SettingsPanel />}
     </AdminShell>
   );
 }
@@ -468,6 +520,37 @@ function AuditRow({ row }: { row: any }) {
       <span className="text-[10px] text-stone-400 font-mono shrink-0">
         {new Date(row.timestamp).toLocaleString()}
       </span>
+    </div>
+  );
+}
+
+// ─── Settings panel ─────────────────────────────────────────────────────────
+function SettingsPanel() {
+  return (
+    <div className="space-y-5">
+      <GlassCard className="p-6">
+        <h3 className="font-serif text-xl font-bold text-stone-900">System settings</h3>
+        <p className="text-sm text-stone-500 mt-1">Workspace preferences, integrations, and security.</p>
+        <div className="mt-5 grid sm:grid-cols-2 gap-3 text-sm">
+          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
+            <p className="font-bold text-stone-900">Storefront URL</p>
+            <p className="text-stone-500 mt-1 text-xs">https://trainingtwc.github.io/brewmatch-ai/</p>
+          </div>
+          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
+            <p className="font-bold text-stone-900">Convex deployment</p>
+            <p className="text-stone-500 mt-1 text-xs">watchful-cormorant-351 (prod)</p>
+          </div>
+          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
+            <p className="font-bold text-stone-900">Auth provider</p>
+            <p className="text-stone-500 mt-1 text-xs">Password (Convex Auth)</p>
+          </div>
+          <div className="p-4 rounded-xl border border-stone-200 bg-white/70">
+            <p className="font-bold text-stone-900">Theme</p>
+            <p className="text-stone-500 mt-1 text-xs">Olive paper (default)</p>
+          </div>
+        </div>
+        <p className="text-xs text-stone-400 mt-5">More controls (API keys, webhooks, branding) coming in the next wave.</p>
+      </GlassCard>
     </div>
   );
 }

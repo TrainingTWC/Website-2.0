@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useMemo, useRef, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Shield,
   LogOut,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { asset } from "../../lib/asset";
 
@@ -66,7 +68,41 @@ export function AdminShell({
 }: AdminShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [query, setQuery] = useState("");
+  const [openPopover, setOpenPopover] = useState<null | "bell" | "settings" | "add" | "search">(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const { signOut } = useAuthActions();
+
+  // Close popovers on outside click / Esc
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (!popoverRef.current) return;
+      if (!popoverRef.current.contains(e.target as Node)) setOpenPopover(null);
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenPopover(null);
+    }
+    if (openPopover) {
+      window.addEventListener("mousedown", handleClick);
+      window.addEventListener("keydown", handleKey);
+    }
+    return () => {
+      window.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [openPopover]);
+
+  // Flat list of nav items for global search
+  const flatNav = useMemo(
+    () => navGroups.flatMap((g) => g.items.map((it) => ({ ...it, group: g.label }))),
+    [navGroups]
+  );
+  const searchHits = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return flatNav
+      .filter((it) => it.label.toLowerCase().includes(q) || (it.group ?? "").toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [flatNav, query]);
 
   const accentBg = panelAccent === "espresso" ? "bg-[#3a2418]" : "bg-natural-accent";
   const orbA = panelAccent === "espresso" ? "bg-amber-400/25" : "bg-amber-300/30";
@@ -209,15 +245,125 @@ export function AdminShell({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setOpenPopover(e.target.value ? "search" : null);
+                }}
+                onFocus={() => query && setOpenPopover("search")}
                 placeholder="Quick search…"
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/70 border border-white/70 text-sm placeholder:text-stone-400 outline-none focus:ring-2 ring-natural-accent/20"
               />
+              <AnimatePresence>
+                {openPopover === "search" && searchHits.length > 0 && (
+                  <motion.div
+                    ref={popoverRef}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-white/70 bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(20,20,20,0.18)] overflow-hidden z-50"
+                  >
+                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400 border-b border-stone-100">
+                      Jump to
+                    </div>
+                    {searchHits.map((hit) => (
+                      <button
+                        key={hit.id}
+                        onClick={() => {
+                          onNavigate(hit.id);
+                          setQuery("");
+                          setOpenPopover(null);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-stone-100 transition"
+                      >
+                        <span className="text-stone-500">{hit.icon}</span>
+                        <span className="flex-1 text-sm text-stone-800">{hit.label}</span>
+                        {hit.group && (
+                          <span className="text-[10px] uppercase tracking-wider text-stone-400">{hit.group}</span>
+                        )}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="relative flex items-center gap-1.5 ml-auto">
-              <IconBtn ariaLabel="Notifications"><Bell className="w-4 h-4" /></IconBtn>
-              <IconBtn ariaLabel="Settings"><Settings className="w-4 h-4" /></IconBtn>
+              {/* Notifications */}
+              <div className="relative">
+                <IconBtn ariaLabel="Notifications" onClick={() => setOpenPopover(openPopover === "bell" ? null : "bell")}>
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+                </IconBtn>
+                <AnimatePresence>
+                  {openPopover === "bell" && (
+                    <Popover popoverRef={popoverRef} onClose={() => setOpenPopover(null)} title="Notifications">
+                      <div className="px-4 py-6 text-center">
+                        <div className="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center mb-3">
+                          <Bell className="w-4 h-4 text-stone-400" />
+                        </div>
+                        <p className="text-sm font-bold text-stone-800">You're all caught up.</p>
+                        <p className="text-xs text-stone-500 mt-1">
+                          New orders, low-stock alerts and team activity will show up here.
+                        </p>
+                      </div>
+                    </Popover>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Settings */}
+              <div className="relative">
+                <IconBtn
+                  ariaLabel="Settings"
+                  onClick={() => {
+                    // Try navigating to a "settings" tab if the dashboard exposes one,
+                    // otherwise open a quick popover.
+                    const hasSettingsTab = navGroups.some((g) => g.items.some((it) => it.id === "settings"));
+                    if (hasSettingsTab) {
+                      onNavigate("settings");
+                    } else {
+                      setOpenPopover(openPopover === "settings" ? null : "settings");
+                    }
+                  }}
+                >
+                  <Settings className="w-4 h-4" />
+                </IconBtn>
+                <AnimatePresence>
+                  {openPopover === "settings" && (
+                    <Popover popoverRef={popoverRef} onClose={() => setOpenPopover(null)} title="Quick settings">
+                      <div className="p-2 text-sm">
+                        <button
+                          onClick={() => {
+                            setCollapsed((c) => !c);
+                            setOpenPopover(null);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-stone-100 transition"
+                        >
+                          {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            document.documentElement.requestFullscreen?.();
+                            setOpenPopover(null);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-stone-100 transition"
+                        >
+                          Enter fullscreen
+                        </button>
+                        <div className="my-1 border-t border-stone-100" />
+                        <button
+                          onClick={() => signOut()}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-rose-50 text-rose-600 transition"
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </Popover>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <button
                 onClick={() => signOut()}
                 aria-label="Sign out"
@@ -239,9 +385,47 @@ export function AdminShell({
                 </div>
               )}
 
-              <button className={`hidden sm:inline-flex items-center gap-1.5 ${accentBg} text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_10px_24px_rgba(90,90,64,0.35)] hover:brightness-110 transition`}>
-                <Plus className="w-3.5 h-3.5" /> Add widget
-              </button>
+              {/* Add widget / quick action */}
+              <div className="relative">
+                <button
+                  onClick={() => setOpenPopover(openPopover === "add" ? null : "add")}
+                  className={`hidden sm:inline-flex items-center gap-1.5 ${accentBg} text-white text-xs font-bold px-3 py-2 rounded-xl shadow-[0_10px_24px_rgba(90,90,64,0.35)] hover:brightness-110 transition`}
+                >
+                  <Plus className="w-3.5 h-3.5" /> Quick action
+                </button>
+                <AnimatePresence>
+                  {openPopover === "add" && (
+                    <Popover popoverRef={popoverRef} onClose={() => setOpenPopover(null)} title="Quick actions" align="right">
+                      <div className="p-2 text-sm">
+                        {flatNav.slice(0, 6).map((it) => (
+                          <button
+                            key={it.id}
+                            onClick={() => {
+                              onNavigate(it.id);
+                              setOpenPopover(null);
+                            }}
+                            className="w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg hover:bg-stone-100 transition"
+                          >
+                            <span className="text-stone-500">{it.icon}</span>
+                            <span className="flex-1 text-stone-800">{it.label}</span>
+                          </button>
+                        ))}
+                        <div className="my-1 border-t border-stone-100" />
+                        <button
+                          onClick={() => {
+                            window.open("/", "_blank");
+                            setOpenPopover(null);
+                          }}
+                          className="w-full flex items-center gap-3 text-left px-3 py-2 rounded-lg hover:bg-stone-100 transition"
+                        >
+                          <Sparkles className="w-4 h-4 text-stone-500" />
+                          <span className="flex-1 text-stone-800">Open storefront</span>
+                        </button>
+                      </div>
+                    </Popover>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </header>
 
@@ -274,14 +458,58 @@ export function AdminShell({
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
-function IconBtn({ children, ariaLabel }: { children: ReactNode; ariaLabel: string }) {
+function IconBtn({
+  children,
+  ariaLabel,
+  onClick,
+}: {
+  children: ReactNode;
+  ariaLabel: string;
+  onClick?: () => void;
+}) {
   return (
     <button
+      onClick={onClick}
       aria-label={ariaLabel}
-      className="w-9 h-9 rounded-xl bg-white/65 border border-white/70 text-stone-600 hover:text-stone-900 hover:bg-white flex items-center justify-center transition"
+      className="relative w-9 h-9 rounded-xl bg-white/65 border border-white/70 text-stone-600 hover:text-stone-900 hover:bg-white flex items-center justify-center transition"
     >
       {children}
     </button>
+  );
+}
+
+function Popover({
+  children,
+  title,
+  onClose,
+  popoverRef,
+  align = "right",
+}: {
+  children: ReactNode;
+  title?: string;
+  onClose: () => void;
+  popoverRef: React.MutableRefObject<HTMLDivElement | null>;
+  align?: "left" | "right";
+}) {
+  return (
+    <motion.div
+      ref={popoverRef}
+      initial={{ opacity: 0, y: 4, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+      transition={{ duration: 0.14, ease: "easeOut" }}
+      className={`absolute top-full mt-2 ${align === "right" ? "right-0" : "left-0"} w-72 rounded-2xl border border-white/70 bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(20,20,20,0.18)] overflow-hidden z-50`}
+    >
+      {title && (
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-stone-100">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500">{title}</p>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+      {children}
+    </motion.div>
   );
 }
 
