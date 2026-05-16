@@ -5,8 +5,6 @@ import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "./_generated/dataModel";
 
-const SUPERADMIN_EMAIL = "amritanshu@thirdwavecoffee.in";
-
 const FULL_PERMS = {
   overview: true,
   inventory: true,
@@ -157,8 +155,11 @@ export const bootstrap = mutation({
     const email = (user.email ?? "").toLowerCase();
 
     if (!admin) {
-      // First-time bootstrap for the canonical superadmin email.
-      if (email === SUPERADMIN_EMAIL.toLowerCase()) {
+      // If no admins exist at all yet, the FIRST authenticated user becomes
+      // the seed superadmin. After that, only invited emails get access.
+      const anyAdmin = await ctx.db.query("admins").first();
+
+      if (!anyAdmin) {
         const id = await ctx.db.insert("admins", {
           userId,
           email,
@@ -178,7 +179,7 @@ export const bootstrap = mutation({
         });
         admin = await ctx.db.get(id);
       } else {
-        // Email is not pre-invited and is not the canonical superadmin.
+        // Admins already exist but this user wasn't pre-invited.
         return { ok: false, reason: "not-invited" as const };
       }
     } else {
