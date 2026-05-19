@@ -1091,13 +1091,7 @@ function MorphingHeader({
                   <span className="font-medium">{item.label}</span>
                 </button>
               ))}
-              <button
-                onClick={(e) => { onOpenTI(e); setMenuOpen(false); }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-natural-text/70 hover:bg-natural-muted/60 hover:text-natural-text"
-              >
-                <img src={asset("third-intelligence-icon.png")} alt="" className="w-5 h-5 object-contain" />
-                <span className="font-medium">Third Intelligence</span>
-              </button>
+
             </div>
           </motion.div>
         )}

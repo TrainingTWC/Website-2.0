@@ -253,8 +253,8 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart, onR
               )}
             </div>
 
-            {/* RIGHT — product panel: horizontal strip on mobile (h-44), compact grid on desktop */}
-            <div className="relative flex shrink-0 h-44 lg:h-auto min-h-0 border-t lg:border-t-0 lg:border-l border-natural-border/60 bg-natural-paper/60 lg:bg-linear-to-br lg:from-natural-paper/60 lg:via-natural-paper/20 lg:to-transparent">
+            {/* RIGHT — product panel: horizontal strip on mobile (h-52), compact grid on desktop */}
+            <div className="relative flex shrink-0 h-52 lg:h-auto min-h-0 border-t lg:border-t-0 lg:border-l border-natural-border/60 bg-natural-paper/60 lg:bg-linear-to-br lg:from-natural-paper/60 lg:via-natural-paper/20 lg:to-transparent">
               <ProductShortlist
                 answers={answers}
                 note={note}
@@ -262,6 +262,7 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart, onR
                 loading={loading}
                 recommendation={recommendation}
                 products={products ?? []}
+                onNavigateToProduct={onNavigateToProduct}
               />
             </div>
           </div>
@@ -967,6 +968,7 @@ function ProductShortlist({
   loading,
   recommendation,
   products,
+  onNavigateToProduct,
 }: {
   answers: Record<string, string>;
   note: string;
@@ -974,6 +976,7 @@ function ProductShortlist({
   loading: boolean;
   recommendation: RecommendationResult | null;
   products: Product[];
+  onNavigateToProduct?: (slug: string) => void;
 }) {
   const shortlist = shortlistProducts(products, answers, note);
   const primaryIds = new Set(recommendation?.primaryProductIds ?? []);
@@ -1009,7 +1012,7 @@ function ProductShortlist({
       </div>
 
       {/* Product grid */}
-      <div className="flex-1 min-h-0 overflow-hidden px-3 sm:px-4 py-3">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-3 sm:px-4 py-3">
         {products.length === 0 ? (
           <div className="flex items-center justify-center h-full text-natural-text/40 text-sm">
             <Coffee className="w-4 h-4 mr-2 animate-pulse" /> Loading our collection…
@@ -1033,9 +1036,10 @@ function ProductShortlist({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.88 }}
                       transition={{ duration: 0.3 }}
+                      onClick={() => onNavigateToProduct && onNavigateToProduct(slugify(p.name))}
                       className={`relative flex-shrink-0 w-24 h-full rounded-xl overflow-hidden border ${
                         isPrimary ? "border-natural-accent ring-2 ring-natural-accent/40" : "border-natural-border"
-                      }`}
+                      }${onNavigateToProduct ? " cursor-pointer" : ""}`}
                     >
                       {p.imageUrl ? (
                         <img src={p.imageUrl} alt={p.name} loading="lazy" className="w-full h-full object-cover" />
@@ -1070,11 +1074,12 @@ function ProductShortlist({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.88 }}
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={() => onNavigateToProduct && onNavigateToProduct(slugify(p.name))}
                       className={`relative rounded-xl overflow-hidden border bg-natural-paper ${
                         isPrimary
                           ? "border-natural-accent shadow-lg shadow-natural-accent/20 ring-2 ring-natural-accent/30"
                           : "border-natural-border"
-                      }`}
+                      }${onNavigateToProduct ? " cursor-pointer" : ""}`}
                     >
                       {p.imageUrl ? (
                         <img src={p.imageUrl} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
