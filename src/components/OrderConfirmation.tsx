@@ -124,6 +124,12 @@ export function OrderConfirmation({ orderId, onContinueShopping }: OrderConfirma
                   <span>Shipping</span>
                   <span>{order.shipping === 0 ? "Free" : `₹${order.shipping}`}</span>
                 </div>
+                {order.discountCode && order.discountApplied && order.discountApplied > 0 && (
+                  <div className="flex justify-between items-center text-green-600 font-medium text-sm py-1 px-3 bg-green-50 rounded-lg border border-green-200 mt-1">
+                    <span>Discount applied ({order.discountCode})</span>
+                    <span>−₹{order.discountApplied.toLocaleString("en-IN")}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-serif font-bold text-base text-natural-text border-t border-natural-border pt-2 mt-1">
                   <span>Total</span>
                   <span>₹{order.total.toLocaleString("en-IN")}</span>

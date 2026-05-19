@@ -312,6 +312,18 @@ function Storefront() {
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [activeDiscount, setActiveDiscount] = useState<{
+    code: string;
+    discountType: "percent" | "flat";
+    amount: number;
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("twc_active_discount");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const params = useUrlQuery();
   const page = params.get("page");
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
@@ -543,6 +555,28 @@ function Storefront() {
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
 
+  const clearDiscount = useCallback(() => {
+    setActiveDiscount(null);
+    localStorage.removeItem("twc_active_discount");
+  }, []);
+
+  const rawSubtotal = useMemo(
+    () =>
+      cart.reduce((sum, item) => {
+        const p = (products ?? []).find((pr) => pr._id === item.productId);
+        return sum + (p?.price ?? 0) * item.qty;
+      }, 0),
+    [cart, products]
+  );
+
+  const discountedSubtotal = useMemo(() => {
+    if (!activeDiscount) return rawSubtotal;
+    if (activeDiscount.discountType === "percent") {
+      return Math.round(rawSubtotal * (1 - activeDiscount.amount / 100));
+    }
+    return Math.max(0, rawSubtotal - activeDiscount.amount);
+  }, [rawSubtotal, activeDiscount]);
+
   const onAddToCart = useCallback((name: string) => {
     const product = (products ?? []).find((p) => p.name === name);
     if (product) addToCart(product._id);
@@ -705,7 +739,11 @@ function Storefront() {
             cart={cart}
             products={products ?? []}
             onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
-            onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
+            onOrderCreated={(orderId) => { setCurrentOrderId(orderId); clearDiscount(); navigateTo({ page: "order-confirmation" }); }}
+            activeDiscount={activeDiscount}
+            clearDiscount={clearDiscount}
+            discountedSubtotal={discountedSubtotal}
+            onShowToast={showToast}
           />
         </div>
         <SiteFooter
@@ -738,6 +776,9 @@ function Storefront() {
           onRemove={removeFromCart}
           onUpdateQty={updateQty}
           onCheckout={() => navigateTo({ page: "checkout" })}
+          activeDiscount={activeDiscount}
+          clearDiscount={clearDiscount}
+          discountedSubtotal={discountedSubtotal}
         />
         <ToastContainer toasts={toasts} />
       </div>
@@ -767,6 +808,9 @@ function Storefront() {
           onRemove={removeFromCart}
           onUpdateQty={updateQty}
           onCheckout={() => navigateTo({ page: "checkout" })}
+          activeDiscount={activeDiscount}
+          clearDiscount={clearDiscount}
+          discountedSubtotal={discountedSubtotal}
         />
         <ToastContainer toasts={toasts} />
       </div>
@@ -817,6 +861,9 @@ function Storefront() {
         onRemove={removeFromCart}
         onUpdateQty={updateQty}
         onCheckout={() => navigateTo({ page: "checkout" })}
+        activeDiscount={activeDiscount}
+        clearDiscount={clearDiscount}
+        discountedSubtotal={discountedSubtotal}
       />
 
       {/* Galaxy-AI style sweep when opening Third Intelligence */}

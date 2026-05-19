@@ -15,6 +15,9 @@ interface CartPanelProps {
   onRemove: (productId: string) => void;
   onUpdateQty: (productId: string, delta: number) => void;
   onCheckout?: () => void;
+  activeDiscount?: { code: string; discountType: "percent" | "flat"; amount: number } | null;
+  clearDiscount?: () => void;
+  discountedSubtotal?: number;
 }
 
 export function CartPanel({
@@ -25,6 +28,9 @@ export function CartPanel({
   onRemove,
   onUpdateQty,
   onCheckout,
+  activeDiscount,
+  clearDiscount,
+  discountedSubtotal,
 }: CartPanelProps) {
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
@@ -154,14 +160,47 @@ export function CartPanel({
             {/* Footer */}
             {cartProducts.length > 0 && (
               <div className="border-t border-natural-border px-6 py-5 space-y-4 bg-natural-paper">
+                {activeDiscount && (
+                  <div className="flex items-center justify-between bg-natural-accent/10 border border-natural-accent/25 rounded-2xl px-4 py-3 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-natural-accent uppercase tracking-widest">
+                        {activeDiscount.code}
+                      </span>
+                      <span className="text-xs text-natural-text/50">✓ applied</span>
+                    </div>
+                    <button
+                      onClick={clearDiscount}
+                      className="text-natural-text/35 hover:text-red-400 transition-colors text-xl leading-none -mr-1"
+                      aria-label="Remove discount"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-natural-text/55 font-medium text-sm">
                     Subtotal ({totalQty} {totalQty === 1 ? "item" : "items"})
                   </span>
-                  <span className="font-serif font-black text-2xl text-natural-text">
-                    ₹{subtotal.toLocaleString("en-IN")}
-                  </span>
+                  {activeDiscount ? (
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-sm text-natural-text/40 line-through">
+                        ₹{subtotal.toLocaleString("en-IN")}
+                      </span>
+                      <span className="font-serif font-black text-2xl text-natural-accent">
+                        ₹{(discountedSubtotal ?? subtotal).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-serif font-black text-2xl text-natural-text">
+                      ₹{subtotal.toLocaleString("en-IN")}
+                    </span>
+                  )}
                 </div>
+                {activeDiscount && discountedSubtotal !== undefined && (
+                  <p className="text-xs text-green-600 font-medium -mt-2">
+                    You save ₹{(subtotal - discountedSubtotal).toLocaleString("en-IN")}
+                  </p>
+                )}
                 <p className="text-natural-text/35 text-xs">
                   Taxes &amp; shipping calculated at checkout.
                 </p>

@@ -148,6 +148,7 @@ export default defineSchema({
       ts: v.number(),
     }))),
     discountCode: v.optional(v.string()),
+    discountApplied: v.optional(v.number()),
     customerPhone: v.optional(v.string()),  // denormalized for index queries
     customerEmail: v.optional(v.string()),  // denormalized for index queries
   })

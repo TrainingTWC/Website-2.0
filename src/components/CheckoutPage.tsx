@@ -12,11 +12,15 @@ interface CheckoutPageProps {
   products: Product[];
   onClose: () => void;
   onOrderCreated: (orderId: string) => void;
+  activeDiscount?: { code: string; discountType: "percent" | "flat"; amount: number } | null;
+  clearDiscount?: () => void;
+  discountedSubtotal?: number;
+  onShowToast?: (msg: string) => void;
 }
 
 type PaymentMethod = "cod" | "upi" | "card";
 
-export function CheckoutPage({ cart, products, onClose, onOrderCreated }: CheckoutPageProps) {
+export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDiscount, clearDiscount, discountedSubtotal, onShowToast }: CheckoutPageProps) {
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
     .filter((c): c is { productId: string; qty: number; product: Product } => c.product != null);
@@ -24,6 +28,12 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated }: Checko
   const subtotal = cartProducts.reduce((s, c) => s + c.product.price * c.qty, 0);
   const shipping = subtotal > 499 ? 0 : 49;
   const total = subtotal + shipping;
+
+  const effectiveSubtotal = activeDiscount && discountedSubtotal !== undefined
+    ? discountedSubtotal
+    : subtotal;
+  const discountedTotal = effectiveSubtotal + shipping;
+  const savings = subtotal - effectiveSubtotal;
 
   const [submitting, setSubmitting] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod>("cod");
@@ -73,32 +83,56 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated }: Checko
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const { orderId } = await submitOrder({
-        customer: {
-          name: form.name,
-          phone: form.phone,
-          email: form.email,
-          address: {
-            line1: form.address1,
-            line2: form.address2 || undefined,
-            city: form.city,
-            state: form.state,
-            pincode: form.pincode,
+      const doSubmit = async (withDiscount: boolean) => {
+        return submitOrder({
+          customer: {
+            name: form.name,
+            phone: form.phone,
+            email: form.email,
+            address: {
+              line1: form.address1,
+              line2: form.address2 || undefined,
+              city: form.city,
+              state: form.state,
+              pincode: form.pincode,
+            },
           },
-        },
-        items: cartProducts.map((c) => ({
-          productId: c.productId,
-          name: c.product.name,
-          imageUrl: c.product.imageUrl,
-          qty: c.qty,
-          price: c.product.price,
-        })),
-        subtotal,
-        shipping,
-        total,
-        paymentMethod: payment,
-      });
-      onOrderCreated(orderId);
+          items: cartProducts.map((c) => ({
+            productId: c.productId,
+            name: c.product.name,
+            imageUrl: c.product.imageUrl,
+            qty: c.qty,
+            price: c.product.price,
+          })),
+          subtotal,
+          shipping,
+          total: discountedTotal,
+          paymentMethod: payment,
+          ...(withDiscount && activeDiscount ? { discountCode: activeDiscount.code } : {}),
+        });
+      };
+
+      let result: { orderId: string };
+
+      try {
+        result = await doSubmit(true);
+      } catch (err: unknown) {
+        // D-03: If discount-related ConvexError, toast + clear + retry without discount
+        const msg = err instanceof Error ? err.message : String(err);
+        const isDiscountError = /discount|offer/i.test(msg);
+
+        if (isDiscountError && activeDiscount) {
+          onShowToast?.(
+            "This offer is no longer available. Your order has been placed without the discount."
+          );
+          clearDiscount?.();
+          result = await doSubmit(false);
+        } else {
+          throw err; // re-throw non-discount errors
+        }
+      }
+
+      onOrderCreated(result.orderId);
     } catch (err) {
       console.error("submitOrder failed:", err);
       setErrors({ name: "Something went wrong. Please try again." });
@@ -242,28 +276,28 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated }: Checko
 
           {/* Mobile CTA */}
           <div className="lg:hidden">
-            <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+            <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={discountedTotal} activeDiscount={activeDiscount} savings={savings} />
             <button
               type="submit"
               disabled={submitting}
               className="mt-5 w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : null}
-              {submitting ? "Placing Order..." : `Place Order · ₹${total.toLocaleString("en-IN")}`}
+              {submitting ? "Placing Order..." : `Place Order · ₹${discountedTotal.toLocaleString("en-IN")}`}
             </button>
           </div>
         </form>
 
         {/* ── Right: Order Summary (desktop) ─── */}
         <div className="hidden lg:block sticky top-24 space-y-4">
-          <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={total} />
+          <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={discountedTotal} activeDiscount={activeDiscount} savings={savings} />
           <button
             onClick={handleSubmit as unknown as React.MouseEventHandler}
             disabled={submitting}
             className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-base hover:bg-natural-accent transition-colors active:scale-[0.98] shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {submitting ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : null}
-            {submitting ? "Placing Order..." : `Place Order · ₹${total.toLocaleString("en-IN")}`}
+            {submitting ? "Placing Order..." : `Place Order · ₹${discountedTotal.toLocaleString("en-IN")}`}
           </button>
         </div>
       </motion.div>
@@ -304,10 +338,12 @@ function Field({
 }
 
 function OrderSummaryCard({
-  cartProducts, subtotal, shipping, total,
+  cartProducts, subtotal, shipping, total, activeDiscount, savings,
 }: {
   cartProducts: { productId: string; qty: number; product: Product }[];
   subtotal: number; shipping: number; total: number;
+  activeDiscount?: { code: string; discountType: "percent" | "flat"; amount: number } | null;
+  savings?: number;
 }) {
   return (
     <div className="bg-natural-paper border border-natural-border rounded-2xl p-5 space-y-4">
@@ -332,6 +368,12 @@ function OrderSummaryCard({
         <div className="flex justify-between text-natural-text/60">
           <span>Subtotal</span><span>₹{subtotal.toLocaleString("en-IN")}</span>
         </div>
+        {activeDiscount && savings !== undefined && savings > 0 && (
+          <div className="flex justify-between text-green-600 font-medium">
+            <span>Discount ({activeDiscount.code})</span>
+            <span>−₹{savings.toLocaleString("en-IN")}</span>
+          </div>
+        )}
         <div className="flex justify-between text-natural-text/60">
           <span>Shipping</span>
           <span>{shipping === 0 ? <span className="text-green-500 font-semibold">Free</span> : `₹${shipping}`}</span>

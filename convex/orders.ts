@@ -43,16 +43,54 @@ export const submitOrder = mutation({
   },
   handler: async (ctx, args) => {
     const orderId = `TWC-${randomAlphaNum(8)}`;
+
+    // Server-side discount re-validation (never trust client total)
+    let discountApplied: number | undefined;
+    let validatedDiscountCode: string | undefined;
+    let serverTotal = args.subtotal + args.shipping; // default: no discount
+
+    if (args.discountCode) {
+      const discount = await ctx.db
+        .query("discounts")
+        .withIndex("by_code", (q) => q.eq("code", args.discountCode!))
+        .unique();
+
+      const isValid =
+        discount &&
+        (!discount.expiresAt || discount.expiresAt > Date.now()) &&
+        (discount.maxUses === undefined || discount.usageCount < discount.maxUses);
+
+      if (isValid && discount) {
+        // Apply discount math — flat capped at subtotal, percent from server-stored amount
+        const savings =
+          discount.discountType === "percent"
+            ? Math.round(args.subtotal * (discount.amount / 100))
+            : Math.min(discount.amount, args.subtotal);
+
+        const discountedSubtotal = args.subtotal - savings;
+        serverTotal = discountedSubtotal + args.shipping;
+        discountApplied = savings;
+        validatedDiscountCode = discount.code;
+
+        // Increment usageCount
+        await ctx.db.patch(discount._id, {
+          usageCount: discount.usageCount + 1,
+        });
+      }
+      // Invalid/expired discount: silently proceed without discount (D-03: no hard rejection)
+    }
+
     await ctx.db.insert("orders", {
       orderId,
       customer: args.customer,
       items: args.items,
       subtotal: args.subtotal,
       shipping: args.shipping,
-      total: args.total,
+      total: serverTotal,
       status: "pending",
       paymentMethod: args.paymentMethod,
-      discountCode: args.discountCode,
+      discountCode: validatedDiscountCode,
+      discountApplied,
       customerPhone: args.customer.phone,
       customerEmail: args.customer.email,
     });
