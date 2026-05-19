@@ -36,6 +36,7 @@ import {
   Eye,
   EyeOff,
   Newspaper,
+  Menu,
 } from "lucide-react";
 import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
@@ -987,6 +988,7 @@ function MorphingHeader({
   const active = activeOverride ?? sectionActive;
   const { scrollY } = useScroll();
   const [compact, setCompact] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => {
     const next = v > 80;
     setCompact((prev) => (prev === next ? prev : next));
@@ -1001,45 +1003,98 @@ function MorphingHeader({
       }}
       className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl saturate-150 border-b"
     >
+      {/* Top bar row */}
       <motion.div
         animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center"
+        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 md:grid-cols-[1fr_auto_1fr] items-center"
       >
-        {/* LEFT — logo */}
-        <button
-          onClick={() => onNavTo("hero")}
-          className="flex items-center justify-start"
-          aria-label="Third Wave Coffee—home"
-        >
-          <motion.img
-            layoutId="brand-logo"
-            src={asset("logo.png")}
-            alt="Third Wave Coffee"
-            initial={false}
-            animate={{ height: compact ? 40 : 56 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="w-auto"
-          />
-        </button>
-
-        {/* CENTER — nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_ITEMS.map((item) => (
-            <MorphNavItem
-              key={item.key}
-              label={item.label}
-              Icon={item.Icon}
-              active={active === item.key}
-              compact={compact}
-              onClick={() => onNavTo(item.target)}
+        {/* LEFT — hamburger on mobile, logo on desktop */}
+        <div className="flex items-center justify-start">
+          {/* Hamburger (mobile only) */}
+          <button
+            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-natural-muted/60 transition-colors text-natural-text/70"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {menuOpen ? (
+                <motion.span
+                  key="x"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center justify-center"
+                >
+                  <Menu className="w-5 h-5" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+          {/* Logo (desktop only) */}
+          <button
+            onClick={() => onNavTo("hero")}
+            className="hidden md:flex items-center justify-start"
+            aria-label="Third Wave Coffee—home"
+          >
+            <motion.img
+              layoutId="brand-logo"
+              src={asset("logo.png")}
+              alt="Third Wave Coffee"
+              initial={false}
+              animate={{ height: compact ? 40 : 56 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="w-auto"
             />
-          ))}
-          {/* TI lives next to Our Story */}
-          <TIHeaderButton compact={compact} onClick={onOpenTI} />
-        </nav>
+          </button>
+        </div>
 
-        {/* RIGHT — cart */}
+        {/* CENTER — logo on mobile (centered), nav on desktop */}
+        <div className="flex items-center justify-center">
+          {/* Logo (mobile only, centered) */}
+          <button
+            onClick={() => { onNavTo("hero"); setMenuOpen(false); }}
+            className="md:hidden flex items-center justify-center"
+            aria-label="Third Wave Coffee—home"
+          >
+            <motion.img
+              src={asset("logo.png")}
+              alt="Third Wave Coffee"
+              initial={false}
+              animate={{ height: compact ? 36 : 44 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="w-auto"
+            />
+          </button>
+          {/* Nav (desktop only) */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <MorphNavItem
+                key={item.key}
+                label={item.label}
+                Icon={item.Icon}
+                active={active === item.key}
+                compact={compact}
+                onClick={() => onNavTo(item.target)}
+              />
+            ))}
+            <TIHeaderButton compact={compact} onClick={onOpenTI} />
+          </nav>
+        </div>
+
+        {/* RIGHT — cart (always visible) */}
         <div className="flex items-center gap-1 justify-end">
           <div className="relative">
             <MorphNavItem
@@ -1057,6 +1112,44 @@ function MorphingHeader({
           </div>
         </div>
       </motion.div>
+
+      {/* Mobile collapsible menu */}
+      <AnimatePresence initial={false}>
+        {menuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="md:hidden overflow-hidden border-t border-natural-border/50"
+          >
+            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => { onNavTo(item.target); setMenuOpen(false); }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left ${
+                    active === item.key
+                      ? "bg-natural-accent text-white"
+                      : "text-natural-text/70 hover:bg-natural-muted/60 hover:text-natural-text"
+                  }`}
+                >
+                  <item.Icon className="w-5 h-5 shrink-0" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+              <button
+                onClick={(e) => { onOpenTI(e); setMenuOpen(false); }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-natural-text/70 hover:bg-natural-muted/60 hover:text-natural-text"
+              >
+                <img src={asset("third-intelligence-icon.png")} alt="" className="w-5 h-5 object-contain" />
+                <span className="font-medium">Third Intelligence</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }
