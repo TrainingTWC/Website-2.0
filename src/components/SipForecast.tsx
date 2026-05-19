@@ -14,6 +14,7 @@ import {
   Flame,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
+import { TIIcon } from "./TIIcon";
 
 /**
  * Sip Forecast — the unique AI experience for easy coffee bags.
