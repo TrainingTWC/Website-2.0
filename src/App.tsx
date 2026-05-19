@@ -1456,13 +1456,13 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
     };
   }, [scrollX, viewportW]);
 
-  // rAF inertia loop — friction 0.93 gives a buttery coast that stops naturally
+  // rAF inertia loop — friction 0.87 gives a smooth, gentle coast that stops naturally
   const runInertia = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     const el = scrollRef.current;
     if (!el) return;
     const tick = () => {
-      velRef.current *= 0.93;
+      velRef.current *= 0.87;
       if (Math.abs(velRef.current) < 0.25) { velRef.current = 0; return; }
       el.scrollLeft += velRef.current;
       rafRef.current = requestAnimationFrame(tick);
@@ -1478,7 +1478,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
       const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5;
       if (!isHorizontal) return; // vertical scroll: don't block, let page scroll
       e.preventDefault();
-      velRef.current += e.deltaX * 0.6;
+      velRef.current += e.deltaX * 0.22;
       runInertia();
     };
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -1510,7 +1510,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
 
     const onUp = () => {
       drag.current.active = false;
-      velRef.current = drag.current.vel * 14;
+      velRef.current = drag.current.vel * 6;
       runInertia();
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
