@@ -1,25 +1,26 @@
 ---
 milestone: v4.0
 name: The Editorial Hub — Offers, News & Promotions
-status: in-progress
+status: complete
 progress:
   phases_total: 3
-  phases_done: 2
+  phases_done: 3
 ---
 
 # STATE.md
 
 ## Current Position
 
-Milestone: v4.0 — The Editorial Hub — Offers, News & Promotions — **IN PROGRESS**
-Phase: 2 of 3 phases complete
-Status: Phase 2 (Magazine Editorial Hub) shipped — ready for Phase 3
-Last activity: 2026-05-15 — Phase 2 execution complete (commit 7156db4)
+Milestone: v4.0 — The Editorial Hub — Offers, News & Promotions — **COMPLETE**
+Phase: 3 of 3 phases complete
+Status: Phase 3 (Discount Cart Integration) shipped — milestone complete
+Last activity: 2026-05-20 — Phase 3 execution complete (commit 621f1f3)
 
 ## Completed Phases
 
 - Phase 1 (Data Layer + Admin CMS) — ✅ shipped — commits `636fee7`, `2da7044`
 - Phase 2 (Magazine Editorial Hub) — ✅ shipped — commit `7156db4`
+- Phase 3 (Discount Cart Integration) — ✅ shipped — commit `621f1f3`
 
 ## Decisions This Milestone
 
