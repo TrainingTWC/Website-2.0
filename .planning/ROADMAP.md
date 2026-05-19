@@ -657,6 +657,13 @@ Phase 1 (posts and discounts tables + queries must exist)
 
 **Requirements covered:** OFF-09, DISC-01, DISC-02, DISC-03
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Convex server-side discount re-validation in submitOrder
+- [ ] 03-02-PLAN.md — App.tsx discount state + CartPanel discount pill UI
+- [ ] 03-03-PLAN.md — CheckoutPage discount summary + OrderConfirmation savings line
+
 ### Tasks
 
 1. **`src/lib/useCart.ts`** — Extend with discount awareness
