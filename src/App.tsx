@@ -790,17 +790,12 @@ function Storefront() {
         cartCount={cartCount}
       />
 
-      {/* Mobile bottom nav — only on small screens */}
-      <MobileBottomNav
-        onOpenTI={openTI}
-        onOpenCart={() => setCartOpen(true)}
-        onNavTo={handleNavTo}
-        cartCount={cartCount}
-      />
+      {/* Floating TI button — mobile only */}
+      <FloatingTIButton onOpenTI={openTI} />
 
       <div>
 
-      <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
+      <main className="pt-24 lg:pt-32 pb-8 px-0">
         <div className="max-w-7xl mx-auto" id="storefront-view">
           <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
         </div>
@@ -838,75 +833,32 @@ function Storefront() {
   );
 }
 
-// ── Mobile bottom nav pill ───────────────────────────────────
-function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onOpenTI: (e: React.MouseEvent) => void; onOpenCart: () => void; onNavTo: (target: string) => void; cartCount?: number }) {
-  const active = useActiveSection();
+// ── Floating TI button — mobile only ─────────────────────────
+function FloatingTIButton({ onOpenTI }: { onOpenTI: (e: React.MouseEvent) => void }) {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-3 mb-3 pointer-events-auto"
+    <div className="md:hidden fixed bottom-5 right-4 z-50">
+      <motion.button
+        onClick={onOpenTI}
+        initial={{ opacity: 0, scale: 0.7, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        whileTap={{ scale: 0.93 }}
+        aria-label="Open Third Intelligence"
+        className="flex items-center gap-2 pl-2.5 pr-4 py-2.5 rounded-full glass-strong shadow-lg shadow-natural-accent/20"
       >
-        <div className="flex items-center justify-around glass-strong rounded-2xl px-1 py-2">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => onNavTo(item.target)}
-              aria-label={item.label}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] transition-colors ${
-                active === item.key ? "text-white" : "text-natural-text/55"
-              }`}
-            >
-              {active === item.key && (
-                <motion.span
-                  layoutId="mobile-nav-active"
-                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                  className="absolute inset-0 rounded-xl bg-natural-accent shadow-md shadow-natural-accent/30"
-                />
-              )}
-              <item.Icon className="relative z-10 w-5 h-5" />
-              <span className="relative z-10 text-[9px] font-bold uppercase tracking-wide leading-none">
-                {item.label.split(" ")[0]}
-              </span>
-            </button>
-          ))}
-          {/* Cart */}
-          <button
-            onClick={onOpenCart}
-            aria-label="Cart"
-            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
-          >
-            <span className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[1rem] h-4 bg-natural-accent text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
-                  {cartCount > 9 ? "9+" : cartCount}
-                </span>
-              )}
-            </span>
-            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">Cart</span>
-          </button>
-          {/* TI */}
-          <button
-            onClick={onOpenTI}
-            aria-label="Third Intelligence"
-            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
-          >
-            <span className="relative w-5 h-5 flex items-center justify-center">
-              <motion.span
-                animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
-                transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
-                style={{ willChange: "transform, opacity" }}
-                className="absolute inset-0 rounded-full bg-natural-accent/40"
-              />
-              <img src={asset("third-intelligence-icon.png")} alt="" className="relative z-10 w-5 h-5 object-contain" />
-            </span>
-            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">AI</span>
-          </button>
-        </div>
-      </motion.div>
+        <span className="relative w-6 h-6 flex items-center justify-center">
+          <motion.span
+            animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", repeatDelay: 0.3 }}
+            style={{ willChange: "transform, opacity" }}
+            className="absolute inset-0 rounded-full bg-natural-accent/40"
+          />
+          <img src={asset("third-intelligence-icon.png")} alt="" className="relative z-10 w-6 h-6 object-contain" />
+        </span>
+        <span className="text-xs font-bold tracking-wide text-natural-text leading-none whitespace-nowrap">
+          Third Intelligence
+        </span>
+      </motion.button>
     </div>
   );
 }
