@@ -35,9 +35,10 @@ Customer question: ${args.question}`;
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "mistral-small-latest",
+        model: "mistral-small-2603",
         max_tokens: 200,
         temperature: 0.4,
+        reasoning_effort: "none",
         messages: [
           { role: "system", content: SUPPORT_SYSTEM_PROMPT },
           { role: "user", content: userMessage },

@@ -30,6 +30,16 @@ function makeCacheKey(actionName: string, args: unknown): string {
     .digest("hex");
 }
 
+// Strip <think>…</think> reasoning traces and markdown fences before parsing.
+// Mistral Small 4 (mistral-small-2603) is a hybrid reasoning model; even with
+// response_format: json_object it can emit thinking tokens in the content field.
+function safeParseJSON(text: string): unknown {
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  return JSON.parse(cleaned);
+}
+
 export const getRecommendation = action({
   args: {
     answers: v.any(),
@@ -111,7 +121,7 @@ RETURN JSON ONLY:
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "mistral-small-latest",
+            model: "mistral-small-2603",
             messages: [
               {
                 role: "system",
@@ -120,6 +130,7 @@ RETURN JSON ONLY:
               { role: "user", content: prompt },
             ],
             temperature: 0.7,
+            reasoning_effort: "none",
             response_format: { type: "json_object" },
           }),
         }
@@ -134,7 +145,7 @@ RETURN JSON ONLY:
       const text = json?.choices?.[0]?.message?.content;
       if (!text) throw new Error("Empty response from Mistral");
 
-      const parsed = JSON.parse(text) as {
+      const parsed = safeParseJSON(text) as {
         primaryProductIds: string[];
         crossSellProductIds: string[];
         explanation: string;
@@ -245,7 +256,7 @@ Rules:
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "mistral-small-latest",
+            model: "mistral-small-2603",
             messages: [
               {
                 role: "system",
@@ -255,6 +266,7 @@ Rules:
               { role: "user", content: prompt },
             ],
             temperature: 0.8,
+            reasoning_effort: "none",
             response_format: { type: "json_object" },
           }),
         }
@@ -274,7 +286,7 @@ Rules:
         return { ok: false as const, error: "Empty response from Mistral" };
       }
 
-      const parsed = JSON.parse(text) as {
+      const parsed = safeParseJSON(text) as {
         title: string;
         grind: string;
         waterTempC: number;
@@ -393,7 +405,7 @@ Rules:
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "mistral-small-latest",
+            model: "mistral-small-2603",
             messages: [
               {
                 role: "system",
@@ -403,6 +415,7 @@ Rules:
               { role: "user", content: prompt },
             ],
             temperature: 0.9,
+            reasoning_effort: "none",
             response_format: { type: "json_object" },
           }),
         }
@@ -422,7 +435,7 @@ Rules:
         return { ok: false as const, error: "Empty response from Mistral" };
       }
 
-      const parsed = JSON.parse(text) as {
+      const parsed = safeParseJSON(text) as {
         title: string;
         headline: string;
         ritual: Array<{ label: string; detail: string }>;
@@ -539,7 +552,7 @@ Rules:
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "mistral-small-latest",
+            model: "mistral-small-2603",
             messages: [
               {
                 role: "system",
@@ -549,6 +562,7 @@ Rules:
               { role: "user", content: prompt },
             ],
             temperature: 0.85,
+            reasoning_effort: "none",
             response_format: { type: "json_object" },
           }),
         }
@@ -568,7 +582,7 @@ Rules:
         return { ok: false as const, error: "Empty response from Mistral" };
       }
 
-      const parsed = JSON.parse(text) as {
+      const parsed = safeParseJSON(text) as {
         title: string;
         servingNote: string;
         steps: Array<{ label: string; duration: string; detail: string }>;
