@@ -1,10 +1,10 @@
 ---
 milestone: v5.0
 name: Next.js Migration
-status: planning
+status: in-progress
 progress:
   phases_total: 3
-  phases_done: 0
+  phases_done: 1
 ---
 
 # STATE.md
@@ -12,9 +12,9 @@ progress:
 ## Current Position
 
 Milestone: v5.0 — Next.js Migration — **IN PROGRESS**
-Phase: 1 of 3 (plans created, ready to execute)
-Status: Phase 1 plans created — execute with `/gsd-execute-phase 1`
-Last activity: 2026-05-20 — Phase 1 plans written (01-01, 01-02)
+Phase: 2 of 3 (Phase 1 complete, Phase 2 ready to plan)
+Status: Phase 1 shipped — `next build` exits 0, static export to `out/`
+Last activity: 2026-05-20 — Phase 1 executed (01-01: 956b3b6, 01-02: 156c849)
 
 ## Completed Phases (v4.0)
 

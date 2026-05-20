@@ -72,12 +72,36 @@ export const getRecommendation = action({
     const productNames = args.products.map((p) => p.name);
     const personalitiesBlock = buildPersonalitiesBlock(productNames);
 
+    // Use simple numeric indices so Mistral never mangles opaque Convex IDs.
+    // We map idx → real _id after parsing.
+    const idxToId: Record<string, string> = {};
     const catalogSnippet = args.products
-      .map(
-        (p) =>
-          `ID: ${p._id} | Name: ${p.name} | Category: ${p.category} | Roast: ${p.roastLevel ?? "N/A"} | Origin: ${p.origin ?? "N/A"} | Flavor: ${p.flavorNotes.join(", ")} | Price: ₹${p.price.toLocaleString("en-IN")}`
-      )
+      .map((p, i) => {
+        const idx = String(i + 1);
+        idxToId[idx] = p._id;
+        return `IDX: ${idx} | Name: ${p.name} | Category: ${p.category} | Roast: ${p.roastLevel ?? "N/A"} | Origin: ${p.origin ?? "N/A"} | Flavor: ${p.flavorNotes.join(", ")} | Price: ₹${p.price.toLocaleString("en-IN")}`;
+      })
       .join("\n");
+
+    // Also build a name → _id lookup as a fallback in case Mistral returns names.
+    const nameToId: Record<string, string> = {};
+    for (const p of args.products) {
+      nameToId[p.name.toLowerCase().trim()] = p._id;
+    }
+
+    const resolveIds = (raw: string[]): string[] => {
+      const resolved: string[] = [];
+      for (const val of raw) {
+        const trimmed = val.trim();
+        if (idxToId[trimmed]) {
+          resolved.push(idxToId[trimmed]);
+        } else if (nameToId[trimmed.toLowerCase()]) {
+          resolved.push(nameToId[trimmed.toLowerCase()]);
+        }
+        // discard anything that doesn't resolve
+      }
+      return resolved;
+    };
 
     const answersSnippet = Object.entries(args.answers as Record<string, string>)
       .map(([k, v]) => `${k}: ${v}`)
@@ -88,7 +112,7 @@ ${BRAND_CONTEXT}
 
 ${personalitiesBlock}
 
-PRODUCT CATALOG (ID | Name | Category | Roast | Origin | Flavor | Price):
+PRODUCT CATALOG (IDX | Name | Category | Roast | Origin | Flavor | Price):
 ${catalogSnippet}
 
 CUSTOMER ANSWERS:
@@ -99,14 +123,15 @@ You are Third Intelligence, the recommendation engine for Third Wave Coffee.
 Using the brand voice directive above, select the best product matches for this customer.
 
 Rules:
-- primaryProductIds: 1–3 IDs of coffee products (beans or bags) that best match the customer's answers
-- crossSellProductIds: 1–2 IDs of complementary products (gear, merch, or different format coffee) — use crossSellAffinity from the personality profiles as guidance
-- explanation: 2–3 sentences in Third Intelligence voice (crisp, confident, precise). Reference the matched product's archetype, specific flavor notes, and a brewing suggestion. Do NOT use filler like "great choice", "you'll love this", or "based on your preferences".
+- primaryProductIds: array of 1–3 IDX numbers (e.g. "3") of coffee products (beans or bags) that best match the answers
+- crossSellProductIds: array of 1–2 IDX numbers of complementary products (gear, merch, or different format coffee)
+- explanation: 2–3 sentences in Third Intelligence voice (crisp, confident, precise). Reference the matched product's specific flavor notes and a brewing suggestion. Do NOT use filler phrases.
+- Return ONLY the numeric IDX values from the catalog above. Do not invent new numbers.
 
 RETURN JSON ONLY:
 {
-  "primaryProductIds": ["id1"],
-  "crossSellProductIds": ["id2"],
+  "primaryProductIds": ["3"],
+  "crossSellProductIds": ["7"],
   "explanation": "..."
 }
 `.trim();
@@ -129,7 +154,7 @@ RETURN JSON ONLY:
               },
               { role: "user", content: prompt },
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             reasoning_effort: "none",
             response_format: { type: "json_object" },
           }),
@@ -156,7 +181,13 @@ RETURN JSON ONLY:
         throw new Error("Malformed response structure from Mistral");
       }
 
-      return parsed;
+      return {
+        primaryProductIds: resolveIds(parsed.primaryProductIds),
+        crossSellProductIds: Array.isArray(parsed.crossSellProductIds)
+          ? resolveIds(parsed.crossSellProductIds)
+          : [],
+        explanation: parsed.explanation,
+      };
     } catch (error) {
       console.error("Mistral Error:", error);
       return {

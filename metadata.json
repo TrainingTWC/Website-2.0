@@ -1,6 +1,7 @@
 {
-  "name": "BrewMatch AI",
-  "description": "An AI-powered e-commerce discovery plugin that acts as an expert barista to recommend the perfect coffee match and complementary products.",
+  "name": "Third Wave Coffee",
+  "description": "Premium specialty coffee e-commerce experience with personalised recommendations, curated beans, and brewing gear.",
+  "author": "Amritanshu Prasad",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
