@@ -7,6 +7,7 @@ import { useCartPanel } from "@/src/context/CartPanelContext";
 import { useToast } from "@/src/context/ToastContext";
 import { useDiscount } from "@/src/context/DiscountContext";
 import { useProducts } from "@/src/lib/useProducts";
+import { hrefForNavTarget } from "@/src/lib/navigation";
 
 export default function CheckoutRoute() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function CheckoutRoute() {
           onShowToast={showToast}
         />
       </div>
-      <SiteFooter onNavigate={(t) => router.push(t === "home" ? "/" : `/${t}`)} />
+      <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />
     </div>
   );
 }

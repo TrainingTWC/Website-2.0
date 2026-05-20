@@ -4,6 +4,7 @@ import { ProductPage } from "@/src/components/ProductPage";
 import { SiteFooter } from "@/src/components/SiteFooter";
 import { useCart } from "@/src/context/CartContext";
 import { useCartPanel } from "@/src/context/CartPanelContext";
+import { hrefForNavTarget } from "@/src/lib/navigation";
 
 export function ProductClient({ slug }: { slug: string }) {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function ProductClient({ slug }: { slug: string }) {
           cartCount={cartCount}
         />
       </div>
-      <SiteFooter onNavigate={(t) => router.push(t === "home" ? "/" : `/${t}`)} />
+      <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />
     </div>
   );
 }

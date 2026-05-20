@@ -5,6 +5,7 @@ import { SiteFooter } from "@/src/components/SiteFooter";
 import { MorphingHeader } from "@/src/components/MorphingHeader";
 import { useCart } from "@/src/context/CartContext";
 import { useCartPanel } from "@/src/context/CartPanelContext";
+import { hrefForNavTarget } from "@/src/lib/navigation";
 
 export default function JournalRoute() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function JournalRoute() {
         headerShadow="0 2px 12px -4px rgba(44,24,16,0.10)"
         onOpenTI={(e) => { e.stopPropagation(); router.push("/ti"); }}
         onOpenCart={openCart}
-        onNavTo={(t) => router.push(t === "home" ? "/" : `/${t}`)}
+        onNavTo={(t) => router.push(hrefForNavTarget(t))}
         cartCount={cartCount}
         activeOverride="editorial"
       />
@@ -29,7 +30,7 @@ export default function JournalRoute() {
           onPostOpen={(id) => router.push(`/journal/${id}`)}
         />
       </div>
-      <SiteFooter onNavigate={(t) => router.push(t === "home" ? "/" : `/${t}`)} />
+      <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />
     </div>
   );
 }

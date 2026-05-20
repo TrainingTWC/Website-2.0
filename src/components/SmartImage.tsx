@@ -37,6 +37,7 @@ export function SmartImage({
   // Ensure images always become visible even when the browser defers onLoad
   // (e.g. Edge's lazy-load intervention that replaces images with placeholders).
   useEffect(() => {
+    setLoaded(false);
     const img = ref.current;
     if (!img) return;
     if (img.complete && img.naturalWidth > 0) {
@@ -89,8 +90,9 @@ export function SmartImage({
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
         onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
         className={`relative w-full h-full transition-opacity duration-700 ease-out ${
-          loaded ? "opacity-100" : "opacity-0"
+          loaded || !blur ? "opacity-100" : "opacity-0"
         } ${className}`}
       />
     </div>

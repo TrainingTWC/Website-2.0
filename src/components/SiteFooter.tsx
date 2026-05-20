@@ -2,6 +2,7 @@
 import { Info, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { asset } from "../lib/asset";
+import { hrefForNavTarget } from "../lib/navigation";
 
 interface SiteFooterProps {
   onNavigate?: (target: string) => void;
@@ -10,17 +11,11 @@ interface SiteFooterProps {
 
 export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
   const router = useRouter();
-  const navigate = onNavigate ?? ((t: string) => router.push(t === "home" ? "/" : `/${t}`));
+  const navigate = onNavigate ?? ((t: string) => router.push(hrefForNavTarget(t)));
   const scroll = (id: string) => {
     if (onScrollTo) onScrollTo(id);
     else {
-      // If we're not on a page that has these sections, route home and let the
-      // hash do the work after navigation.
-      onNavigate("home");
-      requestAnimationFrame(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth" });
-      });
+      router.push(hrefForNavTarget(id));
     }
   };
 

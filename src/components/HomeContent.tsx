@@ -39,12 +39,22 @@ import { CinematicHero, CurtainTransition, ChapterDeck } from "./Cinematic";
 import type { ChapterConfig } from "./Cinematic";
 import { MorphingHeader, useActiveSection, NAV_ITEMS } from "./MorphingHeader";
 import { asset } from "../lib/asset";
+import { hrefForNavTarget } from "../lib/navigation";
 import type { Product } from "../types";
 import { resolveTaxonomy } from "../types";
 
 // ── Scroll helper ──────────────────────────────────────────────
 function scrollTo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const el = document.getElementById(id);
+  const lenis = (window as any).__lenis;
+  if (lenis && el) {
+    lenis.scrollTo(el, {
+      duration: 1.0,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
+    });
+    return;
+  }
+  el?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ── ScrollReveal — fade + lift sections into view on scroll ────
@@ -282,8 +292,8 @@ function ProductCard({
       >
         {imageParallaxX ? (
           <motion.div
-            className="absolute h-full"
-            style={{ width: "140%", left: "-20%", x: imageParallaxX }}
+            className="absolute inset-y-0"
+            style={{ width: "150%", left: "-25%", x: imageParallaxX, willChange: "transform" }}
           >
             <SmartImage
               src={product.imageUrl}
@@ -422,8 +432,10 @@ function HScrollRow({
   onAddToCart: (name: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const velRef = useRef(0);
   const rafRef = useRef(0);
+  const lastFrameRef = useRef(0);
+  const currentLeftRef = useRef(0);
+  const targetLeftRef = useRef(0);
   const drag = useRef({
     active: false,
     startX: 0,
@@ -436,32 +448,69 @@ function HScrollRow({
   const scrollX = useMotionValue(0);
   const viewportW = useMotionValue(0);
 
+  const setScrollLeft = useCallback((value: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = Math.max(0, el.scrollWidth - el.clientWidth);
+    const next = Math.min(max, Math.max(0, value));
+    currentLeftRef.current = next;
+    targetLeftRef.current = next;
+    el.scrollLeft = next;
+    scrollX.set(next);
+  }, [scrollX]);
+
+  const animateToTarget = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    lastFrameRef.current = performance.now();
+    const tick = (now: number) => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const max = Math.max(0, el.scrollWidth - el.clientWidth);
+      targetLeftRef.current = Math.min(max, Math.max(0, targetLeftRef.current));
+
+      const dt = Math.min(48, now - lastFrameRef.current);
+      lastFrameRef.current = now;
+      const current = currentLeftRef.current;
+      const target = targetLeftRef.current;
+      const alpha = 1 - Math.exp(-dt / 58);
+      const next = current + (target - current) * alpha;
+
+      if (Math.abs(target - next) < 0.35) {
+        setScrollLeft(target);
+        rafRef.current = 0;
+        return;
+      }
+
+      currentLeftRef.current = next;
+      el.scrollLeft = next;
+      scrollX.set(next);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, [scrollX, setScrollLeft]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const onScroll = () => scrollX.set(el.scrollLeft);
+    const onScroll = () => {
+      if (rafRef.current || drag.current.active) return;
+      currentLeftRef.current = el.scrollLeft;
+      targetLeftRef.current = el.scrollLeft;
+      scrollX.set(el.scrollLeft);
+    };
     const onResize = () => viewportW.set(el.clientWidth);
+    currentLeftRef.current = el.scrollLeft;
+    targetLeftRef.current = el.scrollLeft;
+    scrollX.set(el.scrollLeft);
     onResize();
     el.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(rafRef.current);
     };
   }, [scrollX, viewportW]);
-
-  const runInertia = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    const el = scrollRef.current;
-    if (!el) return;
-    const tick = () => {
-      velRef.current *= 0.93;
-      if (Math.abs(velRef.current) < 0.25) { velRef.current = 0; return; }
-      el.scrollLeft += velRef.current;
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-  }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -470,19 +519,18 @@ function HScrollRow({
       const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5;
       if (!isHorizontal) return;
       e.preventDefault();
-      velRef.current += e.deltaX * 0.6;
-      runInertia();
+      targetLeftRef.current += e.deltaX * 1.08;
+      animateToTarget();
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => { el.removeEventListener("wheel", onWheel); cancelAnimationFrame(rafRef.current); };
-  }, [runInertia]);
+  }, [animateToTarget]);
 
   const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const el = scrollRef.current;
     if (!el) return;
     cancelAnimationFrame(rafRef.current);
-    velRef.current = 0;
     drag.current = {
       active: true,
       startX: e.clientX,
@@ -503,12 +551,12 @@ function HScrollRow({
       if (dt > 0) d.vel = (d.lastX - ev.clientX) / dt;
       d.lastX = ev.clientX;
       d.lastT = now;
-      scrollRef.current.scrollLeft = d.startSL - dx;
+      setScrollLeft(d.startSL - dx);
     };
     const onUp = () => {
       drag.current.active = false;
-      velRef.current = drag.current.vel * 14;
-      runInertia();
+      targetLeftRef.current = currentLeftRef.current + drag.current.vel * 230;
+      animateToTarget();
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
       if (scrollRef.current) scrollRef.current.style.cursor = "";
@@ -566,7 +614,7 @@ function HScrollCard({
   const imageX = useTransform([scrollX, viewportW] as const, ([sl, vw]) => {
     const cardCentre = index * HSCROLL_CARD_STRIDE + HSCROLL_CARD_STRIDE / 2;
     const viewCentre = (sl as number) + (vw as number) / 2;
-    return (cardCentre - viewCentre) * 0.03;
+    return (cardCentre - viewCentre) * 0.055;
   });
   return (
     <div className="flex-shrink-0 w-48 sm:w-56 md:w-64">
@@ -1314,8 +1362,7 @@ export default function HomeContent() {
             onNavigate={(t) => {
               if (t === "home") { scrollTo("hero"); return; }
               if (t === "third-circle") { router.push("/journal"); return; }
-              if (t === "order-portal") { router.push("/orders"); return; }
-              router.push(`/${t}`);
+              router.push(hrefForNavTarget(t));
             }}
             onScrollTo={(id) => scrollTo(id)}
           />

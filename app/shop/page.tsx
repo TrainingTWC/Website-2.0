@@ -5,6 +5,7 @@ import { SiteFooter } from "@/src/components/SiteFooter";
 import { useCart } from "@/src/context/CartContext";
 import { useCartPanel } from "@/src/context/CartPanelContext";
 import { useToast } from "@/src/context/ToastContext";
+import { hrefForNavTarget } from "@/src/lib/navigation";
 
 export default function ShopRoute() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function ShopRoute() {
           onGoToCart={openCart}
         />
       </div>
-      <SiteFooter onNavigate={(t) => router.push(t === "home" ? "/" : `/${t}`)} />
+      <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />
     </div>
   );
 }

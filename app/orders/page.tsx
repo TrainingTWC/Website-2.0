@@ -5,6 +5,7 @@ import { OrderPortal } from "@/src/components/OrderPortal";
 import { OrderConfirmation } from "@/src/components/OrderConfirmation";
 import { SiteFooter } from "@/src/components/SiteFooter";
 import { useCart } from "@/src/context/CartContext";
+import { hrefForNavTarget } from "@/src/lib/navigation";
 
 function OrdersWrapper() {
   const params = useSearchParams();
@@ -35,7 +36,7 @@ export default function OrdersRoute() {
           <OrdersWrapper />
         </Suspense>
       </div>
-      <SiteFooter onNavigate={(t) => router.push(t === "home" ? "/" : `/${t}`)} />
+      <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />
     </div>
   );
 }
