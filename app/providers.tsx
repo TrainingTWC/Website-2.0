@@ -2,7 +2,11 @@
 
 import { ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { CartProvider } from "../src/context/CartContext";
+import { DiscountProvider } from "../src/context/DiscountContext";
+import { ToastProvider } from "../src/context/ToastContext";
+import { CartPanelProvider } from "../src/context/CartPanelContext";
 
 const convex = new ConvexReactClient(
   process.env.NEXT_PUBLIC_CONVEX_URL as string
@@ -10,6 +14,14 @@ const convex = new ConvexReactClient(
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ConvexAuthProvider client={convex}>{children}</ConvexAuthProvider>
+    <ConvexAuthProvider client={convex}>
+      <CartProvider>
+        <DiscountProvider>
+          <ToastProvider>
+            <CartPanelProvider>{children}</CartPanelProvider>
+          </ToastProvider>
+        </DiscountProvider>
+      </CartProvider>
+    </ConvexAuthProvider>
   );
 }
