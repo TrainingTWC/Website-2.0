@@ -45,7 +45,7 @@ import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { LayoutDashboard } from "lucide-react";
 import { ImagePicker } from "./ImagePicker";
-import { VisitorMap } from "./VisitorMap";
+import { VisitorMap } from "./VisitorMapLazy";
 import type { AdminMe } from "./AdminAuthGate";
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────

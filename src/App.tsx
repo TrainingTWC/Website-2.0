@@ -59,7 +59,7 @@ import { OrderConfirmation } from "./components/OrderConfirmation";
 import { OrderPortal } from "./components/OrderPortal";
 import { ShopPage } from "./components/ShopPage";
 import { SiteFooter } from "./components/SiteFooter";
-import { GalaxySweep } from "./components/GalaxySweep";
+import { GalaxySweep } from "./components/GalaxySweepLazy";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterDeck } from "./components/Cinematic";
 import type { ChapterConfig } from "./components/Cinematic";
