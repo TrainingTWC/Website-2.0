@@ -606,7 +606,7 @@ function SettingsPanel({
   sidebarDefault: "expanded" | "collapsed";
   onSidebarDefaultChange: (v: "expanded" | "collapsed") => void;
 }) {
-  const [storefrontUrl, setStorefrontUrl] = useState("https://trainingtwc.github.io/brewmatch-ai/");
+  const [storefrontUrl, setStorefrontUrl] = useState("https://thirdwavecoffee.prismintelligence.in/");
   const [urlSaved, setUrlSaved] = useState(false);
   const [notifLowStock, setNotifLowStock] = useState(true);
   const [notifOrders, setNotifOrders] = useState(true);
