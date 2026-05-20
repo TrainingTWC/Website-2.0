@@ -17,6 +17,8 @@ import {
   Coffee,
   ArrowRight,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
@@ -436,17 +438,19 @@ function HScrollRow({
   const lastFrameRef = useRef(0);
   const currentLeftRef = useRef(0);
   const targetLeftRef = useRef(0);
-  const drag = useRef({
-    active: false,
-    startX: 0,
-    startSL: 0,
-    lastX: 0,
-    lastT: 0,
-    vel: 0,
-    moved: false,
-  });
+  const [canStepBack, setCanStepBack] = useState(false);
+  const [canStepForward, setCanStepForward] = useState(false);
   const scrollX = useMotionValue(0);
   const viewportW = useMotionValue(0);
+
+  const updateArrowState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = Math.max(0, el.scrollWidth - el.clientWidth);
+    const left = currentLeftRef.current;
+    setCanStepBack(left > 1);
+    setCanStepForward(left < max - 1);
+  }, []);
 
   const setScrollLeft = useCallback((value: number) => {
     const el = scrollRef.current;
@@ -457,7 +461,8 @@ function HScrollRow({
     targetLeftRef.current = next;
     el.scrollLeft = next;
     scrollX.set(next);
-  }, [scrollX]);
+    updateArrowState();
+  }, [scrollX, updateArrowState]);
 
   const animateToTarget = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -484,21 +489,27 @@ function HScrollRow({
       currentLeftRef.current = next;
       el.scrollLeft = next;
       scrollX.set(next);
+      updateArrowState();
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-  }, [scrollX, setScrollLeft]);
+  }, [scrollX, setScrollLeft, updateArrowState]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      if (rafRef.current || drag.current.active) return;
+      if (rafRef.current) return;
       currentLeftRef.current = el.scrollLeft;
       targetLeftRef.current = el.scrollLeft;
       scrollX.set(el.scrollLeft);
+      updateArrowState();
     };
-    const onResize = () => viewportW.set(el.clientWidth);
+    const onResize = () => {
+      viewportW.set(el.clientWidth);
+      setScrollLeft(currentLeftRef.current);
+      updateArrowState();
+    };
     currentLeftRef.current = el.scrollLeft;
     targetLeftRef.current = el.scrollLeft;
     scrollX.set(el.scrollLeft);
@@ -510,90 +521,57 @@ function HScrollRow({
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [scrollX, viewportW]);
+  }, [scrollX, setScrollLeft, updateArrowState, viewportW]);
 
-  useEffect(() => {
+  const stepProducts = useCallback((direction: 1 | -1) => {
     const el = scrollRef.current;
     if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5;
-      if (!isHorizontal) return;
-      e.preventDefault();
-      targetLeftRef.current += e.deltaX * 1.08;
-      animateToTarget();
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => { el.removeEventListener("wheel", onWheel); cancelAnimationFrame(rafRef.current); };
+    const step = Math.max(HSCROLL_CARD_STRIDE, el.clientWidth * 0.82);
+    targetLeftRef.current = currentLeftRef.current + direction * step;
+    animateToTarget();
   }, [animateToTarget]);
 
-  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    cancelAnimationFrame(rafRef.current);
-    drag.current = {
-      active: true,
-      startX: e.clientX,
-      startSL: el.scrollLeft,
-      lastX: e.clientX,
-      lastT: performance.now(),
-      vel: 0,
-      moved: false,
-    };
-    el.style.cursor = "grabbing";
-    const onMove = (ev: MouseEvent) => {
-      const d = drag.current;
-      if (!d.active || !scrollRef.current) return;
-      const dx = ev.clientX - d.startX;
-      if (Math.abs(dx) > 4) d.moved = true;
-      const now = performance.now();
-      const dt = now - d.lastT;
-      if (dt > 0) d.vel = (d.lastX - ev.clientX) / dt;
-      d.lastX = ev.clientX;
-      d.lastT = now;
-      setScrollLeft(d.startSL - dx);
-    };
-    const onUp = () => {
-      drag.current.active = false;
-      targetLeftRef.current = currentLeftRef.current + drag.current.vel * 230;
-      animateToTarget();
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      if (scrollRef.current) scrollRef.current.style.cursor = "";
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  };
-
-  const onClickCapture = (e: React.MouseEvent) => {
-    if (drag.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
-
   return (
-    <div
-      ref={scrollRef}
-      onMouseDown={onMouseDown}
-      onClickCapture={onClickCapture}
-      className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing select-none
-                 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
-                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-                 [overscroll-behavior-x:contain]"
-      style={{ WebkitOverflowScrolling: "touch" as any }}
-      data-lenis-prevent
-    >
-      {products.map((p, i) => (
-        <HScrollCard
-          key={p._id}
-          product={p}
-          index={i}
-          scrollX={scrollX}
-          viewportW={viewportW}
-          onAddToCart={onAddToCart}
-        />
-      ))}
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex gap-4 sm:gap-5 overflow-hidden pb-4 select-none
+                   -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12
+                   [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-lenis-prevent
+      >
+        {products.map((p, i) => (
+          <HScrollCard
+            key={p._id}
+            product={p}
+            index={i}
+            scrollX={scrollX}
+            viewportW={viewportW}
+            onAddToCart={onAddToCart}
+          />
+        ))}
+      </div>
+
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="Previous products"
+          onClick={() => stepProducts(-1)}
+          disabled={!canStepBack}
+          className="pointer-events-auto ml-1 sm:-ml-2 md:-ml-6 h-11 w-11 rounded-full glass-strong text-natural-text shadow-lg transition-all hover:-translate-x-0.5 hover:bg-natural-paper disabled:opacity-0 disabled:pointer-events-none"
+        >
+          <ChevronLeft className="w-5 h-5 mx-auto" />
+        </button>
+        <button
+          type="button"
+          aria-label="Next products"
+          onClick={() => stepProducts(1)}
+          disabled={!canStepForward}
+          className="pointer-events-auto mr-1 sm:-mr-2 md:-mr-6 h-11 w-11 rounded-full glass-strong text-natural-text shadow-lg transition-all hover:translate-x-0.5 hover:bg-natural-paper disabled:opacity-0 disabled:pointer-events-none"
+        >
+          <ChevronRight className="w-5 h-5 mx-auto" />
+        </button>
+      </div>
     </div>
   );
 }
