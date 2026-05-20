@@ -42,6 +42,7 @@ import type { ChapterConfig } from "./Cinematic";
 import { MorphingHeader, useActiveSection, NAV_ITEMS } from "./MorphingHeader";
 import { asset } from "../lib/asset";
 import { hrefForNavTarget } from "../lib/navigation";
+import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 import { resolveTaxonomy } from "../types";
 
@@ -891,16 +892,25 @@ function DemoStorefront({
       <ChapterDeck
         chapters={
           cmsChapters
-            ? cmsChapters.map<ChapterConfig>((c) => {
-                const linked = c.productSlug
-                  ? products.find((p) => {
-                      const t = resolveTaxonomy(p);
-                      return t.slug === c.productSlug || p._id === c.productSlug;
-                    })
+            ? cmsChapters.map<ChapterConfig>((c, i) => {
+                const linked = (c.productSlug && products)
+                  ? products.find((p) => p && (p._id === c.productSlug || slugify(p.name) === c.productSlug))
                   : undefined;
+                
+                // Per-position fallback (Sourcing, Craft, Brewing, Drinkware, Ritual)
+                const fallbacks = [
+                  featuredBean, 
+                  featuredBag, 
+                  featuredBrewing ?? featuredBag, 
+                  featuredMerch, 
+                  featuredKeychain ?? featuredMerch ?? featuredBean
+                ];
+                const fallback = fallbacks[i] ?? featuredBean;
+                const resolvedProduct = linked ?? (c.imageUrl ? undefined : fallback);
+
                 return {
-                  index: c.index,
-                  eyebrow: c.eyebrow,
+                  index: c.index || "",
+                  eyebrow: c.eyebrow || "",
                   title: (
                     <>
                       {c.titleHead}
@@ -912,15 +922,17 @@ function DemoStorefront({
                       ) : null}
                     </>
                   ),
-                  body: c.body,
+                  body: c.body || "",
                   callouts: c.callouts ?? [],
-                  product: linked,
+                  product: resolvedProduct,
                   imageUrl: c.imageUrl,
-                  imageAlt: c.eyebrow,
-                  align: c.align,
-                  theme: c.theme,
+                  imageAlt: c.eyebrow || "",
+                  align: c.align || "left",
+                  theme: c.theme || "light",
                   onProductClick: linked
                     ? () => router.push("/products/" + linked._id)
+                    : resolvedProduct
+                    ? () => router.push("/products/" + resolvedProduct._id)
                     : undefined,
                 };
               })
