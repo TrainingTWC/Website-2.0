@@ -1,9 +1,9 @@
 ---
 milestone: v5.0
-name: (next milestone — not yet defined)
-status: ready
+name: Next.js Migration
+status: planning
 progress:
-  phases_total: 0
+  phases_total: 3
   phases_done: 0
 ---
 
@@ -11,8 +11,10 @@ progress:
 
 ## Current Position
 
-Milestone: v4.0 ✅ **COMPLETE** — archived 2026-05-20
-Status: Ready for next milestone planning
+Milestone: v5.0 — Next.js Migration — **IN PROGRESS**
+Phase: 0 of 3 (defining plans)
+Status: Phase 1 ready to plan
+Last activity: 2026-05-20 — milestone started, requirements + roadmap defined
 
 ## Completed Phases (v4.0)
 

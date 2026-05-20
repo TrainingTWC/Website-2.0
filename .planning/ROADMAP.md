@@ -468,5 +468,82 @@ Phase 2 of v2.0 (orders must exist in Convex — already shipped); `support.ts` 
 
 ---
 
+# Roadmap: v5.0 — Next.js Migration
+
+**Milestone:** v5.0
+**Continuing from:** v4.0 (complete)
+**Phase numbering:** 1–3 (reset)
+**Mode:** Planned
+**Granularity:** Standard — 3 phases
+**Deployment target:** GitHub Pages (`output: 'export'`) + Cloudflare CDN — no SSR
+
+---
+
+## Phase 1 — Next.js Bootstrap + Build Pipeline
+
+**Goal:** The project builds with Next.js 15 App Router and deploys to GitHub Pages via `output: 'export'`. The existing Vite build is removed. Convex + Auth providers are wired in root layout. GitHub Actions uploads `./out` instead of `./dist`.
+
+**Requirements covered:** MIG-01, MIG-02, MIG-03, MIG-04, MIG-05, MIG-06, MIG-07
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Next.js 15 init: package.json, next.config.ts, tsconfig, postcss (Tailwind v4), remove Vite
+- [ ] 01-02-PLAN.md — Providers root layout + GitHub Actions deploy update + smoke-test build
+
+### Depends On
+
+Nothing — can start immediately.
+
+---
+
+## Phase 2 — Global State Providers + SSR Safety
+
+**Goal:** All shared state currently living in App.tsx (cart, discounts, toasts, cart panel) is extracted into React context providers mounted at the root layout. Every SSR-incompatible component (Three.js, Leaflet, Lenis, MagneticCursor) is wrapped in `dynamic()` or `"use client"` guards. `next build` produces zero hydration warnings.
+
+**Requirements covered:** STATE-01, STATE-02, STATE-03, STATE-04, SSR-01, SSR-02, SSR-03, SSR-04, SSR-05
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — CartProvider + DiscountProvider + ToastProvider + CartPanelProvider
+- [ ] 02-02-PLAN.md — SSR-unsafe dynamic() wraps + localStorage guards
+
+### Depends On
+
+Phase 1 (Next.js build must work before providers can be tested)
+
+---
+
+## Phase 3 — Route Migration + Cleanup
+
+**Goal:** All 8 pages are migrated from `?page=` query-param routing to Next.js App Router file routes. App.tsx is retired. All `navigateTo()` calls are replaced with `useRouter().push()` / `<Link>`. `generateStaticParams()` is implemented for product and post dynamic routes.
+
+**Requirements covered:** ROUTE-01, ROUTE-02, ROUTE-03, ROUTE-04, ROUTE-05, ROUTE-06, ROUTE-07, ROUTE-08, ROUTE-09, ROUTE-10, ROUTE-11, ROUTE-12
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Static routes: `/`, `/shop`, `/checkout`, `/orders`, `/admin`
+- [ ] 03-02-PLAN.md — Dynamic routes: `/products/[slug]`, `/journal`, `/journal/[id]`, `/orders/[id]`
+- [ ] 03-03-PLAN.md — Navigation wiring, App.tsx retirement, `not-found.tsx`, final build verification
+
+### Depends On
+
+Phase 2 (providers must exist before pages consume them)
+
+---
+
+## Milestone Completion Criteria (v5.0)
+
+- [ ] `next build` exits 0, `./out` directory generated
+- [ ] GitHub Actions deploys successfully to `thirdwavecoffee.prismintelligence.in`
+- [ ] All 8 routes load without blank screens or console errors
+- [ ] Cart persists across route changes (add in `/shop`, checkout on `/checkout`)
+- [ ] Discount flow works end-to-end: journal → claim → cart shows discount
+- [ ] Admin dashboard accessible at `/admin`
+- [ ] No hydration mismatch warnings in browser console
+- [ ] `vite.config.ts` deleted — no Vite artifacts remain
+
 
 ## ~~v4.0 — The Editorial Hub~~ SHIPPED 2026-05-20 * 30/31 reqs * 58 commits | [Archive](.planning/milestones/v4.0-ROADMAP.md)

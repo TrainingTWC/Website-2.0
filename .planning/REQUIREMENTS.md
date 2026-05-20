@@ -299,4 +299,100 @@ Requirements for Milestone v4.0 — The Editorial Hub: Offers, News & Promotions
 
 ---
 *Requirements defined: 2026-05-14*
-*Last updated: 2026-05-13 — initial definition*
+*Last updated: 2026-05-20 — v5.0 added*
+
+---
+
+## v5.0 Requirements
+
+Requirements for Milestone v5.0 — Next.js Migration.
+
+**Deployment constraint (locked):** `output: 'export'` static HTML — stays on GitHub Pages + Cloudflare CDN. No SSR. No React Server Components with data fetching.
+
+### Infrastructure
+
+- [ ] **MIG-01**: Next.js 15 App Router initialized with TypeScript — Vite config removed, `package.json` scripts updated to `next dev` / `next build`
+- [ ] **MIG-02**: `next.config.ts` sets `output: 'export'`, `trailingSlash: true`, `images: { unoptimized: true }` (Cloudflare handles image CDN)
+- [ ] **MIG-03**: Tailwind CSS v4 configured via `@tailwindcss/postcss` in `postcss.config.mjs` (replaces `@tailwindcss/vite` plugin)
+- [ ] **MIG-04**: ConvexProvider + ConvexAuthProvider mounted in root `app/layout.tsx` inside a `"use client"` providers wrapper component
+- [ ] **MIG-05**: GitHub Actions `deploy.yml` updated — artifact path changed from `./dist` to `./out`
+- [ ] **MIG-06**: `public/CNAME` preserved; `basePath` not set (custom domain is at `/`)
+- [ ] **MIG-07**: `next build` succeeds with 0 TypeScript errors and 0 console errors
+
+### Global State Providers
+
+- [ ] **STATE-01**: `CartProvider` React context created — provides `cart`, `addToCart`, `removeFromCart`, `updateQty`, `clearCart`; persists to localStorage; replaces cart state in App.tsx
+- [ ] **STATE-02**: `DiscountProvider` React context — provides `activeDiscount`, `setActiveDiscount`, `clearDiscount`; syncs with `twc_active_discount` localStorage key; replaces discount state in App.tsx
+- [ ] **STATE-03**: `ToastProvider` React context — provides `showToast`; renders `<ToastContainer>` globally at root layout
+- [ ] **STATE-04**: `CartPanelProvider` React context — manages `cartOpen` boolean + renders `<CartPanel>` overlay at root layout so it persists across route changes
+
+### SSR Safety
+
+- [ ] **SSR-01**: `BestsellerCarousel3D`, `ProductHero3D`, `GalaxySweep` each wrapped with `dynamic(() => import(...), { ssr: false })`
+- [ ] **SSR-02**: `VisitorMap` (Leaflet) wrapped with `dynamic(() => import(...), { ssr: false })`
+- [ ] **SSR-03**: `SmoothScroll` (Lenis) converted to `"use client"` with `useEffect` guard — no window access at module level
+- [ ] **SSR-04**: `MagneticCursor` wrapped with `dynamic(() => import(...), { ssr: false })`
+- [ ] **SSR-05**: All `localStorage` reads (cart init, discount init, page scroll position) guarded with `typeof window !== 'undefined'`
+
+### Routing
+
+- [ ] **ROUTE-01**: `/` — Home page (hero, storefront sections, BannerSlideshow, PersonalitySection, etc.)
+- [ ] **ROUTE-02**: `/shop` — ShopPage with cart integration via CartProvider
+- [ ] **ROUTE-03**: `/products/[slug]` — ProductPage; slug = product `_id`; `generateStaticParams()` enumerates all product IDs fetched from Convex HTTP API at build time
+- [ ] **ROUTE-04**: `/journal` — EditorialHub
+- [ ] **ROUTE-05**: `/journal/[id]` — PostDetail; `generateStaticParams()` returns `[]` + client-side load via `useQuery` (posts are dynamic CMS content)
+- [ ] **ROUTE-06**: `/checkout` — CheckoutPage with cart + discount via providers
+- [ ] **ROUTE-07**: `/orders/[id]` — OrderConfirmation; `generateStaticParams()` returns `[]` + client-side load
+- [ ] **ROUTE-08**: `/orders` — OrderPortal (track/manage order)
+- [ ] **ROUTE-09**: `/admin` — AdminShell protected by AdminAuthGate
+- [ ] **ROUTE-10**: `not-found.tsx` (404 page) redirects to `/` — handles GitHub Pages 404 for any unmatched route
+- [ ] **ROUTE-11**: All `navigateTo({ page: X })` calls and `window.location` mutations replaced with `useRouter().push('/x')` or `<Link href="/x">`
+- [ ] **ROUTE-12**: App.tsx retired — root `app/page.tsx` replaces the home page branch of App.tsx
+
+## Out of Scope (v5.0)
+
+| Feature | Reason |
+|---------|--------|
+| React Server Components with Convex | Requires SSR/edge runtime — incompatible with `output: 'export'` |
+| Razorpay integration | Deferred to v6.0 |
+| `next/image` optimization | Disabled (`unoptimized: true`); Cloudflare handles CDN |
+| i18n routing | Not needed for current deployment |
+| Incremental Static Regeneration | Not compatible with static export |
+
+## Traceability (v5.0)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MIG-01 | Phase 1 | Pending |
+| MIG-02 | Phase 1 | Pending |
+| MIG-03 | Phase 1 | Pending |
+| MIG-04 | Phase 1 | Pending |
+| MIG-05 | Phase 1 | Pending |
+| MIG-06 | Phase 1 | Pending |
+| MIG-07 | Phase 1 | Pending |
+| STATE-01 | Phase 2 | Pending |
+| STATE-02 | Phase 2 | Pending |
+| STATE-03 | Phase 2 | Pending |
+| STATE-04 | Phase 2 | Pending |
+| SSR-01 | Phase 2 | Pending |
+| SSR-02 | Phase 2 | Pending |
+| SSR-03 | Phase 2 | Pending |
+| SSR-04 | Phase 2 | Pending |
+| SSR-05 | Phase 2 | Pending |
+| ROUTE-01 | Phase 3 | Pending |
+| ROUTE-02 | Phase 3 | Pending |
+| ROUTE-03 | Phase 3 | Pending |
+| ROUTE-04 | Phase 3 | Pending |
+| ROUTE-05 | Phase 3 | Pending |
+| ROUTE-06 | Phase 3 | Pending |
+| ROUTE-07 | Phase 3 | Pending |
+| ROUTE-08 | Phase 3 | Pending |
+| ROUTE-09 | Phase 3 | Pending |
+| ROUTE-10 | Phase 3 | Pending |
+| ROUTE-11 | Phase 3 | Pending |
+| ROUTE-12 | Phase 3 | Pending |
+
+**Coverage:**
+- v5.0 requirements: 28 total
+- Mapped to phases: 28
+- Unmapped: 0 ✓

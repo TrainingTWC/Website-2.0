@@ -70,21 +70,27 @@ Every customer leaves with a coffee recommendation that feels personally curated
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
 
-## Current Milestone: v5.0 — TBD
+## Current Milestone: v5.0 — Next.js Migration
 
-**Status:** Planning not yet started
+**Goal:** Migrate the React/Vite SPA to Next.js 15 App Router with `output: 'export'` for static GitHub Pages + Cloudflare deployment. Replace `?page=` query-param routing with file-based routes, extract App.tsx mega-state into providers, wrap SSR-incompatible components.
+
+**Target features:**
+- Next.js 15 App Router + TypeScript + Tailwind v4 via postcss
+- `output: 'export'` static build → GitHub Pages (`./out` dir)
+- CartProvider, DiscountProvider, ToastProvider, CartPanelProvider at root
+- SSR-safe dynamic() wraps for Three.js, Leaflet, Lenis, MagneticCursor
+- 8 file-based routes replacing `?page=` switch in App.tsx
+- App.tsx retired
+
+**Locked decisions:**
+- GitHub Pages + Cloudflare (no Vercel, no SSR)
+- Razorpay deferred to v6.0
 
 **Shipped milestones:**
 - v1.1 — Third Intelligence Context & Personality (2026-05-13)
 - v2.0 — Cart + Checkout + Orders (2026-05-15)
 - v3.0 — Admin Analytics + GPS + Order Portal (2026-05-15)
 - v4.0 — The Editorial Hub (2026-05-20) — [archive](.planning/milestones/v4.0-ROADMAP.md)
-
-**Candidate next directions:**
-- Next.js migration (flagged in CONCERNS.md as high-priority tech debt)
-- Razorpay payment integration
-- Product search + filtering in ShopPage
-- Customer-facing order tracking improvements
 
 This document evolves at phase transitions and milestone boundaries.
 
