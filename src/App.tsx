@@ -50,7 +50,10 @@ import { AdminAuthGate } from "./components/admin/AdminAuthGate";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { SmartImage } from "./components/SmartImage";
 import { ProductPage } from "./components/ProductPage";
-import { CartPanel } from "./components/CartPanel";
+import { useCart } from "./context/CartContext";
+import { useDiscount } from "./context/DiscountContext";
+import { useToast } from "./context/ToastContext";
+import { useCartPanel } from "./context/CartPanelContext";
 import { CheckoutPage } from "./components/CheckoutPage";
 import { OrderConfirmation } from "./components/OrderConfirmation";
 import { OrderPortal } from "./components/OrderPortal";
@@ -115,40 +118,6 @@ function ScrollProgressBar() {
       className="fixed top-0 left-0 right-0 h-[2px] bg-natural-accent origin-left z-[60]"
       style={{ scaleX }}
     />
-  );
-}
-
-// ── Toast notification system ──────────────────────────────────
-function useToast() {
-  const [toasts, setToasts] = useState<{ id: number; text: string; icon?: string }[]>([]);
-  const show = useCallback((text: string, icon = "cart") => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, text, icon }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500);
-  }, []);
-  return { toasts, show };
-}
-
-function ToastContainer({ toasts }: { toasts: { id: number; text: string; icon?: string }[] }) {
-  return (
-    <div className="fixed bottom-[7rem] sm:bottom-8 right-4 sm:right-8 z-[200] flex flex-col gap-3 pointer-events-none">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, x: 40, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 40, scale: 0.9 }}
-            className="bg-natural-text text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-medium pointer-events-auto"
-          >
-            <div className="bg-white/20 p-1.5 rounded-full">
-              <Check className="w-4 h-4" />
-            </div>
-            {t.text}
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -306,10 +275,11 @@ function DessertsBanner() {
 
 function Storefront() {
   const products = useProducts();
-  const { toasts, show: showToast } = useToast();
+  const { showToast } = useToast();
+  const { cart, addToCart, removeFromCart, updateQty, clearCart, cartCount } = useCart();
+  const { cartOpen, openCart, closeCart } = useCartPanel();
+  const { activeDiscount, clearDiscount, computeDiscountedSubtotal } = useDiscount();
   const [criticalReady, setCriticalReady] = useState(false);
-  const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const params = useUrlQuery();
   const page = params.get("page");
@@ -515,37 +485,10 @@ function Storefront() {
   };
   const closeTI = () => navigateTo({ page: null });
 
-  const addToCart = useCallback((productId: string, qty = 1) => {
-    setCart((prev) => {
-      const idx = prev.findIndex((c) => c.productId === productId);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = { ...next[idx], qty: next[idx].qty + qty };
-        return next;
-      }
-      return [...prev, { productId, qty }];
-    });
-    showToast("Added to cart");
-  }, [showToast]);
-
-  const removeFromCart = useCallback((productId: string) => {
-    setCart((prev) => prev.filter((c) => c.productId !== productId));
-  }, []);
-
-  const updateQty = useCallback((productId: string, delta: number) => {
-    setCart((prev) =>
-      prev.map((c) =>
-        c.productId === productId ? { ...c, qty: Math.max(1, c.qty + delta) } : c
-      )
-    );
-  }, []);
-
-  const cartCount = cart.reduce((s, c) => s + c.qty, 0);
-
   const onAddToCart = useCallback((name: string) => {
     const product = (products ?? []).find((p) => p.name === name);
-    if (product) addToCart(product._id);
-  }, [products, addToCart]);
+    if (product) { addToCart(product._id); showToast("Added to cart"); }
+  }, [products, addToCart, showToast]);
 
   // Nav click — page routes first, then scroll to section
   const handleNavTo = useCallback((target: string) => {
@@ -673,7 +616,6 @@ function Storefront() {
         <SiteFooter
           onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
-        <ToastContainer toasts={toasts} />
       </div>
     );
   }
@@ -685,7 +627,7 @@ function Storefront() {
         <div className="flex-1">
           <OrderConfirmation
             orderId={currentOrderId}
-            onContinueShopping={() => { setCart([]); setCurrentOrderId(null); navigateTo({ page: null }); }}
+            onContinueShopping={() => { clearCart(); setCurrentOrderId(null); navigateTo({ page: null }); }}
           />
         </div>
         <SiteFooter
@@ -697,14 +639,22 @@ function Storefront() {
 
   // ── Full-page route: Checkout ───────────────────────────────
   if (page === "checkout") {
+    const csub = (products ?? []).reduce((s, p) => {
+      const it = cart.find((c) => c.productId === p._id);
+      return it ? s + p.price * it.qty : s;
+    }, 0);
     return (
       <div className="min-h-screen bg-natural-bg text-natural-text font-sans flex flex-col">
         <div className="flex-1">
           <CheckoutPage
             cart={cart}
             products={products ?? []}
-            onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
+            onClose={() => { navigateTo({ page: null }); openCart(); }}
             onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
+            activeDiscount={activeDiscount}
+            clearDiscount={clearDiscount}
+            discountedSubtotal={activeDiscount ? computeDiscountedSubtotal(csub) : undefined}
+            onShowToast={showToast}
           />
         </div>
         <SiteFooter
@@ -721,24 +671,14 @@ function Storefront() {
         <div className="flex-1">
           <ProductPage
             productId={activeProductId}
-            onAddToCart={(productId, qty) => { addToCart(productId, qty); setCartOpen(true); }}
-            onOpenCart={() => setCartOpen(true)}
+            onAddToCart={(productId, qty) => { addToCart(productId, qty); openCart(); }}
+            onOpenCart={openCart}
             cartCount={cartCount}
           />
         </div>
         <SiteFooter
           onNavigate={(t) => navigateTo({ page: t === "home" ? null : t, product: null })}
         />
-        <CartPanel
-          open={cartOpen}
-          onClose={() => setCartOpen(false)}
-          cart={cart}
-          products={products ?? []}
-          onRemove={removeFromCart}
-          onUpdateQty={updateQty}
-          onCheckout={() => navigateTo({ page: "checkout" })}
-        />
-        <ToastContainer toasts={toasts} />
       </div>
     );
   }
@@ -750,24 +690,14 @@ function Storefront() {
         <div className="flex-1">
           <ShopPage
             cart={cart}
-            onAddToCart={(productId) => { addToCart(productId); }}
+            onAddToCart={(productId) => { addToCart(productId); showToast("Added to cart"); }}
             onProductClick={(slug) => navigateTo({ page: null, product: slug })}
-            onGoToCart={() => setCartOpen(true)}
+            onGoToCart={openCart}
           />
         </div>
         <SiteFooter
           onNavigate={(t) => navigateTo({ page: t === "home" ? null : t })}
         />
-        <CartPanel
-          open={cartOpen}
-          onClose={() => setCartOpen(false)}
-          cart={cart}
-          products={products ?? []}
-          onRemove={removeFromCart}
-          onUpdateQty={updateQty}
-          onCheckout={() => navigateTo({ page: "checkout" })}
-        />
-        <ToastContainer toasts={toasts} />
       </div>
     );
   }
@@ -784,7 +714,7 @@ function Storefront() {
         headerBorder={headerBorder}
         headerShadow={headerShadow}
         onOpenTI={openTI}
-        onOpenCart={() => setCartOpen(true)}
+        onOpenCart={openCart}
         onNavTo={handleNavTo}
         cartCount={cartCount}
       />
@@ -792,7 +722,7 @@ function Storefront() {
       {/* Mobile bottom nav — only on small screens */}
       <MobileBottomNav
         onOpenTI={openTI}
-        onOpenCart={() => setCartOpen(true)}
+        onOpenCart={openCart}
         onNavTo={handleNavTo}
         cartCount={cartCount}
       />
@@ -810,18 +740,7 @@ function Storefront() {
         onScrollTo={(id) => scrollTo(id)}
       />
 
-      <ToastContainer toasts={toasts} />
       </div>
-
-      <CartPanel
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        cart={cart}
-        products={products ?? []}
-        onRemove={removeFromCart}
-        onUpdateQty={updateQty}
-        onCheckout={() => navigateTo({ page: "checkout" })}
-      />
 
       {/* Galaxy-AI style sweep when opening Third Intelligence */}
       {tiSweep && (
