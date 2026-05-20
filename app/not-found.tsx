@@ -27,6 +27,18 @@ export default function NotFound() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F2ED] text-[#2C1810] font-sans">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function () {
+              var paths = ${JSON.stringify(Array.from(HOME_SECTION_PATHS))};
+              if (paths.indexOf(window.location.pathname) === -1) return;
+              var id = window.location.pathname.slice(1);
+              window.location.replace(id === "hero" ? "/" : "/#" + id);
+            })();
+          `,
+        }}
+      />
       <div className="text-center space-y-6 px-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#5A5A40]">
           Third Wave Coffee
