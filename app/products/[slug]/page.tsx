@@ -1,14 +1,17 @@
 import { ProductClient } from "./ProductClient";
 
 // ROUTE-03: enumerate all product _ids at build time via Convex HTTP API
+const CONVEX_URL =
+  process.env.NEXT_PUBLIC_CONVEX_URL || "https://different-bulldog-772.convex.cloud";
+
 export async function generateStaticParams() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/query`,
+      `${CONVEX_URL}/api/query`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: "products:list", args: {}, format: "clean_json" }),
+        body: JSON.stringify({ path: "products:list", args: {} }),
       }
     );
     if (!res.ok) return [{ slug: "_" }];
