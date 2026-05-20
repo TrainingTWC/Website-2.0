@@ -16,13 +16,20 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) return;
 
+    // Prevent the browser / Next.js from restoring scroll position on
+    // back-forward navigation — Lenis owns the scroll position.
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
     const lenis = new Lenis({
       // Frame-rate independent smoothing — feels identical at 60 / 120 / 144 Hz.
-      // Lower = snappier (tighter tracking of the wheel), higher = heavier.
-      lerp: 0.13,
+      // Lower lerp = more smoothing (buttery), higher = snappier (digital).
+      // 0.08 gives the silk-curtain feel without perceptible lag.
+      lerp: 0.08,
       smoothWheel: true,
       syncTouch: true,
-      syncTouchLerp: 0.1,
+      syncTouchLerp: 0.075,
       wheelMultiplier: 1.0,
       touchMultiplier: 1.4,
     });
@@ -30,6 +37,9 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     let raf = 0;
     const loop = (time: number) => {
       lenis.raf(time);
+      // Notify Framer Motion's useScroll listeners so useTransform values
+      // update on the same frame as the Lenis position change.
+      window.dispatchEvent(new Event("scroll"));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);

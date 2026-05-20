@@ -9,7 +9,7 @@ import { ToastProvider } from "../src/context/ToastContext";
 import { CartPanelProvider } from "../src/context/CartPanelContext";
 
 const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL ?? "https://placeholder.convex.cloud"
+  process.env.NEXT_PUBLIC_CONVEX_URL ?? "https://different-bulldog-772.convex.cloud"
 );
 
 export function Providers({ children }: { children: ReactNode }) {
