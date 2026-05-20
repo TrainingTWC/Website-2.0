@@ -12,9 +12,9 @@ progress:
 ## Current Position
 
 Milestone: v5.0 — Next.js Migration — **IN PROGRESS**
-Phase: 0 of 3 (defining plans)
-Status: Phase 1 ready to plan
-Last activity: 2026-05-20 — milestone started, requirements + roadmap defined
+Phase: 1 of 3 (plans created, ready to execute)
+Status: Phase 1 plans created — execute with `/gsd-execute-phase 1`
+Last activity: 2026-05-20 — Phase 1 plans written (01-01, 01-02)
 
 ## Completed Phases (v4.0)
 

@@ -491,6 +491,8 @@ Plans:
 - [ ] 01-01-PLAN.md — Next.js 15 init: package.json, next.config.ts, tsconfig, postcss (Tailwind v4), remove Vite
 - [ ] 01-02-PLAN.md — Providers root layout + GitHub Actions deploy update + smoke-test build
 
+**Phase directory:** `.planning/phases/01-nextjs-bootstrap/`
+
 ### Depends On
 
 Nothing — can start immediately.
