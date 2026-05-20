@@ -26,11 +26,19 @@ Every customer leaves with a coffee recommendation that feels personally curated
 
 ### Active
 
-- [ ] **CART-01 – CART-05**: Cart hook + Add to Cart + cart drawer + header badge
-- [ ] **CHK-01 – CHK-04**: Guest checkout form (Name, Phone, Email, Address, Pincode)
-- [ ] **ORD-01 – ORD-03**: Convex orders table, submitOrder mutation, confirmation screen
-- [ ] **ADM-01 – ADM-03**: Admin dashboard Orders tab with order queue + detail view
-- [ ] **PAY-01 – PAY-04**: Razorpay integration + webhook verification
+- [ ] Next milestone to be planned (v5.0)
+
+### Completed (v4.0 — The Editorial Hub)
+
+- [x] `posts` Convex table + 5 content types (flash-sale, product-launch, café-news, brand-story, champion)
+- [x] `discounts` Convex table with validateDiscount + claimDiscount
+- [x] Admin "Editorial" tab: create/edit/publish posts, manage discounts, champions
+- [x] EditorialHub magazine page: asymmetric grid, category filters, countdown timers
+- [x] Glassmorphism "Claim Offer" → applies single discount to cart
+- [x] CartPanel: discount pill, strike-through subtotal, savings line
+- [x] CheckoutPage: discount line in summary, server re-validation, D-03 toast+retry
+- [x] OrderConfirmation: green savings card
+- [x] Server-side discount validation in submitOrder (discountApplied stored on orders)
 
 ### Out of Scope
 
@@ -62,21 +70,21 @@ Every customer leaves with a coffee recommendation that feels personally curated
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
 
-## Current Milestone: v4.0 — The Editorial Hub
+## Current Milestone: v5.0 — TBD
 
-**Goal:** Build a fully dynamic, CMS-driven Offers & News section that feels like a premium coffee magazine — flash sales, discount codes, product launches, café news, brand stories, and a Champions spotlight — all managed from the existing Admin Dashboard, with a glassmorphism "Claim Offer" mechanic that applies one discount at a time to the cart.
+**Status:** Planning not yet started
 
-**Target features:**
-- `posts` — content type supporting flash-sale, product-launch, cafe-news, brand-story, champion
-- `discounts` — promo codes (percent/flat, firstOrderOnly or all-users, expiry, usage limits), validated server-side
-- `champions` — staff spotlight entries (name, role, story, photo, favourite product)
-- Admin Dashboard "Editorial" tab: create/edit/publish posts, manage discounts, manage champions
-- Editorial Hub page (`?page=editorial`): magazine-style full-bleed grid, category filters, countdown timers on flash sales
-- Glassmorphism "Claim Offer" button on offer cards → applies discount to cart with "Offer applied ✓" toast; one discount at a time
-- Cart Drawer: shows applied discount code badge, savings, strike-through subtotal
-- Checkout: discount reflected in order total; stored on order record
+**Shipped milestones:**
+- v1.1 — Third Intelligence Context & Personality (2026-05-13)
+- v2.0 — Cart + Checkout + Orders (2026-05-15)
+- v3.0 — Admin Analytics + GPS + Order Portal (2026-05-15)
+- v4.0 — The Editorial Hub (2026-05-20) — [archive](.planning/milestones/v4.0-ROADMAP.md)
 
-**Phase numbering:** 1–3 (reset for new milestone)
+**Candidate next directions:**
+- Next.js migration (flagged in CONCERNS.md as high-priority tech debt)
+- Razorpay payment integration
+- Product search + filtering in ShopPage
+- Customer-facing order tracking improvements
 
 This document evolves at phase transitions and milestone boundaries.
 
