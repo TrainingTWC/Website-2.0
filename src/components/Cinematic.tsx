@@ -269,7 +269,7 @@ export function ChapterReveal({
                     src={resolvedImage}
                     alt={imageAlt ?? product?.name ?? eyebrow}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.6s]"
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
                   />
                   <MacroBeam progress={scrollYProgress} />

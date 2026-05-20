@@ -34,11 +34,31 @@ export function SmartImage({
   const [loaded, setLoaded] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
 
-  // If the image is already cached and complete on mount, skip the fade-in.
+  // Ensure images always become visible even when the browser defers onLoad
+  // (e.g. Edge's lazy-load intervention that replaces images with placeholders).
   useEffect(() => {
-    if (ref.current?.complete && ref.current.naturalWidth > 0) {
+    const img = ref.current;
+    if (!img) return;
+    if (img.complete && img.naturalWidth > 0) {
       setLoaded(true);
+      return;
     }
+
+    let cancelled = false;
+    // Hard fallback: always reveal after 4 s regardless of load events
+    const timer = setTimeout(() => { if (!cancelled) setLoaded(true); }, 4000);
+
+    // img.decode() resolves when pixels are ready for compositing —
+    // fires even when the browser defers the standard load event.
+    img
+      .decode()
+      .then(() => { if (!cancelled) setLoaded(true); })
+      .catch(() => { /* decode can fail for un-started lazy images; timer handles it */ });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [src]);
 
   return (
