@@ -898,6 +898,25 @@ function DemoStorefront({
                       return t.slug === c.productSlug || p._id === c.productSlug;
                     })
                   : undefined;
+                // Per-eyebrow fallback so every chapter always has a product image,
+                // even when the CMS chapter has no imageUrl and no/stale productSlug.
+                const eyebrowKey = c.eyebrow.trim().toLowerCase();
+                const fallbackByEyebrow =
+                  eyebrowKey === "sourcing" ? featuredBean :
+                  eyebrowKey === "craft" ? featuredBag :
+                  eyebrowKey === "brewing" ? (featuredBrewing ?? featuredBag) :
+                  eyebrowKey === "drinkware" ? featuredMerch :
+                  eyebrowKey === "ritual" ? (featuredKeychain ?? featuredMerch ?? featuredBean) :
+                  undefined;
+                const fallbackProduct =
+                  fallbackByEyebrow ??
+                  featuredBean ??
+                  featuredBag ??
+                  featuredMerch ??
+                  featuredBrewing ??
+                  featuredKeychain;
+                const hasImageUrl = !!(c.imageUrl && c.imageUrl.trim());
+                const resolvedProduct = linked ?? (hasImageUrl ? undefined : fallbackProduct);
                 return {
                   index: c.index,
                   eyebrow: c.eyebrow,
@@ -914,13 +933,15 @@ function DemoStorefront({
                   ),
                   body: c.body,
                   callouts: c.callouts ?? [],
-                  product: linked,
+                  product: resolvedProduct,
                   imageUrl: c.imageUrl,
                   imageAlt: c.eyebrow,
                   align: c.align,
                   theme: c.theme,
                   onProductClick: linked
                     ? () => router.push("/products/" + linked._id)
+                    : resolvedProduct
+                    ? () => router.push("/products/" + resolvedProduct._id)
                     : undefined,
                 };
               })
