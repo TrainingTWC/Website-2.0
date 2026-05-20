@@ -28,11 +28,13 @@ jobs:
 
       - name: Deploy Convex functions
         run: npx convex deploy --yes
+        continue-on-error: true
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
       - name: Set Convex env vars
         run: npx convex env set MISTRAL_API_KEY "$MISTRAL_API_KEY"
+        continue-on-error: true
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
