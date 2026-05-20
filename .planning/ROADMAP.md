@@ -508,8 +508,8 @@ Nothing — can start immediately.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — CartProvider + DiscountProvider + ToastProvider + CartPanelProvider
-- [ ] 02-02-PLAN.md — SSR-unsafe dynamic() wraps + localStorage guards
+- [ ] 02-01-PLAN.md — CartProvider + DiscountProvider + ToastProvider + CartPanelProvider (Wave 1)
+- [ ] 02-02-PLAN.md — SSR-unsafe dynamic() wraps + SmoothScroll use client (Wave 2, depends on 02-01)
 
 ### Depends On
 
