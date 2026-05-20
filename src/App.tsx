@@ -36,7 +36,6 @@ import {
   Eye,
   EyeOff,
   Newspaper,
-  Menu,
 } from "lucide-react";
 import { api } from "../convex/_generated/api";
 import { useMutation } from "convex/react";
@@ -246,7 +245,7 @@ function FizzBanner() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url(${import.meta.env.BASE_URL}banner-schweppes.png)`,
+          backgroundImage: `url(/banner-schweppes.png)`,
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
@@ -279,7 +278,7 @@ function DessertsBanner() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url(${import.meta.env.BASE_URL}banner-third-rush.jpg)`,
+          backgroundImage: `url(/banner-third-rush.jpg)`,
         }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
@@ -312,18 +311,6 @@ function Storefront() {
   const [cart, setCart] = useState<{ productId: string; qty: number }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const [activeDiscount, setActiveDiscount] = useState<{
-    code: string;
-    discountType: "percent" | "flat";
-    amount: number;
-  } | null>(() => {
-    try {
-      const raw = localStorage.getItem("twc_active_discount");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
   const params = useUrlQuery();
   const page = params.get("page");
   // Slugs in URL (e.g. ?product=kenyan-single-origin) — resolve to Convex _id
@@ -485,7 +472,7 @@ function Storefront() {
       }
       const ip = await getIpGeo();
       // If IP gave us coords but no city, try reverse-geocoding those coords.
-      if (ip.lat != null && ip.lon != null && (!ip.city || !ip.locality)) {
+      if (ip.lat != null && ip.lon != null && !ip.city) {
         const rev = await reverseGeocode(ip.lat, ip.lon);
         Object.assign(ip, { ...rev });
       }
@@ -554,28 +541,6 @@ function Storefront() {
   }, []);
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
-
-  const clearDiscount = useCallback(() => {
-    setActiveDiscount(null);
-    localStorage.removeItem("twc_active_discount");
-  }, []);
-
-  const rawSubtotal = useMemo(
-    () =>
-      cart.reduce((sum, item) => {
-        const p = (products ?? []).find((pr) => pr._id === item.productId);
-        return sum + (p?.price ?? 0) * item.qty;
-      }, 0),
-    [cart, products]
-  );
-
-  const discountedSubtotal = useMemo(() => {
-    if (!activeDiscount) return rawSubtotal;
-    if (activeDiscount.discountType === "percent") {
-      return Math.round(rawSubtotal * (1 - activeDiscount.amount / 100));
-    }
-    return Math.max(0, rawSubtotal - activeDiscount.amount);
-  }, [rawSubtotal, activeDiscount]);
 
   const onAddToCart = useCallback((name: string) => {
     const product = (products ?? []).find((p) => p.name === name);
@@ -739,11 +704,7 @@ function Storefront() {
             cart={cart}
             products={products ?? []}
             onClose={() => { navigateTo({ page: null }); setCartOpen(true); }}
-            onOrderCreated={(orderId) => { setCurrentOrderId(orderId); clearDiscount(); navigateTo({ page: "order-confirmation" }); }}
-            activeDiscount={activeDiscount}
-            clearDiscount={clearDiscount}
-            discountedSubtotal={discountedSubtotal}
-            onShowToast={showToast}
+            onOrderCreated={(orderId) => { setCurrentOrderId(orderId); navigateTo({ page: "order-confirmation" }); }}
           />
         </div>
         <SiteFooter
@@ -776,9 +737,6 @@ function Storefront() {
           onRemove={removeFromCart}
           onUpdateQty={updateQty}
           onCheckout={() => navigateTo({ page: "checkout" })}
-          activeDiscount={activeDiscount}
-          clearDiscount={clearDiscount}
-          discountedSubtotal={discountedSubtotal}
         />
         <ToastContainer toasts={toasts} />
       </div>
@@ -808,9 +766,6 @@ function Storefront() {
           onRemove={removeFromCart}
           onUpdateQty={updateQty}
           onCheckout={() => navigateTo({ page: "checkout" })}
-          activeDiscount={activeDiscount}
-          clearDiscount={clearDiscount}
-          discountedSubtotal={discountedSubtotal}
         />
         <ToastContainer toasts={toasts} />
       </div>
@@ -834,12 +789,17 @@ function Storefront() {
         cartCount={cartCount}
       />
 
-      {/* Floating TI button — mobile only */}
-      <FloatingTIButton onOpenTI={openTI} />
+      {/* Mobile bottom nav — only on small screens */}
+      <MobileBottomNav
+        onOpenTI={openTI}
+        onOpenCart={() => setCartOpen(true)}
+        onNavTo={handleNavTo}
+        cartCount={cartCount}
+      />
 
       <div>
 
-      <main className="pt-24 lg:pt-32 pb-8 px-0">
+      <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
         <div className="max-w-7xl mx-auto" id="storefront-view">
           <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
         </div>
@@ -861,9 +821,6 @@ function Storefront() {
         onRemove={removeFromCart}
         onUpdateQty={updateQty}
         onCheckout={() => navigateTo({ page: "checkout" })}
-        activeDiscount={activeDiscount}
-        clearDiscount={clearDiscount}
-        discountedSubtotal={discountedSubtotal}
       />
 
       {/* Galaxy-AI style sweep when opening Third Intelligence */}
@@ -880,32 +837,75 @@ function Storefront() {
   );
 }
 
-// ── Floating TI button — mobile only ─────────────────────────
-function FloatingTIButton({ onOpenTI }: { onOpenTI: (e: React.MouseEvent) => void }) {
+// ── Mobile bottom nav pill ───────────────────────────────────
+function MobileBottomNav({ onOpenTI, onOpenCart, onNavTo, cartCount = 0 }: { onOpenTI: (e: React.MouseEvent) => void; onOpenCart: () => void; onNavTo: (target: string) => void; cartCount?: number }) {
+  const active = useActiveSection();
   return (
-    <div className="md:hidden fixed bottom-5 right-4 z-50">
-      <motion.button
-        onClick={onOpenTI}
-        initial={{ opacity: 0, scale: 0.7, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        whileTap={{ scale: 0.93 }}
-        aria-label="Open Third Intelligence"
-        className="flex items-center gap-2 pl-2.5 pr-4 py-2.5 rounded-full glass-strong shadow-lg shadow-natural-accent/20"
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="mx-3 mb-3 pointer-events-auto"
       >
-        <span className="relative w-6 h-6 flex items-center justify-center">
-          <motion.span
-            animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", repeatDelay: 0.3 }}
-            style={{ willChange: "transform, opacity" }}
-            className="absolute inset-0 rounded-full bg-natural-accent/40"
-          />
-          <img src={asset("third-intelligence-icon.png")} alt="" className="relative z-10 w-6 h-6 object-contain" />
-        </span>
-        <span className="text-xs font-bold tracking-wide text-natural-text leading-none whitespace-nowrap">
-          Third Intelligence
-        </span>
-      </motion.button>
+        <div className="flex items-center justify-around glass-strong rounded-2xl px-1 py-2">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => onNavTo(item.target)}
+              aria-label={item.label}
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] transition-colors ${
+                active === item.key ? "text-white" : "text-natural-text/55"
+              }`}
+            >
+              {active === item.key && (
+                <motion.span
+                  layoutId="mobile-nav-active"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-natural-accent shadow-md shadow-natural-accent/30"
+                />
+              )}
+              <item.Icon className="relative z-10 w-5 h-5" />
+              <span className="relative z-10 text-[9px] font-bold uppercase tracking-wide leading-none">
+                {item.label.split(" ")[0]}
+              </span>
+            </button>
+          ))}
+          {/* Cart */}
+          <button
+            onClick={onOpenCart}
+            aria-label="Cart"
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
+          >
+            <span className="relative">
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[1rem] h-4 bg-natural-accent text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">Cart</span>
+          </button>
+          {/* TI */}
+          <button
+            onClick={onOpenTI}
+            aria-label="Third Intelligence"
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[3rem] text-natural-text/55"
+          >
+            <span className="relative w-5 h-5 flex items-center justify-center">
+              <motion.span
+                animate={{ scale: [1, 1.55], opacity: [0.55, 0] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", repeatDelay: 0.1 }}
+                style={{ willChange: "transform, opacity" }}
+                className="absolute inset-0 rounded-full bg-natural-accent/40"
+              />
+              <img src={asset("third-intelligence-icon.png")} alt="" className="relative z-10 w-5 h-5 object-contain" />
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">AI</span>
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -987,7 +987,6 @@ function MorphingHeader({
   const active = activeOverride ?? sectionActive;
   const { scrollY } = useScroll();
   const [compact, setCompact] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => {
     const next = v > 80;
     setCompact((prev) => (prev === next ? prev : next));
@@ -1002,98 +1001,45 @@ function MorphingHeader({
       }}
       className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl saturate-150 border-b"
     >
-      {/* Top bar row */}
       <motion.div
         animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-3 md:grid-cols-[1fr_auto_1fr] items-center"
+        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center"
       >
-        {/* LEFT — hamburger on mobile, logo on desktop */}
-        <div className="flex items-center justify-start">
-          {/* Hamburger (mobile only) */}
-          <button
-            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-natural-muted/60 transition-colors text-natural-text/70"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {menuOpen ? (
-                <motion.span
-                  key="x"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center justify-center"
-                >
-                  <X className="w-5 h-5" />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center justify-center"
-                >
-                  <Menu className="w-5 h-5" />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-          {/* Logo (desktop only) */}
-          <button
-            onClick={() => onNavTo("hero")}
-            className="hidden md:flex items-center justify-start"
-            aria-label="Third Wave Coffee—home"
-          >
-            <motion.img
-              layoutId="brand-logo"
-              src={asset("logo.png")}
-              alt="Third Wave Coffee"
-              initial={false}
-              animate={{ height: compact ? 40 : 56 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-auto"
-            />
-          </button>
-        </div>
+        {/* LEFT — logo */}
+        <button
+          onClick={() => onNavTo("hero")}
+          className="flex items-center justify-start"
+          aria-label="Third Wave Coffee—home"
+        >
+          <motion.img
+            layoutId="brand-logo"
+            src={asset("logo.png")}
+            alt="Third Wave Coffee"
+            initial={false}
+            animate={{ height: compact ? 40 : 56 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="w-auto"
+          />
+        </button>
 
-        {/* CENTER — logo on mobile (centered), nav on desktop */}
-        <div className="flex items-center justify-center">
-          {/* Logo (mobile only, centered) */}
-          <button
-            onClick={() => { onNavTo("hero"); setMenuOpen(false); }}
-            className="md:hidden flex items-center justify-center"
-            aria-label="Third Wave Coffee—home"
-          >
-            <motion.img
-              src={asset("logo.png")}
-              alt="Third Wave Coffee"
-              initial={false}
-              animate={{ height: compact ? 36 : 44 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-auto"
+        {/* CENTER — nav */}
+        <nav className="hidden md:flex items-center gap-1">
+          {NAV_ITEMS.map((item) => (
+            <MorphNavItem
+              key={item.key}
+              label={item.label}
+              Icon={item.Icon}
+              active={active === item.key}
+              compact={compact}
+              onClick={() => onNavTo(item.target)}
             />
-          </button>
-          {/* Nav (desktop only) */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <MorphNavItem
-                key={item.key}
-                label={item.label}
-                Icon={item.Icon}
-                active={active === item.key}
-                compact={compact}
-                onClick={() => onNavTo(item.target)}
-              />
-            ))}
-            <TIHeaderButton compact={compact} onClick={onOpenTI} />
-          </nav>
-        </div>
+          ))}
+          {/* TI lives next to Our Story */}
+          <TIHeaderButton compact={compact} onClick={onOpenTI} />
+        </nav>
 
-        {/* RIGHT — cart (always visible) */}
+        {/* RIGHT — cart */}
         <div className="flex items-center gap-1 justify-end">
           <div className="relative">
             <MorphNavItem
@@ -1111,38 +1057,6 @@ function MorphingHeader({
           </div>
         </div>
       </motion.div>
-
-      {/* Mobile collapsible menu */}
-      <AnimatePresence initial={false}>
-        {menuOpen && (
-          <motion.div
-            key="mobile-menu"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden overflow-hidden border-t border-natural-border/50"
-          >
-            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
-              {NAV_ITEMS.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => { onNavTo(item.target); setMenuOpen(false); }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left ${
-                    active === item.key
-                      ? "bg-natural-accent text-white"
-                      : "text-natural-text/70 hover:bg-natural-muted/60 hover:text-natural-text"
-                  }`}
-                >
-                  <item.Icon className="w-5 h-5 shrink-0" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              ))}
-
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.header>
   );
 }
@@ -1449,13 +1363,13 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
     };
   }, [scrollX, viewportW]);
 
-  // rAF inertia loop — friction 0.87 gives a smooth, gentle coast that stops naturally
+  // rAF inertia loop — friction 0.93 gives a buttery coast that stops naturally
   const runInertia = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     const el = scrollRef.current;
     if (!el) return;
     const tick = () => {
-      velRef.current *= 0.87;
+      velRef.current *= 0.93;
       if (Math.abs(velRef.current) < 0.25) { velRef.current = 0; return; }
       el.scrollLeft += velRef.current;
       rafRef.current = requestAnimationFrame(tick);
@@ -1471,7 +1385,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
       const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5;
       if (!isHorizontal) return; // vertical scroll: don't block, let page scroll
       e.preventDefault();
-      velRef.current += e.deltaX * 0.22;
+      velRef.current += e.deltaX * 0.6;
       runInertia();
     };
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -1503,7 +1417,7 @@ function HScrollRow({ products, onAddToCart }: { products: Product[]; onAddToCar
 
     const onUp = () => {
       drag.current.active = false;
-      velRef.current = drag.current.vel * 6;
+      velRef.current = drag.current.vel * 14;
       runInertia();
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
@@ -1759,7 +1673,7 @@ function OurStoryImage({ slides }: { slides?: string[] }) {
         className="absolute inset-[-4%] w-[108%] h-[108%]"
         style={{ x: imgX, y: imgY }}
       >
-        <AnimatePresence mode="crossfade">
+        <AnimatePresence mode="wait">
           <motion.img
             key={`${idx}-${list[idx]}`}
             src={list[idx]}
