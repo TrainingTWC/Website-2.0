@@ -1,20 +1,20 @@
 ---
 milestone: v5.0
 name: Next.js Migration
-status: in-progress
+status: complete
 progress:
   phases_total: 3
-  phases_done: 2
+  phases_done: 3
 ---
 
 # STATE.md
 
 ## Current Position
 
-Milestone: v5.0 — Next.js Migration — **IN PROGRESS**
-Phase: 3 of 3 (Phases 1–2 complete, Phase 3 ready to plan)
-Status: Phase 2 shipped — global state providers + SSR lazy wrappers, `next build` exits 0
-Last activity: 2026-05-21 — Phase 2 executed (02-01: 4e3a93b, 02-02: 4c14e48)
+Milestone: v5.0 — Next.js Migration — **COMPLETE**
+Phase: 3 of 3 (All phases complete)
+Status: Phase 3 shipped — route migration complete, `next build` exits 0, 11 static pages generated
+Last activity: 2026-05-21 — Phase 3 executed (03-01, 03-02, 03-03)
 
 ## Completed Phases (v4.0)
 

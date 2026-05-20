@@ -35,7 +35,7 @@ export function CartPanelProvider({ children }: { children: ReactNode }) {
 
   const handleCheckout = useCallback(() => {
     setCartOpen(false);
-    router.push("/?page=checkout");
+    router.push("/checkout");
   }, [router]);
 
   const subtotal = useMemo(() => {

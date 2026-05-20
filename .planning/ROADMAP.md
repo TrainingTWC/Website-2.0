@@ -526,9 +526,9 @@ Phase 1 (Next.js build must work before providers can be tested)
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Static routes: `/shop`, `/checkout`, `/orders`, `/admin` (Wave 1)
-- [ ] 03-02-PLAN.md — Dynamic routes: `/products/[slug]`, `/journal`, `/journal/[id]`, `/orders/[id]` + MorphingHeader extraction (Wave 1, parallel)
-- [ ] 03-03-PLAN.md — Home page (ROUTE-01), navigation wiring, App.tsx retirement, `not-found.tsx`, final build verification (Wave 2)
+- [x] 03-01-PLAN.md — Static routes: `/shop`, `/checkout`, `/orders`, `/admin` (Wave 1)
+- [x] 03-02-PLAN.md — Dynamic routes: `/products/[slug]`, `/journal`, `/journal/[id]` + MorphingHeader extraction (Wave 1, parallel)
+- [x] 03-03-PLAN.md — Home page (ROUTE-01), navigation wiring, App.tsx retirement, `not-found.tsx`, final build verification (Wave 2)
 
 ### Depends On
 

@@ -1,17 +1,16 @@
+"use client";
 import { Info, Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { asset } from "../lib/asset";
 
 interface SiteFooterProps {
-  onNavigate: (target: string) => void;
+  onNavigate?: (target: string) => void;
   onScrollTo?: (id: string) => void;
 }
 
-/**
- * Shared site footer — rendered on every customer-facing route
- * (storefront, shop, product, checkout, order portal, order confirmation).
- * Intentionally NOT rendered on the Third Intelligence (TI) full-screen route.
- */
 export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
+  const router = useRouter();
+  const navigate = onNavigate ?? ((t: string) => router.push(t === "home" ? "/" : `/${t}`));
   const scroll = (id: string) => {
     if (onScrollTo) onScrollTo(id);
     else {
@@ -49,15 +48,15 @@ export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-coffee-ecb")}>Easy Coffee Bags</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-merch-drinkware")}>Drinkware</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("section-merch-keychains")}>Keychains</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("order-portal")}>Track your order</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("shop")}>Shop All</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigate("order-portal")}>Track your order</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigate("shop")}>Shop All</span>
               </div>
             </div>
             <div className="space-y-4">
               <h4 className="font-bold uppercase tracking-widest text-[10px] text-natural-text/40">Company</h4>
               <div className="flex flex-col gap-2.5 text-natural-text/60 font-medium">
                 <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => scroll("our-story")}>Our Story</span>
-                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => onNavigate("third-circle")}>Third Circle</span>
+                <span className="cursor-pointer hover:text-natural-accent transition-colors" onClick={() => navigate("third-circle")}>Third Circle</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors">Contact</span>
                 <span className="cursor-pointer hover:text-natural-accent transition-colors">Careers</span>
               </div>
