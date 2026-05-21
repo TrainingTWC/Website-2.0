@@ -1,22 +1,35 @@
 ---
 milestone: v6.0
 name: Performance & Fluidity Pass
-status: planned
+status: code-complete-pending-uat
 progress:
   phases_total: 1
   phases_done: 0
   plans_total: 6
-  plans_done: 0
+  plans_done: 5
 ---
 
 # STATE.md
 
 ## Current Position
 
-Milestone: v6.0 — Performance & Fluidity Pass — **PLANNED**
-Phase: 1 of 1 — Adaptive Performance & Fluidity (6 plans, 3 waves)
-Status: Plans 01–06 written. Ready for `/gsd-execute-phase v6.0-phase-01-performance-fluidity`.
-Last activity: 2026-05-22 — v6.0 planned (PERF-01..PERF-12)
+Milestone: v6.0 — Performance & Fluidity Pass — **CODE-COMPLETE, PENDING MANUAL UAT**
+Phase: 1 of 1 — Adaptive Performance & Fluidity (5 of 6 plans done)
+Status: Plans 01, 02, 03, 04, 05 implemented + committed. Plan 06 (`gate: blocking`, `checkpoint: human-verify`) is awaiting manual UAT sign-off — see `.planning/phases/v6.0-phase-01-performance-fluidity/UAT.md`.
+Last activity: 2026-05-21 — Plans 01–05 shipped; UAT scaffold authored; awaiting human verification before flipping STATE/ROADMAP to complete.
+
+### Commits (master)
+
+- Plan 01 — `feat(v6.0-01): adaptive perf tier + web-vitals telemetry (PERF-01..03)`
+- Plan 02 — `perf(v6.0-02): tier-gate Lenis, kill synthetic scroll dispatch (PERF-04..06, D-05)` — `116d53c`
+- Plan 05 — `perf(v6.0-05): LazyMotion root, Convex preconnect+dns, SmartImage sizes (PERF-12..15)`
+- Plan 03 — `perf(v6.0-03): collapse Cinematic ChapterDeck to single useScroll, tier-gate parallax (PERF-07..09)` — `9695ab8`
+- Plan 04 — `perf(v6.0-04): tier-gate heavy components - 3D, magnetic cursor, galaxy (PERF-10..11)` — `3730f24`
+
+### Outstanding before phase-complete
+
+- Run UAT.md checklist on production build of master (≥ `3730f24`).
+- On pass, flip frontmatter `status` → `complete`, `phases_done` → `1`, `plans_done` → `6`, and update body sections.
 
 ## v6.0 Planning Decisions (see CONTEXT.md)
 
