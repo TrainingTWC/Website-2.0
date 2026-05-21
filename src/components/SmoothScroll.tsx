@@ -1,20 +1,32 @@
 "use client";
 import { useEffect, type ReactNode } from "react";
 import Lenis from "lenis";
+import { usePerfMode } from "@/src/context/PerfModeContext";
 
 /**
  * Buttery smooth-scroll wrapper. Drives a single shared Lenis instance via rAF
  * so all `motion/react` `useScroll` listeners read interpolated scrollY values.
  *
- * The Autajon-style site feel is entirely keyed off this: chunky momentum,
- * slow ease-out, scroll velocity that lets Z-depth parallax read as a real
- * "dive" rather than a jagged wheel-jump.
+ * Tier-gated per CONTEXT D-04:
+ *   • low tier or `prefers-reduced-motion`     → skip Lenis entirely
+ *     (native scroll, no rAF loop, no synthetic events).
+ *   • mid tier  → lerp 0.10, syncTouch off (saves a 60 Hz event firehose on phones).
+ *   • high tier → lerp 0.08, syncTouch on  (full silk-curtain feel).
+ *
+ * D-05 — we deliberately do NOT dispatch a synthetic `scroll` event each
+ * frame. motion/react's `useScroll` already reads the real scroll position
+ * via its own listener; the synthetic dispatch was the single largest
+ * scroll-fps regression in v5.x and is gone for good.
  */
 export function SmoothScroll({ children }: { children: ReactNode }) {
+  const { tier, reducedMotion } = usePerfMode();
+
   useEffect(() => {
-    // Respect users that explicitly prefer reduced motion.
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    // Hard bail-outs: Lenis adds cost we don't want on these paths.
+    if (reducedMotion || tier === "low") {
+      document.documentElement.classList.remove("lenis", "lenis-smooth");
+      return;
+    }
 
     // Prevent the browser / Next.js from restoring scroll position on
     // back-forward navigation — Lenis owns the scroll position.
@@ -22,13 +34,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       history.scrollRestoration = "manual";
     }
 
+    const isHigh = tier === "high";
     const lenis = new Lenis({
-      // Frame-rate independent smoothing — feels identical at 60 / 120 / 144 Hz.
-      // Lower lerp = more smoothing (buttery), higher = snappier (digital).
-      // 0.08 gives the silk-curtain feel without perceptible lag.
-      lerp: 0.08,
+      lerp: isHigh ? 0.08 : 0.1,
       smoothWheel: true,
-      syncTouch: true,
+      syncTouch: isHigh,
       syncTouchLerp: 0.075,
       wheelMultiplier: 1.0,
       touchMultiplier: 1.4,
@@ -37,9 +47,6 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     let raf = 0;
     const loop = (time: number) => {
       lenis.raf(time);
-      // Notify Framer Motion's useScroll listeners so useTransform values
-      // update on the same frame as the Lenis position change.
-      window.dispatchEvent(new Event("scroll"));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -52,7 +59,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
     };
-  }, []);
+  }, [tier, reducedMotion]);
 
   return <>{children}</>;
 }

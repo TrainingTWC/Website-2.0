@@ -21,7 +21,11 @@
        animation engine racing the wheel handler. */
     scroll-behavior: auto;
   }
-  /* Lenis smooth-scroll requires `html.lenis` to set its own scrolling */
+  /* Lenis smooth-scroll requires `html.lenis` to set its own scrolling.
+     These rules ONLY apply when Lenis has added the `.lenis` class to <html>.
+     On low-tier devices or `prefers-reduced-motion`, SmoothScroll skips Lenis
+     entirely and strips the class, so native browser scrolling resumes
+     with zero overhead. See src/components/SmoothScroll.tsx (D-04, D-05). */
   html.lenis, html.lenis body { height: auto; }
   .lenis.lenis-smooth { scroll-behavior: auto !important; }
   .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
