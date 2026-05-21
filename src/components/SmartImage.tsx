@@ -26,6 +26,7 @@ export function SmartImage({
   blur,
   aspectRatio,
   priority = false,
+  sizes = "(max-width: 768px) 100vw, 50vw",
   wrapperClassName = "",
   className = "",
   style,
@@ -86,6 +87,7 @@ export function SmartImage({
         ref={ref}
         src={src}
         alt={alt}
+        sizes={sizes}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
