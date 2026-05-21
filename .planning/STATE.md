@@ -1,20 +1,52 @@
 ---
-milestone: v5.0
-name: Next.js Migration
-status: complete
+milestone: v6.0
+name: Performance & Fluidity Pass
+status: planned
 progress:
-  phases_total: 3
-  phases_done: 3
+  phases_total: 1
+  phases_done: 0
+  plans_total: 6
+  plans_done: 0
 ---
 
 # STATE.md
 
 ## Current Position
 
-Milestone: v5.0 — Next.js Migration — **COMPLETE**
-Phase: 3 of 3 (All phases complete)
-Status: Phase 3 shipped — route migration complete, `next build` exits 0, 11 static pages generated
-Last activity: 2026-05-21 — Phase 3 executed (03-01, 03-02, 03-03)
+Milestone: v6.0 — Performance & Fluidity Pass — **PLANNED**
+Phase: 1 of 1 — Adaptive Performance & Fluidity (6 plans, 3 waves)
+Status: Plans 01–06 written. Ready for `/gsd-execute-phase v6.0-phase-01-performance-fluidity`.
+Last activity: 2026-05-22 — v6.0 planned (PERF-01..PERF-12)
+
+## v6.0 Planning Decisions (see CONTEXT.md)
+
+| Decision | Rationale |
+|----------|-----------|
+| Three perf tiers `low/mid/high`, default `mid` on SSR (D-01) | Avoids hydration flicker, keeps brand alive on mid-spec |
+| Tier inputs: deviceMemory + hardwareConcurrency + reduced-motion + rAF refresh sample (D-02) | Cheap, well-supported, no fingerprinting concern |
+| reduced-motion forces low tier (D-03) | Accessibility precedence |
+| Drop synthetic `dispatchEvent(scroll)` in SmoothScroll.tsx (D-05) | Biggest single perf bug — re-fires every motion listener every frame |
+| Consolidate Cinematic's per-chapter useScroll into ONE shared MotionValue (D-06) | Cuts N scroll listeners to 1 |
+| BestsellerCarousel low-tier fallback is a flat scroll-snap strip (D-07) | Preserves shopping value without 3D |
+| MagneticCursor only on high+fine-pointer (D-08) | Useless on touch, expensive on weak CPUs |
+| LazyMotion + domAnimation at provider root (D-09) | Standard motion/react split, ships less initial JS |
+| Web vitals via `web-vitals` library into Convex `webVitals` table (D-10) | RUM beats synthetic Lighthouse |
+| All hero imagery through next/image (D-11) | LCP + CLS wins |
+| Final gate is manual UAT on user's 8 GB laptop (D-12) | Spec IS the lived experience |
+
+## Wave Structure (v6.0 Phase 1)
+
+| Wave | Plans | Notes |
+|------|-------|-------|
+| 1 | 01 (perf-tier infra + vitals), 02 (Lenis fix), 05 (images + LazyMotion) | All three touch disjoint files; safe parallel |
+| 2 | 03 (Cinematic consolidation), 04 (3D/effects tier gating) | Depend on perf-tier hook from 01 |
+| 3 | 06 (manual UAT checkpoint) | Depends on everything |
+
+## Completed Phases (v5.0)
+
+- Phase 1 (Next.js Bootstrap + Build Pipeline) — ✅ shipped
+- Phase 2 (Global State Providers + SSR Safety) — ✅ shipped
+- Phase 3 (Route Migration + Cleanup) — ✅ shipped — `next build` exits 0, 11 static pages
 
 ## Completed Phases (v4.0)
 

@@ -396,3 +396,57 @@ Requirements for Milestone v5.0 — Next.js Migration.
 - v5.0 requirements: 28 total
 - Mapped to phases: 28
 - Unmapped: 0 ✓
+
+## v6.0 Requirements — Performance & Fluidity Pass
+
+### Device Capability & Telemetry
+
+- [ ] **PERF-01**: `usePerfTier()` hook returns `{ tier: "low"|"mid"|"high", deviceMemoryGB, hwConcurrency, reducedMotion, estimatedHz }` derived from `navigator.deviceMemory`, `navigator.hardwareConcurrency`, `matchMedia("(prefers-reduced-motion: reduce)")`, and a 60-frame rAF sample. Defaults to `mid` when signals are missing.
+- [ ] **PERF-02**: `<PerfModeProvider>` is mounted in `app/providers.tsx` and exposes the tier via `usePerfMode()`. SSR-safe (defaults to `mid` on server, hydrates to real value on client).
+- [ ] **PERF-03**: Real-user web vitals (FCP, LCP, INP, CLS, TTFB) are captured via `web-vitals` and persisted into Convex `pageViews` (or a new `webVitals` table) in production. Dev logs to console.
+
+### Scroll Engine
+
+- [ ] **PERF-04**: `SmoothScroll` no longer dispatches a synthetic `scroll` event every rAF. Instead it relies on Lenis emitting its own scroll callback / native scroll events that `motion/react` `useScroll` already listens to. On `tier === "low"` or `reducedMotion`, Lenis is disabled and the page falls back to native browser scroll.
+
+### Cinematic / ChapterDeck
+
+- [ ] **PERF-05**: Cinematic `ChapterReveal` no longer creates one `useScroll` instance per chapter. A single shared `scrollY` MotionValue (from a top-level `useScroll`) is consumed by every chapter via `useTransform` with chapter-local ranges. Verified via DevTools: only one scroll listener attached.
+- [ ] **PERF-06**: Chapter sections set `will-change: transform` only when the section is intersecting (via `IntersectionObserver`). Chapters more than 1 viewport away from the visible region do not run their parallax transforms.
+- [ ] **PERF-07**: On `tier === "low"` or `reducedMotion`, ChapterReveal renders with identity transforms (no parallax, no scale, no rotate) and full opacity — the layout is preserved but the animation is suppressed.
+
+### 3D + Effects Adaptive Degradation
+
+- [ ] **PERF-08**: `BestsellerCarousel3D` (which uses Framer Motion springs + a CSS-3D conveyor) is wrapped behind a tier gate. On `tier === "low"`, the carousel renders a static horizontal scroll strip of bestseller cards (no rotation, no spring, no perspective). `ProductHero3D` (R3F Canvas) downgrades `dpr` to `[1, 1]` on `mid` and skips mounting entirely on `low` (replaced by `SmartImage`).
+- [ ] **PERF-09**: `MagneticCursor` is mounted only on `tier === "high"` and non-touch pointers. `GalaxySweep` renders its full particle effect on `high`, a single-ring CSS pulse on `mid`, and skips entirely on `low`.
+
+### Bundle + Image Hygiene
+
+- [ ] **PERF-10**: Every above-the-fold hero image uses `next/image` with explicit `width`/`height`/`sizes` and `priority` only on the first viewport. Below-the-fold images are lazy (`loading="lazy"`) and use `placeholder="blur"` where a blur data URL is available. No raw `<img>` remains for product/hero imagery in `Cinematic.tsx`, `BannerSlideshow.tsx`, `HomeContent.tsx`. Convex storage origin is added to `next.config.ts` `images.remotePatterns` and preconnected in `app/layout.tsx`.
+- [ ] **PERF-11**: `motion/react` is consumed through `LazyMotion` + `domAnimation` (or `domMax` where required) at the provider root, so the full motion feature set is no longer bundled into the initial JS. `m.` is used in place of `motion.` inside lazy sections.
+
+### Verification
+
+- [ ] **PERF-12**: Manual UAT on an 8 GB RAM Windows laptop (Chrome stable) confirms: home scroll sustains ≥ 55 fps in Chrome Performance recording; Lighthouse perf ≥ 90 mobile and ≥ 95 desktop on `/`, `/shop`, `/products/[slug]`; INP < 200 ms when adding to cart and opening the cart panel; no console errors.
+
+## Traceability (v6.0)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PERF-01 | Phase 1 | Pending |
+| PERF-02 | Phase 1 | Pending |
+| PERF-03 | Phase 1 | Pending |
+| PERF-04 | Phase 1 | Pending |
+| PERF-05 | Phase 1 | Pending |
+| PERF-06 | Phase 1 | Pending |
+| PERF-07 | Phase 1 | Pending |
+| PERF-08 | Phase 1 | Pending |
+| PERF-09 | Phase 1 | Pending |
+| PERF-10 | Phase 1 | Pending |
+| PERF-11 | Phase 1 | Pending |
+| PERF-12 | Phase 1 | Pending |
+
+**Coverage:**
+- v6.0 requirements: 12 total
+- Mapped to phases: 12
+- Unmapped: 0 ✓

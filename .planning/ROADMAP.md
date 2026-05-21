@@ -549,3 +549,52 @@ Phase 2 (providers must exist before pages consume them)
 
 
 ## ~~v4.0 — The Editorial Hub~~ SHIPPED 2026-05-20 * 30/31 reqs * 58 commits | [Archive](.planning/milestones/v4.0-ROADMAP.md)
+
+---
+
+# Roadmap: v6.0 — Performance & Fluidity Pass
+
+**Status:** Planned 2026-05-22
+**Goal:** Homepage and key routes feel buttery on a mid-range 8 GB RAM Windows laptop. Scroll, parallax, hover, and route transitions sustain 55–60 fps in Chrome/Edge. Bundle size and motion overhead are tier-aware: low-spec devices automatically degrade to lighter visuals instead of stuttering.
+
+**North-star metrics (measured on 8 GB RAM / integrated GPU baseline device):**
+- Homepage sustained scroll FPS ≥ 55 (Chrome Performance panel, 10s scroll-down sweep)
+- Lighthouse performance ≥ 90 mobile, ≥ 95 desktop on `/`, `/shop`, `/products/[slug]`
+- Largest Contentful Paint (LCP) < 2.5 s on cold load over fast-3G
+- Interaction-to-Next-Paint (INP) < 200 ms during cart/CTA interactions
+- No long task > 200 ms during home scroll
+- 3D bestseller carousel + GalaxySweep + MagneticCursor degrade or unmount on `deviceMemory ≤ 4` GB / `prefers-reduced-motion`
+
+## Phase 1 — Adaptive Performance & Fluidity
+
+**Goal:** Add device-aware adaptive performance tiers, fix the scroll-event broadcast that re-fires every animation listener per frame, consolidate Cinematic's per-chapter `useScroll` listeners into a single shared MotionValue, gate 3D / particle / cursor effects on tier, and trim the motion/react and image payloads.
+
+**Requirements covered:** PERF-01, PERF-02, PERF-03, PERF-04, PERF-05, PERF-06, PERF-07, PERF-08, PERF-09, PERF-10, PERF-11, PERF-12
+
+**Plans:** 6 plans
+
+Plans:
+- [ ] v6.0-phase-01-01-PLAN.md — Perf-tier hook, PerfMode context, web-vitals telemetry (Wave 1)
+- [ ] v6.0-phase-01-02-PLAN.md — Lenis: drop synthetic scroll dispatch, tier-gate smooth scroll (Wave 1)
+- [ ] v6.0-phase-01-03-PLAN.md — Cinematic: shared scroll MotionValue, IO-gated will-change, adaptive parallax (Wave 2, depends on 01)
+- [ ] v6.0-phase-01-04-PLAN.md — 3D + effects adaptive degradation (carousel, GalaxySweep, MagneticCursor) (Wave 2, depends on 01)
+- [ ] v6.0-phase-01-05-PLAN.md — Image hygiene + LazyMotion tree-shake (Wave 1)
+- [ ] v6.0-phase-01-06-PLAN.md — 8 GB RAM UAT + Lighthouse + FPS verification (Wave 3, checkpoint)
+
+**Phase directory:** `.planning/phases/v6.0-phase-01-performance-fluidity/`
+
+### Depends On
+
+v5.0 complete (Next.js routes shipped, current scroll/motion stack in place).
+
+---
+
+## Milestone Completion Criteria (v6.0)
+
+- [ ] All PERF-01..PERF-12 requirements green
+- [ ] Manual UAT on 8 GB RAM laptop: homepage scroll feels smooth, no jank during ChapterDeck transitions
+- [ ] Lighthouse perf budget met on `/`, `/shop`, `/products/[slug]`
+- [ ] Web vitals (FCP/LCP/INP/CLS) logged to Convex `pageViews` for production traffic
+- [ ] `prefers-reduced-motion` users get a fully static, transform-free experience
+- [ ] No regression in admin dashboard, cart, checkout, or order flows
+
