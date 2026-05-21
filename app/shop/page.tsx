@@ -21,6 +21,7 @@ export default function ShopRoute() {
           onAddToCart={(productId) => { addToCart(productId); showToast("Added to cart"); }}
           onProductClick={(slug) => router.push(`/products/${slug}`)}
           onGoToCart={openCart}
+          onBack={() => router.push("/")}
         />
       </div>
       <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />

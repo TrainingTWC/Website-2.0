@@ -15,6 +15,7 @@ interface ShopPageProps {
   onAddToCart: (productId: string) => void;
   onProductClick: (slug: string) => void;
   onGoToCart: () => void;
+  onBack?: () => void;
 }
 
 type MainFilter = "all" | MainCategory;
@@ -122,7 +123,7 @@ function ProductCard({
 }
 
 // ── Main ShopPage export ───────────────────────────────────────────────────
-export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: ShopPageProps) {
+export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart, onBack }: ShopPageProps) {
   const products = useProducts();
   const [search, setSearch] = useState("");
   const [mainFilter, setMainFilter] = useState<MainFilter>("all");
@@ -184,7 +185,7 @@ export function ShopPage({ cart, onAddToCart, onProductClick, onGoToCart }: Shop
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           {/* Back to home */}
           <button
-            onClick={goToStorefront}
+            onClick={() => onBack ? onBack() : goToStorefront()}
             className="flex items-center gap-1 text-natural-text/60 hover:text-natural-text transition-colors shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -19,6 +19,7 @@ export function ProductClient({ slug }: { slug: string }) {
           onAddToCart={(productId, qty) => { addToCart(productId, qty); openCart(); }}
           onOpenCart={openCart}
           cartCount={cartCount}
+          onBack={() => router.back()}
         />
       </div>
       <SiteFooter onNavigate={(t) => router.push(hrefForNavTarget(t))} />

@@ -47,7 +47,7 @@ export function BestsellerCarousel3D({ products, onSelect, onAddToCart }: Carous
 
   // Rotation in degrees. Continuous (not wrapped) so animations feel smooth.
   const rotation = useMotionValue(0);
-  const spring = useSpring(rotation, { stiffness: 90, damping: 22, mass: 0.9 });
+  const spring = useSpring(rotation, { stiffness: 55, damping: 20, mass: 1.3 });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const lastInteractionRef = useRef<number>(Date.now());
@@ -97,7 +97,10 @@ export function BestsellerCarousel3D({ products, onSelect, onAddToCart }: Carous
   };
 
   const stepBy = (dir: 1 | -1) => {
-    rotation.set(rotation.get() - dir * stepAngle);
+    // Animate through spring by setting target one step away from current spring value
+    const current = spring.get();
+    const target = Math.round(current / stepAngle) * stepAngle - dir * stepAngle;
+    rotation.set(target);
     lastInteractionRef.current = Date.now();
   };
 
@@ -267,15 +270,17 @@ function CarouselCard({
       style={{
         transform: `rotateY(${angle}deg) translateZ(${radius}px)`,
         transformStyle: "preserve-3d",
+        willChange: "transform",
       }}
     >
       {/* Counter-rotate so card always faces camera */}
       <motion.button
         onClick={onClick}
-        whileHover={{ scale: 1.04 }}
+        whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
         className="block w-full h-full rounded-[2rem] overflow-hidden bg-white shadow-2xl border border-white/30 group"
-        style={{ transform: `rotateY(${-angle}deg)`, transformStyle: "preserve-3d" }}
+        style={{ transform: `rotateY(${-angle}deg)`, transformStyle: "preserve-3d", willChange: "transform" }}
       >
         <div className="relative w-full h-full">
           <SmartImage

@@ -291,7 +291,7 @@ function ProductCard({
       <div
         className="aspect-[4/5] glass-card rounded-[2rem] overflow-hidden group-hover:shadow-2xl transition-all group-hover:-translate-y-1 relative preserve-3d cursor-pointer"
         style={{ transform: "translateZ(20px)" }}
-        onClick={() => router.push("/products/" + product._id)}
+        onClick={() => router.push("/products/" + slugify(product.name))}
       >
         {imageParallaxX ? (
           <motion.div
@@ -336,7 +336,7 @@ function ProductCard({
         <div className="flex items-start justify-between gap-2">
           <h4
             className="text-lg font-bold leading-tight cursor-pointer hover:text-natural-accent transition-colors"
-            onClick={() => router.push("/products/" + product._id)}
+            onClick={() => router.push("/products/" + slugify(product.name))}
           >
             {product.name}
           </h4>
@@ -401,7 +401,7 @@ function HorizontalCard({
           </span>
           <h4
             className="text-xl font-bold mt-1 line-clamp-1 cursor-pointer hover:text-natural-accent transition-colors"
-            onClick={() => router.push("/products/" + product._id)}
+            onClick={() => router.push("/products/" + slugify(product.name))}
           >
             {product.name}
           </h4>
@@ -930,9 +930,9 @@ function DemoStorefront({
                   align: c.align || "left",
                   theme: c.theme || "light",
                   onProductClick: linked
-                    ? () => router.push("/products/" + linked._id)
+                    ? () => router.push("/products/" + slugify(linked.name))
                     : resolvedProduct
-                    ? () => router.push("/products/" + resolvedProduct._id)
+                    ? () => router.push("/products/" + slugify(resolvedProduct.name))
                     : undefined,
                 };
               })
@@ -953,7 +953,7 @@ function DemoStorefront({
                   align: "left",
                   theme: "light",
                   onProductClick: featuredBean
-                    ? () => router.push("/products/" + featuredBean._id)
+                    ? () => router.push("/products/" + slugify(featuredBean.name))
                     : undefined,
                 },
                 {
@@ -970,7 +970,7 @@ function DemoStorefront({
                   align: "right",
                   theme: "dark",
                   onProductClick: featuredBag
-                    ? () => router.push("/products/" + featuredBag._id)
+                    ? () => router.push("/products/" + slugify(featuredBag.name))
                     : undefined,
                 },
                 {
@@ -987,7 +987,7 @@ function DemoStorefront({
                   align: "left",
                   theme: "light",
                   onProductClick: featuredBrewing
-                    ? () => router.push("/products/" + featuredBrewing._id)
+                    ? () => router.push("/products/" + slugify(featuredBrewing.name))
                     : undefined,
                 },
                 {
@@ -1004,7 +1004,7 @@ function DemoStorefront({
                   align: "right",
                   theme: "dark",
                   onProductClick: featuredMerch
-                    ? () => router.push("/products/" + featuredMerch._id)
+                    ? () => router.push("/products/" + slugify(featuredMerch.name))
                     : undefined,
                 },
                 {
@@ -1021,9 +1021,9 @@ function DemoStorefront({
                   align: "left",
                   theme: "light",
                   onProductClick: featuredKeychain
-                    ? () => router.push("/products/" + featuredKeychain._id)
+                    ? () => router.push("/products/" + slugify(featuredKeychain.name))
                     : featuredMerch
-                    ? () => router.push("/products/" + featuredMerch._id)
+                    ? () => router.push("/products/" + slugify(featuredMerch.name))
                     : undefined,
                 },
               ]

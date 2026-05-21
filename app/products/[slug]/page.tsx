@@ -1,6 +1,7 @@
 import { ProductClient } from "./ProductClient";
+import { slugify } from "@/src/lib/slug";
 
-// ROUTE-03: enumerate all product _ids at build time via Convex HTTP API
+// ROUTE-03: enumerate all product slugs at build time via Convex HTTP API
 const CONVEX_URL =
   process.env.NEXT_PUBLIC_CONVEX_URL || "https://different-bulldog-772.convex.cloud";
 
@@ -18,7 +19,9 @@ export async function generateStaticParams() {
     const data = await res.json();
     const products = data.value ?? [];
     if (products.length === 0) return [{ slug: "_" }];
-    return products.map((p: { _id: string }) => ({ slug: p._id }));
+    return products.map((p: { _id: string; name: string }) => ({
+      slug: slugify(p.name || p._id),
+    }));
   } catch {
     return [{ slug: "_" }];
   }

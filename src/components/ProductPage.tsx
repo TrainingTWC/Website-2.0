@@ -59,6 +59,7 @@ interface ProductPageProps {
   onAddToCart: (productId: string, qty: number) => void;
   onOpenCart?: () => void;
   cartCount?: number;
+  onBack?: () => void;
 }
 
 interface Theme {
@@ -140,7 +141,7 @@ function themeFor(p: Product): Theme {
   return THEMES[key] ?? THEMES.medium;
 }
 
-export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 }: ProductPageProps) {
+export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount, onBack }: ProductPageProps) {
   const products = useProducts();
   const [qty, setQty] = useState(1);
   const [variant, setVariant] = useState<string>("250g");
@@ -148,7 +149,10 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const product = useMemo(
-    () => products?.find((p) => p._id === productId) ?? null,
+    () =>
+      products?.find(
+        (p) => p._id === productId || slugify(p.name) === productId
+      ) ?? null,
     [products, productId]
   );
 
@@ -205,6 +209,11 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
     .slice(0, 4);
 
   const goHome = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    // Legacy SPA fallback
     const url = new URL(window.location.href);
     url.searchParams.delete("product");
     window.history.pushState({}, "", url.toString());
@@ -212,6 +221,11 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount = 0 
   };
 
   const goToProduct = (slug: string) => {
+    if (onBack) {
+      // In Next.js routing, navigate to the new product
+      window.location.href = `/products/${slug}`;
+      return;
+    }
     const url = new URL(window.location.href);
     url.searchParams.set("product", slug);
     window.history.pushState({}, "", url.toString());
