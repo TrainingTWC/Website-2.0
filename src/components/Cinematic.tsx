@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   motion,
   useScroll,
@@ -10,6 +10,7 @@ import { ArrowDown } from "lucide-react";
 import type { Product } from "../types";
 import { SmartImage } from "./SmartImage";
 import { BannerSlideshow } from "./BannerSlideshow";
+import { usePerfMode } from "../context/PerfModeContext";
 
 /**
  * Autajon-inspired cinematic scrollytelling sequence.
@@ -192,6 +193,9 @@ export function ChapterReveal({
   align = "left",
   theme = "light",
   onProductClick,
+  scrollProgress,
+  localStart,
+  localEnd,
 }: {
   index: string;
   eyebrow: string;
@@ -204,19 +208,57 @@ export function ChapterReveal({
   align?: "left" | "right";
   theme?: "light" | "dark";
   onProductClick?: () => void;
+  /** Shared deck-wide scroll progress (Plan 03). The chapter derives all
+   *  parallax from this single MotionValue \u2014 there is NO per-chapter
+   *  `useScroll` subscription. */
+  scrollProgress: MotionValue<number>;
+  localStart: number;
+  localEnd: number;
 }) {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
+  const { tier, reducedMotion } = usePerfMode();
+  const staticRender = reducedMotion || tier === "low";
 
-  const bigTextY = useTransform(scrollYProgress, [0, 1], ["20%", "-50%"]);
-  const productY = useTransform(scrollYProgress, [0, 1], ["10%", "-20%"]);
-  const productScale = useTransform(scrollYProgress, [0, 0.4, 1], [0.85, 1, 1.08]);
-  const productRotate = useTransform(scrollYProgress, [0, 1], [-6, 6]);
-  const copyOpacity = useTransform(scrollYProgress, [0.1, 0.3, 0.7, 0.9], [0, 1, 1, 0]);
-  const copyY = useTransform(scrollYProgress, [0.1, 0.3], [40, 0]);
+  const ref = useRef<HTMLElement>(null);
+
+  const source = scrollProgress;
+  const ls = localStart;
+  const le = localEnd;
+
+  // Slice-local 0–1 progress derived from whichever source we're using.
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const bigTextY = useTransform(source, [ls, le], ["20%", "-50%"]);
+  const productY = useTransform(source, [ls, le], ["10%", "-20%"]);
+  const productScale = useTransform(
+    source,
+    [ls, lerp(ls, le, 0.4), le],
+    [0.85, 1, 1.08],
+  );
+  const productRotate = useTransform(source, [ls, le], [-6, 6]);
+  const productMacro = useTransform(source, [ls, le], [0, 1]);
+  const copyOpacity = useTransform(
+    source,
+    [lerp(ls, le, 0.1), lerp(ls, le, 0.3), lerp(ls, le, 0.7), lerp(ls, le, 0.9)],
+    [0, 1, 1, 0],
+  );
+  const copyY = useTransform(source, [lerp(ls, le, 0.1), lerp(ls, le, 0.3)], [40, 0]);
+
+  // ── IO-driven willChange toggle ────────────────────────────────────
+  // rootMargin 100% 0% = one viewport of leeway on top & bottom, so we
+  // promote a chapter to its own composited layer slightly before it
+  // enters the viewport and demote it shortly after it leaves.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (staticRender) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setNear(entry.isIntersecting),
+      { rootMargin: "100% 0%" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [staticRender]);
+  const willChange = near ? "transform" : "auto";
 
   const dark = theme === "dark";
   const bg = dark ? "bg-[#1A0F08]" : "bg-natural-paper";
@@ -232,9 +274,9 @@ export function ChapterReveal({
 
   return (
     <section ref={ref} className={`relative ${hasImage ? "min-h-screen" : "min-h-[60vh]"} ${bg} ${fg} overflow-hidden`}>
-      {/* Background editorial wordmark — slowest moving */}
+      {/* Background editorial wordmark — slowest moving (skipped in static mode) */}
       <motion.div
-        style={{ y: bigTextY }}
+        style={staticRender ? { transform: "none" } : { y: bigTextY, willChange }}
         className="absolute inset-x-0 top-0 pointer-events-none select-none flex justify-center"
       >
         <span
@@ -253,7 +295,11 @@ export function ChapterReveal({
         >
           {/* Product still-life */}
           <motion.div
-            style={{ y: productY, scale: productScale, rotate: productRotate }}
+            style={
+              staticRender
+                ? { transform: "none" }
+                : { y: productY, scale: productScale, rotate: productRotate, willChange }
+            }
             className={`relative ${align === "right" ? "lg:order-2" : "lg:order-1"}`}
           >
             {(() => {
@@ -272,7 +318,7 @@ export function ChapterReveal({
                     loading="eager"
                     decoding="async"
                   />
-                  <MacroBeam progress={scrollYProgress} />
+                  {!staticRender && <MacroBeam progress={productMacro} />}
                 </button>
               );
             })()}
@@ -280,7 +326,7 @@ export function ChapterReveal({
 
           {/* Copy column */}
           <motion.div
-            style={{ opacity: copyOpacity, y: copyY }}
+            style={staticRender ? { opacity: 1, transform: "none" } : { opacity: copyOpacity, y: copyY, willChange }}
             className={`relative space-y-6 ${align === "right" ? "lg:order-1" : "lg:order-2"}`}
           >
             <div className="flex items-center gap-3">
@@ -338,12 +384,17 @@ export type ChapterConfig = {
 };
 
 export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
-  // Plain vertical stack — each chapter is a full ChapterReveal section
-  // (sticky pinned stage + parallax wordmark + product Y/scale/rotate +
-  // copy fade), one after another. No 3D conveyor, no morphing, just
-  // the original editorial parallax brought back card-by-card.
+  // Plan 03: ONE top-level useScroll for the entire deck. Each ChapterReveal
+  // gets a slice [localStart, localEnd] of the deck-wide progress and derives
+  // its parallax from that shared MotionValue — N subscriptions → 1.
+  const deckRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: deckRef,
+    offset: ["start end", "end start"],
+  });
+  const N = Math.max(1, chapters.length);
   return (
-    <div className="relative">
+    <div ref={deckRef} className="relative">
       {chapters.map((c, i) => (
         <ChapterReveal
           key={`${c.eyebrow}-${i}`}
@@ -358,6 +409,9 @@ export function ChapterDeck({ chapters }: { chapters: ChapterConfig[] }) {
           align={c.align}
           theme={c.theme}
           onProductClick={c.onProductClick}
+          scrollProgress={scrollYProgress}
+          localStart={i / N}
+          localEnd={(i + 1) / N}
         />
       ))}
     </div>
