@@ -148,7 +148,6 @@ export default defineSchema({
       ts: v.number(),
     }))),
     discountCode: v.optional(v.string()),
-    discountApplied: v.optional(v.number()),
     customerPhone: v.optional(v.string()),  // denormalized for index queries
     customerEmail: v.optional(v.string()),  // denormalized for index queries
   })
@@ -245,6 +244,31 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_email", ["email"]),
+
+  // ── Web vitals (RUM telemetry) ───────────────────────────────────────────
+  // Real-user FCP/LCP/INP/CLS/TTFB samples, tagged with the device perf tier.
+  // Written by src/lib/webVitals.ts on every page load. Used to verify the
+  // v6.0 performance phase actually moved the needle on real hardware.
+  webVitals: defineTable({
+    name: v.union(
+      v.literal("FCP"),
+      v.literal("LCP"),
+      v.literal("INP"),
+      v.literal("CLS"),
+      v.literal("TTFB")
+    ),
+    value: v.number(),
+    rating: v.union(
+      v.literal("good"),
+      v.literal("needs-improvement"),
+      v.literal("poor")
+    ),
+    page: v.string(),
+    userAgent: v.string(),
+    tier: v.union(v.literal("low"), v.literal("mid"), v.literal("high")),
+  })
+    .index("by_name", ["name"])
+    .index("by_page", ["page"]),
 
   // ── Audit log ───────────────────────────────────────────────────────────
   auditLog: defineTable({
