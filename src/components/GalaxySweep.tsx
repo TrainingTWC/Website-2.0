@@ -1,11 +1,18 @@
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 interface GalaxySweepProps {
   origin: { x: number; y: number };
   onComplete: () => void;
   /** Total duration in seconds. Defaults to a relaxed 1.8s. */
   duration?: number;
+  /**
+   * Visual fidelity.
+   *  - `"full"` (default): rAF-driven bloom, ripples, glitters, grain.
+   *  - `"lite"`: a single CSS-keyframe radial pulse — no rAF, no motion lib,
+   *    completes in ~600 ms. Used for mid-tier devices.
+   */
+  variant?: "full" | "lite";
 }
 
 /**
@@ -16,7 +23,51 @@ interface GalaxySweepProps {
  * glitters. Tuned down from the original to feel restrained and luxe
  * rather than fireworks.
  */
-export function GalaxySweep({ origin, onComplete, duration = 1.8 }: GalaxySweepProps) {
+export function GalaxySweep({ origin, onComplete, duration = 1.8, variant = "full" }: GalaxySweepProps) {
+  if (variant === "lite") {
+    return <GalaxySweepLite origin={origin} onComplete={onComplete} />;
+  }
+  return <GalaxySweepFull origin={origin} onComplete={onComplete} duration={duration} />;
+}
+
+/** Cheap one-shot CSS radial pulse — ~600 ms, no rAF. */
+function GalaxySweepLite({ origin, onComplete }: { origin: { x: number; y: number }; onComplete: () => void }) {
+  useEffect(() => {
+    const id = window.setTimeout(onComplete, 600);
+    return () => window.clearTimeout(id);
+  }, [onComplete]);
+
+  return (
+    <div className="fixed inset-0 z-[9998] pointer-events-none overflow-hidden">
+      <style>{`
+        @keyframes brewmatch-galaxy-lite {
+          0%   { opacity: 0; transform: scale(0.2); }
+          40%  { opacity: 0.5; }
+          100% { opacity: 0; transform: scale(2.2); }
+        }
+      `}</style>
+      <div
+        className="absolute rounded-full"
+        style={{
+          left: origin.x,
+          top: origin.y,
+          width: "60vmax",
+          height: "60vmax",
+          marginLeft: "-30vmax",
+          marginTop: "-30vmax",
+          background:
+            "radial-gradient(circle, rgba(190,235,225,0.55) 0%, rgba(140,210,200,0.35) 30%, rgba(110,180,190,0.2) 55%, rgba(70,120,150,0) 80%)",
+          filter: "blur(28px)",
+          mixBlendMode: "screen",
+          animation: "brewmatch-galaxy-lite 600ms cubic-bezier(0.32, 0.72, 0.28, 1) forwards",
+          willChange: "transform, opacity",
+        }}
+      />
+    </div>
+  );
+}
+
+function GalaxySweepFull({ origin, onComplete, duration }: { origin: { x: number; y: number }; onComplete: () => void; duration: number }) {
   const grainUrl =
     "data:image/svg+xml;utf8," +
     encodeURIComponent(
