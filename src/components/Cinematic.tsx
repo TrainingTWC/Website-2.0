@@ -64,26 +64,35 @@ export function CinematicHero({
     <section
       ref={ref}
       id="hero"
-      className="relative w-full overflow-hidden text-white"
+      className="relative w-full text-natural-text"
     >
 
-      {/* Foreground content — slideshow pushed to top, eyebrow below */}
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="w-full">
-          <BannerSlideshow slides={slides} rounded="rounded-[2rem]" className="mx-4 sm:mx-8" />
-        </div>
-        <motion.div
-          style={{ y: tagY }}
-          className="mt-6 flex items-center gap-3"
-        >
-          <span className="h-px w-10 bg-amber-600/60" />
-          <span className="text-[10px] font-bold tracking-[0.45em] uppercase text-natural-text/60">
-            {eyebrow}
-          </span>
-          <span className="h-px w-10 bg-amber-600/60" />
-        </motion.div>
+      {/* Slideshow — full width with side margins so rounded corners are visible */}
+      <div className="relative z-10 w-full px-4 sm:px-6 pt-4">
+        <BannerSlideshow slides={slides} rounded="rounded-[2rem]" />
       </div>
 
+      {/* Hero tagline — big editorial style below the poster */}
+      <div className="relative overflow-hidden py-14 sm:py-20 bg-natural-bg">
+        {/* Giant ghost wordmark behind */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none flex justify-center overflow-hidden">
+          <span className="font-serif font-black text-[clamp(5rem,18vw,18rem)] leading-none tracking-tight text-natural-text/[0.05] whitespace-nowrap">
+            {eyebrow.toUpperCase()}
+          </span>
+        </div>
+        {/* Foreground copy */}
+        <div className="relative z-10 text-center px-4">
+          <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-natural-text/50 mb-4 flex items-center justify-center gap-3">
+            <span className="h-px w-10 bg-amber-600/50 inline-block" />
+            {eyebrow}
+            <span className="h-px w-10 bg-amber-600/50 inline-block" />
+          </p>
+          <h2 className="font-serif font-black text-[clamp(2.8rem,8vw,7rem)] leading-[0.92] tracking-tight text-natural-text">
+            A daily{" "}
+            <span className="italic text-natural-accent">ritual.</span>
+          </h2>
+        </div>
+      </div>
 
     </section>
   );
