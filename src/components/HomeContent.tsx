@@ -1247,14 +1247,20 @@ export default function HomeContent() {
       return out;
     }
 
-    resolveGeo().then((geo) => {
-      recordPageView({
-        path: window.location.pathname,
-        sessionId,
-        referrer: document.referrer || undefined,
-        ...geo,
-      }).then((id: any) => { pvId = id; });
-    });
+    const pvDateKey = `brewmatch:pv:${new Date().toISOString().slice(0, 10)}`;
+    if (!sessionStorage.getItem(pvDateKey)) {
+      resolveGeo().then((geo) => {
+        recordPageView({
+          path: window.location.pathname,
+          sessionId,
+          referrer: document.referrer || undefined,
+          ...geo,
+        }).then((id: any) => {
+          pvId = id;
+          try { sessionStorage.setItem(pvDateKey, "1"); } catch { /* ignore */ }
+        });
+      });
+    }
 
     const handleUnload = () => {
       if (pvId) {

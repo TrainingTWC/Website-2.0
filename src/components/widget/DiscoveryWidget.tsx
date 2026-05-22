@@ -18,6 +18,7 @@ import ReactMarkdown from "react-markdown";
 import { asset } from "../../lib/asset";
 import { slugify } from "../../lib/slug";
 import type { Product, RecommendationResult } from "../../types";
+import { capture } from "../../lib/posthog";
 
 interface TIQuestion {
   id: string;
@@ -115,6 +116,11 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart, onR
   const getRecommendation = useAction(api.recommendations.getRecommendation);
   const createSession = useMutation(api.sessions.create);
 
+  // Layer 3: track when user reaches the first quiz question
+  useEffect(() => {
+    if (step === 0) capture("ai_quiz_started");
+  }, [step]);
+
   const q = QUESTIONS[step];
   const hasAnswer = !!answers[q?.id];
 
@@ -155,8 +161,10 @@ export function DiscoveryWidget({ onClose, onNavigateToProduct, onAddToCart, onR
         category: p.category,
       }));
       const finalAnswers = note.trim() ? { ...answers, freeform: note.trim() } : answers;
-      const rec = await getRecommendation({ answers: finalAnswers, products: productSnapshot });
+      const sid = typeof window !== "undefined" ? (sessionStorage.getItem("brewmatch:sid") ?? undefined) : undefined;
+      const rec = await getRecommendation({ answers: finalAnswers, products: productSnapshot, sessionId: sid });
       setRecommendation(rec);
+      capture("ai_quiz_completed", { has_results: rec.primaryProductIds.length > 0 });
       onRecommendations?.(rec.primaryProductIds, rec.crossSellProductIds);
       await createSession({
         answers: finalAnswers,

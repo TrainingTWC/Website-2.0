@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem } from "../components/CartPanel";
+import { capture } from "../lib/posthog";
 
 interface CartContextValue {
   cart: CartItem[];
@@ -47,6 +48,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart]);
 
   const addToCart = useCallback((productId: string, qty = 1) => {
+    capture("add_to_cart", { product_id: productId, qty });
     setCart((prev) => {
       const idx = prev.findIndex((c) => c.productId === productId);
       if (idx >= 0) {

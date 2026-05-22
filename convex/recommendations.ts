@@ -57,8 +57,10 @@ export const getRecommendation = action({
         category: v.string(),
       })
     ),
+    // Optional: passed by the client to enable per-session rate limiting.
+    sessionId: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
@@ -67,6 +69,39 @@ export const getRecommendation = action({
         explanation:
           "AI recommendations are not configured. Please set the MISTRAL_API_KEY environment variable in your Convex dashboard.",
       };
+    }
+
+    // ── L1: Convex AI response cache ────────────────────────────────────────────────
+    // Cache key covers only the user’s answers (product catalog is stable).
+    const cacheKey = makeCacheKey("getRecommendation", { answers: args.answers });
+    const cachedEntry = await ctx.runQuery(internal.cache.get, { key: cacheKey });
+    if (cachedEntry) {
+      try { return JSON.parse(cachedEntry.value); } catch { /* corrupted — fall through to fresh call */ }
+    }
+
+    // ── Rate limiting via Upstash Redis (optional) ────────────────────────────────
+    // Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Convex dashboard.
+    // Allows 5 AI requests per sessionId per 15 minutes; gracefully skipped if
+    // env vars are absent so the feature degrades without breaking anything.
+    const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (args.sessionId && redisUrl && redisToken) {
+      try {
+        const rlKey = `rl:rec:${args.sessionId}`;
+        const pipeRes = await fetch(`${redisUrl}/pipeline`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify([["INCR", rlKey], ["EXPIRE", rlKey, 900]]),
+        });
+        const rlResults = await pipeRes.json() as { result: number }[];
+        if ((rlResults[0]?.result ?? 0) > 5) {
+          return {
+            primaryProductIds: [],
+            crossSellProductIds: [],
+            explanation: "You’ve requested several matches recently. Please wait a few minutes and try again.",
+          };
+        }
+      } catch { /* Redis unavailable — allow the request through */ }
     }
 
     const productNames = args.products.map((p) => p.name);
@@ -181,13 +216,16 @@ RETURN JSON ONLY:
         throw new Error("Malformed response structure from Mistral");
       }
 
-      return {
+      const result = {
         primaryProductIds: resolveIds(parsed.primaryProductIds),
         crossSellProductIds: Array.isArray(parsed.crossSellProductIds)
           ? resolveIds(parsed.crossSellProductIds)
           : [],
         explanation: parsed.explanation,
       };
+      // Store successful result in Convex cache (avoids re-calling Mistral for identical answers)
+      try { await ctx.runMutation(internal.cache.set, { key: cacheKey, value: JSON.stringify(result) }); } catch { /* ignore cache write failure */ }
+      return result;
     } catch (error) {
       console.error("Mistral Error:", error);
       return {
