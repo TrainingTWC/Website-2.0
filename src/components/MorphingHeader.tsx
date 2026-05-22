@@ -275,6 +275,7 @@ export function MorphingHeader({
       <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
         <motion.div
           layout
+          initial={false}
           transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
           className={
             compact
@@ -301,6 +302,7 @@ export function MorphingHeader({
           {/* ── Logo — springs to top-left circle on scroll ── */}
           <motion.button
             layout
+            initial={false}
             transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
             onClick={() => onNavTo("hero")}
             aria-label="Third Wave Coffee—home"
@@ -320,6 +322,7 @@ export function MorphingHeader({
               }}
             />
             <motion.img
+              initial={false}
               animate={{ height: compact ? 36 : 48 }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
               src={asset("logo.png")}
