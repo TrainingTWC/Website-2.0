@@ -16,7 +16,7 @@ export function BannerSlideshow({
   slides,
   interval = 6000,
   className = "",
-  rounded = "rounded-[2.5rem]",
+  rounded = "rounded-none",
 }: {
   slides: ReactNode[];
   interval?: number;

@@ -64,7 +64,7 @@ export function CinematicHero({
     <section
       ref={ref}
       id="hero"
-      className="relative h-[110vh] w-full overflow-hidden bg-[#1A0F08] text-white"
+      className="relative h-[110vh] w-full overflow-hidden text-white"
     >
       {/* Deep background image with parallax */}
       <motion.div
@@ -106,7 +106,7 @@ export function CinematicHero({
       {/* Foreground content */}
       <motion.div
         style={{ y: carouselY, opacity: carouselOpacity }}
-        className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6"
+        className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
       >
         <motion.div
           style={{ y: tagY }}
@@ -121,7 +121,7 @@ export function CinematicHero({
 
         <h2 className="sr-only">Master the ritual.</h2>
 
-        <div className="w-full max-w-6xl">
+        <div className="w-full">
           <BannerSlideshow slides={slides} />
         </div>
       </motion.div>
