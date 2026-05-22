@@ -64,85 +64,27 @@ export function CinematicHero({
     <section
       ref={ref}
       id="hero"
-      className="relative h-[110vh] w-full overflow-hidden text-white"
+      className="relative w-full overflow-hidden text-white"
     >
-      {/* Deep background image with parallax */}
-      <motion.div
-        style={{ y: bgY, scale: bgScale }}
-        className="absolute inset-0 will-change-transform"
-      >
-        <div
-          className="w-full h-[120%] bg-cover bg-center opacity-25"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1442975631115-c4f7b05b8a2c?auto=format&fit=crop&q=80&w=1800)",
-          }}
-        />
-      </motion.div>
 
-      {/* Vignette + film grain overlays */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,transparent_0%,rgba(10,5,2,0.55)_55%,rgba(10,5,2,0.95)_100%)]" />
-      <div
-        className="absolute inset-0 mix-blend-overlay opacity-[0.18]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
-
-      {/* MASSIVE background wordmark — slowest moving layer */}
-      <motion.h1
-        style={{ y: titleY, opacity: titleOpacity }}
-        className="absolute inset-x-0 top-[14%] text-center pointer-events-none select-none"
-      >
-        <span className="block font-serif font-black text-[clamp(4rem,16vw,15rem)] leading-[0.85] tracking-tight text-white/[0.07]">
-          {wordmarkLine1}
-        </span>
-        <span className="block font-serif font-black italic text-[clamp(3rem,14vw,13rem)] leading-[0.85] tracking-tight text-white/[0.1] -mt-4">
-          {wordmarkLine2}
-        </span>
-      </motion.h1>
-
-      {/* Foreground content */}
-      <motion.div
-        style={{ y: carouselY, opacity: carouselOpacity }}
-        className="absolute inset-0 z-10 flex flex-col items-center justify-center px-2"
-      >
+      {/* Foreground content — slideshow pushed to top, eyebrow below */}
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="w-full">
+          <BannerSlideshow slides={slides} rounded="rounded-[2rem]" className="mx-4 sm:mx-8" />
+        </div>
         <motion.div
           style={{ y: tagY }}
-          className="mb-8 flex items-center gap-3"
+          className="mt-6 flex items-center gap-3"
         >
-          <span className="h-px w-10 bg-amber-300/70" />
-          <span className="text-[10px] font-bold tracking-[0.45em] uppercase text-amber-200/90">
+          <span className="h-px w-10 bg-amber-600/60" />
+          <span className="text-[10px] font-bold tracking-[0.45em] uppercase text-natural-text/60">
             {eyebrow}
           </span>
-          <span className="h-px w-10 bg-amber-300/70" />
+          <span className="h-px w-10 bg-amber-600/60" />
         </motion.div>
+      </div>
 
-        <h2 className="sr-only">Master the ritual.</h2>
 
-        <div className="w-full">
-          <BannerSlideshow slides={slides} />
-        </div>
-      </motion.div>
-
-      {/* Scroll hint */}
-      <motion.button
-        data-magnetic
-        onClick={onScrollHint}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/60 hover:text-white transition-colors"
-      >
-        <span className="text-[9px] font-bold tracking-[0.4em] uppercase">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ArrowDown className="w-4 h-4" />
-        </motion.div>
-      </motion.button>
     </section>
   );
 }
