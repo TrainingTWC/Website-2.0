@@ -72,16 +72,22 @@ export function CinematicHero({
         <BannerSlideshow slides={slides} rounded="rounded-[2rem]" />
       </div>
 
-      {/* Hero tagline — big editorial style below the poster */}
+      {/* Hero tagline — big editorial style below the poster, with scroll parallax */}
       <div className="relative overflow-hidden py-14 sm:py-20 bg-natural-bg">
-        {/* Giant ghost wordmark behind */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none flex justify-center overflow-hidden">
+        {/* Giant ghost wordmark — drifts up slower than copy */}
+        <motion.div
+          style={{ y: tagY }}
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none flex justify-center overflow-hidden"
+        >
           <span className="font-serif font-black text-[clamp(5rem,18vw,18rem)] leading-none tracking-tight text-natural-text/[0.05] whitespace-nowrap">
             {eyebrow.toUpperCase()}
           </span>
-        </div>
-        {/* Foreground copy */}
-        <div className="relative z-10 text-center px-4">
+        </motion.div>
+        {/* Foreground copy — drifts up faster */}
+        <motion.div
+          style={{ y: useTransform(scrollYProgress, [0, 1], [0, -80]) }}
+          className="relative z-10 text-center px-4"
+        >
           <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-natural-text/50 mb-4 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-amber-600/50 inline-block" />
             {eyebrow}
@@ -91,7 +97,7 @@ export function CinematicHero({
             A daily{" "}
             <span className="italic text-natural-accent">ritual.</span>
           </h2>
-        </div>
+        </motion.div>
       </div>
 
     </section>

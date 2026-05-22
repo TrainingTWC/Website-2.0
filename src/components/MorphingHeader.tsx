@@ -273,14 +273,16 @@ export function MorphingHeader({
 
       {/* Desktop: fluid water-drop header — layout FLIP drives the split animation */}
       <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
+        {/* py-3 wrapper gives equal visual gap above and below the pill */}
+        <div className={compact ? "w-full py-2 px-4" : "py-3"}>
         <motion.div
           layout
           initial={false}
           transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
           className={
             compact
-              ? "flex items-center justify-between w-full px-4 pt-2 relative pointer-events-none"
-              : "flex items-center justify-between mx-auto mt-3 px-6 py-1 relative pointer-events-none gap-8"
+              ? "flex items-center justify-between w-full relative pointer-events-none"
+              : "flex items-center justify-between mx-auto px-6 py-1 relative pointer-events-none gap-8"
           }
           style={{ maxWidth: compact ? undefined : 920, borderRadius: 999 }}
         >
@@ -389,6 +391,7 @@ export function MorphingHeader({
             )}
           </motion.div>
         </motion.div>
+        </div>
       </div>
     </div>
   );
