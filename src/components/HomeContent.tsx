@@ -1035,8 +1035,8 @@ function DemoStorefront({
         title={sectionsContent.catalogBanner.title}
       />
 
-      <div className="space-y-16 sm:space-y-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 pt-12">
-        <section id="categories" className="space-y-6">
+      <div className="space-y-16 sm:space-y-24 pb-24 pt-12">
+        <section id="categories" className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">
@@ -1087,17 +1087,19 @@ function DemoStorefront({
 
         {sections.map((s) => (
           <section key={s.id} id={s.id} className="space-y-8 scroll-mt-24">
-            <div className="flex items-end border-b border-natural-border pb-6">
+            <div className="flex items-end border-b border-natural-border pb-6 max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
               <h3 className="text-2xl sm:text-4xl font-serif font-bold">{s.title}</h3>
               <span className="ml-auto text-xs text-natural-text/40 font-bold uppercase tracking-widest">
                 {s.items.length} {s.items.length === 1 ? "option" : "options"}
               </span>
             </div>
-            <HScrollRow products={s.items} onAddToCart={onAddToCart} />
+            <div className="px-4 sm:px-6 md:px-12">
+              <HScrollRow products={s.items} onAddToCart={onAddToCart} />
+            </div>
           </section>
         ))}
 
-        <section className="scroll-mt-24" id="our-story">
+        <section className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 md:px-12" id="our-story">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">
