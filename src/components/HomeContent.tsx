@@ -1348,10 +1348,8 @@ export default function HomeContent() {
         />
 
         <div>
-          <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0">
-            <div className="max-w-7xl mx-auto" id="storefront-view">
-              <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
-            </div>
+          <main className="pt-24 lg:pt-32 pb-28 sm:pb-12 px-0" id="storefront-view">
+            <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
           </main>
 
           <SiteFooter
