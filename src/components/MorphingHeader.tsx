@@ -271,153 +271,122 @@ export function MorphingHeader({
         </motion.div>
       </motion.header>
 
-      {/* Desktop: water-drop split header */}
-      {(() => {
-        const glassStyle: React.CSSProperties = {
-          background: "rgba(250,249,246,0.38)",
-          backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
-          WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
-          borderRadius: 999,
-          boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
-        };
-        // Remove "home" from desktop nav — logo already acts as home button
-        const desktopNav = NAV_ITEMS.filter((item) => item.key !== "home");
+      {/* Desktop: fluid water-drop header — layout FLIP drives the split animation */}
+      <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
+        <motion.div
+          layout
+          transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
+          className={
+            compact
+              ? "flex items-center justify-between w-full px-4 pt-3 relative pointer-events-none"
+              : "flex items-center justify-between mx-auto mt-4 px-8 py-3 relative pointer-events-none gap-10"
+          }
+          style={{ maxWidth: compact ? undefined : 920, borderRadius: 999 }}
+        >
+          {/* Island glass bg — covers all 3 when expanded, fades when compact */}
+          <span
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              borderRadius: 999,
+              background: "rgba(250,249,246,0.38)",
+              backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+              WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+              boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
+              opacity: compact ? 0 : 1,
+              transition: "opacity 0.38s cubic-bezier(0.22,1,0.36,1)",
+            }}
+          />
 
-        return (
-          <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
-            <AnimatePresence mode="wait" initial={false}>
-              {!compact ? (
-                /* ── EXPANDED: single unified island ── */
-                <motion.div
-                  key="expanded"
-                  initial={{ opacity: 0, y: -14, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.96 }}
-                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                  className="mx-auto mt-4 px-8 py-2 flex items-center justify-between pointer-events-auto gap-10"
-                  style={{ maxWidth: 920, ...glassStyle }}
-                >
-                  {/* Logo */}
-                  <button
-                    onClick={() => onNavTo("hero")}
-                    className="flex items-center flex-shrink-0"
-                    aria-label="Third Wave Coffee—home"
-                  >
-                    <img
-                      src={asset("logo.png")}
-                      alt="Third Wave Coffee"
-                      style={{ height: 68 }}
-                      className="w-auto"
-                    />
-                  </button>
+          {/* ── Logo — springs to top-left circle on scroll ── */}
+          <motion.button
+            layout
+            transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
+            onClick={() => onNavTo("hero")}
+            aria-label="Third Wave Coffee—home"
+            className={`relative flex-shrink-0 flex items-center justify-center overflow-hidden rounded-full pointer-events-auto z-10${compact ? " w-14 h-14" : ""}`}
+          >
+            {/* Per-element glass — visible only when compact (circle mode) */}
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: "rgba(250,249,246,0.38)",
+                backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+                WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+                boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
+                opacity: compact ? 1 : 0,
+                transition: "opacity 0.38s cubic-bezier(0.22,1,0.36,1)",
+              }}
+            />
+            <motion.img
+              animate={{ height: compact ? 40 : 68 }}
+              transition={{ type: "spring", stiffness: 260, damping: 30 }}
+              src={asset("logo.png")}
+              alt="Third Wave Coffee"
+              className="relative z-10 w-auto"
+            />
+          </motion.button>
 
-                  {/* Nav */}
-                  <nav className="flex items-center gap-0.5">
-                    {desktopNav.map((item) => (
-                      <MorphNavItem
-                        key={item.key}
-                        label={item.label}
-                        Icon={item.Icon}
-                        active={active === item.key}
-                        compact={false}
-                        onClick={() => onNavTo(item.target)}
-                      />
-                    ))}
-                    <TIHeaderButton compact={false} onClick={onOpenTI} />
-                  </nav>
+          {/* ── Nav — stays centred, always has its own glass pill ── */}
+          <motion.nav
+            layout
+            transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
+            className="relative flex items-center gap-0.5 pointer-events-auto z-10 px-2 py-1"
+            style={{
+              borderRadius: 999,
+              background: "rgba(250,249,246,0.38)",
+              backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+              WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+              boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
+            }}
+          >
+            {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => (
+              <MorphNavItem
+                key={item.key}
+                label={item.label}
+                Icon={item.Icon}
+                active={active === item.key}
+                compact={compact}
+                onClick={() => onNavTo(item.target)}
+              />
+            ))}
+            <TIHeaderButton compact={compact} onClick={onOpenTI} />
+          </motion.nav>
 
-                  {/* Cart */}
-                  <div className="flex-shrink-0 relative">
-                    <MorphNavItem
-                      label="Cart"
-                      Icon={ShoppingCart}
-                      active={false}
-                      compact={false}
-                      onClick={onOpenCart}
-                    />
-                    {cartCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none">
-                        {cartCount > 9 ? "9+" : cartCount}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              ) : (
-                /* ── COMPACT: three separate glass pills ── */
-                <motion.div
-                  key="compact"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-start justify-between px-4 pt-3 pointer-events-none"
-                >
-                  {/* Logo pill — top-left */}
-                  <motion.button
-                    initial={{ x: -24, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    onClick={() => onNavTo("hero")}
-                    className="pointer-events-auto p-2 flex items-center"
-                    style={glassStyle}
-                    aria-label="Third Wave Coffee—home"
-                  >
-                    <img
-                      src={asset("logo.png")}
-                      alt="Third Wave Coffee"
-                      style={{ height: 44 }}
-                      className="w-auto"
-                    />
-                  </motion.button>
-
-                  {/* Nav pill — center */}
-                  <motion.nav
-                    initial={{ y: -14, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1], delay: 0.04 }}
-                    className="flex items-center gap-0.5 pointer-events-auto px-2 py-1"
-                    style={glassStyle}
-                  >
-                    {desktopNav.map((item) => (
-                      <MorphNavItem
-                        key={item.key}
-                        label={item.label}
-                        Icon={item.Icon}
-                        active={active === item.key}
-                        compact
-                        onClick={() => onNavTo(item.target)}
-                      />
-                    ))}
-                    <TIHeaderButton compact onClick={onOpenTI} />
-                  </motion.nav>
-
-                  {/* Cart pill — top-right */}
-                  <motion.div
-                    initial={{ x: 24, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="pointer-events-auto relative p-1"
-                    style={glassStyle}
-                  >
-                    <MorphNavItem
-                      label="Cart"
-                      Icon={ShoppingCart}
-                      active={false}
-                      compact
-                      onClick={onOpenCart}
-                    />
-                    {cartCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none">
-                        {cartCount > 9 ? "9+" : cartCount}
-                      </span>
-                    )}
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })()}
+          {/* ── Cart — springs to top-right circle on scroll ── */}
+          <motion.div
+            layout
+            transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
+            className={`relative flex-shrink-0 flex items-center justify-center rounded-full pointer-events-auto z-10${compact ? " w-12 h-12" : ""}`}
+          >
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                background: "rgba(250,249,246,0.38)",
+                backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+                WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+                boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
+                opacity: compact ? 1 : 0,
+                transition: "opacity 0.38s cubic-bezier(0.22,1,0.36,1)",
+              }}
+            />
+            <MorphNavItem
+              label="Cart"
+              Icon={ShoppingCart}
+              active={false}
+              compact={compact}
+              onClick={onOpenCart}
+            />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none z-20">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }
