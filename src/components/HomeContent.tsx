@@ -1356,7 +1356,7 @@ export default function HomeContent() {
         />
 
         <div>
-          <main className="pt-24 md:pt-28 lg:pt-32 pb-28 sm:pb-12 px-0" id="storefront-view">
+          <main className="pt-20 md:pt-20 lg:pt-20 pb-28 sm:pb-12 px-0" id="storefront-view">
             <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
           </main>
 

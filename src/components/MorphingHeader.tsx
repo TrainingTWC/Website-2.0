@@ -278,8 +278,8 @@ export function MorphingHeader({
           transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
           className={
             compact
-              ? "flex items-center justify-between w-full px-4 pt-3 relative pointer-events-none"
-              : "flex items-center justify-between mx-auto mt-4 px-8 py-3 relative pointer-events-none gap-10"
+              ? "flex items-center justify-between w-full px-4 pt-2 relative pointer-events-none"
+              : "flex items-center justify-between mx-auto mt-3 px-6 py-1 relative pointer-events-none gap-8"
           }
           style={{ maxWidth: compact ? undefined : 920, borderRadius: 999 }}
         >
@@ -320,7 +320,7 @@ export function MorphingHeader({
               }}
             />
             <motion.img
-              animate={{ height: compact ? 40 : 68 }}
+              animate={{ height: compact ? 36 : 48 }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
               src={asset("logo.png")}
               alt="Third Wave Coffee"
