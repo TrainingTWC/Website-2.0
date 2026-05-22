@@ -278,12 +278,12 @@ export function MorphingHeader({
         className="hidden md:flex items-center justify-between pointer-events-auto mx-auto mt-4 px-5"
         style={{
           maxWidth: 860,
-          background: "rgba(250,249,246,0.72)",
-          backdropFilter: "blur(28px) saturate(160%)",
-          WebkitBackdropFilter: "blur(28px) saturate(160%)",
+          background: "rgba(250,249,246,0.38)",
+          backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
+          WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
           borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.45)",
-          boxShadow: "0 8px 32px -8px rgba(44,24,16,0.14), 0 1.5px 0 rgba(255,255,255,0.6) inset",
+          border: "1px solid rgba(255,255,255,0.55)",
+          boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
         }}
       >
         {/* LEFT — logo */}
