@@ -237,10 +237,10 @@ export function ChapterReveal({
   const productMacro = useTransform(source, [ls, le], [0, 1]);
   const copyOpacity = useTransform(
     source,
-    [lerp(ls, le, 0.1), lerp(ls, le, 0.3), lerp(ls, le, 0.7), lerp(ls, le, 0.9)],
+    [lerp(ls, le, 0.05), lerp(ls, le, 0.18), lerp(ls, le, 0.7), lerp(ls, le, 0.9)],
     [0, 1, 1, 0],
   );
-  const copyY = useTransform(source, [lerp(ls, le, 0.1), lerp(ls, le, 0.3)], [40, 0]);
+  const copyY = useTransform(source, [lerp(ls, le, 0.05), lerp(ls, le, 0.18)], [24, 0]);
 
   // ── IO-driven willChange toggle ────────────────────────────────────
   // rootMargin 100% 0% = one viewport of leeway on top & bottom, so we

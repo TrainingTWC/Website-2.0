@@ -213,23 +213,83 @@ export function MorphingHeader({
   });
 
   return (
-    <motion.header
-      style={{
-        backgroundColor: headerBg,
-        borderBottomColor: headerBorder,
-        boxShadow: headerShadow,
-      }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl saturate-150 border-b"
-    >
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      {/* Mobile: full-width bar (unchanged) */}
+      <motion.header
+        style={{
+          backgroundColor: headerBg,
+          borderBottomColor: headerBorder,
+          boxShadow: headerShadow,
+        }}
+        className="md:hidden pointer-events-auto backdrop-blur-2xl saturate-150 border-b"
+      >
+        <motion.div
+          animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="px-4 grid grid-cols-[1fr_auto_1fr] items-center"
+        >
+          {/* LEFT — logo */}
+          <button
+            onClick={() => onNavTo("hero")}
+            className="flex items-center justify-start"
+            aria-label="Third Wave Coffee—home"
+          >
+            <motion.img
+              layoutId="brand-logo"
+              src={asset("logo.png")}
+              alt="Third Wave Coffee"
+              initial={false}
+              animate={{ height: compact ? 44 : 68 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="w-auto"
+            />
+          </button>
+          {/* CENTER — mobile nav placeholder */}
+          <nav className="flex items-center gap-1">
+            {NAV_ITEMS.slice(0, 4).map((item) => (
+              <MorphNavItem
+                key={item.key}
+                label={item.label}
+                Icon={item.Icon}
+                active={active === item.key}
+                compact
+                onClick={() => onNavTo(item.target)}
+              />
+            ))}
+          </nav>
+          {/* RIGHT — cart */}
+          <div className="flex items-center gap-1 justify-end">
+            <div className="relative">
+              <MorphNavItem label="Cart" Icon={ShoppingCart} active={false} compact onClick={onOpenCart} />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </motion.header>
+
+      {/* Desktop: floating glassmorphism island */}
       <motion.div
-        animate={{ paddingTop: compact ? 8 : 14, paddingBottom: compact ? 8 : 14 }}
+        animate={{ paddingTop: compact ? 8 : 12, paddingBottom: compact ? 8 : 12 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-[1fr_auto_1fr] items-center"
+        className="hidden md:flex items-center justify-between pointer-events-auto mx-auto mt-4 px-5"
+        style={{
+          maxWidth: 860,
+          background: "rgba(250,249,246,0.72)",
+          backdropFilter: "blur(28px) saturate(160%)",
+          WebkitBackdropFilter: "blur(28px) saturate(160%)",
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.45)",
+          boxShadow: "0 8px 32px -8px rgba(44,24,16,0.14), 0 1.5px 0 rgba(255,255,255,0.6) inset",
+        }}
       >
         {/* LEFT — logo */}
         <button
           onClick={() => onNavTo("hero")}
-          className="flex items-center justify-start"
+          className="flex items-center justify-start flex-shrink-0"
           aria-label="Third Wave Coffee—home"
         >
           <motion.img
@@ -237,14 +297,14 @@ export function MorphingHeader({
             src={asset("logo.png")}
             alt="Third Wave Coffee"
             initial={false}
-            animate={{ height: compact ? 40 : 56 }}
+            animate={{ height: compact ? 44 : 68 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="w-auto"
           />
         </button>
 
         {/* CENTER — nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="flex items-center gap-1">
           {NAV_ITEMS.map((item) => (
             <MorphNavItem
               key={item.key}
@@ -255,20 +315,13 @@ export function MorphingHeader({
               onClick={() => onNavTo(item.target)}
             />
           ))}
-          {/* TI lives next to Our Story */}
           <TIHeaderButton compact={compact} onClick={onOpenTI} />
         </nav>
 
         {/* RIGHT — cart */}
-        <div className="flex items-center gap-1 justify-end">
+        <div className="flex items-center gap-1 justify-end flex-shrink-0">
           <div className="relative">
-            <MorphNavItem
-              label="Cart"
-              Icon={ShoppingCart}
-              active={false}
-              compact={compact}
-              onClick={onOpenCart}
-            />
+            <MorphNavItem label="Cart" Icon={ShoppingCart} active={false} compact={compact} onClick={onOpenCart} />
             {cartCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] bg-natural-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5 pointer-events-none">
                 {cartCount > 9 ? "9+" : cartCount}
@@ -277,6 +330,6 @@ export function MorphingHeader({
           </div>
         </div>
       </motion.div>
-    </motion.header>
+    </div>
   );
 }
