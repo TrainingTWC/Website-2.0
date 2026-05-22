@@ -12,40 +12,62 @@ export interface VitalsPayload {
   tier: PerfTier;
 }
 
+const FLUSH_DELAY_MS = 10_000;
+
 interface ReportOptions {
   tier: PerfTier;
-  sendToConvex: (m: VitalsPayload) => void;
+  sendBatchToConvex: (vitals: VitalsPayload[]) => void;
 }
 
 /**
- * Subscribes to web-vitals metrics and forwards them to Convex.
+ * Subscribes to web-vitals metrics and forwards them to Convex as a single
+ * batch (Fix #2: reduces 5 mutations → 1 per page load).
  *
- * - Dynamically imports `web-vitals` so it stays out of the critical path.
- * - In dev (`NODE_ENV !== "production"`), each metric is also logged.
- * - Safe to call on the client only; no-ops if `window` is undefined.
+ * Collects all metrics for FLUSH_DELAY_MS then sends one batch, or flushes
+ * immediately on visibilitychange (tab close / navigation).
  */
 export function reportWebVitals(opts: ReportOptions): void {
   if (typeof window === "undefined") return;
 
+  const buffer: VitalsPayload[] = [];
+  let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const flush = () => {
+    if (flushTimer !== null) { clearTimeout(flushTimer); flushTimer = null; }
+    if (buffer.length === 0) return;
+    const batch = buffer.splice(0);
+    try {
+      opts.sendBatchToConvex(batch);
+    } catch {
+      /* swallow — never let telemetry break the app */
+    }
+  };
+
+  const scheduleFlush = () => {
+    if (flushTimer !== null) return;
+    flushTimer = setTimeout(flush, FLUSH_DELAY_MS);
+  };
+
+  const handleVisibility = () => {
+    if (document.visibilityState === "hidden") flush();
+  };
+  document.addEventListener("visibilitychange", handleVisibility);
+
   void import("web-vitals").then((wv) => {
     const emit = (name: VitalsName) => (metric: { value: number; rating: VitalsRating }) => {
-      const payload: VitalsPayload = {
+      buffer.push({
         name,
         value: metric.value,
         rating: metric.rating,
         page: window.location.pathname || "/",
         userAgent: navigator.userAgent || "unknown",
         tier: opts.tier,
-      };
+      });
       if (process.env.NODE_ENV !== "production") {
         // eslint-disable-next-line no-console
-        console.log("[vitals]", payload);
+        console.log("[vitals]", name, metric.value, metric.rating);
       }
-      try {
-        opts.sendToConvex(payload);
-      } catch {
-        /* swallow — never let telemetry break the app */
-      }
+      scheduleFlush();
     };
     wv.onFCP(emit("FCP"));
     wv.onLCP(emit("LCP"));

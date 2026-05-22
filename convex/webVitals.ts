@@ -41,3 +41,20 @@ export const recent = query({
     return await ctx.db.query("webVitals").order("desc").take(limit);
   },
 });
+
+// Batch insert — one mutation per page load instead of one per metric (Fix #2).
+export const recordBatch = mutation({
+  args: {
+    vitals: v.array(v.object({
+      name: vitalName,
+      value: v.number(),
+      rating: vitalRating,
+      page: v.string(),
+      userAgent: v.string(),
+      tier: perfTier,
+    })),
+  },
+  handler: async (ctx, args) => {
+    await Promise.all(args.vitals.map((vital) => ctx.db.insert("webVitals", vital)));
+  },
+});

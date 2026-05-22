@@ -1,5 +1,86 @@
-import { mutation, query } from "./_generated/server";
+﻿import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+
+function todayUTC(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function incrementDailySummary(
+  ctx: any,
+  args: {
+    sessionId: string;
+    path: string;
+    lat?: number;
+    lon?: number;
+    geoSource?: string;
+    country?: string;
+    city?: string;
+    region?: string;
+    locality?: string;
+    countryCode?: string;
+  }
+) {
+  const date = todayUTC();
+  const existing = await ctx.db
+    .query("pageViewDailySummary")
+    .withIndex("by_date", (q: any) => q.eq("date", date))
+    .first();
+
+  if (existing) {
+    const sessionIds: string[] = existing.sessionIdsJson
+      ? JSON.parse(existing.sessionIdsJson)
+      : [];
+    const isNewSession = !sessionIds.includes(args.sessionId);
+    const newSessionIds = isNewSession
+      ? [...sessionIds, args.sessionId].slice(-10000)
+      : sessionIds;
+
+    const pathCounts: Record<string, number> = JSON.parse(existing.pathCountsJson);
+    pathCounts[args.path] = (pathCounts[args.path] ?? 0) + 1;
+
+    const geoData: any = JSON.parse(existing.geoJson);
+    if (args.country) {
+      geoData.countries = geoData.countries ?? {};
+      geoData.countries[args.country] = (geoData.countries[args.country] ?? 0) + 1;
+    }
+    if (args.city) {
+      geoData.cities = geoData.cities ?? {};
+      geoData.cities[args.city] = (geoData.cities[args.city] ?? 0) + 1;
+    }
+
+    await ctx.db.patch(existing._id, {
+      totalViews: existing.totalViews + 1,
+      uniqueSessions: isNewSession
+        ? existing.uniqueSessions + 1
+        : existing.uniqueSessions,
+      pathCountsJson: JSON.stringify(pathCounts),
+      geoJson: JSON.stringify(geoData),
+      gpsCount:
+        args.geoSource === "gps" ? existing.gpsCount + 1 : existing.gpsCount,
+      ipCount:
+        args.geoSource === "ip" ? existing.ipCount + 1 : existing.ipCount,
+      sessionIdsJson: JSON.stringify(newSessionIds),
+    });
+  } else {
+    const pathCounts: Record<string, number> = { [args.path]: 1 };
+    const geoData: any = {};
+    if (args.country) geoData.countries = { [args.country]: 1 };
+    if (args.city) geoData.cities = { [args.city]: 1 };
+
+    await ctx.db.insert("pageViewDailySummary", {
+      date,
+      totalViews: 1,
+      uniqueSessions: 1,
+      pathCountsJson: JSON.stringify(pathCounts),
+      geoJson: JSON.stringify(geoData),
+      avgDurationSec: 0,
+      durationSamples: 0,
+      gpsCount: args.geoSource === "gps" ? 1 : 0,
+      ipCount: args.geoSource === "ip" ? 1 : 0,
+      sessionIdsJson: JSON.stringify([args.sessionId]),
+    });
+  }
+}
 
 export const record = mutation({
   args: {
@@ -17,7 +98,7 @@ export const record = mutation({
     geoSource: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("pageViews", {
+    const id = await ctx.db.insert("pageViews", {
       path: args.path,
       sessionId: args.sessionId,
       referrer: args.referrer,
@@ -32,6 +113,8 @@ export const record = mutation({
       geoSource: args.geoSource,
       timestamp: Date.now(),
     });
+    await incrementDailySummary(ctx, args);
+    return id;
   },
 });
 
@@ -42,140 +125,122 @@ export const updateDuration = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { duration: args.duration });
+    const date = todayUTC();
+    const summary = await ctx.db
+      .query("pageViewDailySummary")
+      .withIndex("by_date", (q) => q.eq("date", date))
+      .first();
+    if (summary && args.duration > 0) {
+      const n = summary.durationSamples;
+      const newAvg = (summary.avgDurationSec * n + args.duration / 1000) / (n + 1);
+      await ctx.db.patch(summary._id, {
+        avgDurationSec: Math.round(newAvg),
+        durationSamples: n + 1,
+      });
+    }
   },
 });
 
 export const getStats = query({
   args: {},
   handler: async (ctx) => {
-    const views = await ctx.db.query("pageViews").collect();
-    const now = Date.now();
+    const summaries = await ctx.db
+      .query("pageViewDailySummary")
+      .order("desc")
+      .take(30);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTs = today.getTime();
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const totalViews = summaries.reduce((s, d) => s + d.totalViews, 0);
+    const uniqueSessions = summaries.reduce((s, d) => s + d.uniqueSessions, 0);
+    const gpsCount = summaries.reduce((s, d) => s + d.gpsCount, 0);
+    const ipCount = summaries.reduce((s, d) => s + d.ipCount, 0);
 
-    const todayViews = views.filter((v) => v.timestamp >= todayTs);
-    const weekViews = views.filter((v) => v.timestamp >= weekAgo);
-    const uniqueSessions = new Set(views.map((v) => v.sessionId)).size;
+    const today = summaries.find((d) => d.date === todayUTC());
+    const todayViews = today?.totalViews ?? 0;
 
-    const withDuration = views.filter((v) => v.duration != null);
+    const weekSummaries = summaries.slice(0, 7);
+    const weekViews = weekSummaries.reduce((s, d) => s + d.totalViews, 0);
+
+    const withDuration = summaries.filter((d) => d.durationSamples > 0);
     const avgDurationSec =
       withDuration.length > 0
         ? Math.round(
-            withDuration.reduce((sum, v) => sum + (v.duration ?? 0), 0) /
+            withDuration.reduce((s, d) => s + d.avgDurationSec, 0) /
               withDuration.length
           )
         : 0;
 
-    // Daily views for last 7 days
-    const dailyViews: { date: string; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(now - i * 24 * 60 * 60 * 1000);
-      day.setHours(0, 0, 0, 0);
-      const nextDay = new Date(day.getTime() + 24 * 60 * 60 * 1000);
-      dailyViews.push({
-        date: day.toLocaleDateString("en-IN", { weekday: "short" }),
-        count: views.filter(
-          (v) =>
-            v.timestamp >= day.getTime() && v.timestamp < nextDay.getTime()
-        ).length,
-      });
+    const dailyViews = summaries
+      .slice(0, 7)
+      .reverse()
+      .map((d) => ({
+        date: new Date(d.date).toLocaleDateString("en-IN", { weekday: "short" }),
+        count: d.totalViews,
+      }));
+
+    const mergedPaths: Record<string, number> = {};
+    for (const d of summaries) {
+      const pc: Record<string, number> = JSON.parse(d.pathCountsJson);
+      for (const [p, c] of Object.entries(pc)) {
+        mergedPaths[p] = (mergedPaths[p] ?? 0) + c;
+      }
+    }
+    const pathCounts = mergedPaths;
+
+    const countryCounts: Record<string, number> = {};
+    const cityCounts: Record<string, number> = {};
+    for (const d of summaries) {
+      const geo = JSON.parse(d.geoJson);
+      if (geo.countries) {
+        for (const [k, c] of Object.entries(geo.countries as Record<string, number>)) {
+          countryCounts[k] = (countryCounts[k] ?? 0) + c;
+        }
+      }
+      if (geo.cities) {
+        for (const [k, c] of Object.entries(geo.cities as Record<string, number>)) {
+          cityCounts[k] = (cityCounts[k] ?? 0) + c;
+        }
+      }
     }
 
-    // Top paths
-    const pathCounts: Record<string, number> = {};
-    for (const v of views) {
-      pathCounts[v.path] = (pathCounts[v.path] ?? 0) + 1;
-    }
-
-    // Geo aggregation
-    const countryCounts: Record<string, { count: number; code?: string }> = {};
-    const cityCounts: Record<string, { count: number; country?: string }> = {};
-    const regionCounts: Record<string, { count: number; country?: string }> = {};
-    const localityCounts: Record<string, { count: number; city?: string }> = {};
-    for (const v of views) {
-      if (v.country) {
-        const c = countryCounts[v.country] ?? { count: 0, code: v.countryCode };
-        c.count += 1;
-        if (!c.code && v.countryCode) c.code = v.countryCode;
-        countryCounts[v.country] = c;
-      }
-      if (v.city) {
-        const c = cityCounts[v.city] ?? { count: 0, country: v.country };
-        c.count += 1;
-        cityCounts[v.city] = c;
-      }
-      if (v.region) {
-        const c = regionCounts[v.region] ?? { count: 0, country: v.country };
-        c.count += 1;
-        regionCounts[v.region] = c;
-      }
-      if (v.locality) {
-        const c = localityCounts[v.locality] ?? { count: 0, city: v.city };
-        c.count += 1;
-        localityCounts[v.locality] = c;
-      }
-    }
     const topCountries = Object.entries(countryCounts)
-      .map(([name, info]) => ({ name, count: info.count, code: info.code }))
+      .map(([name, count]) => ({ name, count, code: undefined }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
     const topCities = Object.entries(cityCounts)
-      .map(([name, info]) => ({ name, count: info.count, country: info.country }))
+      .map(([name, count]) => ({ name, count, country: undefined }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
-    const topRegions = Object.entries(regionCounts)
-      .map(([name, info]) => ({ name, count: info.count, country: info.country }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-    const topLocalities = Object.entries(localityCounts)
-      .map(([name, info]) => ({ name, count: info.count, city: info.city }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-    const knownGeo = views.filter((v) => v.country).length;
-
-    // Map points clustered by ~1km grid so we don't ship every view
-    const pointMap = new Map<string, { lat: number; lon: number; count: number; label: string; source?: string }>();
-    for (const v of views) {
-      if (v.lat == null || v.lon == null) continue;
-      const key = `${v.lat.toFixed(2)}|${v.lon.toFixed(2)}`;
-      const existing = pointMap.get(key);
-      const label = [v.locality, v.city, v.region, v.country].filter(Boolean).join(", ") || "Unknown";
-      if (existing) {
-        existing.count += 1;
-      } else {
-        pointMap.set(key, {
-          lat: Number(v.lat.toFixed(4)),
-          lon: Number(v.lon.toFixed(4)),
-          count: 1,
-          label,
-          source: v.geoSource,
-        });
-      }
-    }
-    const mapPoints = Array.from(pointMap.values()).sort((a, b) => b.count - a.count).slice(0, 500);
-
-    const gpsCount = views.filter((v) => v.geoSource === "gps").length;
-    const ipCount = views.filter((v) => v.geoSource === "ip").length;
 
     return {
-      totalViews: views.length,
-      todayViews: todayViews.length,
-      weekViews: weekViews.length,
+      totalViews,
+      todayViews,
+      weekViews,
       uniqueSessions,
       avgDurationSec,
       dailyViews,
       pathCounts,
       topCountries,
       topCities,
-      topRegions,
-      topLocalities,
-      knownGeo,
-      mapPoints,
+      topRegions: [],
+      topLocalities: [],
+      knownGeo: gpsCount + ipCount,
+      mapPoints: [],
       gpsCount,
       ipCount,
     };
+  },
+});
+
+export const cleanupOldViews = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+    const old = await ctx.db
+      .query("pageViews")
+      .withIndex("by_creation_time")
+      .filter((q) => q.lt(q.field("_creationTime"), cutoff))
+      .take(500);
+    await Promise.all(old.map((v) => ctx.db.delete(v._id)));
+    return { deleted: old.length };
   },
 });

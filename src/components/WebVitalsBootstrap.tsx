@@ -17,7 +17,7 @@ import { reportWebVitals } from "@/src/lib/webVitals";
  */
 export function WebVitalsBootstrap() {
   const { tier } = usePerfMode();
-  const recordVital = useMutation(api.webVitals.record);
+  const recordBatch = useMutation(api.webVitals.recordBatch);
   const subscribedRef = useRef(false);
 
   useEffect(() => {
@@ -25,13 +25,13 @@ export function WebVitalsBootstrap() {
     subscribedRef.current = true;
     reportWebVitals({
       tier,
-      sendToConvex: (m) => {
-        void recordVital(m).catch(() => {
+      sendBatchToConvex: (vitals) => {
+        void recordBatch({ vitals }).catch(() => {
           /* never let telemetry break the app */
         });
       },
     });
-  }, [tier, recordVital]);
+  }, [tier, recordBatch]);
 
   return null;
 }

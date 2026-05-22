@@ -148,6 +148,7 @@ export default defineSchema({
       ts: v.number(),
     }))),
     discountCode: v.optional(v.string()),
+    discountApplied: v.optional(v.number()),
     customerPhone: v.optional(v.string()),  // denormalized for index queries
     customerEmail: v.optional(v.string()),  // denormalized for index queries
   })
@@ -281,4 +282,30 @@ export default defineSchema({
   })
     .index("by_admin", ["adminUserId"])
     .index("by_timestamp", ["timestamp"]),
+
+  // ── Pre-aggregated daily page-view counters (Fix #1) ────────────────────
+  pageViewDailySummary: defineTable({
+    date: v.string(),            // ISO "YYYY-MM-DD" in UTC
+    totalViews: v.number(),
+    uniqueSessions: v.number(),
+    pathCountsJson: v.string(),  // JSON: { "/shop": 42, ... }
+    geoJson: v.string(),         // JSON: { countries, cities, regions }
+    avgDurationSec: v.number(),
+    durationSamples: v.number(),
+    gpsCount: v.number(),
+    ipCount: v.number(),
+    sessionIdsJson: v.optional(v.string()), // capped at 10k session IDs
+  }).index("by_date", ["date"]),
+
+  // ── Materialized order counters for O(1) analytics (Fix #3) ────────────
+  orderSummary: defineTable({
+    key: v.string(),              // always "global"
+    totalRevenue: v.number(),
+    totalOrders: v.number(),
+    completedOrders: v.number(),
+    pendingOrders: v.number(),
+    cancelledOrders: v.number(),
+    avgOrderValue: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

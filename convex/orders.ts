@@ -1,7 +1,65 @@
-import { mutation, query } from "./_generated/server";
+﻿import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Revenue-counting statuses
+const REVENUE_STATUSES = new Set(["confirmed", "shipped", "delivered"]);
+
+// Atomically maintain the orderSummary singleton (Fix #3)
+async function upsertOrderSummary(
+  ctx: any,
+  oldStatus: string | null,
+  newStatus: string,
+  orderTotal: number
+) {
+  const existing = await ctx.db
+    .query("orderSummary")
+    .withIndex("by_key", (q: any) => q.eq("key", "global"))
+    .first();
+
+  const base = existing
+    ? { ...existing }
+    : {
+        key: "global" as const,
+        totalRevenue: 0,
+        totalOrders: 0,
+        completedOrders: 0,
+        pendingOrders: 0,
+        cancelledOrders: 0,
+        avgOrderValue: 0,
+        updatedAt: 0,
+      };
+
+  if (oldStatus && REVENUE_STATUSES.has(oldStatus)) {
+    base.totalRevenue -= orderTotal;
+    base.completedOrders = Math.max(0, base.completedOrders - 1);
+  } else if (oldStatus === "pending") {
+    base.pendingOrders = Math.max(0, base.pendingOrders - 1);
+  } else if (oldStatus === "cancelled") {
+    base.cancelledOrders = Math.max(0, base.cancelledOrders - 1);
+  }
+
+  if (REVENUE_STATUSES.has(newStatus)) {
+    base.totalRevenue += orderTotal;
+    base.completedOrders += 1;
+  } else if (newStatus === "pending") {
+    base.pendingOrders += 1;
+  } else if (newStatus === "cancelled") {
+    base.cancelledOrders += 1;
+  }
+
+  if (oldStatus === null) base.totalOrders += 1;
+
+  base.avgOrderValue =
+    base.completedOrders > 0 ? base.totalRevenue / base.completedOrders : 0;
+  base.updatedAt = Date.now();
+
+  if (existing) {
+    await ctx.db.patch(existing._id, base);
+  } else {
+    await ctx.db.insert("orderSummary", base);
+  }
+}
+
 function randomAlphaNum(len: number): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let out = "";
@@ -44,10 +102,9 @@ export const submitOrder = mutation({
   handler: async (ctx, args) => {
     const orderId = `TWC-${randomAlphaNum(8)}`;
 
-    // Server-side discount re-validation (never trust client total)
     let discountApplied: number | undefined;
     let validatedDiscountCode: string | undefined;
-    let serverTotal = args.subtotal + args.shipping; // default: no discount
+    let serverTotal = args.subtotal + args.shipping;
 
     if (args.discountCode) {
       const discount = await ctx.db
@@ -61,7 +118,6 @@ export const submitOrder = mutation({
         (discount.maxUses === undefined || discount.usageCount < discount.maxUses);
 
       if (isValid && discount) {
-        // Apply discount math — flat capped at subtotal, percent from server-stored amount
         const savings =
           discount.discountType === "percent"
             ? Math.round(args.subtotal * (discount.amount / 100))
@@ -72,12 +128,10 @@ export const submitOrder = mutation({
         discountApplied = savings;
         validatedDiscountCode = discount.code;
 
-        // Increment usageCount
         await ctx.db.patch(discount._id, {
           usageCount: discount.usageCount + 1,
         });
       }
-      // Invalid/expired discount: silently proceed without discount (D-03: no hard rejection)
     }
 
     await ctx.db.insert("orders", {
@@ -94,6 +148,7 @@ export const submitOrder = mutation({
       customerPhone: args.customer.phone,
       customerEmail: args.customer.email,
     });
+    await upsertOrderSummary(ctx, null, "pending", serverTotal);
     return { orderId };
   },
 });
@@ -131,7 +186,10 @@ export const updateStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.id);
+    if (!order) throw new ConvexError("Order not found.");
     await ctx.db.patch(args.id, { status: args.status });
+    await upsertOrderSummary(ctx, order.status, args.status, order.total ?? order.subtotal);
   },
 });
 
@@ -148,6 +206,7 @@ export const cancelOrder = mutation({
       throw new ConvexError(`Cannot cancel — order is already ${order.status}.`);
     }
     await ctx.db.patch(order._id, { status: "cancelled" });
+    await upsertOrderSummary(ctx, order.status, "cancelled", order.total ?? order.subtotal);
   },
 });
 
@@ -157,12 +216,15 @@ export const getOrdersByContact = query({
   handler: async (ctx, args) => {
     if (!args.contact.trim()) return [];
     const normalized = args.contact.toLowerCase().trim();
-    const all = await ctx.db.query("orders").order("desc").collect();
-    return all.filter(
-      (o) =>
-        o.customer.email?.toLowerCase() === normalized ||
-        o.customer.phone === normalized
-    );
+    const byPhone = await ctx.db
+      .query("orders")
+      .withIndex("by_customerPhone", (q) => q.eq("customerPhone", normalized))
+      .take(50);
+    if (byPhone.length > 0) return byPhone;
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_customerEmail", (q) => q.eq("customerEmail", normalized))
+      .take(50);
   },
 });
 

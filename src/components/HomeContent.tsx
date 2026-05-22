@@ -1295,6 +1295,12 @@ export default function HomeContent() {
     scrollTo(target);
   }, [router]);
 
+  // Hard ceiling: never block the user for more than 6 s regardless of network.
+  useEffect(() => {
+    const t = setTimeout(() => setCriticalReady(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
   // Wait for products + hero image
   useEffect(() => {
     if (!products) return;

@@ -1,20 +1,35 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation } from "./_generated/server";
 
 /**
  * EMERGENCY: Wipe every trace of an email from the auth system + admins table.
- * Run this from the Convex dashboard "Functions" tab if you cannot sign up
- * because the email is stuck in authAccounts from a previous deployment.
  *
- * Usage from dashboard:
- *   authAdmin:purgeEmail  { "email": "amritanshu@thirdwavecoffee.in" }
- *
- * This is intentionally unauthenticated because it exists to recover from
- * a locked-out state. Remove or gate this file once you are signed in.
+ * Requires the caller to be authenticated as a superadmin.
+ * If you are completely locked out and cannot authenticate, you must run this
+ * directly from the Convex dashboard "Functions" tab (which uses your
+ * dashboard session, not a client JWT) — the auth check is bypassed there.
  */
 export const purgeEmail = mutation({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
+    // ── Auth guard ────────────────────────────────────────────────────────
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError(
+        "Unauthorized: you must be signed in as a superadmin to use this function."
+      );
+    }
+    const callerEmail = (identity.email ?? "").toLowerCase().trim();
+    const callerAdmin = await ctx.db
+      .query("admins")
+      .withIndex("by_email", (q) => q.eq("email", callerEmail))
+      .first();
+    if (!callerAdmin || callerAdmin.role !== "superadmin" || !callerAdmin.active) {
+      throw new ConvexError(
+        "Forbidden: only active superadmins can purge email records."
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────
     const target = email.toLowerCase().trim();
     let removed = {
       authAccounts: 0,
