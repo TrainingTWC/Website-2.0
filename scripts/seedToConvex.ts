@@ -187,7 +187,7 @@ const productsToSeed = [
     type: "merch", category: "tote", price: 799,
     tags: ["tote", "bag", "canvas", "art", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/black-tote-bag.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/black-tote-bag.webp"
   },
   {
     name: "White Skater Tote Bag",
@@ -195,7 +195,7 @@ const productsToSeed = [
     type: "merch", category: "tote", price: 799,
     tags: ["tote", "bag", "canvas", "illustrated", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/white-tote-bag.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/white-tote-bag.webp"
   },
   {
     name: "Cat in a Cup Lapel Pin",
@@ -203,7 +203,7 @@ const productsToSeed = [
     type: "merch", category: "pin", price: 449,
     tags: ["lapel-pin", "wooden", "cat", "accessory", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/cat-in-cup-lapel-pin.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/cat-in-cup-lapel-pin.webp"
   },
   {
     name: "Cat Lapel Pin",
@@ -211,7 +211,7 @@ const productsToSeed = [
     type: "merch", category: "pin", price: 449,
     tags: ["lapel-pin", "metal", "cat", "accessory", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/cat-lapel-pin.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/cat-lapel-pin.webp"
   },
   {
     name: "Coffee Strainer",
@@ -219,7 +219,7 @@ const productsToSeed = [
     type: "merch", category: "accessories", price: 699,
     tags: ["strainer", "steel", "brewing", "kitchen", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.6, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/coffee-strainer.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/coffee-strainer.webp"
   },
   {
     name: "Brass Dabara Set",
@@ -227,7 +227,7 @@ const productsToSeed = [
     type: "merch", category: "accessories", price: 1499,
     tags: ["dabara", "brass", "filter-coffee", "traditional", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.9, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/dabra-set.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/dabra-set.webp"
   },
   {
     name: "Keychain & Magnetic Bookmarks Set",
@@ -235,7 +235,7 @@ const productsToSeed = [
     type: "merch", category: "keychain", price: 549,
     tags: ["keychain", "wooden", "bookmark", "gift-set", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/keychain-magnetic-bookmarks.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/keychain-magnetic-bookmarks.webp"
   },
   {
     name: "NFC Smart Keychain",
@@ -243,7 +243,7 @@ const productsToSeed = [
     type: "merch", category: "keychain", price: 599,
     tags: ["keychain", "nfc", "wooden", "smart", "tech", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.6, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/nfc-keychain.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/nfc-keychain.webp"
   },
   {
     name: "Iridescent Sipper Cup",
@@ -251,7 +251,7 @@ const productsToSeed = [
     type: "merch", category: "drinkware", price: 999,
     tags: ["sipper", "cup", "purple", "iridescent", "drinkware", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.7, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/sipper.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/sipper.webp"
   },
   {
     name: "Gradient Stainless Steel Tumbler",
@@ -259,7 +259,7 @@ const productsToSeed = [
     type: "merch", category: "drinkware", price: 1299,
     tags: ["tumbler", "steel", "insulated", "gradient", "drinkware", "gift", "merch"], flavorNotes: [], stockStatus: "in-stock", rating: 4.8, reviewCount: 0,
     imageFile: null,
-    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/assets/tumbler.jpg"
+    imageUrl: "https://trainingtwc.github.io/brewmatch-ai/optimized/tumbler.webp"
   }
 ];
 

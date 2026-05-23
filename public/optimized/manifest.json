@@ -1,4 +1,34 @@
 {
+  "black-tote-bag.jpg": {
+    "webp": "black-tote-bag.webp",
+    "lqip": "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAADQBACdASoYABAAPwForE6rJaQiMAgBYCAJYwCw7YvM1YDVaCJxGsdWxbr6HqFyUAD+5+xLdcaraUWYKhDCzB/eSJ13+LRYYvw5YQCZmjl+4UVBZJAaqWBmfeg9HgUw3k6/91augAOv3Q/vFES+ZhaKzes5Bb1L8aSJEZF+Jf4ry8NQ+vDxFIPTWMCuEq/A+RVZfmgucNoZ3eF1+SBKB/O08fi7lL8iwES2GPCDsQZXwAAA",
+    "width": 2160,
+    "height": 1440
+  },
+  "cat-in-cup-lapel-pin.jpg": {
+    "webp": "cat-in-cup-lapel-pin.webp",
+    "lqip": "data:image/webp;base64,UklGRpoAAABXRUJQVlA4II4AAACQBACdASoYABAAPwFqrE6rJiQiMAgBYCAJaACdMoADg9HZTX1Tvr4gf244oyAAzjI6jMnoY70T2W0OvU+ifAg6lQ+/8KELbKe1vVO2G5awEGun7bmmDuPHE8gIqATteIGHy0oQlMdDjZFfpycdBF4+lYMQPnnDj+S/8QXUk8Ci2pJAvzgc9umpt7A4gAAA",
+    "width": 2160,
+    "height": 1440
+  },
+  "cat-lapel-pin.jpg": {
+    "webp": "cat-lapel-pin.webp",
+    "lqip": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAACwBACdASoYABAAPwFqrE8rJiQiMAgBYCAJQBOmUAS1W7JFDXBjhnqD4PVPCpKAAP7n0XPnmtA1aMhgwblyfPiZNy7pca121ipIwls+KVgKvJOiEZSMZEVmtuHYdgrsbGeyaP15dWzzwTSgkoBkGm8Kk7dw3O0vOUdFPfHwLfF34Z2SvY66PNteKZnoAA==",
+    "width": 2160,
+    "height": 1440
+  },
+  "coffee-strainer.jpg": {
+    "webp": "coffee-strainer.webp",
+    "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAwBACdASoYABAAPwForE8rJaQiMAgBYCAJYgCdAB6ET9iBW2QXyP+1SYAA/rXUoaiGE4gPZaN7KDrbi0jNBoQDnZrhBtnhBi7RWVdF0eQZnJHE7PUqU69xMux9CuMMdfoFd9k562ixhlnk26aaC4KOp/tsv9YQWyvVoi1/6tOZ5wD+0AA=",
+    "width": 2160,
+    "height": 1440
+  },
+  "dabra-set.jpg": {
+    "webp": "dabra-set.webp",
+    "lqip": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAABQBACdASoYABAAPwFqrE8rJiQiMAgBYCAJaAC7AYw6qTsNDYQKUmqkp9pwAP68gk2LFVvFaTy4y8kHHLDrYvbXEVLN32UNXoaUTi7jhX3rF4iLoGCnJyILgA3q5FrUuaGv7V386bnDMaw+d9FGszA1xD1FpRJDO+yAjVV7v91yRn4/tHfeY6JsLfuD0lXGIDSzF7nJ1U4tS2x+2MAiUdD8TIyxmSvAAAA=",
+    "width": 2160,
+    "height": 1440
+  },
   "EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg": {
     "webp": "EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.webp",
     "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAADQBACdASoYABgAPwFor1GrJSQisBgIAWAgCWcAyUwQtf/9rgl2J+08ZN6uW/K0AAD+78ORP6kXkeKlUdI2NaSFViX8g+qx1De+nDtlNcnbESfeQiMcRpTlWzX7jPG9UPVeLrROV4Psw+dntj/lOc8OvC0Cj39ALHmWPXgwMIAAAA==",
@@ -47,6 +77,12 @@
     "width": 8533,
     "height": 8533
   },
+  "keychain-magnetic-bookmarks.jpg": {
+    "webp": "keychain-magnetic-bookmarks.webp",
+    "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAAAQBACdASoYABAAPwFqrE8rJiQiMAgBYCAJZgCsACFdoITaYUL5xCjg6AD839vrEjAI4iI9ntoXdVj5NGMBUCkgRVfMHf5q+4wQz1YUM3hwqbXep2yyWfyhE29XhwR0avmGhLSzeWl6rsAoBxiciSnYh4DCH+1mUjiQ3yHmaZ2QAA==",
+    "width": 2160,
+    "height": 1440
+  },
   "merch-green-mug.jpg": {
     "webp": "merch-green-mug.webp",
     "lqip": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAABwBACdASoYABAAPwFqrE6rJiQiMAgBYCAJQBOgMYYduYTRbCG3/shJpSeIAAD+1CgQI3X0ZfNdBfeLHwHNAyenL7RV/ZN71m24uLAD2DlGo12fVyUMG1ctW9+qZ6f3yKLhztmbzV9uAo/OL6xFR6AS52zbOOfLQWBrhOUMWaXTkbRM8f60XcJnAAA=",
@@ -83,6 +119,18 @@
     "width": 8533,
     "height": 8533
   },
+  "nfc-keychain.jpg": {
+    "webp": "nfc-keychain.webp",
+    "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAAAwBACdASoYABAAPwFqrE8rJiQiMAgBYCAJQBOgMWgb+fdTZELXkNfp4+AA/q6ifBtWn39i9tGE/1QAIIgHXNaCYOVSaIxjq1Jxgv7dfrdfQgLj19puovY1gkrvbH5L80oceteszfyaIg7fkzUsF/hviyd6Kw6tDQZOTAAA",
+    "width": 2160,
+    "height": 1440
+  },
+  "our-story.png": {
+    "webp": "our-story.webp",
+    "lqip": "data:image/webp;base64,UklGRrwAAABXRUJQVlA4ILAAAAAwBQCdASoYABMAPwFysFKrJqSiqAqpYCAJbAC2yBEc3Jh4x1AWXramI8eg/mZ7ivyfhAD+8pddV5nXdLbwYrKYnnlZeG74kdFQ71qtpEvSvU/q1/IRK0YQ2kz6Ok3xOmDKJ5I7F9MxIrYFeS/8VduYXGb5RdT0S9lJL6Q2GGfxGCL1IDj8MioQu+RMTmLdTtNPi2FBk3/EWesW0Pn5J1eMySsUCEWmaBJprZnEIAAAAA==",
+    "width": 1073,
+    "height": 865
+  },
   "SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg": {
     "webp": "SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.webp",
     "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAABwBACdASoYABgAPwFsrk6rJiSiMAgBYCAJZQAAW+qqUw96tDa80Uw9lEcjwAD+77S30DJvkCFWH8BzKW/YPZKMnNIpGpyJpuxbN56u9pO4OYBq0Oy3864uJotmWhvyvn1RiOHe6xtwAA==",
@@ -106,6 +154,12 @@
     "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAABwBACdASoYABgAPv1kq06rJSOiN/VYAWAfiWcAAC31U4wBILRWd9vjIdlAAAD+78Nf8XaR/9xI2tZoy7AV8l8+4hRj8UBaYrkLbSb4buYAyCFhb13c7ooszKn8T6Nc9DDDTQ3I5coQ7uQAAAA=",
     "width": 8533,
     "height": 8533
+  },
+  "sipper.jpg": {
+    "webp": "sipper.webp",
+    "lqip": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAwBACdASoYABAAPwFqrE6rJiQiMAgBYCAJYwCdAB0k58psP4/t7Ici+aAA/tlYRFsl17PL7go/UIsFtQdnNIlUDcCPl7HVWNeXt9BfWdgeyIIKvVEfYnrhZlVmsHjT8Rz5v17EXtNouzY1VWNz9vKc2FZbcqEpJAFCLLaX/W4WiSmZegpH1OtOEgWAAA==",
+    "width": 2160,
+    "height": 1440
   },
   "SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg": {
     "webp": "SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.webp",
@@ -202,6 +256,12 @@
     "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAABwBACdASoYABgAPv1kq06rJSOiN/VYAWAfiWcAAC31U4wBILRWd9vjIdlAAAD+78Nf8XaR/9xI2tZoy7AV8l8+4hRj8UBaYrkLbSb4buYAyCFhb13c7ooszKn8T6Nc9DDDTQ3I5coQ7uQAAAA=",
     "width": 8533,
     "height": 8533
+  },
+  "tumbler.jpg": {
+    "webp": "tumbler.webp",
+    "lqip": "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAAAwBACdASoYABAAPwFqrE6rJiQiMAgBYCAJQBjiiYhVtB532uy3RV5MtVAA/tlYKf3HavE+f1H32x4wnZLRRjqbdcHSieuCfZdQ47WfYvIrPTZqmthQkHcPUwnm89iTvXobk8MYarwol/tx++FnDJBQ43EJZ4fWzrMn4n85qw5kdEB1ZixHwv0MQ6HAXmn//uGAAA==",
+    "width": 2160,
+    "height": 1440
   },
   "VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg": {
     "webp": "VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.webp",
@@ -304,5 +364,11 @@
     "lqip": "data:image/webp;base64,UklGRpIAAABXRUJQVlA4IIYAAACQBACdASoYABgAPvVop06qpiOiMAwBUB6JagDGfCHfw/y2MaO6V325rLn3gAAA/vHE7VF0a5kt/GT2/sOZ0HktVwuibN7UZfbFVS+KGBRnIXFUQhUuG2dovjxcQ2fZEK2EQfkLy61CJQ11AmdLqFGERFpETBS5H5rGrD4ozcwFCHiGvgAAAA==",
     "width": 4000,
     "height": 4000
+  },
+  "white-tote-bag.jpg": {
+    "webp": "white-tote-bag.webp",
+    "lqip": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAAAwBACdASoYABAAPwFsrU8rJiQiMAgBYCAJaACw82pQOqF4dsUZYeoZeGAA/bbGEQtHSKUtxI84vfMye315RxGnsZR1gRNGOZJDqnNqvEm4Nj/EpzC7aXPh/0rnCWbOD135lGXbMZKgp5sx+huMPun7dOpoZ0Eaqj7CWm0O/TapWHb+5T+olRAAAAA=",
+    "width": 2160,
+    "height": 1440
   }
 }

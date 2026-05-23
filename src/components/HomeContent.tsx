@@ -111,7 +111,7 @@ function FizzBanner() {
     <div className="relative w-full h-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(/banner-schweppes.png)` }}
+        style={{ backgroundImage: `url(/banner-schweppes.webp)` }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
       <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
@@ -140,7 +140,7 @@ function DessertsBanner() {
     <div className="relative w-full h-full overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(/banner-third-rush.jpg)` }}
+        style={{ backgroundImage: `url(/banner-third-rush.webp)` }}
       />
       <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
       <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
