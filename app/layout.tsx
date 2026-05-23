@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import { PageTransition } from "../src/components/PageTransition";
+import { THEME_BOOT_SCRIPT } from "../src/context/ThemeContext";
 import "../src/index.css";
 
 export const metadata: Metadata = {
@@ -27,6 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Apply the saved theme before paint to avoid FOUC on dark palettes. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
+        />
         <link
           rel="preconnect"
           href="https://different-bulldog-772.convex.cloud"

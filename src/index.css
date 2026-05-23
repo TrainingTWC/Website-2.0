@@ -21,6 +21,47 @@
   --color-natural-orange-soft: #F5DEC8;
 }
 
+
+/* -- Theme palettes --------------------------------------------
+   User-selectable palettes. The default (cream) lives in `@theme`
+   above; each [data-theme] selector overrides the six core role
+   tokens so every component themed with bg-natural-* utilities
+   retunes automatically. The pastel pink / green / orange tokens
+   remain global so the per-page About tones stay consistent
+   across palettes. See src/context/ThemeContext.tsx. */
+
+[data-theme="mocha"] {
+  --color-natural-bg: #1E1612;
+  --color-natural-paper: #2A1F18;
+  --color-natural-muted: #3B2C22;
+  --color-natural-stone: #5A463A;
+  --color-natural-text: #F1E8DC;
+  --color-natural-accent: #D7A86E;
+  --color-natural-border: #4A3A2E;
+  --color-natural-ink: #0E0907;
+}
+
+[data-theme="coastal"] {
+  --color-natural-bg: #EEF3F2;
+  --color-natural-paper: #F8FBFA;
+  --color-natural-muted: #DDE8E6;
+  --color-natural-stone: #B8C9C5;
+  --color-natural-text: #1B2B2D;
+  --color-natural-accent: #2F6F73;
+  --color-natural-border: #CCDAD7;
+  --color-natural-ink: #0F1C1E;
+}
+
+[data-theme="sunset"] {
+  --color-natural-bg: #F5EBE3;
+  --color-natural-paper: #FBF4ED;
+  --color-natural-muted: #ECDDD0;
+  --color-natural-stone: #D8B9A0;
+  --color-natural-text: #3B1F1C;
+  --color-natural-accent: #B85C3C;
+  --color-natural-border: #E3CCB8;
+  --color-natural-ink: #2A1310;
+}
 @layer base {
   html {
     /* Native smooth scroll fights Lenis. Lenis owns scroll; let CSS-anchored
