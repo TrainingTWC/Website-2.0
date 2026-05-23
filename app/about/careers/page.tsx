@@ -13,6 +13,8 @@ import {
   useCareerRoles,
   useCareerBenefits,
   useCareerStories,
+  useCareerMarquee,
+  useCareerStats,
 } from "@/src/lib/useAboutContent";
 
 const BENEFIT_ICONS: Record<string, any> = {
@@ -80,6 +82,8 @@ export default function CareersPage() {
   const roles = useCareerRoles();
   const benefitTiles = useCareerBenefits();
   const stories = useCareerStories();
+  const marqueeItems = useCareerMarquee();
+  const statTiles = useCareerStats();
   const [filter, setFilter] = useState<TeamFilter>("All");
   const visibleRoles =
     filter === "All" ? roles : roles.filter((r) => r.team === filter);
@@ -104,7 +108,7 @@ export default function CareersPage() {
           ]}
         />
         <MarqueeStrip
-          items={["NO EXPERIENCE NEEDED", "DAY 1 PAID TRAINING", "FREE BEANS FOREVER", "GROW FAST", "130+ CAFES", "JOIN THE TEAM"]}
+          items={marqueeItems}
           variant="accent"
         />
       </>
@@ -113,18 +117,13 @@ export default function CareersPage() {
       <section className="bg-natural-text text-natural-bg py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-14">
-            {([
-              ["Rs 3.6L+", "starting pay"],
-              ["Day 1", "training on salary"],
-              ["3 weeks", "paid coffee school"],
-              ["130+", "cafes to grow into"],
-            ] as const).map(([num, label], i) => (
-              <RevealOnScroll key={label} delay={i * 0.06}>
+            {statTiles.map((s, i) => (
+              <RevealOnScroll key={s.label + i} delay={i * 0.06}>
                 <div className="font-serif font-bold text-5xl sm:text-6xl xl:text-7xl leading-none">
-                  {num}
+                  {s.value}
                 </div>
                 <div className="mt-3 text-xs font-bold uppercase tracking-[0.35em] opacity-55">
-                  {label}
+                  {s.label}
                 </div>
               </RevealOnScroll>
             ))}

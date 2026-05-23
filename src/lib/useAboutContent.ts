@@ -54,6 +54,11 @@ export interface CareerBenefit {
   iconColor: string;
 }
 
+export interface CareerStat {
+  value: string;
+  label: string;
+}
+
 export interface CareerStory {
   name: string;
   role: string;
@@ -212,6 +217,22 @@ const DEFAULT_BENEFITS: CareerBenefit[] = [
   { iconKey: "Globe", title: "Sabbatical", detail: "Eligible every 5 years. Paid time to think.", color: "bg-emerald-50 border-emerald-200", iconColor: "text-emerald-500" },
 ];
 
+const DEFAULT_CAREERS_MARQUEE: string[] = [
+  "NO EXPERIENCE NEEDED",
+  "DAY 1 PAID TRAINING",
+  "FREE BEANS FOREVER",
+  "GROW FAST",
+  "130+ CAFES",
+  "JOIN THE TEAM",
+];
+
+const DEFAULT_CAREERS_STATS: CareerStat[] = [
+  { value: "Rs 3.6L+", label: "starting pay" },
+  { value: "Day 1",    label: "training on salary" },
+  { value: "3 weeks",  label: "paid coffee school" },
+  { value: "130+",     label: "cafes to grow into" },
+];
+
 const DEFAULT_STORIES: CareerStory[] = [
   { name: "Meera D’Souza", role: "Regional Trainer", image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"), from: "Barista, 2022", to: "Trains 80 people, 2026", quote: "I joined thinking coffee was a job. Three years later I train 80 people." },
   { name: "Aarav Menon", role: "Head of Roasting", image: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), from: "Apprentice, 2021", to: "Runs Mumbai roastery, 2025", quote: "I was hired to clean machines. Now I own the roast profile." },
@@ -308,6 +329,12 @@ export function useCareerBenefits(): CareerBenefit[] {
 export function useCareerStories(): CareerStory[] {
   return useListValue<CareerStory>("about.careers.stories", DEFAULT_STORIES);
 }
+export function useCareerMarquee(): string[] {
+  return useListValue<string>("about.careers.marquee", DEFAULT_CAREERS_MARQUEE);
+}
+export function useCareerStats(): CareerStat[] {
+  return useListValue<CareerStat>("about.careers.stats", DEFAULT_CAREERS_STATS);
+}
 
 // Newsroom
 export function useNewsroomHero() {
@@ -330,6 +357,8 @@ export const AboutDefaults = {
   roles: DEFAULT_ROLES,
   benefits: DEFAULT_BENEFITS,
   stories: DEFAULT_STORIES,
+  careersMarquee: DEFAULT_CAREERS_MARQUEE,
+  careersStats: DEFAULT_CAREERS_STATS,
   newsroomHero: DEFAULT_NEWSROOM_HERO,
   press: DEFAULT_PRESS,
   facts: DEFAULT_FACTS,

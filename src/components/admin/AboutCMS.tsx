@@ -23,6 +23,7 @@ import {
   type CareerRole,
   type CareerBenefit,
   type CareerStory,
+  type CareerStat,
   type PressItem,
   type FactItem,
 } from "../../lib/useAboutContent";
@@ -654,10 +655,81 @@ function CareersEditors({ onSave }: { onSave: () => void }) {
   return (
     <>
       <HeroEditor storageKey="about.careers.hero" defaults={AboutDefaults.careersHero} onSave={onSave} />
+      <MarqueeEditor onSave={onSave} />
+      <StatsEditor onSave={onSave} />
       <RolesEditor onSave={onSave} />
       <BenefitsEditor onSave={onSave} />
       <StoriesEditor onSave={onSave} />
     </>
+  );
+}
+
+function MarqueeEditor({ onSave }: { onSave: () => void }) {
+  const { items, setItems, save, reset, status, error } = useItemsForm<string>(
+    "about.careers.marquee",
+    AboutDefaults.careersMarquee as string[]
+  );
+  const [text, setText] = useState(items.join("\n"));
+  // keep textarea in sync when convex data hydrates
+  useEffect(() => { setText(items.join("\n")); }, [items.join("\u0001")]); // eslint-disable-line react-hooks/exhaustive-deps
+  async function handleSave() {
+    const next = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    setItems(next);
+    // give state a tick then save
+    setTimeout(async () => { if (await save()) onSave(); }, 0);
+  }
+  return (
+    <section className={PANEL}>
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h4 className="font-serif font-bold text-lg text-stone-800">Banner marquee</h4>
+          <p className="text-xs text-stone-500">The scrolling pink banner under the hero. One phrase per line.</p>
+        </div>
+        <span className="text-[11px] uppercase tracking-wider text-stone-400 font-bold">about.careers.marquee</span>
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className={TEXTAREA}
+        rows={Math.max(6, text.split(/\r?\n/).length + 1)}
+        placeholder={"NO EXPERIENCE NEEDED\nDAY 1 PAID TRAINING\n..."}
+      />
+      <SaveBar status={status} error={error} onSave={handleSave} onReset={() => { reset(); setText((AboutDefaults.careersMarquee as string[]).join("\n")); }} />
+    </section>
+  );
+}
+
+function StatsEditor({ onSave }: { onSave: () => void }) {
+  const { items, setItems, save, reset, status, error } = useItemsForm<CareerStat>(
+    "about.careers.stats",
+    AboutDefaults.careersStats as CareerStat[]
+  );
+  async function handleSave() {
+    if (await save()) onSave();
+  }
+  return (
+    <section className={PANEL}>
+      <ListEditor<CareerStat>
+        title="Stat tiles (dark band)"
+        items={items}
+        setItems={setItems}
+        itemLabel={(idx, it) => it.value || `Stat ${idx + 1}`}
+        defaultItem={{ value: "", label: "" }}
+        renderItem={(item, update) => (
+          <>
+            <div>
+              <label className={LABEL}>Big number / phrase</label>
+              <input value={item.value} onChange={(e) => update({ value: e.target.value })} className={INPUT} placeholder="Rs 3.6L+" />
+            </div>
+            <div>
+              <label className={LABEL}>Caption</label>
+              <input value={item.label} onChange={(e) => update({ label: e.target.value })} className={INPUT} placeholder="starting pay" />
+            </div>
+          </>
+        )}
+      />
+      <SaveBar status={status} error={error} onSave={handleSave} onReset={reset} />
+    </section>
   );
 }
 
