@@ -2,14 +2,16 @@
 
 ## Intent
 
-Convince a careful Indian buyer that **BrewMatch is a real company built by real people**, not a faceless DTC brand. Establish credibility through specificity: dates, names, places, partnerships. Earn the right to charge a premium.
+Make a 20–40 year old urban Indian reader feel like **BrewMatch is a brand made by people they'd actually hang out with** — not a faceless DTC operation, not a legacy company trying to act young. Specificity earns the read: real names, real dates, real estates, real numbers. We are confident without being corporate, proud without preening.
 
 The reader should leave knowing:
-1. **Who** founded it, what they were doing before, why this.
-2. **When** and **where** it started (and what was different about 2016 India coffee).
-3. **How** the supply chain works (in plain terms).
-4. **What** the company stands for, demonstrated through actions not slogans.
-5. **Where** it is today and what's next.
+1. **Who** founded it — the actual humans, with opinions and faces, not LinkedIn headshots.
+2. **When** and **where** it started, and what was broken about Indian coffee in 2016 that they decided to fix.
+3. **How** the supply chain works — plain English, no jargon.
+4. **What** the company actually stands for, proven by what we do, not what we say.
+5. **Where** we are today and what comes next — stated with confidence, not aspiration.
+
+The page should be screenshot-worthy. Multiple moments where the reader pauses, takes a phone screenshot, sends it to a friend. That's the bar.
 
 ---
 
@@ -18,9 +20,10 @@ The reader should leave knowing:
 ### 1. Hero **[KEEP]**
 - **Eyebrow**: "Our Story"
 - **Title**: "A small Bengaluru roastery, ten years on."
-- **Tagline**: One sentence that does not over-promise. Currently strong; can stay.
-- **Image**: A real photo of the original roastery exterior, ideally at golden hour.
+- **Tagline**: One sentence that does not over-promise. Tone is confident-quiet, not founder-LinkedIn-energetic.
+- **Image**: A real photo of the original roastery exterior — ideally golden hour, slightly imperfect framing. The image should feel like a phone photo a co-founder might have taken, not a brand shoot.
 - **Component**: `ParallaxHero` (keep as-is).
+- **Mobile rule**: title must fit in 2 lines at 360px width — if it doesn't, shorten it.
 
 ### 2. The Founding Moment **[KEEP, refine copy]**
 - **PinnedTextBlock**, text left, 3 photos right.
@@ -37,11 +40,12 @@ A two-up grid of large founder portraits with a 200-word bio under each. This is
 
 - **Layout**: Two big cards side-by-side on desktop, stacked on mobile.
 - **Per founder**:
-  - Portrait (3:4 aspect)
+  - Portrait (3:4 aspect) — styled but not retouched-to-perfection. Skin texture and crow's feet stay in.
   - Name + role (e.g. "Anjali Iyer, Co-founder & Head of Coffee")
-  - Short paragraph: background → why they left it → role today.
-  - One personal-voice quote (35-50 words). No corporate-speak.
+  - Short paragraph: background → why they left it → role today. Written in a conversational register — "I was 27, working in product at a startup that didn't deserve me, and I'd just had the worst flat white of my life in BKC. …"
+  - One personal-voice quote (35–50 words). Strong opinion or sharp observation. **Banned**: anything starting with "I'm passionate about…".
 - **Component**: New `FoundersGrid` primitive, or compose `RevealOnScroll` + plain divs. No tilt — portraits should feel still and serious, not gimmicky.
+- **Optional young-mindset add**: a tiny "now playing / now reading" line under each founder — the song or book they're into right now. Small, italic, refreshed quarterly. Signals real humans behind the bios.
 - **Open**: We need actual founder names and bios from the user. Newsroom page already implies "Anjali" (Head of Coffee) and "Ayushi" (PR). Need confirmation + a third if applicable.
 
 ### 4. The Timeline **[NEW]**

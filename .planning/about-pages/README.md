@@ -4,21 +4,58 @@ These four briefs lock the *content* and *narrative order* for the new About pag
 
 ## Audience anchor
 
-The primary buyer is a **40–45 yr old Indian consumer** who:
-- Drinks coffee daily, increasingly cares about quality.
-- Distrusts marketing speak. Trusts specificity (names, dates, numbers, faces).
-- Reads carefully on tablet / desktop, scrolls patiently. Mobile reader is secondary but still important.
-- Wants to know **who** is behind the brand, **where** the beans come from, **how** people are treated, **what** the press independently says.
+The primary audience is a **20–40 year old urban Indian** — the 95% of our buyers, hires, and casual readers. They are:
 
-Every section earns its place by answering a question this reader actually has. No filler.
+- **Digital natives.** They scroll on phones first, in transit, between meetings, in queues. Desktop is the secondary surface, not the primary one.
+- **Taste-curious, not coffee-snobby.** They want to drink better coffee without being talked down to. They Google "V60 vs French press" without embarrassment.
+- **Bullshit-allergic.** They can spot a stock photo, a humblebrag, or a recycled brand-voice template in 0.4 seconds. They share what feels real, mute what feels manufactured.
+- **Aesthetic-aware.** They know what good design looks like — they follow it on Instagram, Substack, Pinterest. The page itself has to feel like something they'd screenshot.
+- **Value-driven.** Ethics, transparency, fair pay, sustainability — these aren't soft preferences. They are filters before purchase.
+- **Time-poor, attention-rich.** If they're reading, they're engaged. But they will bail in 6 seconds if the page reads like a 2015 corporate "About Us".
+
+What they want from this site:
+- Know **who** is actually behind the brand (faces, voices, opinions).
+- Know **where** the beans come from in real terms (region, estate, farmer).
+- Know **how** people are treated (compensation, growth, culture — with receipts).
+- Know **what** the world independently says (press, awards, third-party validation).
+- Be **respected** as a smart reader, not pitched at.
+
+Every section earns its place by answering a question they actually have. No filler. No grandfather-brand sincerity.
+
+## Voice & tone
+
+- **Confident, never corporate.** Short sentences. Active verbs. Real opinions.
+- **Specific, never sweeping.** "We pay 28% above C-market" beats "we believe in fair trade."
+- **Self-aware, never thirsty.** We can be funny, but we don't perform fun. We can be proud, but we don't preen.
+- **Plain English, no jargon hierarchy.** Use words like *cupping*, *terroir*, *SCA* only when the page also explains them.
+- **Direct address.** "You" not "the customer." "We" not "the company."
+- **No buzzwords ever:** *curated*, *bespoke*, *passion*, *journey*, *artisanal*, *handcrafted*, *premium experience*, *world-class*, *passionate about coffee*. Banned on sight.
 
 ## Universal narrative principle
 
 > **Show people, places, and proof — in that order.**
 
-- **People**: real names, real photos, real quotes. No stock photography for human subjects.
+- **People**: real names, real photos, real quotes. No stock photography for human subjects, ever.
 - **Places**: estates, the roastery, the cafés. Geography grounds the story.
 - **Proof**: dates, scores, percentages, independent press, third-party recognition.
+
+## Visual & motion direction (young-mindset)
+
+Design references to internalize \u2014 NOT to copy, but to calibrate vibe:
+- **Linear, Vercel, Stripe, Arc** \u2014 confident product-grade typography, lots of negative space, motion only where it earns its keep.
+- **Aesop, Loftie, Future** \u2014 editorial-minded e-commerce/brand sites with strong typographic restraint.
+- **Substack writer pages, Pitchfork features, The Verge long-reads** \u2014 the article-feel for our long-form sections.
+- **NOT**: legacy big-coffee corporate sites (Starbucks, Tata), 2018-era \"craft\" template sites, anything with a stock-photo carousel hero.
+
+Specific calibration:
+- **Type**: Big serif display + crisp sans body. Hierarchy via size + weight, not color or boxes. Generous line-height (1.5\u20131.7 for body).\n- **Color**: The existing cream/dark-text palette is good. Use the dark contrast band (already shipped) as the editorial pause. Avoid gradients except as 5\u201310% texture.\n- **Imagery**: Photo-led, never illustration-led. Imperfect framing > over-styled.\n- **Motion**: Restrained. Parallax is a seasoning, not the main course. Every motion must survive `prefers-reduced-motion`.\n- **Cursor / hover**: Subtle. No cursor-follow blobs, no magnetic buttons. The audience is over the gimmick phase.\n- **Micro-interactions**: One tasteful detail per page, max. A pull quote that fades in. A timeline year that pins. That's enough.\n\n## Mobile-first non-negotiables
+
+Because this audience reads on phones first:
+- Hero copy must work in a 360×640 viewport — no orphaned words, no truncated taglines.
+- Tap targets ≥ 44px. No hover-only interactions; every hover state has a tap equivalent.
+- Side-by-side image+text blocks collapse to vertical with a clear visual rhythm, not just stacked rectangles.
+- All horizontal scrollers (timeline, success stories) snap on mobile with momentum, not free-scroll.
+- Font sizes scale fluidly with `clamp()`, not breakpoint-jumps.
 
 ## Loading discipline (applies to all 4 pages)
 

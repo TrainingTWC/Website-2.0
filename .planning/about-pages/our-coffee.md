@@ -2,16 +2,16 @@
 
 ## Intent
 
-Educate the buyer enough that they can **make a confident purchase decision** AND **brew the coffee well at home**. This page is the antidote to the buyer's biggest fear: "I'll spend ₹800 on a bag and not know what to do with it."
+Give a 20–40 year old reader — first-job professional, design student, founder, hostel-dweller, weekend host — enough to **confidently buy a bag and actually brew it well at home**. This page exists to kill two fears at once: "I won't know what to pick" and "I'll waste ₹800 because I don't know how to brew it."
 
 The reader should leave knowing:
-1. **Why** our coffee tastes the way it does (terroir + roast craft + freshness).
-2. **Where** the beans come from (5 Indian growing regions, named).
-3. **How** to brew them at home (4 methods, exact recipes).
-4. **How fresh** they are when they arrive (the 48-hr roast-to-dispatch promise).
-5. **What** a good cup should taste like and how to identify it.
+1. **Why** our coffee tastes the way it does (terroir + roast craft + freshness, in plain English).
+2. **Where** the beans come from — 5 Indian regions, named, with character.
+3. **How** to brew well at home — 4 methods, exact recipes, scaled for a small kitchen.
+4. **How fresh** it is when it lands at their door (the 48-hour promise).
+5. **What** a good cup tastes like and how to tell when something's off.
 
-This page should reduce returns and increase repeat purchases — by demystifying coffee, not romanticising it.
+This page should reduce returns, increase repeat purchases, and — just as importantly — give the reader something to share with the group chat that taught them something. **No gatekeeping. No "coffee snob" energy. Specialty coffee for people who aren't sure if they're allowed to drink it yet.**
 
 ---
 
@@ -83,22 +83,23 @@ The single most confused topic for new buyers. Demystify in 3 cards.
 - **Component**: TiltCard with intensity 4. Real bean photography is non-negotiable.
 
 ### 7. Brew Methods — Recipes You Can Actually Use **[REFINE]**
-Currently shows 4 brew method TiltCards with no recipe content. Each should be a detailed mini-recipe.
+Currently shows 4 brew method TiltCards with no recipe content. Each should be a detailed mini-recipe — written for someone in a PG kitchen, a 1BHK, or a hostel — not a lab.
 
 - **Format**: 4 expandable cards (or just always-open on desktop). Each card has:
   - Method name + small icon
-  - Gear required (with affordable + premium options for India market)
+  - Gear required — with **affordable + premium options for the Indian market**, real INR ranges ("₹450 plastic dripper from any Amazon search… or ₹6,000 Hario glass if you're feeling it").
   - Coffee-to-water ratio (e.g. 1:16)
-  - Grind size (visual reference — "table salt", "sea salt", "coarse sand")
-  - Water temperature
+  - Grind size — visual reference using stuff people actually have ("table salt", "sea salt", "coarse sand from a beach trip").
+  - Water temperature — if no thermometer, the **"boil + wait 30 seconds"** rule.
   - Total brew time
-  - Step-by-step in 5-7 bullets
+  - Step-by-step in 5–7 bullets, written in second person, mildly funny.
 - **4 methods**:
-  1. **French Press** — 1:15, coarse grind, 4 min steep, gentle plunge
-  2. **Pour-Over (V60 / Hario)** — 1:16, medium-fine, 3-minute bloom + pour cycle
-  3. **AeroPress** — 1:14, fine grind, 30s steep, inverted method
-  4. **Moka Pot** — 1:7, fine grind, low heat, listen for the sputter
+  1. **French Press** — 1:15, coarse grind, 4 min steep, gentle plunge. The hostel-friendly default.
+  2. **Pour-Over (V60 / Hario)** — 1:16, medium-fine, 3-minute bloom + pour cycle. The "I've started making it on weekends" method.
+  3. **AeroPress** — 1:14, fine grind, 30s steep, inverted method. The traveler's friend.
+  4. **Moka Pot** — 1:7, fine grind, low heat, listen for the sputter. The closest thing to espresso without an espresso machine.
 - **Component**: New `BrewRecipeCard` — slightly taller card, more text-dense than current TiltCard.
+- **Optional add**: a tiny "if you mess this up, here's what it'll taste like" troubleshooting line per method — sour = under-extracted, bitter = over-extracted, weak = ratio off. Demystifies the failure modes.
 
 ### 8. The Freshness Promise **[NEW]**
 Reinforce the 48-hour stat with an actual visual.

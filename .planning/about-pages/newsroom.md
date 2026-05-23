@@ -2,15 +2,16 @@
 
 ## Intent
 
-Give journalists, investors, partners, and curious buyers a **single credible source** for everything externally said about BrewMatch — coverage, awards, founder talks, brand assets, and a direct line to the press team. This page is also passively used by the buyer to validate "is this brand for real?"
+Give a 20–40 year old reader — plus the occasional journalist, investor, or curious operator — a **single credible page that proves we're for real**, without sounding like an investor deck. This is the page that pops up when someone searches a founder's name or an outlet name, and it has to convert curiosity into trust in under 30 seconds of scroll.
 
 The reader should leave with:
-1. A clear sense of **the press independently rates us** (multiple outlets, named, dated).
-2. Recognition that we have been **awarded by people who matter** in the category.
-3. Easy access to **assets and a contact** if they want to write about us.
-4. Trust that we are **transparent** — we link to original pieces, we name the people, we publish the response SLA.
+1. A clear sense that **the press independently rates us** — multiple outlets, named, dated, linkable.
+2. Recognition that we've been **picked by the people whose taste they trust** (Forbes 30u30, CNT, SCA, etc.).
+3. The **founders' on-record voice** in long form — podcasts, talks, interviews. This is how young readers vet a brand now.
+4. Easy, no-friction access to **assets and a direct contact** if they want to write about us.
+5. A clean **fact sheet** they can quote without re-asking us.
 
-This is the **most rigorously factual** of the 4 pages. Every claim must be verifiable, every link must work, every name must be correct.
+This is the most rigorously factual of the 4 pages. Every claim must be verifiable, every link must work, every name must be correct. **No vibes-based marketing here — just receipts, in chronological order, with a quiet design that lets the work speak.**
 
 ---
 
@@ -66,19 +67,21 @@ Separate from press. Awards are different — they are juried, not editorial.
 - **Component**: New `AwardsGrid` — non-tilting, restrained type-led tiles.
 
 ### 5. Founders in Conversation **[NEW]**
-Podcast, conference, and YouTube appearances. The founders' on-record voice in long form.
+Podcast, conference, and YouTube appearances. The founders' on-record voice in long form. **This is how young readers actually vet a brand now** — they go listen to a 90-minute interview before they decide if they trust you.
 
 - **Format**: A 3-up grid of "Listen / Watch" tiles. Each tile:
   - Thumbnail (16:9, with play-icon overlay — not auto-playing)
-  - Show / event name
+  - Show / event name (visually weighted — it's the credibility signal)
   - Episode title
   - Duration + date
-  - "Watch →" or "Listen →" external link
+  - "Watch →" or "Listen →" external link (opens in new tab)
 - **Suggested entries (need verification)**:
-  - The Seen and the Unseen podcast — "The economics of specialty coffee in India"
-  - India Coffee Forum 2024 keynote — "What 14 estates taught us about pricing"
-  - The Ken's "Daybreak" — interview on Series B
+  - The Seen and the Unseen podcast — "The economics of specialty coffee in India" (~3 hrs)
+  - India Coffee Forum 2024 keynote — "What 14 estates taught us about pricing" (~45 min)
+  - The Ken's "Daybreak" — interview on Series B (~25 min)
+  - Pick a Spotify/YouTube creator interview if one exists — reaches the youngest segment of the audience.
 - **Component**: New `MediaAppearances` grid. NO embed-on-mount — only load the iframe when the user clicks, to keep TTI fast.
+- **Mobile rule**: thumbnails should still be tappable and link to the platform's native app (Spotify, YouTube, Apple Podcasts) where possible — most young readers will continue listening on their phone, not on our site.
 
 ### 6. Speaking Engagements **[NEW]**
 A small "where we'll be next" calendar — even just 2-3 upcoming entries — signals an active, externally-engaged brand.

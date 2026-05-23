@@ -2,18 +2,19 @@
 
 ## Intent
 
-Convince a smart, ambitious candidate (barista, roaster, designer, engineer, manager) that **BrewMatch is one of the best places to build a career in Indian coffee**. The reader's first question is "what's open?" — answer that immediately. Then earn the rest of their attention.
+Convince a smart, ambitious 20–40 year old — barista, roaster, designer, engineer, ops lead — that **BrewMatch is one of the fastest places to grow in Indian coffee, where the work is real, the people are good, and you're not waiting 5 years for a promotion that should take 18 months**.
 
 The user explicitly directed: "**we should firstly show the available roles, how the cafe team is happy, people who are success stories for the brand etc.**" — this brief follows that ordering exactly.
 
 The reader should leave knowing:
-1. **What roles are open**, in their team and city.
-2. **What it actually feels like** to work here (faces, names, days-in-the-life).
-3. **That people grow here** — concrete success stories.
-4. **How they'll be trained** (the Coffee School).
-5. **What benefits look like** in real terms, not buzzwords.
-6. **How to apply** and what to expect from the process.
+1. **What's open right now** — in their team, their city, their level.
+2. **What it actually feels like** to work here — not stock-photo "culture," real faces and real days.
+3. **That people grow here fast** — receipt-backed success stories, with names and timelines.
+4. **How they'll be trained** — the Coffee School, 3 weeks paid, ₹0 cost.
+5. **What benefits actually mean** in rupees, days, and outcomes.
+6. **How to apply** and exactly what to expect step by step.
 
+This is the page that loses us a great hire if we make it feel like a corporate careers portal. It has to feel like reading a peer's Notion doc — sharp, scannable, opinionated.
 ---
 
 ## Sections, in order
@@ -58,20 +59,21 @@ A bento-style grid of 6-9 real photographs from inside the company. No staged sh
 - **Caption style**: 9-10px uppercase tracking, small, unobtrusive.
 
 ### 4. Success Stories — From the Team **[NEW — user explicitly requested]**
-The emotional core of the page. 3-4 deep portraits of people who grew here.
+The emotional core of the page. 3–4 deep portraits of people who grew here — fast.
 
-- **Format**: A horizontal scrolling testimonial cards on desktop, vertical stack on mobile.
+- **Format**: A horizontal scrolling testimonial set on desktop (scroll-snap), vertical stack on mobile.
 - **Per story**:
-  - Large portrait (4:5 ratio)
+  - Large portrait (4:5 ratio) — real, not corporate headshot.
   - Name + current role
-  - "Joined as ___ in ____" / "Now ___"
-  - 80-100 word story in their own voice
-  - 1 pull quote in larger serif
+  - **Time-to-current-role timeline** — e.g. "Joined as Barista, Mar 2022 → Senior Barista, Oct 2022 → Café Lead, Jul 2023 → Regional Trainer, Mar 2025". Visual stepper. **This is the headline** — young readers want to see velocity, not tenure.
+  - 80–100 word story in their own voice. Casual register. Mention specifics: cities, mistakes, a moment that mattered.
+  - 1 pull quote in larger serif.
+  - Optional: their LinkedIn link, opt-in. Lets readers stalk before they trust.
 - **Suggested archetype stories**:
-  1. **Café team lead → Regional trainer** — "Joined as a barista in 2018, didn't speak English well, now trains all of South India."
-  2. **Intern → Senior engineer** — "Three weeks of barista shadowing taught me more about user empathy than any product course."
-  3. **Roastery apprentice → Head of Roasting (Mumbai)** — "I was hired to clean machines. Now I own the Mumbai roast profile."
-  4. **Designer → Brand lead** — "Came in to design a single packaging refresh in 2021. Stayed for the people."
+  1. **Café team lead → Regional trainer in 3 years** — "Joined as a barista in 2022, didn't speak English well at first, now trains 80 baristas across South India."
+  2. **Intern → Senior engineer in 2 years** — "Three weeks of barista shadowing taught me more about user empathy than any product course."
+  3. **Roastery apprentice → Head of Roasting (Mumbai) in 4 years** — "Hired to clean machines. Now I own the Mumbai roast profile."
+  4. **Designer → Brand lead in 3 years** — "Came in to redesign one bag in 2022. Stayed because the team disagreed with me well."
 - **Open**: Need real employee names + photos + permission. Until then, placeholder names clearly marked.
 - **Component**: New `StoryCarousel` or a `SuccessStoryGrid`. Tilt OK (intensity 4) but motion subtle.
 
