@@ -14,30 +14,44 @@ import { asset } from "@/src/lib/asset";
 
 const founders = [
   {
-    name: "Anjali Iyer",
-    role: "Co-founder & Head of Coffee",
+    name: "Sushant Goel",
+    role: "Co-founder",
     image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
-    bio: "Anjali was 27, working in product at a startup that did not deserve her, and had just paid too much for a flat white in BKC that tasted like cardboard. She moved to Bengaluru, learnt roasting the slow way, and still runs Friday cuppings herself.",
-    quote: "Good coffee is not a personality trait. It is a supply chain with taste. If we cannot explain why a cup costs what it costs, we should not be selling it.",
-    note: "now reading: The Creative Act",
+    bio: "Sushant grew up around South Indian filter coffee in a household where the morning cup was non-negotiable. After Wharton and a stint in consumer investing, he came home convinced India deserved fresh, traceable coffee — not warehouse beans dressed up in nice bags.",
+    quote: "We did not start a cafe chain. We started a roastery that opened cafes so people could taste what fresh actually means.",
+    note: "now reading: The Monk of Mokha",
   },
   {
-    name: "Sushant Rao",
-    role: "Co-founder & Operations",
+    name: "Anirudh Sharma",
+    role: "Co-founder",
     image: asset("assets/our-story.png"),
-    bio: "Sushant came in as the person who could turn a stubborn coffee idea into a company that actually opens on time. He built the first cafe playbook, the roast-to-dispatch promise, and the habit of putting numbers next to every brand claim.",
+    bio: "Anirudh runs the parts of the business that do not make it into the brand film — the logistics, the cafe playbook, the unglamorous spreadsheets that decide whether a 130-cafe network can still ship a bag roasted on Monday.",
     quote: "The romantic version is that we started with a dream. The honest version is that we started with a spreadsheet, a tiny roaster, and very little patience for stale coffee.",
-    note: "now playing: Peter Cat Recording Co.",
+    note: "now listening: Peter Cat Recording Co.",
+  },
+  {
+    name: "Ayush Bathwal",
+    role: "Co-founder",
+    image: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-09.jpg"),
+    bio: "Ayush leads sourcing, partnerships, and the slow work of turning estate relationships into seasonal pricing contracts. If a bag carries a farm name on its back, he probably knows the person who grew it.",
+    quote: "Fourteen estates, fourteen relationships. None of them survive on price alone. They survive because we keep showing up the year after a bad monsoon.",
+    note: "now drinking: Attikan washed lot 04",
+  },
+  {
+    name: "Rajat Luthra",
+    role: "Chief Executive Officer",
+    image: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"),
+    bio: "Rajat joined as CEO in late 2023 after years building consumer brands at scale. He runs the next chapter — more cafes, a second roastery, and a training school built so a barista in Indore tastes the same espresso a barista in Bandra pulls.",
+    quote: "Growth is the easy part. Growing without losing the cup is the actual job.",
+    note: "now obsessing over: dispatch SLAs",
   },
 ] as const;
 
 const timeline = [
   ["2016", "First roastery, Bengaluru", "A 600 sq ft space, one restored roaster, and a roast log held together by tape."],
-  ["2017", "Indiranagar cafe opens", "The first place people could taste the coffee before they trusted the bag."],
   ["2018", "First estate partnership", "Chikmagalur stopped being a sourcing line and became a relationship."],
-  ["2019", "National e-commerce launch", "Fresh beans started reaching kitchens outside the cafe cities."],
   ["2021", "8 estates locked in", "Long-term pricing replaced opportunistic buying."],
-  ["2023", "Coffee School launches", "Three paid weeks before a new barista touches a guest's order."],
+  ["2023", "Coffee School + new CEO", "Three paid weeks of training, and Rajat Luthra steps in to scale the playbook."],
   ["2025", "Series B closed", "Rs 120 cr to grow cafes, roastery capacity, and direct trade."],
   ["2026", "130+ cafes, 14 estates", "Still small enough for the founders to read the bad reviews."],
 ] as const;
@@ -47,16 +61,10 @@ const estates = [
   ["Kelagur", "Chikmagalur", "1,220 m", "SLN 795"],
   ["Mooley Maneh", "Coorg", "1,050 m", "Arabica + Robusta"],
   ["Ratnagiri", "Bababudangiri", "1,350 m", "Catuai"],
-  ["Sangameshwar", "Chikmagalur", "1,100 m", "Kent"],
-  ["Venkids Valley", "Coorg", "980 m", "Robusta"],
-  ["Karadykan", "Chikmagalur", "1,380 m", "Selection 9"],
   ["Baarbara", "Bababudangiri", "1,500 m", "Arabica"],
   ["Kerehaklu", "Chikmagalur", "1,320 m", "Catimor"],
   ["Harley", "Sakleshpur", "1,100 m", "Arabica"],
-  ["Moganad", "Wayanad", "920 m", "Robusta"],
   ["Balanoor", "Chikmagalur", "1,250 m", "Arabica"],
-  ["Thogarihunkal", "Bababudangiri", "1,420 m", "SLN 795"],
-  ["Kalledevarapura", "Chikmagalur", "1,180 m", "Mixed lots"],
 ] as const;
 
 const values = [
@@ -178,9 +186,9 @@ export default function OurStoryPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
         <RevealOnScroll>
           <div className="max-w-3xl mb-10 sm:mb-14">
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">14 partner estates</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">8 of 14 partner estates</span>
             <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">Where your coffee is actually from.</h2>
-            <p className="mt-5 text-natural-text/68 leading-relaxed">Placeholder estate data until the final farm list is confirmed. The design is built to show named places, not vague mountain poetry.</p>
+            <p className="mt-5 text-natural-text/68 leading-relaxed">Eight of our fourteen partner estates, by name. Where the coffee actually comes from — written on the bag, on the menu, on the wall.</p>
           </div>
         </RevealOnScroll>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -259,7 +267,7 @@ export default function OurStoryPage() {
           <div className="about-page-panel border rounded-xl px-6 py-10 sm:p-12 shadow-about-soft">
             <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">A note from the founders</p>
             <blockquote className="font-serif text-2xl sm:text-4xl leading-[1.3] text-natural-text">We started because the cup felt wrong. We are still here because fixing it turned out to mean farmers, baristas, logistics, design, training, and a thousand boring decisions done carefully.</blockquote>
-            <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-natural-text/60">Anjali, Sushant & Ayushi</p>
+            <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-natural-text/60">Sushant, Anirudh, Ayush & Rajat</p>
           </div>
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
             <a href="/about/our-coffee" className="inline-flex justify-center px-5 py-3 rounded-full bg-natural-text text-natural-bg font-bold text-sm">Read about our coffee →</a>

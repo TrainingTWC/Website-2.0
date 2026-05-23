@@ -56,15 +56,6 @@ const regions = [
     estates: "1 partner cooperative",
     image: asset("assets/SSIFB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-17.jpg"),
   },
-  {
-    name: "Bababudangiri",
-    elevation: "1,500 m+",
-    varietals: "Arabica, Catuai, SLN lots",
-    harvest: "Dec-Feb",
-    profile: "Wine-like, dense, and a little dramatic in the best way. This is where coffee history becomes cup character.",
-    estates: "2 partner estates",
-    image: asset("assets/SSCR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-25.jpg"),
-  },
 ] as const;
 
 const roastLevels = [
@@ -106,17 +97,6 @@ const brewMethods = [
     time: "90 sec",
     steps: ["Use inverted if you know it; normal if you do not.", "Add 16 g coffee + 220 g water.", "Stir for 10 seconds, steep 30 seconds.", "Press slowly. If your arm shakes, you ground too fine."],
     trouble: "Too sharp? Grind finer or steep longer. Too heavy? Back off the steep time.",
-  },
-  {
-    method: "Moka Pot",
-    label: "almost espresso",
-    gear: "Rs 900-2,500 moka pot, stove, patience. No tamping, no aggression.",
-    ratio: "1:7",
-    grind: "Fine-medium, not espresso powder",
-    water: "Hot water in base",
-    time: "4-5 min",
-    steps: ["Fill base with hot water below valve.", "Fill basket level. Do not press it down.", "Low flame until the first sputter.", "Take it off heat early; the final angry gurgle tastes burnt."],
-    trouble: "Metallic bitterness usually means too much heat. Lower the flame and stop earlier.",
   },
 ] as const;
 
@@ -181,7 +161,7 @@ export default function OurCoffeePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Origins</span>
-            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-12 leading-[1.1]">Five Indian regions, five different cups.</h2>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-12 leading-[1.1]">Four Indian regions, four different cups.</h2>
           </RevealOnScroll>
           <div className="space-y-8 sm:space-y-10">
             {regions.map((region, index) => (
@@ -210,7 +190,7 @@ export default function OurCoffeePage() {
         title="Consistency over capacity. Every time."
         paragraphs={[
           "We roast on a restored 1965 Probat UG-22 because it gives us control, not because old machines look good in photos. Capacity is useful. Consistency is survival.",
-          "Head roaster Anjali has led the table since 2018. Every Friday, production cups the week's roasts for aroma, acidity, body, sweetness, balance, aftertaste, and defects.",
+          "Head roaster Our head roaster has led the table since 2018. Every Friday, production cups the week's roasts for aroma, acidity, body, sweetness, balance, aftertaste, and defects.",
           "Roast profiles are per-origin, not generic. Araku stays light and floral. Chikmagalur gets a medium profile. Dark roasts are built for milk without crossing into burnt.",
         ]}
         sideImages={[

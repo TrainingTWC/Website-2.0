@@ -23,15 +23,12 @@ type Role = {
 };
 
 const roles: Role[] = [
-  { title: "Barista", team: "Cafe Operations", location: "Bengaluru · Multiple Locations", type: "Full-time", level: "Entry", salary: "Rs 3.2-4.2L LPA", experience: "0-2 yrs", posted: "2 days ago" },
-  { title: "Cafe Manager", team: "Cafe Operations", location: "Mumbai · Bandra Flagship", type: "Full-time", level: "Mid", salary: "Rs 7-10L LPA", experience: "3-5 yrs", posted: "5 days ago" },
-  { title: "Head Roaster", team: "Roastery", location: "Bengaluru · Whitefield", type: "Full-time", level: "Senior", salary: "Rs 18-25L LPA", experience: "7+ yrs", posted: "8 days ago" },
-  { title: "QC Cupper", team: "Roastery", location: "Bengaluru · Whitefield", type: "Full-time", level: "Mid", salary: "Rs 8-12L LPA", experience: "3+ yrs", posted: "11 days ago" },
-  { title: "Coffee Educator", team: "Coffee Education", location: "Delhi · Hauz Khas", type: "Full-time", level: "Mid", salary: "Rs 7-11L LPA", experience: "3-5 yrs", posted: "3 days ago" },
-  { title: "Senior Frontend Engineer", team: "Technology", location: "Remote · India", type: "Full-time", level: "Senior", salary: "Rs 28-38L LPA", experience: "5+ yrs", posted: "6 days ago" },
-  { title: "Brand Storyteller", team: "Brand & Marketing", location: "Bengaluru · HQ", type: "Full-time", level: "Mid", salary: "Rs 10-16L LPA", experience: "3+ yrs", posted: "4 days ago" },
-  { title: "Origin & Trade Lead", team: "Supply Chain", location: "Chikmagalur · Field", type: "Full-time", level: "Lead", salary: "Rs 20-30L LPA", experience: "8+ yrs", posted: "12 days ago" },
-  { title: "Weekend Barista", team: "Cafe Operations", location: "Pune · Koregaon Park", type: "Part-time", level: "Entry", salary: "Rs 450/hr", experience: "0-1 yr", posted: "1 day ago" },
+  { title: "Barista", team: "Cafe Operations", location: "Bengaluru · Multiple Locations", type: "Full-time", level: "Entry", salary: "Rs 3.6-4.5L LPA", experience: "0-2 yrs", posted: "2 days ago" },
+  { title: "Cafe Manager", team: "Cafe Operations", location: "Mumbai · Bandra Flagship", type: "Full-time", level: "Mid", salary: "Rs 8-11L LPA", experience: "3-5 yrs", posted: "5 days ago" },
+  { title: "Head Roaster", team: "Roastery", location: "Bengaluru · Whitefield", type: "Full-time", level: "Senior", salary: "Rs 20-28L LPA", experience: "7+ yrs", posted: "8 days ago" },
+  { title: "Coffee Educator", team: "Coffee Education", location: "Delhi · Hauz Khas", type: "Full-time", level: "Mid", salary: "Rs 8-12L LPA", experience: "3-5 yrs", posted: "3 days ago" },
+  { title: "Senior Frontend Engineer", team: "Technology", location: "Remote · India", type: "Full-time", level: "Senior", salary: "Rs 32-42L LPA", experience: "5+ yrs", posted: "6 days ago" },
+  { title: "Origin & Trade Lead", team: "Supply Chain", location: "Chikmagalur · Field", type: "Full-time", level: "Lead", salary: "Rs 22-32L LPA", experience: "8+ yrs", posted: "12 days ago" },
 ];
 
 const teams = ["All", "Cafe Operations", "Roastery", "Coffee Education", "Technology", "Brand & Marketing", "Supply Chain"] as const;
@@ -84,9 +81,7 @@ const benefits = [
 const faqs = [
   ["I do not have coffee experience. Can I apply?", "Yes. Entry cafe roles are designed for curious beginners. We train for coffee; we hire for hospitality."],
   ["Is the trial shift paid?", "Yes. Cafe trials and corporate work samples are paid. Free labour is not a culture test."],
-  ["Are remote roles available?", "Mostly Technology and a few Brand roles. Cafe, Roastery, and Supply Chain roles are location-based."],
   ["Do you respond to rejected applicants?", "Yes. Every applicant gets a response within 7 business days, even when it is a no."],
-  ["What if there is no role for me today?", "Write in anyway. The best people on our team rarely arrived through a perfect job posting."],
 ] as const;
 
 export default function CareersPage() {
@@ -121,7 +116,7 @@ export default function CareersPage() {
             <div>
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Open roles</span>
               <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">{visibleRoles.length} role{visibleRoles.length === 1 ? "" : "s"} open right now.</h2>
-              <p className="mt-4 text-natural-text/65">9 open roles across 6 teams. Salary bands included because hiding them is tired.</p>
+              <p className="mt-4 text-natural-text/65">6 open roles across 6 teams. Salary bands included because hiding them is tired.</p>
             </div>
           </div>
         </RevealOnScroll>

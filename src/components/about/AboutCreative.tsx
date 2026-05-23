@@ -367,6 +367,7 @@ export function CreativeHero({
   /** Optional substring of `title` to render in the accent color. */
   accentWord?: string;
 }) {
+  const reducedHero = useReducedMotion();
   // Split title around accent word for color emphasis.
   let parts: React.ReactNode = title;
   if (accentWord && title.includes(accentWord)) {
@@ -417,6 +418,12 @@ export function CreativeHero({
           {/* Image column with rotated card + optional sticker */}
           <div className="relative z-[2]">
             <motion.div
+              aria-hidden
+              className="brewmatch-hero-ring pointer-events-none absolute -inset-6 sm:-inset-10 rounded-[3rem] border border-dashed border-[color:var(--about-accent)]/45"
+              animate={reducedHero ? undefined : { rotate: 360 }}
+              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
               initial={{ rotate: -3, y: 30, opacity: 0 }}
               whileInView={{ rotate: -3, y: 0, opacity: 1 }}
               viewport={{ once: true, amount: 0.3 }}
@@ -424,14 +431,22 @@ export function CreativeHero({
               className="relative mx-auto max-w-md lg:max-w-none"
             >
               <div className="relative rounded-3xl overflow-hidden border border-[color:var(--about-accent)]/30 shadow-about-soft">
-                <img
+                <motion.img
                   src={imageUrl}
                   alt={imageAlt}
                   loading="eager"
                   decoding="async"
-                  className="w-full aspect-[4/5] object-cover"
+                  className="w-full aspect-[4/5] object-cover will-change-transform"
+                  initial={{ scale: 1.06 }}
+                  animate={reducedHero ? { scale: 1 } : { scale: [1.06, 1.13, 1.06], x: [0, -10, 0, 8, 0], y: [0, 6, 0, -6, 0] }}
+                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-[color:var(--about-accent)]/12 via-transparent to-transparent" />
+                <motion.div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-tr from-[color:var(--about-accent)]/20 via-transparent to-[color:var(--about-accent)]/10"
+                  animate={reducedHero ? undefined : { opacity: [0.55, 0.95, 0.55] }}
+                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                />
               </div>
 
               {stickerText && (

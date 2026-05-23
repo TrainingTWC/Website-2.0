@@ -24,11 +24,9 @@ type PressItem = {
 };
 
 const press: PressItem[] = [
-  { outlet: "Economic Times", date: "Aug 2025", headline: "The quiet revolution in India's specialty coffee scene", excerpt: "A reported look at homegrown roasters reshaping what Indians expect from a cup of coffee.", category: "Feature", readTime: "7 min", imageUrl: asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg"), href: "#" },
-  { outlet: "Mint Lounge", date: "Jun 2025", headline: "Inside the Bengaluru roastery that ships fresh beans across India", excerpt: "A long-read on the 48-hour roast-to-dispatch operation and the cupping protocol.", category: "Interview", readTime: "9 min", imageUrl: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), href: "#" },
-  { outlet: "Forbes India", date: "Apr 2025", headline: "30 Under 30: The duo redefining Indian cafe culture", excerpt: "Co-founders Anjali and Sushant featured under Food & Beverage for the third consecutive year.", category: "Award", readTime: "5 min", imageUrl: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"), href: "#" },
-  { outlet: "Conde Nast Traveller", date: "Mar 2025", headline: "The 12 best cafes in India for serious coffee drinkers", excerpt: "Three flagship cafes featured in CNT's list of independent specialty coffee bars.", category: "Feature", readTime: "6 min", imageUrl: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"), href: "#" },
-  { outlet: "Business Standard", date: "Jan 2025", headline: "Series B: Rs 120 cr to expand cafe footprint to 250 stores", excerpt: "The roaster-cafe chain closes a Series B led by a marquee consumer fund.", category: "Industry", readTime: "4 min", imageUrl: asset("assets/SSCR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-25.jpg"), href: "#" },
+  { outlet: "Economic Times", date: "Feb 2026", headline: "How Third Wave's CEO is taking a Bengaluru roastery national", excerpt: "Rajat Luthra on scaling cafes without breaking the roast-to-dispatch promise.", category: "Interview", readTime: "7 min", imageUrl: asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg"), href: "#" },
+  { outlet: "Mint Lounge", date: "Nov 2025", headline: "Inside the Bengaluru roastery that ships fresh beans across India", excerpt: "A long-read on the 48-hour roast-to-dispatch operation and the cupping protocol.", category: "Feature", readTime: "9 min", imageUrl: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), href: "#" },
+  { outlet: "Forbes India", date: "Apr 2025", headline: "30 Under 30: The founders redefining Indian cafe culture", excerpt: "Co-founders Sushant Goel, Anirudh Sharma, and Ayush Bathwal featured under Food & Beverage.", category: "Award", readTime: "5 min", imageUrl: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"), href: "#" },
   { outlet: "The Hindu", date: "Nov 2024", headline: "How a 28% premium to farmers is changing Chikmagalur", excerpt: "A field report on long-term estate partnerships and transparent pricing.", category: "Feature", readTime: "8 min", imageUrl: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"), href: "#" },
 ];
 
@@ -39,8 +37,6 @@ const awards = [
   ["Forbes India", "2023-2025", "30 Under 30, F&B"],
   ["Conde Nast Traveller", "2025", "Top 12 Cafes in India"],
   ["SCA India", "2024", "Best Roaster"],
-  ["India Coffee Awards", "2023", "Sustainable Sourcing"],
-  ["Mint Lounge", "2025", "Best of Food & Drink"],
   ["LinkedIn", "2024", "Top Startups India"],
 ] as const;
 
@@ -51,9 +47,8 @@ const media = [
 ] as const;
 
 const events = [
-  ["India Coffee Festival", "Bengaluru", "Jun 12, 2026", "Anjali Iyer", "Why freshness is an operations problem"],
-  ["D2C Insider Summit", "Mumbai", "Jul 4, 2026", "Sushant Rao", "Building trust without discount addiction"],
-  ["SCA India Cupping Table", "Delhi", "Aug 19, 2026", "Roastery team", "New Indian micro-lots"],
+  ["India Coffee Festival", "Bengaluru", "Jun 12, 2026", "Ayush Bathwal", "Why freshness is an operations problem"],
+  ["D2C Insider Summit", "Mumbai", "Jul 4, 2026", "Rajat Luthra", "Scaling cafes without losing the cup"],
 ] as const;
 
 const pressKit = [
@@ -65,13 +60,9 @@ const pressKit = [
 
 const facts = [
   ["Founded", "2016, Bengaluru"],
-  ["Founders", "Anjali Iyer, Sushant Rao, Ayushi Mehta"],
-  ["Headquarters", "Bengaluru"],
-  ["Roastery", "Bengaluru; Mumbai under construction"],
-  ["Cafes", "130+ across 18 cities"],
-  ["Team size", "450+"],
-  ["Partner estates", "14"],
-  ["Funding raised", "Rs 165 cr"],
+  ["Founders", "Sushant Goel, Anirudh Sharma, Ayush Bathwal"],
+  ["CEO", "Rajat Luthra (since 2023)"],
+  ["Cafes", "130+ across 18 cities · 14 partner estates"],
   ["Latest round", "Series B, Rs 120 cr, Jan 2025"],
   ["Press contact", "press@brewmatch.in"],
 ] as const;
@@ -271,7 +262,7 @@ export default function NewsroomPage() {
       <RevealOnScroll>
         <section className="max-w-3xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28 text-center">
           <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">Press inquiries</p>
-          <h2 className="font-serif font-bold text-2xl sm:text-4xl leading-[1.2] text-natural-text">Write to Ayushi directly.</h2>
+          <h2 className="font-serif font-bold text-2xl sm:text-4xl leading-[1.2] text-natural-text">Write to the press desk directly.</h2>
           <p className="mt-6 text-natural-text/70 leading-relaxed">We respond to every press email within 2 working days. Include your outlet, deadline, topic, and what you would like from us.</p>
           <a href="mailto:press@brewmatch.in" className="inline-flex mt-8 items-center gap-2 px-6 py-3 rounded-full bg-natural-text text-natural-bg font-bold text-sm hover:bg-natural-accent transition-colors">press@brewmatch.in →</a>
           <p className="mt-10 text-sm text-natural-text/55">If you are a buyer, not a journalist — <a href="/about/our-coffee" className="font-bold text-natural-accent">start with the coffee →</a></p>
