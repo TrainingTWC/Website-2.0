@@ -36,6 +36,7 @@ import { BrewingStudio } from "./BrewingStudio";
 import { SipForecast } from "./SipForecast";
 import { slugify } from "../lib/slug";
 import { asset } from "../lib/asset";
+import { MorphingHeader } from "./MorphingHeader";
 import { useProducts } from "../lib/useProducts";
 import type { Product } from "../types";
 
@@ -249,6 +250,8 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount, onB
       setModel3DReady={setModel3DReady}
       related={related}
       onAddToCart={onAddToCart}
+      onOpenCart={onOpenCart}
+      cartCount={cartCount}
       goHome={goHome}
       goToProduct={goToProduct}
       containerRef={containerRef}
@@ -281,6 +284,8 @@ interface LayoutProps {
   setModel3DReady: (v: boolean) => void;
   related: Product[];
   onAddToCart: (productId: string, qty: number) => void;
+  onOpenCart?: () => void;
+  cartCount?: number;
   goHome: () => void;
   goToProduct: (slug: string) => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -288,22 +293,22 @@ interface LayoutProps {
 
 function ImmersiveProductLayout({
   product, theme, personality, qty, setQty, variant, setVariant, variants,
-  displayPrice, model3DReady, setModel3DReady, related, onAddToCart, goHome,
-  goToProduct, containerRef,
+  displayPrice, model3DReady, setModel3DReady, related, onAddToCart, onOpenCart,
+  cartCount, goHome, goToProduct, containerRef,
 }: LayoutProps) {
   const heroRef = useRef<HTMLDivElement>(null);
   const imageWrapRef = useRef<HTMLDivElement>(null);
-  const [stickyVisible, setStickyVisible] = useState(false);
 
-  // Sticky bar: show after hero scrolls out
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => setStickyVisible(!entry.isIntersecting),
-      { rootMargin: "-80px 0px 0px 0px" }
-    );
-    if (heroRef.current) obs.observe(heroRef.current);
-    return () => obs.disconnect();
-  }, []);
+  // Header scroll motion values (same treatment as homepage)
+  const { scrollY } = useScroll();
+  const headerBg = useTransform(scrollY, [0, 80], ["rgba(250,249,246,0.0)", "rgba(250,249,246,0.95)"]);
+  const headerBorder = useTransform(scrollY, [0, 80], ["rgba(255,255,255,0.0)", "rgba(255,255,255,0.4)"]);
+  const headerShadow = useTransform(scrollY, [0, 80], ["none", "0 4px 30px rgba(44,24,16,0.15)"]);
+
+  const handleNavTo = (target: string) => {
+    if (target.startsWith("/")) { window.location.href = target; return; }
+    goHome();
+  };
 
   // Scroll-driven parallax
   const { scrollYProgress: heroScroll } = useScroll({
@@ -343,46 +348,16 @@ function ImmersiveProductLayout({
   return (
     <div ref={containerRef} className="min-h-screen" style={{ background: theme.bg }}>
 
-      {/* ── Sticky mini-nav ──────────────────────────────────────── */}
-      <AnimatePresence>
-        {stickyVisible && (
-          <motion.div
-            initial={{ y: -64, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -64, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
-            style={{
-              background: `${theme.bg}e6`,
-              borderColor: "rgba(255,255,255,0.1)",
-            }}
-          >
-            <div className={`max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4 ${theme.fg}`}>
-              <div className="flex items-center gap-3 min-w-0">
-                <button
-                  onClick={goHome}
-                  className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </button>
-                <span className="font-bold text-sm truncate">{product.name}</span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="font-bold text-sm hidden sm:block">
-                  ₹{displayPrice.toLocaleString("en-IN")}
-                </span>
-                <button
-                  onClick={() => onAddToCart(product._id, qty)}
-                  className={`${theme.accent} px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-transform`}
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Add to cart
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ── Full-site navigation header (same as homepage + third circle) ── */}
+      <MorphingHeader
+        headerBg={headerBg}
+        headerBorder={headerBorder}
+        headerShadow={headerShadow}
+        onOpenTI={() => {}}
+        onOpenCart={onOpenCart ?? (() => {})}
+        onNavTo={handleNavTo}
+        cartCount={cartCount ?? 0}
+      />
 
       {/* ── HERO — editorial asymmetric layout ──────────────────────── */}
       <div
@@ -405,12 +380,13 @@ function ImmersiveProductLayout({
           />
         </div>
 
-        {/* Accent radial glow behind product */}
+        {/* Accent radial glow — centered for center-image layout */}
         <div
           className="absolute pointer-events-none"
           style={{
-            left: "10%",
-            top: "30%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            top: "20%",
             width: "55vw",
             height: "55vw",
             maxWidth: "900px",
@@ -421,60 +397,17 @@ function ImmersiveProductLayout({
           aria-hidden
         />
 
-        {/* ── TOP NAV BAR ─────────────────────────────────────────── */}
-        <div className="relative z-20 max-w-[1440px] mx-auto w-full px-6 sm:px-10 pt-6 sm:pt-8 grid grid-cols-3 items-start gap-4">
-          {/* Left: back / menu cue */}
-          <motion.button
-            onClick={goHome}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] opacity-80 hover:opacity-100 transition-opacity justify-self-start"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </motion.button>
-
-          {/* Center: Third Wave Coffee logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05 }}
-            className="justify-self-center flex items-center"
-          >
-            <img
-              src={asset("logo.png")}
-              alt="Third Wave Coffee"
-              className={`h-7 sm:h-8 w-auto object-contain ${theme.fg === "text-white" ? "invert" : ""}`}
-              style={{ filter: theme.fg === "text-white" ? "brightness(0) invert(1)" : "none" }}
-            />
-          </motion.div>
-
-          {/* Right: cart dot */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] opacity-80 justify-self-end"
-          >
-            <span className={`inline-block w-1.5 h-1.5 rounded-full bg-current`} />
-            <span className={`text-[10px] font-bold uppercase tracking-[0.3em] px-3 py-1.5 rounded-full border ${theme.pillBg}`}>
-              {product.category}
-            </span>
-          </motion.div>
-        </div>
-
         {/* ── MAIN STAGE ────────────────────────────────────────────── */}
-        <div className="relative z-10 flex-1 flex items-center overflow-hidden">
-          <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-16 grid grid-cols-1 lg:grid-cols-12 gap-x-8 lg:gap-x-12 items-center py-4">
+        <div className="relative z-10 flex-1 flex items-center overflow-hidden pt-20">
+          <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 grid grid-cols-1 lg:grid-cols-12 gap-x-6 lg:gap-x-8 items-center py-2">
 
-            {/* IMAGE — left panel */}
+            {/* IMAGE — center panel, col 5-9 */}
             <motion.div
               ref={imageWrapRef}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
               style={{ y: springY, scale: springScale }}
-              className="lg:col-start-1 lg:col-end-6 flex items-center justify-center mb-8 lg:mb-0"
+              className="lg:col-start-5 lg:col-end-9 flex items-center justify-center order-1 lg:order-2 mb-6 lg:mb-0"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -482,10 +415,10 @@ function ImmersiveProductLayout({
                 transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 className="relative"
                 style={{
-                  width: "clamp(200px, 36vw, 500px)",
-                  height: "clamp(200px, 36vw, 500px)",
-                  maxHeight: "calc(100dvh - 11rem)",
-                  maxWidth: "calc(100dvh - 11rem)",
+                  width: "clamp(160px, 22vw, 360px)",
+                  height: "clamp(160px, 22vw, 360px)",
+                  maxHeight: "calc(100dvh - 14rem)",
+                  maxWidth: "calc(100dvh - 14rem)",
                   perspective: "1400px",
                   filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.45)) drop-shadow(0 8px 16px rgba(0,0,0,0.2))",
                 }}
@@ -565,177 +498,177 @@ function ImmersiveProductLayout({
             </motion.div>
           </motion.div>
 
-            {/* CONTENT PANEL — right, everything fits above the fold */}
-            <div className="lg:col-start-6 lg:col-end-13 flex flex-col justify-center">
-
-              {/* Eyebrow + Title */}
-              <motion.div style={{ y: titleY, opacity: titleOpacity }}>
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className={`text-[11px] font-bold uppercase tracking-[0.4em] mb-3 ${theme.accentText}`}
-                >
-                  {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
-                  {product.origin ?? product.category}
-                </motion.p>
-
-                <h1
-                  className="font-serif font-normal leading-[0.9] tracking-[-0.025em] mb-5"
-                  style={{ fontSize: "clamp(2rem, 3.8vw, 4.2rem)" }}
-                >
-                  {product.name.split(" ").map((word, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, y: 28, rotateX: -20 }}
-                      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                      transition={{
-                        duration: 0.7,
-                        delay: 0.15 + i * 0.06,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className="inline-block mr-[0.18em]"
-                      style={{ transformOrigin: "left bottom" }}
-                    >
-                      {word}
-                    </motion.span>
-                  ))}
-                </h1>
-              </motion.div>
-
-              {/* Card content */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
+            {/* LEFT PANEL — col 1-5: tagline, title, details, tags */}
+            <motion.div
+              style={{ y: titleY, opacity: titleOpacity }}
+              className="lg:col-start-1 lg:col-end-5 flex flex-col justify-center order-2 lg:order-1 mt-6 lg:mt-0"
+            >
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className={`text-[11px] font-bold uppercase tracking-[0.4em] mb-3 ${theme.accentText}`}
               >
-                {/* Description */}
-                <p className={`text-sm leading-relaxed mb-4 ${theme.accentText}`}>
-                  {product.description}
-                </p>
+                {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
+                {product.origin ?? product.category}
+              </motion.p>
 
-                {/* Details inline row */}
-                {(() => {
-                  const details = [
-                    product.origin && { label: "Origin", value: product.origin },
-                    product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
-                    { label: "Type", value: product.type },
-                    { label: "Stock", value: product.stockStatus.replace("-", " ") },
-                  ].filter(Boolean) as { label: string; value: string }[];
-                  return (
-                    <div className="flex flex-wrap gap-x-7 gap-y-3 mb-4">
-                      {details.map((d) => (
-                        <div key={d.label}>
-                          <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-0.5 ${theme.accentText}`}>{d.label}</p>
-                          <p className="text-[13px] font-semibold capitalize">{d.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+              <h1
+                className="font-serif font-normal leading-[0.92] tracking-[-0.025em] mb-5"
+                style={{ fontSize: "clamp(1.8rem, 2.8vw, 3.6rem)" }}
+              >
+                {product.name.split(" ").map((word, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 28, rotateX: -20 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    transition={{
+                      duration: 0.7,
+                      delay: 0.15 + i * 0.06,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="inline-block mr-[0.18em]"
+                    style={{ transformOrigin: "left bottom" }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </h1>
 
-                {/* Tags */}
-                {product.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {product.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${theme.pillBg}`}
+              {/* Details */}
+              {(() => {
+                const details = [
+                  product.origin && { label: "Origin", value: product.origin },
+                  product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
+                  { label: "Type", value: product.type },
+                  { label: "Stock", value: product.stockStatus.replace("-", " ") },
+                ].filter(Boolean) as { label: string; value: string }[];
+                return (
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 mb-4">
+                    {details.map((d) => (
+                      <div key={d.label}>
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-0.5 ${theme.accentText}`}>{d.label}</p>
+                        <p className="text-[13px] font-semibold capitalize">{d.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Tags */}
+              {product.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {product.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${theme.pillBg}`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+
+            {/* RIGHT PANEL — col 9-13: description, price, CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-start-9 lg:col-end-13 flex flex-col justify-center order-3 lg:order-3"
+            >
+              {/* Description */}
+              <p className={`text-sm leading-relaxed mb-4 ${theme.accentText}`}>
+                {product.description}
+              </p>
+
+              {/* Divider */}
+              <div className="h-px w-full mb-3" style={{ background: "currentColor", opacity: 0.15 }} />
+
+              {/* Price + Size */}
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-3 mb-3">
+                <div>
+                  <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1 ${theme.accentText}`}>Price</p>
+                  <p className="font-serif font-normal text-3xl sm:text-[2.2rem] leading-none tracking-tight">
+                    ₹{displayPrice.toLocaleString("en-IN")}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Size</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {variants.map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setVariant(v)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
+                          v === variant
+                            ? `${theme.accent} border-transparent shadow-lg`
+                            : `${theme.pillBg} hover:scale-[1.04]`
+                        }`}
                       >
-                        {tag}
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Flavor notes */}
+              {product.flavorNotes.length > 0 && (
+                <div className="mb-3">
+                  <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Notes</p>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {product.flavorNotes.slice(0, 3).map((note) => (
+                      <span
+                        key={note}
+                        className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
+                      >
+                        {note}
                       </span>
                     ))}
                   </div>
-                )}
-
-                {/* Divider */}
-                <div className="h-px w-full mb-4" style={{ background: "currentColor", opacity: 0.15 }} />
-
-                {/* Price + Size + Notes in one row */}
-                <div className="flex flex-wrap items-end gap-x-7 gap-y-3 mb-4">
-                  <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1 ${theme.accentText}`}>Price</p>
-                    <p className="font-serif font-normal text-3xl sm:text-[2.5rem] leading-none tracking-tight">
-                      ₹{displayPrice.toLocaleString("en-IN")}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Size</p>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {variants.map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setVariant(v)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
-                            v === variant
-                              ? `${theme.accent} border-transparent shadow-lg`
-                              : `${theme.pillBg} hover:scale-[1.04]`
-                          }`}
-                        >
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {product.flavorNotes.length > 0 && (
-                    <div>
-                      <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Notes</p>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {product.flavorNotes.slice(0, 3).map((note) => (
-                          <span
-                            key={note}
-                            className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
-                          >
-                            {note}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
+              )}
 
-                {/* Divider */}
-                <div className="h-px w-full mb-4" style={{ background: "currentColor", opacity: 0.15 }} />
+              {/* Divider */}
+              <div className="h-px w-full mb-4" style={{ background: "currentColor", opacity: 0.15 }} />
 
-                {/* Qty + CTA */}
-                <div className="flex items-center gap-3">
-                  <div className={`inline-flex items-center gap-0.5 rounded-full border ${theme.pillBg} px-1.5 py-1.5`}>
-                    <button
-                      onClick={() => setQty((q) => Math.max(1, q - 1))}
-                      className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="font-bold w-6 text-center text-sm tabular-nums">{qty}</span>
-                    <button
-                      onClick={() => setQty((q) => q + 1)}
-                      className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-                      aria-label="Increase quantity"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
+              {/* Qty + CTA */}
+              <div className="flex items-center gap-3">
+                <div className={`inline-flex items-center gap-0.5 rounded-full border ${theme.pillBg} px-1.5 py-1.5`}>
                   <button
-                    onClick={() => onAddToCart(product._id, qty)}
-                    className={`flex-1 ${theme.accent} px-6 py-3.5 rounded-full text-[13px] font-bold tracking-wide uppercase flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    aria-label="Decrease quantity"
                   >
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to basket
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="font-bold w-6 text-center text-sm tabular-nums">{qty}</span>
+                  <button
+                    onClick={() => setQty((q) => q + 1)}
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                {product.stockStatus === "low-stock" && (
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5 mt-3">
-                    <Sparkles className="w-3 h-3" />
-                    Limited stock
-                  </p>
-                )}
-              </motion.div>
-            </div>
+                <button
+                  onClick={() => onAddToCart(product._id, qty)}
+                  className={`flex-1 ${theme.accent} px-6 py-3.5 rounded-full text-[13px] font-bold tracking-wide uppercase flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to basket
+                </button>
+              </div>
+
+              {product.stockStatus === "low-stock" && (
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5 mt-3">
+                  <Sparkles className="w-3 h-3" />
+                  Limited stock
+                </p>
+              )}
+            </motion.div>
           </div>
         </div>
 
