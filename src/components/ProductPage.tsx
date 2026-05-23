@@ -80,9 +80,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#3A2419",
     fg: "text-white",
     accent: "bg-amber-200 text-natural-text",
-    accentText: "text-amber-100/80",
-    pillBg: "bg-white/10 text-white border-white/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.6)]",
+    accentText: "text-amber-50/85",
+    pillBg: "bg-white/10 text-white border-white/20",
+    shadow: "",
     decorOpacity: "opacity-[0.14]",
     accentHex: "#D4A062",
   },
@@ -90,9 +90,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#5C3A26",
     fg: "text-white",
     accent: "bg-orange-100 text-natural-text",
-    accentText: "text-orange-100/80",
-    pillBg: "bg-white/10 text-white border-white/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.5)]",
+    accentText: "text-orange-50/85",
+    pillBg: "bg-white/10 text-white border-white/20",
+    shadow: "",
     decorOpacity: "opacity-[0.16]",
     accentHex: "#E8B583",
   },
@@ -100,9 +100,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#3E5C4A",
     fg: "text-white",
     accent: "bg-white text-natural-text",
-    accentText: "text-white/70",
-    pillBg: "bg-white/10 text-white border-white/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.45)]",
+    accentText: "text-white/85",
+    pillBg: "bg-white/10 text-white border-white/20",
+    shadow: "",
     decorOpacity: "opacity-[0.18]",
     accentHex: "#D4C8A8",
   },
@@ -110,9 +110,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#C5A572",
     fg: "text-natural-text",
     accent: "bg-natural-text text-white",
-    accentText: "text-natural-text/65",
-    pillBg: "bg-natural-text/8 text-natural-text border-natural-text/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(80,50,20,0.3)]",
+    accentText: "text-natural-text/75",
+    pillBg: "bg-natural-text/10 text-natural-text border-natural-text/20",
+    shadow: "",
     decorOpacity: "opacity-[0.2]",
     accentHex: "#7A5A2C",
   },
@@ -120,9 +120,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#4A6373",
     fg: "text-white",
     accent: "bg-white text-natural-text",
-    accentText: "text-white/70",
-    pillBg: "bg-white/10 text-white border-white/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.45)]",
+    accentText: "text-white/85",
+    pillBg: "bg-white/10 text-white border-white/20",
+    shadow: "",
     decorOpacity: "opacity-[0.18]",
     accentHex: "#C8D6DE",
   },
@@ -130,9 +130,9 @@ const THEMES: Record<string, Theme> = {
     bg: "#7A6F62",
     fg: "text-white",
     accent: "bg-white text-natural-text",
-    accentText: "text-white/70",
-    pillBg: "bg-white/10 text-white border-white/15",
-    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.4)]",
+    accentText: "text-white/85",
+    pillBg: "bg-white/10 text-white border-white/20",
+    shadow: "",
     decorOpacity: "opacity-[0.18]",
     accentHex: "#D9D1C7",
   },
@@ -508,23 +508,24 @@ function ImmersiveProductLayout({
             </h1>
           </motion.div>
 
-          {/* OVERSIZED PRODUCT IMAGE — bleeds left, dominates */}
+          {/* OVERSIZED PRODUCT IMAGE — bleeds left, interlocks with title */}
           <motion.div
             ref={imageWrapRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             style={{ y: springY, scale: springScale }}
-            className="lg:col-start-1 lg:col-end-8 lg:row-start-2 relative flex items-center justify-center lg:justify-start lg:-ml-8 xl:-ml-16 -mt-6 sm:-mt-12 lg:-mt-20 z-10"
+            className="lg:col-start-1 lg:col-end-8 lg:row-start-2 relative flex items-center justify-center lg:justify-start lg:-ml-10 xl:-ml-20 -mt-4 sm:-mt-10 lg:-mt-28 z-10"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.85, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className={`relative ${theme.shadow}`}
+              className="relative"
               style={{
-                width: "clamp(280px, 50vw, 680px)",
-                height: "clamp(280px, 50vw, 680px)",
+                width: "clamp(320px, 56vw, 760px)",
+                height: "clamp(320px, 56vw, 760px)",
                 perspective: "1400px",
+                filter: "drop-shadow(0 40px 60px rgba(0,0,0,0.45)) drop-shadow(0 20px 30px rgba(0,0,0,0.25))",
               }}
             >
               <motion.div
@@ -596,8 +597,8 @@ function ImmersiveProductLayout({
 
               {/* Soft ground shadow */}
               <div
-                className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-2/3 h-10 blur-2xl rounded-full pointer-events-none"
-                style={{ background: "rgba(0,0,0,0.35)" }}
+                className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[55%] h-8 blur-2xl rounded-full pointer-events-none"
+                style={{ background: "rgba(0,0,0,0.4)" }}
               />
             </motion.div>
           </motion.div>
@@ -605,18 +606,18 @@ function ImmersiveProductLayout({
           {/* PRODUCT CARD — pinned top-right, right under title */}
           <motion.div
             style={{ opacity: cardOpacity }}
-            className="lg:col-start-8 lg:col-end-13 lg:row-start-2 self-start relative z-20"
+            className="lg:col-start-9 lg:col-end-13 lg:row-start-2 self-center relative z-20"
           >
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:max-w-md ml-auto"
+              className="lg:max-w-[400px] ml-auto"
             >
               {/* Short description */}
               <p
-                className="text-[15px] sm:text-base leading-[1.65] mb-6 font-medium"
-                style={{ opacity: 0.92 }}
+                className="text-[15px] sm:text-base leading-[1.7] mb-7 font-normal"
+                style={{ opacity: 0.95 }}
               >
                 {product.description}
               </p>
@@ -630,11 +631,11 @@ function ImmersiveProductLayout({
                   { label: "Stock", value: product.stockStatus.replace("-", " ") },
                 ].filter(Boolean) as { label: string; value: string }[];
                 return (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-6">
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-4 mb-7">
                     {details.map((d) => (
                       <div key={d.label}>
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.3em] mb-1 ${theme.accentText}`}>{d.label}</p>
-                        <p className="text-sm font-medium capitalize leading-snug">{d.value}</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-1.5 ${theme.accentText}`}>{d.label}</p>
+                        <p className="text-[15px] font-medium capitalize leading-snug">{d.value}</p>
                       </div>
                     ))}
                   </div>
@@ -643,11 +644,11 @@ function ImmersiveProductLayout({
 
               {/* Tags */}
               {product.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-6">
+                <div className="flex flex-wrap gap-1.5 mb-7">
                   {product.tags.map((tag) => (
                     <span
                       key={tag}
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${theme.pillBg}`}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border ${theme.pillBg}`}
                     >
                       {tag}
                     </span>
@@ -656,19 +657,19 @@ function ImmersiveProductLayout({
               )}
 
               {/* Hairline */}
-              <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
+              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.18 }} />
 
               {/* Price + edition row */}
-              <div className="flex items-start justify-between gap-6 mb-5">
+              <div className="flex items-end justify-between gap-6 mb-6">
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-2 ${theme.accentText}`}>Price</p>
-                  <p className="font-serif font-light text-3xl sm:text-4xl tracking-tight">
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2 ${theme.accentText}`}>Price</p>
+                  <p className="font-serif font-normal text-4xl sm:text-[2.75rem] leading-none tracking-tight">
                     ₹{displayPrice.toLocaleString("en-IN")}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-2 ${theme.accentText}`}>Edition</p>
-                  <p className="text-sm font-medium">
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2 ${theme.accentText}`}>Edition</p>
+                  <p className="text-[15px] font-medium leading-snug">
                     {variant}
                     {product.weight && (
                       <>
@@ -680,21 +681,18 @@ function ImmersiveProductLayout({
                 </div>
               </div>
 
-              {/* Hairline */}
-              <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
-
-              {/* Size selector — labeled inline */}
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${theme.accentText}`}>Size</span>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* Size selector */}
+              <div className="mb-5">
+                <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2.5 ${theme.accentText}`}>Size</p>
+                <div className="flex items-center gap-2 flex-wrap">
                   {variants.map((v) => (
                     <button
                       key={v}
                       onClick={() => setVariant(v)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
+                      className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide border transition-all ${
                         v === variant
-                          ? `${theme.accent} border-transparent shadow-md`
-                          : `${theme.pillBg} backdrop-blur-sm hover:scale-105`
+                          ? `${theme.accent} border-transparent shadow-lg`
+                          : `${theme.pillBg} hover:scale-[1.04]`
                       }`}
                     >
                       {v}
@@ -705,40 +703,39 @@ function ImmersiveProductLayout({
 
               {/* Flavor swatches */}
               {product.flavorNotes.length > 0 && (
-                <>
-                  <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
-                  <div className="flex items-center justify-between gap-4 mb-5">
-                    <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${theme.accentText}`}>Notes</span>
-                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                      {product.flavorNotes.slice(0, 4).map((note) => (
-                        <span
-                          key={note}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
-                        >
-                          {note}
-                        </span>
-                      ))}
-                    </div>
+                <div className="mb-6">
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2.5 ${theme.accentText}`}>Notes</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {product.flavorNotes.slice(0, 4).map((note) => (
+                      <span
+                        key={note}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
+                      >
+                        {note}
+                      </span>
+                    ))}
                   </div>
-                </>
+                </div>
               )}
 
               {/* Hairline */}
-              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.15 }} />
+              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.18 }} />
 
               {/* Qty + CTA row */}
               <div className="flex items-center gap-3">
-                <div className={`inline-flex items-center gap-1 rounded-full border ${theme.pillBg} px-1.5 py-1`}>
+                <div className={`inline-flex items-center gap-1 rounded-full border ${theme.pillBg} px-1.5 py-1.5`}>
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    aria-label="Decrease quantity"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="font-bold w-5 text-center text-sm">{qty}</span>
+                  <span className="font-bold w-6 text-center text-sm tabular-nums">{qty}</span>
                   <button
                     onClick={() => setQty((q) => q + 1)}
-                    className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                    aria-label="Increase quantity"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -746,7 +743,7 @@ function ImmersiveProductLayout({
 
                 <button
                   onClick={() => onAddToCart(product._id, qty)}
-                  className={`flex-1 ${theme.accent} px-5 py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
+                  className={`flex-1 ${theme.accent} px-6 py-3.5 rounded-full text-[13px] font-bold tracking-wide uppercase flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Add to basket
