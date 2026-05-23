@@ -60,8 +60,11 @@ const PAGES: PageDef[] = [
   { id: "newsroom", label: "Newsroom", url: "/about/newsroom" },
 ];
 
-export function AboutCMS() {
-  const [active, setActive] = useState<PageId>("story");
+export function AboutCMS({ page }: { page?: PageId } = {}) {
+  const [active, setActive] = useState<PageId>(page ?? "story");
+  // Keep external page in sync if it changes
+  useEffect(() => { if (page) setActive(page); }, [page]);
+  const showPageTabs = !page;
   const [showPreview, setShowPreview] = useState(true);
   const [refreshTick, setRefreshTick] = useState(0);
   const previewRef = useRef<HTMLIFrameElement>(null);
@@ -98,22 +101,24 @@ export function AboutCMS() {
           </button>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {PAGES.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setActive(p.id)}
-              className={
-                "px-4 py-2 rounded-full text-xs font-bold tracking-wide border transition " +
-                (active === p.id
-                  ? "bg-stone-900 text-white border-stone-900"
-                  : "bg-white/80 text-stone-700 border-stone-200 hover:bg-white")
-              }
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
+        {showPageTabs && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {PAGES.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setActive(p.id)}
+                className={
+                  "px-4 py-2 rounded-full text-xs font-bold tracking-wide border transition " +
+                  (active === p.id
+                    ? "bg-stone-900 text-white border-stone-900"
+                    : "bg-white/80 text-stone-700 border-stone-200 hover:bg-white")
+                }
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Split layout: editors left, preview right */}
