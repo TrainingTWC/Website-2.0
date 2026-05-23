@@ -418,32 +418,96 @@ export function RevealOnScroll({
 }
 
 /* ───────────────────────────────────────────────────────────────────────── */
-/* StatStrip — animated 3-or-4 stat row                                       */
+/* StatStrip — full-width contrast band with eyebrow + stats                  */
+/*                                                                            */
+/* Renders as a dark band against the cream page background. The band gives   */
+/* the section visual weight so a thin row of numbers doesn't drown in        */
+/* whitespace. Eyebrow/caption are optional context for the stats.            */
 /* ───────────────────────────────────────────────────────────────────────── */
 export function StatStrip({
   stats,
+  eyebrow,
+  caption,
+  variant = "band",
 }: {
   stats: { value: string; label: string }[];
+  /** Small uppercase label above the stats — e.g. "By the numbers". */
+  eyebrow?: string;
+  /** One-line summary under the eyebrow giving the stats context. */
+  caption?: string;
+  /** "band" = full-width dark contrast strip (default). "minimal" = old card-row look. */
+  variant?: "band" | "minimal";
 }) {
+  if (variant === "minimal") {
+    return (
+      <RevealOnScroll>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 max-w-5xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
+          {stats.map((s) => (
+            <TiltCard
+              key={s.label}
+              className="text-center px-4 py-6 rounded-2xl bg-natural-paper border border-natural-border shadow-sm"
+              intensity={6}
+            >
+              <div className="text-3xl sm:text-5xl font-extrabold text-natural-text">
+                {s.value}
+              </div>
+              <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-natural-text/50 mt-3">
+                {s.label}
+              </div>
+            </TiltCard>
+          ))}
+        </div>
+      </RevealOnScroll>
+    );
+  }
+
   return (
-    <RevealOnScroll>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 max-w-5xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
-        {stats.map((s) => (
-          <TiltCard
-            key={s.label}
-            className="text-center px-4 py-6 rounded-2xl bg-natural-paper border border-natural-border shadow-sm"
-            intensity={6}
-          >
-            <div className="text-3xl sm:text-5xl font-extrabold text-natural-text">
-              {s.value}
+    <section
+      style={PAINT_CONTAINED}
+      className="relative bg-natural-text text-natural-bg overflow-hidden"
+    >
+      {/* Subtle radial accent so the band has texture, not just flat color. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 45%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.5) 0%, transparent 50%)",
+        }}
+      />
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        {(eyebrow || caption) && (
+          <RevealOnScroll>
+            <div className="max-w-3xl mb-12 sm:mb-16">
+              {eyebrow && (
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-bg/55">
+                  {eyebrow}
+                </span>
+              )}
+              {caption && (
+                <p className="font-serif font-bold text-2xl sm:text-4xl leading-[1.15] mt-4 text-natural-bg">
+                  {caption}
+                </p>
+              )}
             </div>
-            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-natural-text/50 mt-3">
-              {s.label}
-            </div>
-          </TiltCard>
-        ))}
+          </RevealOnScroll>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12">
+          {stats.map((s, i) => (
+            <RevealOnScroll key={s.label} delay={i * 0.06}>
+              <div className="border-l border-natural-bg/20 pl-5 sm:pl-7">
+                <div className="font-serif text-4xl sm:text-6xl font-extrabold text-natural-bg leading-none tracking-tight">
+                  {s.value}
+                </div>
+                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-natural-bg/65 mt-4 leading-relaxed">
+                  {s.label}
+                </div>
+              </div>
+            </RevealOnScroll>
+          ))}
+        </div>
       </div>
-    </RevealOnScroll>
+    </section>
   );
 }
 

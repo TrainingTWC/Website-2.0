@@ -226,6 +226,8 @@ export default function OurCoffeePage() {
       </section>
 
       <StatStrip
+        eyebrow="Quality, measured"
+        caption="Specialty-grade beans, single-origin sourcing, and a roast-to-dispatch window most retailers won't match."
         stats={[
           { value: "80+", label: "SCA cupping score" },
           { value: "48 hrs", label: "Roast to dispatch" },

@@ -70,6 +70,8 @@ export default function OurStoryPage() {
       />
 
       <StatStrip
+        eyebrow="Ten years in"
+        caption="A small Bengaluru roastery turned into a national specialty coffee company — one estate, one café, one careful cup at a time."
         stats={[
           { value: "2016", label: "Founded in Bengaluru" },
           { value: "14", label: "Partner estates" },

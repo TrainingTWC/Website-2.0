@@ -155,6 +155,8 @@ export default function NewsroomPage() {
       </section>
 
       <StatStrip
+        eyebrow="By the numbers"
+        caption="Earned coverage, not bought attention. Here's what a decade of letting the coffee do the talking adds up to."
         stats={[
           { value: "120+", label: "Press mentions to date" },
           { value: "9", label: "Long-form features in 2025" },

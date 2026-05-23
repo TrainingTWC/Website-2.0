@@ -69,6 +69,8 @@ export default function CareersPage() {
       />
 
       <StatStrip
+        eyebrow="The team, in numbers"
+        caption="We hire for curiosity, train for craft, and promote from within. Here's what that looks like in practice."
         stats={[
           { value: "450+", label: "Teammates pan-India" },
           { value: "3 wks", label: "Paid coffee school" },
