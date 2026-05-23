@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   motion,
@@ -1147,6 +1147,16 @@ function DemoStorefront({
 export default function HomeContent() {
   const router = useRouter();
   const products = useProducts();
+  const cmsChapters = useChapters();
+  const chapterNavItems = useMemo(() => {
+    const eyebrows = cmsChapters
+      ? cmsChapters.map((ch: { eyebrow?: string }) => ch.eyebrow || "").filter(Boolean)
+      : ["Sourcing", "Craft", "Brewing", "Drinkware", "Ritual"];
+    return eyebrows.map((label: string) => ({
+      label,
+      target: "chapter-" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-$/, ""),
+    }));
+  }, [cmsChapters]);
   const { showToast } = useToast();
   const { cart, addToCart, cartCount } = useCart();
   const { openCart } = useCartPanel();
@@ -1346,6 +1356,7 @@ export default function HomeContent() {
           onOpenCart={openCart}
           onNavTo={handleNavTo}
           cartCount={cartCount}
+          chapterItems={chapterNavItems}
         />
 
         <MobileBottomNav

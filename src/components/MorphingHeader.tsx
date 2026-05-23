@@ -1,5 +1,5 @@
-"use client";
-import React, { useState, useEffect } from "react";
+﻿"use client";
+import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
   AnimatePresence,
@@ -33,16 +33,18 @@ export const NAV_ITEMS: {
 ];
 
 // ── Active section tracker ─────────────────────────────────────
-export function useActiveSection(): string {
+export function useActiveSection(extraItems = []) {
   const [active, setActive] = useState<string>("home");
+  const extraRef = useRef(extraItems);
+  extraRef.current = extraItems;
   useEffect(() => {
     const update = () => {
-      const items = NAV_ITEMS
+      const items = [...NAV_ITEMS.map(({key,target})=>({key,target})),...extraRef.current]
         .map(({ key, target }) => {
           const el = document.getElementById(target);
           return el ? { key, el } : null;
         })
-        .filter((x): x is { key: string; el: HTMLElement } => !!x);
+        .filter((x) => !!x);
       if (!items.length) return;
 
       const trigger = window.scrollY + window.innerHeight * 0.35;
@@ -193,6 +195,7 @@ export function MorphingHeader({
   onNavTo,
   cartCount = 0,
   activeOverride,
+  chapterItems,
 }: {
   headerBg: any;
   headerBorder: any;
@@ -202,8 +205,10 @@ export function MorphingHeader({
   onNavTo: (target: string) => void;
   cartCount?: number;
   activeOverride?: string;
+  chapterItems?: { label: string; target: string }[];
 }) {
-  const sectionActive = useActiveSection();
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/-$/,"");
+  const sectionActive = useActiveSection((chapterItems||[]).map(ci=>({key:"chapter-"+slug(ci.label),target:ci.target})));
   const active = activeOverride ?? sectionActive;
   const { scrollY } = useScroll();
   const [compact, setCompact] = useState(false);
@@ -355,6 +360,25 @@ export function MorphingHeader({
               />
             ))}
             <TIHeaderButton compact={compact} onClick={onOpenTI} />
+            {!compact&&chapterItems&&chapterItems.length>0&&(
+              <>
+                <span aria-hidden className="w-px h-4 bg-natural-text/20 mx-1 shrink-0"/>
+                {chapterItems.map(item=>{
+                  const k="chapter-"+slug(item.label);
+                  return(
+                    <button key={item.target} onClick={()=>onNavTo(item.target)}
+                      className={[
+                        "relative h-10 px-3 flex items-center rounded-full text-[11px] font-bold tracking-[0.1em] uppercase transition-colors pointer-events-auto",
+                        active===k ? "text-white" : "text-natural-text/55 hover:text-natural-text"
+                      ].join(" ")}
+                    >
+                      {active===k&&<motion.span layoutId="header-nav-active" transition={{type:"spring",stiffness:380,damping:32}} className="absolute inset-0 rounded-full bg-natural-accent shadow-md shadow-natural-accent/30"/>}
+                      <span className="relative z-10">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </motion.nav>
 
           {/* ── Cart — springs to top-right circle on scroll ── */}
