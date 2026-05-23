@@ -15,6 +15,11 @@ import {
   ShoppingBag,
   Newspaper,
   Layers,
+  Gift,
+  Briefcase,
+  Award,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { asset } from "@/src/lib/asset";
 
@@ -35,32 +40,39 @@ export const NAV_ITEMS: {
 ];
 
 // ── Dropdown content per nav key ───────────────────────────────
-const STATIC_DROPDOWNS: Record<string, { label: string; target: string }[]> = {
+type DropdownItem = {
+  label: string;
+  target: string;
+  description?: string;
+  Icon?: React.ComponentType<{ className?: string }>;
+};
+
+const STATIC_DROPDOWNS: Record<string, DropdownItem[]> = {
   beans: [
-    { label: "Single Origin",    target: "section-coffee-beans" },
-    { label: "Blends & Espresso", target: "section-coffee-beans" },
+    { label: "Single Origin",    target: "section-coffee-beans",    description: "Estate-pure lots from 14 partner farms.", Icon: Coffee },
+    { label: "Blends & Espresso", target: "section-coffee-beans",   description: "House blends built for milk & crema.",    Icon: Layers },
   ],
   bags: [
-    { label: "Eco Craft Bags", target: "section-coffee-ecb" },
+    { label: "Eco Craft Bags", target: "section-coffee-ecb", description: "Brew-in-bag, zero cleanup.", Icon: Package },
   ],
   merch: [
-    { label: "Drinkware",  target: "section-merch-drinkware"  },
-    { label: "Bags",       target: "section-merch-bags"       },
-    { label: "Keychains",  target: "section-merch-keychains"  },
-    { label: "Chocolates", target: "section-merch-chocolates" },
+    { label: "Drinkware",  target: "section-merch-drinkware",  description: "Mugs, tumblers, glassware.",       Icon: Coffee },
+    { label: "Bags",       target: "section-merch-bags",       description: "Totes & travel-friendly carriers.", Icon: ShoppingBag },
+    { label: "Keychains",  target: "section-merch-keychains",  description: "Pocket-sized roastery keepsakes.",  Icon: Package },
+    { label: "Chocolates", target: "section-merch-chocolates", description: "Single-origin pairings.",           Icon: Gift },
   ],
   story: [
-    { label: "Our Story",  target: "/about/our-story"  },
-    { label: "Our Coffee", target: "/about/our-coffee" },
-    { label: "Careers",    target: "/about/careers"    },
-    { label: "Newsroom",   target: "/about/newsroom"   },
+    { label: "Our Story",  target: "/about/our-story",  description: "Founders, milestones, ten-year arc.", Icon: BookOpen },
+    { label: "Our Coffee", target: "/about/our-coffee", description: "Estates, varietals & the cup.",       Icon: Coffee },
+    { label: "Careers",    target: "/about/careers",    description: "Open roles + life at Third Wave.",    Icon: Briefcase },
+    { label: "Newsroom",   target: "/about/newsroom",   description: "Press, releases & facts.",            Icon: Newspaper },
   ],
   editorial: [
-    { label: "All",       target: "/third-circle"                    },
-    { label: "Offers",    target: "/third-circle?filter=flash-sale"  },
-    { label: "News",      target: "/third-circle?filter=cafe-news"   },
-    { label: "Stories",   target: "/third-circle?filter=brand-story" },
-    { label: "Champions", target: "/third-circle?filter=champion"    },
+    { label: "All",       target: "/third-circle",                    description: "Every story in one feed.",       Icon: Layers },
+    { label: "Offers",    target: "/third-circle?filter=flash-sale",  description: "Limited drops & promotions.",    Icon: Sparkles },
+    { label: "News",      target: "/third-circle?filter=cafe-news",   description: "What's new in our cafes.",       Icon: Newspaper },
+    { label: "Stories",   target: "/third-circle?filter=brand-story", description: "Long reads from the team.",      Icon: BookOpen },
+    { label: "Champions", target: "/third-circle?filter=champion",    description: "Baristas, growers & partners.",  Icon: Award },
   ],
 };
 
@@ -131,9 +143,12 @@ function DropdownPanel({
   items,
   onSelect,
 }: {
-  items: { label: string; target: string }[];
+  items: DropdownItem[];
   onSelect: (t: string) => void;
 }) {
+  const hasDescriptions = items.some((i) => i.description);
+  const twoCol = hasDescriptions && items.length >= 4;
+  const panelWidth = twoCol ? 560 : hasDescriptions ? 320 : 220;
   return (
     <div
       style={{
@@ -141,33 +156,110 @@ function DropdownPanel({
         top: "100%",
         left: "50%",
         zIndex: 200,
-        paddingTop: 8,
+        paddingTop: 10,
         pointerEvents: "auto",
       }}
     >
       <motion.div
-        initial={{ opacity: 0, scaleY: 0.82, y: -8 }}
+        initial={{ opacity: 0, scaleY: 0.9, y: -6 }}
         animate={{ opacity: 1, scaleY: 1, y: 0 }}
-        exit={{ opacity: 0, scaleY: 0.82, y: -8 }}
+        exit={{ opacity: 0, scaleY: 0.9, y: -6 }}
+        transition={{ type: "spring", stiffness: 460, damping: 32, mass: 0.7 }}
         style={{
-          ...GLASS,
-          borderRadius: 16,
           transformOrigin: "top center",
           x: "-50%",
-          minWidth: 162,
-          padding: 6,
+          width: panelWidth,
+          borderRadius: 22,
+          padding: 10,
+          position: "relative",
+          overflow: "hidden",
+          background:
+            "linear-gradient(180deg, rgba(255,254,251,0.85) 0%, rgba(250,249,246,0.78) 100%)",
+          backdropFilter: "blur(56px) saturate(190%) brightness(1.08)",
+          WebkitBackdropFilter: "blur(56px) saturate(190%) brightness(1.08)",
+          boxShadow:
+            "0 28px 64px -16px rgba(44,24,16,0.28), 0 8px 24px -8px rgba(44,24,16,0.16), 0 1px 0 rgba(255,255,255,0.95) inset, 0 0 0 1px rgba(255,255,255,0.55)",
         }}
-        transition={{ type: "spring", stiffness: 420, damping: 30, mass: 0.7 }}
       >
-        {items.map((item) => (
-          <button
-            key={item.target + item.label}
-            onClick={(e) => { e.stopPropagation(); onSelect(item.target); }}
-            className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-natural-text/75 hover:text-natural-text hover:bg-natural-text/[0.07] transition-colors whitespace-nowrap"
-          >
-            {item.label}
-          </button>
-        ))}
+        {/* top sheen */}
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 56,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%)",
+          }}
+        />
+        {/* bottom warm glow */}
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: -40,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "70%",
+            height: 80,
+            pointerEvents: "none",
+            background:
+              "radial-gradient(ellipse at center, rgba(168,118,68,0.16) 0%, rgba(168,118,68,0) 70%)",
+            filter: "blur(8px)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: twoCol ? "1fr 1fr" : "1fr",
+            gap: 4,
+          }}
+        >
+          {items.map((item) => {
+            const Icon = item.Icon;
+            return (
+              <button
+                key={item.target + item.label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(item.target);
+                }}
+                className="group relative flex items-start gap-3 text-left rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-white/55 hover:shadow-[0_4px_18px_-6px_rgba(44,24,16,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-natural-accent/50"
+              >
+                {Icon ? (
+                  <span
+                    aria-hidden
+                    className="shrink-0 grid place-items-center w-9 h-9 rounded-xl transition-transform duration-200 group-hover:scale-[1.04]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(168,118,68,0.18) 0%, rgba(168,118,68,0.06) 100%)",
+                      boxShadow:
+                        "0 1px 0 rgba(255,255,255,0.7) inset, 0 0 0 1px rgba(168,118,68,0.18)",
+                    }}
+                  >
+                    <Icon className="w-[18px] h-[18px] text-natural-accent" />
+                  </span>
+                ) : null}
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[13.5px] font-bold text-natural-text leading-tight">
+                    {item.label}
+                  </span>
+                  {item.description ? (
+                    <span className="block text-[11.5px] text-natural-text/55 mt-0.5 leading-snug">
+                      {item.description}
+                    </span>
+                  ) : null}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-natural-text/30 mt-1.5 shrink-0 opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0" />
+              </button>
+            );
+          })}
+        </div>
       </motion.div>
     </div>
   );
