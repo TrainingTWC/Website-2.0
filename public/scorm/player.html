@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Third Wave Coffee — Orientation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0f0e0c; }
+    #frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      place-items: center;
+      font-family: system-ui, sans-serif;
+      color: #e0d6c8;
+      background: #0f0e0c;
+      text-align: center;
+      padding: 2rem;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    #error.visible { display: flex; }
+    #error p { max-width: 480px; opacity: 0.7; line-height: 1.6; }
+    #error a { color: #c87941; text-decoration: underline; }
+  </style>
+  <!-- SCORM 1.2 API stub: must load before the course frame does. -->
+  <script src="/scorm/scorm-api.js"></script>
+</head>
+<body>
+  <iframe id="frame" allow="fullscreen" allowfullscreen></iframe>
+
+  <div id="error">
+    <strong style="font-size:1.2rem">Course files not found</strong>
+    <p>
+      Please extract your SCORM 1.2 ZIP into <code>public/scorm/orientation/</code>
+      so that the launch file is at
+      <code>public/scorm/orientation/&lt;launch&gt;</code>.
+    </p>
+    <p>
+      <a href="javascript:history.back()">← Go back</a>
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      // Read ?launch=story.html from the URL; fallback to common filenames.
+      var params = new URLSearchParams(location.search);
+      var launch = params.get("launch") || "story.html";
+      var candidates = [launch, "index.html", "story_html5.html", "story.html"];
+
+      // De-duplicate while preserving order.
+      var seen = {};
+      var queue = [];
+      candidates.forEach(function (c) {
+        if (!seen[c]) { seen[c] = true; queue.push(c); }
+      });
+
+      var frame = document.getElementById("frame");
+      var err = document.getElementById("error");
+
+      function tryNext() {
+        var file = queue.shift();
+        if (!file) {
+          err.classList.add("visible");
+          return;
+        }
+        // Probe: use a HEAD-like fetch to confirm the file exists before pointing
+        // the iframe at it (avoids a blank/broken frame for end users).
+        var probe = new XMLHttpRequest();
+        probe.open("HEAD", "/scorm/orientation/" + file, true);
+        probe.onload = function () {
+          if (probe.status === 200 || probe.status === 304) {
+            frame.src = "/scorm/orientation/" + file;
+          } else {
+            tryNext();
+          }
+        };
+        probe.onerror = tryNext;
+        probe.send();
+      }
+
+      tryNext();
+    })();
+  </script>
+</body>
+</html>

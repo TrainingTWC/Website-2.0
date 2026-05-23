@@ -10,6 +10,7 @@ import {
 } from "@/src/components/about/ParallaxPrimitives";
 import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
+import { ScormViewer } from "@/src/components/about/ScormViewer";
 
 type Role = {
   title: string;
