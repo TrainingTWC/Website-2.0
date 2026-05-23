@@ -8,12 +8,12 @@ import { usePerfMode } from "@/src/context/PerfModeContext";
  * so all `motion/react` `useScroll` listeners read interpolated scrollY values.
  *
  * Tier-gated per CONTEXT D-04:
- *   • low tier or `prefers-reduced-motion`     ? skip Lenis entirely
+ *   - low tier or `prefers-reduced-motion` -> skip Lenis entirely
  *     (native scroll, no rAF loop, no synthetic events).
- *   • mid tier  ? lerp 0.10, syncTouch off (saves a 60 Hz event firehose on phones).
- *   • high tier ? lerp 0.08, syncTouch on  (full silk-curtain feel).
+ *   - mid tier  -> lerp 0.10, syncTouch off (saves a 60 Hz event firehose on phones).
+ *   - high tier -> lerp 0.08, syncTouch on  (full silk-curtain feel).
  *
- * D-05 — we deliberately do NOT dispatch a synthetic `scroll` event each
+ * D-05 - we deliberately do NOT dispatch a synthetic `scroll` event each
  * frame. motion/react's `useScroll` already reads the real scroll position
  * via its own listener; the synthetic dispatch was the single largest
  * scroll-fps regression in v5.x and is gone for good.
@@ -29,7 +29,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     }
 
     // Prevent the browser / Next.js from restoring scroll position on
-    // back-forward navigation — Lenis owns the scroll position.
+    // back-forward navigation - Lenis owns the scroll position.
     if ("scrollRestoration" in history) {
       history.scrollRestoration = "manual";
     }
@@ -58,13 +58,13 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     // Soft chapter snap (desktop only, proximity-based, idle-triggered)
     // -------------------------------------------------------------
     // Behaviour:
-    //   • Watch scroll. ~180ms after user stops, find the nearest
-    //     [data-snap-chapter] section whose top is within ±40% vh
+    //   - Watch scroll. ~180ms after user stops, find the nearest
+    //     [data-snap-chapter] section whose top is within +/-40% vh
     //     of the current viewport top.
-    //   • If found and we aren't already aligned (within 6px),
+    //   - If found and we aren't already aligned (within 6px),
     //     gently scrollTo it with Lenis.
-    //   • Any wheel/touch/key input during the snap aborts it.
-    //   • Disabled on <768px viewports.
+    //   - Any wheel/touch/key input during the snap aborts it.
+    //   - Disabled on <768px viewports.
     const mql = window.matchMedia("(min-width: 768px)");
     let snapIdleTimer: number | null = null;
     let snapInProgress = false;
@@ -95,7 +95,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       if (!mql.matches || snapInProgress) return;
 
       const vh = window.innerHeight;
-      const proximityPx = vh * 0.4; // proximity zone: ±40% vh
+      const proximityPx = vh * 0.4; // proximity zone: +/-40% vh
       const currentTop = window.scrollY;
 
       const sections = Array.from(
