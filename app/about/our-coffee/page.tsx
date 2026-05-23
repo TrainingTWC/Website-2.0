@@ -8,6 +8,7 @@ import {
   TiltCard,
   RevealOnScroll,
 } from "@/src/components/about/ParallaxPrimitives";
+import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
 
 const processSteps = [
@@ -138,12 +139,25 @@ const products = [
 export default function OurCoffeePage() {
   return (
     <AboutPageShell active="our-coffee">
-      <ParallaxHero
-        eyebrow="Our Coffee"
-        title="Single-origin, single-minded."
-        tagline="Coffee that tells you where it came from, how to brew it, and what to do if your first cup tastes weird."
-        imageUrl={asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg")}
-      />
+      <>
+        <CreativeHero
+          eyebrow="Our Coffee"
+          title="Single-origin, single-minded."
+          tagline="Coffee that tells you where it came from, how to brew it, and what to do if your first cup tastes weird."
+          imageUrl={asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg")}
+          accentWord="estates"
+          stickerText="14 ESTATES"
+          decorations={[
+            { glyph: "leaf", top: "10%", right: "8%", size: 44, color: "var(--about-accent)", rotate: 24, drift: 12, duration: 7 },
+            { glyph: "bean", top: "62%", left: "4%", size: 40, color: "var(--about-accent)", rotate: -16, drift: 10, duration: 6, delay: 0.3 },
+            { glyph: "sparkle", top: "14%", left: "12%", size: 24, color: "var(--about-accent)", rotate: 8, drift: 8, duration: 5, delay: 0.5 },
+            { glyph: "flower", top: "44%", right: "5%", size: 36, color: "var(--about-accent)", rotate: -6, drift: 10, duration: 7, delay: 0.2 },
+            { glyph: "squiggle", bottom: "18%", right: "20%", size: 90, color: "var(--about-accent)", rotate: 4, drift: 6, duration: 6, delay: 0.4 },
+            { glyph: "bubble", bottom: "10%", left: "18%", size: 30, color: "var(--about-accent)", rotate: 0, drift: 14, duration: 8, delay: 0.6 },
+          ]}
+        />
+        <MarqueeStrip items={["FARM TO ROAST", "SINGLE ORIGIN", "HAND PICKED", "ARABICA", "ROBUSTA", "FRESH GROUND"]} variant="accent" />
+      </>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
         <RevealOnScroll>

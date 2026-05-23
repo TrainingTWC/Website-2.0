@@ -235,3 +235,10 @@
 @utility shadow-about-soft {
   box-shadow: 0 18px 60px -34px color-mix(in srgb, var(--about-accent) 58%, transparent);
 }
+
+
+@keyframes brewmatch-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-25%); }
+}
+

@@ -8,6 +8,7 @@ import {
   TiltCard,
   RevealOnScroll,
 } from "@/src/components/about/ParallaxPrimitives";
+import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
 
 type PressCategory = "Feature" | "Interview" | "Award" | "Industry";
@@ -82,12 +83,25 @@ export default function NewsroomPage() {
 
   return (
     <AboutPageShell active="newsroom">
-      <ParallaxHero
-        eyebrow="Newsroom"
-        title="In the news, in our own words."
-        tagline="Receipts, interviews, facts, and direct contact. Quiet design. Verifiable claims. No investor-deck cosplay."
-        imageUrl={asset("assets/SSRR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-33.jpg")}
-      />
+      <>
+        <CreativeHero
+          eyebrow="Newsroom"
+          title="In the news, in our own words."
+          tagline="Receipts, interviews, facts, and direct contact. Quiet design. Verifiable claims. No investor-deck cosplay."
+          imageUrl={asset("assets/SSRR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-33.jpg")}
+          accentWord="words"
+          stickerText="PRESS ROOM"
+          decorations={[
+            { glyph: "star", top: "10%", right: "8%", size: 30, color: "var(--about-accent)", rotate: 14, drift: 12, duration: 6 },
+            { glyph: "sparkle", bottom: "20%", right: "14%", size: 26, color: "var(--about-accent)", rotate: -8, drift: 10, duration: 5, delay: 0.3 },
+            { glyph: "squiggle", top: "16%", left: "4%", size: 90, color: "var(--about-accent)", rotate: 6, drift: 6, duration: 6, delay: 0.5 },
+            { glyph: "bubble", top: "48%", left: "6%", size: 32, color: "var(--about-accent)", rotate: 0, drift: 14, duration: 7, delay: 0.4 },
+            { glyph: "planet", top: "60%", right: "5%", size: 50, color: "var(--about-accent)", rotate: -12, drift: 8, duration: 8, delay: 0.6 },
+            { glyph: "flower", bottom: "12%", left: "16%", size: 38, color: "var(--about-accent)", rotate: 10, drift: 9, duration: 7, delay: 0.2 },
+          ]}
+        />
+        <MarqueeStrip items={["IN THE PRESS", "FACTS NOT HYPE", "ON THE RECORD", "AWARDS", "INTERVIEWS"]} variant="accent" />
+      </>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
         <RevealOnScroll>

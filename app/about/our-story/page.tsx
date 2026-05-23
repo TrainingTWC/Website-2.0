@@ -9,6 +9,7 @@ import {
   TiltCard,
   RevealOnScroll,
 } from "@/src/components/about/ParallaxPrimitives";
+import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
 
 const founders = [
@@ -68,12 +69,25 @@ const values = [
 export default function OurStoryPage() {
   return (
     <AboutPageShell active="our-story">
-      <ParallaxHero
-        eyebrow="Our Story"
-        title="A small Bengaluru roastery, ten years on."
-        tagline="Made by people who care about the cup, the farm, and the person drinking it on a half-awake Tuesday."
-        imageUrl={asset("assets/our-story.png")}
-      />
+      <>
+        <CreativeHero
+          eyebrow="Our Story"
+          title="A small Bengaluru roastery, ten years on."
+          tagline="Made by people who care about the cup, the farm, and the person drinking it on a half-awake Tuesday."
+          imageUrl={asset("assets/our-story.png")}
+          accentWord="Bengaluru"
+          stickerText="EST. 2016"
+          decorations={[
+            { glyph: "bean", top: "12%", left: "4%", size: 38, color: "var(--about-accent)", rotate: -18, drift: 12, duration: 7 },
+            { glyph: "sparkle", top: "8%", right: "10%", size: 26, color: "var(--about-accent)", rotate: 12, drift: 10, duration: 5, delay: 0.4 },
+            { glyph: "squiggle", top: "32%", right: "44%", size: 80, color: "var(--about-accent)", rotate: -8, drift: 6, duration: 6, delay: 0.2 },
+            { glyph: "planet", bottom: "8%", left: "8%", size: 56, color: "var(--about-accent)", rotate: 6, drift: 8, duration: 8, delay: 0.6 },
+            { glyph: "star", bottom: "20%", right: "6%", size: 32, color: "var(--about-accent)", rotate: 14, drift: 12, duration: 5, delay: 0.3 },
+            { glyph: "flower", top: "58%", left: "2%", size: 42, color: "var(--about-accent)", rotate: -10, drift: 9, duration: 7, delay: 0.5 },
+          ]}
+        />
+        <MarqueeStrip items={["MADE WITH CARE", "SMALL BATCH", "ROASTED FRESH", "BENGALURU", "FROM BEAN TO CUP"]} variant="accent" />
+      </>
 
       <PinnedTextBlock
         eyebrow="Bengaluru, 2016"

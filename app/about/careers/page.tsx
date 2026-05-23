@@ -8,6 +8,7 @@ import {
   TiltCard,
   RevealOnScroll,
 } from "@/src/components/about/ParallaxPrimitives";
+import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
 
 type Role = {
@@ -94,12 +95,25 @@ export default function CareersPage() {
 
   return (
     <AboutPageShell active="careers">
-      <ParallaxHero
-        eyebrow="Careers"
-        title="Hospitality, not customer service."
-        tagline="Fast growth, real training, transparent bands, and people who take the work seriously without turning into a corporate portal."
-        imageUrl={asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg")}
-      />
+      <>
+        <CreativeHero
+          eyebrow="Careers"
+          title="Hospitality, not customer service."
+          tagline="Fast growth, real training, transparent bands, and people who take the work seriously without turning into a corporate portal."
+          imageUrl={asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg")}
+          accentWord="Hospitality"
+          stickerText="WE'RE HIRING"
+          decorations={[
+            { glyph: "sparkle", top: "10%", right: "12%", size: 32, color: "var(--about-accent)", rotate: 16, drift: 14, duration: 6 },
+            { glyph: "star", top: "20%", left: "6%", size: 28, color: "var(--about-accent)", rotate: -10, drift: 12, duration: 5, delay: 0.3 },
+            { glyph: "flower", top: "52%", left: "3%", size: 42, color: "var(--about-accent)", rotate: 8, drift: 10, duration: 7, delay: 0.5 },
+            { glyph: "bubble", top: "38%", right: "6%", size: 34, color: "var(--about-accent)", rotate: 0, drift: 13, duration: 8, delay: 0.4 },
+            { glyph: "squiggle", bottom: "22%", left: "20%", size: 92, color: "var(--about-accent)", rotate: -4, drift: 6, duration: 6, delay: 0.2 },
+            { glyph: "planet", bottom: "10%", right: "8%", size: 52, color: "var(--about-accent)", rotate: 12, drift: 9, duration: 8, delay: 0.6 },
+          ]}
+        />
+        <MarqueeStrip items={["PEOPLE FIRST", "GROW WITH US", "REAL TRAINING", "OPEN ROLES", "JOIN THE TEAM"]} variant="accent" />
+      </>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
         <RevealOnScroll>
