@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
@@ -14,56 +14,84 @@ import {
   Package,
   ShoppingBag,
   Newspaper,
+  Layers,
 } from "lucide-react";
 import { asset } from "@/src/lib/asset";
 
-// ── Nav items constant ─────────────────────────────────────────
+// ── Nav items ─────────────────────────────────────────────────
 export const NAV_ITEMS: {
   key: string;
   label: string;
   target: string;
   Icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  { key: "home", label: "Home", target: "hero", Icon: Home },
-  { key: "beans", label: "Beans", target: "section-coffee-beans", Icon: Coffee },
-  { key: "bags", label: "Coffee Bags", target: "section-coffee-ecb", Icon: Package },
-  { key: "merch", label: "Merch", target: "section-merch-drinkware", Icon: ShoppingBag },
-  { key: "story", label: "Our Story", target: "our-story", Icon: BookOpen },
-  { key: "editorial", label: "Third Circle", target: "third-circle", Icon: Newspaper },
+  { key: "home",      label: "Home",         target: "hero",                    Icon: Home       },
+  { key: "chapters",  label: "Chapters",     target: "chapter-sourcing",        Icon: Layers     },
+  { key: "beans",     label: "Beans",        target: "section-coffee-beans",    Icon: Coffee     },
+  { key: "bags",      label: "Coffee Bags",  target: "section-coffee-ecb",      Icon: Package    },
+  { key: "merch",     label: "Merch",        target: "section-merch-drinkware", Icon: ShoppingBag },
+  { key: "story",     label: "Our Story",    target: "our-story",               Icon: BookOpen   },
+  { key: "editorial", label: "Third Circle", target: "third-circle",            Icon: Newspaper  },
 ];
 
+// ── Dropdown content per nav key ───────────────────────────────
+const STATIC_DROPDOWNS: Record<string, { label: string; target: string }[]> = {
+  beans: [
+    { label: "Single Origin",    target: "section-coffee-beans" },
+    { label: "Blends & Espresso", target: "section-coffee-beans" },
+  ],
+  bags: [
+    { label: "Eco Craft Bags", target: "section-coffee-ecb" },
+  ],
+  merch: [
+    { label: "Drinkware",  target: "section-merch-drinkware"  },
+    { label: "Bags",       target: "section-merch-bags"       },
+    { label: "Keychains",  target: "section-merch-keychains"  },
+    { label: "Chocolates", target: "section-merch-chocolates" },
+  ],
+  story: [
+    { label: "Our Story", target: "our-story" },
+  ],
+  editorial: [
+    { label: "All",       target: "/third-circle"                    },
+    { label: "Offers",    target: "/third-circle?filter=flash-sale"  },
+    { label: "News",      target: "/third-circle?filter=cafe-news"   },
+    { label: "Stories",   target: "/third-circle?filter=brand-story" },
+    { label: "Champions", target: "/third-circle?filter=champion"    },
+  ],
+};
+
 // ── Active section tracker ─────────────────────────────────────
-export function useActiveSection(extraItems = []) {
+export function useActiveSection(chapterTargets: { target: string }[] = []) {
   const [active, setActive] = useState<string>("home");
-  const extraRef = useRef(extraItems);
-  extraRef.current = extraItems;
+  const chapRef = useRef(chapterTargets);
+  chapRef.current = chapterTargets;
   useEffect(() => {
     const update = () => {
-      const items = [...NAV_ITEMS.map(({key,target})=>({key,target})),...extraRef.current]
+      const allItems = [
+        ...NAV_ITEMS.map(({ key, target }) => ({ key, target })),
+        ...chapRef.current.map(({ target }) => ({ key: "chapters", target })),
+      ]
+        .filter(({ target }) => !target.startsWith("/"))
         .map(({ key, target }) => {
           const el = document.getElementById(target);
           return el ? { key, el } : null;
         })
-        .filter((x) => !!x);
-      if (!items.length) return;
-
+        .filter((x): x is { key: string; el: HTMLElement } => !!x);
+      if (!allItems.length) return;
       const trigger = window.scrollY + window.innerHeight * 0.35;
-      let best = items[0];
+      let best = allItems[0];
       let bestDist = Infinity;
-      for (const item of items) {
+      for (const item of allItems) {
         const top = window.scrollY + item.el.getBoundingClientRect().top;
         const dist = Math.abs(top - trigger);
         if (dist < bestDist) { bestDist = dist; best = item; }
       }
       setActive((prev) => (prev === best.key ? prev : best.key));
     };
-
     const lenis = (window as any).__lenis;
-    if (lenis) {
-      lenis.on("scroll", update);
-    } else {
-      window.addEventListener("scroll", update, { passive: true });
-    }
+    if (lenis) lenis.on("scroll", update);
+    else window.addEventListener("scroll", update, { passive: true });
     update();
     const t = setTimeout(update, 600);
     return () => {
@@ -73,6 +101,62 @@ export function useActiveSection(extraItems = []) {
     };
   }, []);
   return active;
+}
+
+// ── Shared glass style ─────────────────────────────────────────
+const GLASS: React.CSSProperties = {
+  background: "rgba(250,249,246,0.92)",
+  backdropFilter: "blur(48px) saturate(180%) brightness(1.06)",
+  WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.06)",
+  boxShadow:
+    "0 16px 48px -8px rgba(44,24,16,0.22), 0 1.5px 0 rgba(255,255,255,0.8) inset, 0 0 0 1px rgba(255,255,255,0.45)",
+};
+
+// ── DropdownPanel ──────────────────────────────────────────────
+function DropdownPanel({
+  items,
+  onSelect,
+}: {
+  items: { label: string; target: string }[];
+  onSelect: (t: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "100%",
+        left: "50%",
+        zIndex: 200,
+        paddingTop: 8,
+        pointerEvents: "auto",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scaleY: 0.82, y: -8 }}
+        animate={{ opacity: 1, scaleY: 1, y: 0 }}
+        exit={{ opacity: 0, scaleY: 0.82, y: -8 }}
+        style={{
+          ...GLASS,
+          borderRadius: 16,
+          transformOrigin: "top center",
+          x: "-50%",
+          minWidth: 162,
+          padding: 6,
+        }}
+        transition={{ type: "spring", stiffness: 420, damping: 30, mass: 0.7 }}
+      >
+        {items.map((item) => (
+          <button
+            key={item.target + item.label}
+            onClick={(e) => { e.stopPropagation(); onSelect(item.target); }}
+            className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-natural-text/75 hover:text-natural-text hover:bg-natural-text/[0.07] transition-colors whitespace-nowrap"
+          >
+            {item.label}
+          </button>
+        ))}
+      </motion.div>
+    </div>
+  );
 }
 
 // ── MorphNavItem ───────────────────────────────────────────────
@@ -136,7 +220,7 @@ function MorphNavItem({
   );
 }
 
-// ── TI button in header ────────────────────────────────────────
+// ── TI button ─────────────────────────────────────────────────
 function TIHeaderButton({
   compact,
   onClick,
@@ -207,25 +291,28 @@ export function MorphingHeader({
   activeOverride?: string;
   chapterItems?: { label: string; target: string }[];
 }) {
-  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/-$/,"");
-  const sectionActive = useActiveSection((chapterItems||[]).map(ci=>({key:"chapter-"+slug(ci.label),target:ci.target})));
+  const sectionActive = useActiveSection(chapterItems || []);
   const active = activeOverride ?? sectionActive;
   const { scrollY } = useScroll();
   const [compact, setCompact] = useState(false);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+
   useMotionValueEvent(scrollY, "change", (v) => {
     const next = v > 80;
     setCompact((prev) => (prev === next ? prev : next));
   });
 
+  const getDropdownItems = (key: string) => {
+    if (key === "chapters") return chapterItems || [];
+    return STATIC_DROPDOWNS[key] || [];
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-      {/* Mobile: full-width bar (unchanged) */}
+
+      {/* ── Mobile: full-width bar ── */}
       <motion.header
-        style={{
-          backgroundColor: headerBg,
-          borderBottomColor: headerBorder,
-          boxShadow: headerShadow,
-        }}
+        style={{ backgroundColor: headerBg, borderBottomColor: headerBorder, boxShadow: headerShadow }}
         className="md:hidden pointer-events-auto backdrop-blur-2xl saturate-150 border-b"
       >
         <motion.div
@@ -233,12 +320,7 @@ export function MorphingHeader({
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="px-4 grid grid-cols-[1fr_auto_1fr] items-center"
         >
-          {/* LEFT — logo */}
-          <button
-            onClick={() => onNavTo("hero")}
-            className="flex items-center justify-start"
-            aria-label="Third Wave Coffee—home"
-          >
+          <button onClick={() => onNavTo("hero")} className="flex items-center justify-start" aria-label="Third Wave Coffee—home">
             <motion.img
               layoutId="brand-logo"
               src={asset("logo.png")}
@@ -249,9 +331,8 @@ export function MorphingHeader({
               className="w-auto"
             />
           </button>
-          {/* CENTER — mobile nav placeholder */}
           <nav className="flex items-center gap-1">
-            {NAV_ITEMS.slice(0, 4).map((item) => (
+            {NAV_ITEMS.slice(0, 5).map((item) => (
               <MorphNavItem
                 key={item.key}
                 label={item.label}
@@ -262,7 +343,6 @@ export function MorphingHeader({
               />
             ))}
           </nav>
-          {/* RIGHT — cart */}
           <div className="flex items-center gap-1 justify-end">
             <div className="relative">
               <MorphNavItem label="Cart" Icon={ShoppingCart} active={false} compact onClick={onOpenCart} />
@@ -276,7 +356,7 @@ export function MorphingHeader({
         </motion.div>
       </motion.header>
 
-      {/* Desktop: fluid water-drop header — layout FLIP drives the split animation */}
+      {/* ── Desktop: fluid water-drop header ── */}
       <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
         <motion.div
           layout
@@ -289,7 +369,7 @@ export function MorphingHeader({
           }
           style={{ maxWidth: compact ? undefined : 920, borderRadius: 999 }}
         >
-          {/* Island glass bg — covers all 3 when expanded, fades when compact */}
+          {/* Island glass bg — single pill when expanded */}
           <span
             aria-hidden
             className="absolute inset-0 pointer-events-none"
@@ -304,7 +384,7 @@ export function MorphingHeader({
             }}
           />
 
-          {/* ── Logo — springs to top-left circle on scroll ── */}
+          {/* Logo */}
           <motion.button
             layout
             initial={false}
@@ -313,7 +393,6 @@ export function MorphingHeader({
             aria-label="Third Wave Coffee—home"
             className={`relative flex-shrink-0 flex items-center justify-center overflow-hidden rounded-full pointer-events-auto z-10${compact ? " w-14 h-14" : ""}`}
           >
-            {/* Per-element glass — visible only when compact (circle mode) */}
             <span
               aria-hidden
               className="absolute inset-0 rounded-full pointer-events-none"
@@ -336,7 +415,7 @@ export function MorphingHeader({
             />
           </motion.button>
 
-          {/* ── Nav — stays centred, always has its own glass pill ── */}
+          {/* Nav pill */}
           <motion.nav
             layout
             transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
@@ -349,39 +428,38 @@ export function MorphingHeader({
               boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
             }}
           >
-            {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => (
-              <MorphNavItem
-                key={item.key}
-                label={item.label}
-                Icon={item.Icon}
-                active={active === item.key}
-                compact={compact}
-                onClick={() => onNavTo(item.target)}
-              />
-            ))}
+            {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
+              const dropItems = getDropdownItems(item.key);
+              const showDrop = hoveredKey === item.key && dropItems.length > 0 && !compact;
+              return (
+                <div
+                  key={item.key}
+                  style={{ position: "relative" }}
+                  onMouseEnter={() => setHoveredKey(item.key)}
+                  onMouseLeave={() => setHoveredKey(null)}
+                >
+                  <MorphNavItem
+                    label={item.label}
+                    Icon={item.Icon}
+                    active={active === item.key}
+                    compact={compact}
+                    onClick={() => { setHoveredKey(null); onNavTo(item.target); }}
+                  />
+                  <AnimatePresence>
+                    {showDrop && (
+                      <DropdownPanel
+                        items={dropItems}
+                        onSelect={(t) => { setHoveredKey(null); onNavTo(t); }}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
             <TIHeaderButton compact={compact} onClick={onOpenTI} />
-            {!compact&&chapterItems&&chapterItems.length>0&&(
-              <>
-                <span aria-hidden className="w-px h-4 bg-natural-text/20 mx-1 shrink-0"/>
-                {chapterItems.map(item=>{
-                  const k="chapter-"+slug(item.label);
-                  return(
-                    <button key={item.target} onClick={()=>onNavTo(item.target)}
-                      className={[
-                        "relative h-10 px-3 flex items-center rounded-full text-[11px] font-bold tracking-[0.1em] uppercase transition-colors pointer-events-auto",
-                        active===k ? "text-white" : "text-natural-text/55 hover:text-natural-text"
-                      ].join(" ")}
-                    >
-                      {active===k&&<motion.span layoutId="header-nav-active" transition={{type:"spring",stiffness:380,damping:32}} className="absolute inset-0 rounded-full bg-natural-accent shadow-md shadow-natural-accent/30"/>}
-                      <span className="relative z-10">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </>
-            )}
           </motion.nav>
 
-          {/* ── Cart — springs to top-right circle on scroll ── */}
+          {/* Cart */}
           <motion.div
             layout
             transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
@@ -412,6 +490,7 @@ export function MorphingHeader({
               </span>
             )}
           </motion.div>
+
         </motion.div>
       </div>
     </div>

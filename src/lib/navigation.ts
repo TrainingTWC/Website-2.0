@@ -14,6 +14,7 @@ const HOME_SECTION_TARGETS = new Set([
 ]);
 
 export function hrefForNavTarget(target: string): string {
+  if (target.startsWith("/")) return target;
   if (target === "third-circle") return "/third-circle";
   if (target === "order-portal") return "/orders";
   if (target === "shop") return "/shop";

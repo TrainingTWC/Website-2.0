@@ -1306,11 +1306,10 @@ export default function HomeContent() {
 
   // Simplified nav handler — TI is now an overlay, all other routes are real routes
   const handleNavTo = useCallback((target: string) => {
-    if (target === "third-circle") {
-      router.push("/journal");
-      return;
-    }
-    scrollTo(target);
+    if (target.startsWith("/")) { router.push(target); return; }
+    if (target === "third-circle") { router.push("/third-circle"); return; }
+    const el = typeof document !== "undefined" && document.getElementById(target);
+    if (el) { scrollTo(target); } else { router.push("/#" + target); }
   }, [router]);
 
   // Hard ceiling: never block the user for more than 6 s regardless of network.
