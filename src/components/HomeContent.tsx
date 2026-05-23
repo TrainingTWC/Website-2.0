@@ -49,16 +49,16 @@ import { resolveTaxonomy } from "../types";
 // -- Scroll helper ----------------------------------------------
 function scrollTo(id: string) {
   const el = document.getElementById(id);
+  if (!el) return;
   const lenis = (window as any).__lenis;
-  if (lenis && el) {
-    lenis.scrollTo(el, {
-      duration: 1.0,
-      easing: (t: number) => 1 - Math.pow(1 - t, 3),
-    });
+  if (lenis) {
+    const top = Math.round(el.getBoundingClientRect().top + window.scrollY);
+    lenis.scrollTo(top, { duration: 1.0, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
     return;
   }
-  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
 
 // -- ScrollReveal — fade + lift sections into view on scroll ----
 function ScrollReveal({
@@ -1316,7 +1316,7 @@ export default function HomeContent() {
       if (chapterEls && chapterEls.length > 0) {
         const first = chapterEls[0] as HTMLElement;
         const lenis = (window as any).__lenis;
-        if (lenis) lenis.scrollTo(first, { duration: 1.0, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+        if (lenis) { const top = Math.round(first.getBoundingClientRect().top + window.scrollY); lenis.scrollTo(top, { duration: 1.0, easing: (t: number) => 1 - Math.pow(1 - t, 3) }); }
         else first.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
@@ -1330,25 +1330,23 @@ export default function HomeContent() {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.slice(1);
     if (!hash.startsWith("chapter-")) return;
-    const t = setTimeout(() => {
-      const el = document.getElementById(hash);
+    let attempts = 0;
+    let pollTimer: ReturnType<typeof setTimeout>;
+    const poll = () => {
+      attempts++;
+      const el = document.getElementById(hash) ?? document.querySelector<HTMLElement>("[data-snap-chapter]");
       if (el) {
         const lenis = (window as any).__lenis;
-        if (lenis) lenis.scrollTo(el, { duration: 1.0, easing: (x: number) => 1 - Math.pow(1 - x, 3) });
-        else el.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        const chapterEls = document.querySelectorAll("[data-snap-chapter]");
-        if (chapterEls.length > 0) {
-          const first = chapterEls[0] as HTMLElement;
-          const lenis = (window as any).__lenis;
-          if (lenis) lenis.scrollTo(first, { duration: 1.0, easing: (x: number) => 1 - Math.pow(1 - x, 3) });
-          else first.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        const top = Math.round(el.getBoundingClientRect().top + window.scrollY);
+        if (lenis) lenis.scrollTo(top, { duration: 1.2, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+        else window.scrollTo({ top, behavior: "smooth" });
+        return;
       }
-    }, 600);
-    return () => clearTimeout(t);
+      if (attempts < 25) pollTimer = setTimeout(poll, 120);
+    };
+    const t = setTimeout(poll, 300);
+    return () => { clearTimeout(t); clearTimeout(pollTimer); };
   }, []);
-
   // Hard ceiling: never block the user for more than 6 s regardless of network.
   useEffect(() => {
     const t = setTimeout(() => setCriticalReady(true), 6000);
