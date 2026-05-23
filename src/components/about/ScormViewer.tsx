@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { GraduationCap, X } from "lucide-react";
 
 type Status = "not_started" | "incomplete" | "completed" | "passed" | "failed";
 
@@ -108,8 +109,8 @@ export function ScormViewer({
       {/* ── Teaser card ─────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-about-accent bg-about-tint shadow-about-soft p-7 sm:p-9 flex flex-col sm:flex-row gap-7 items-start sm:items-center">
         {/* Icon / glyph */}
-        <div className="shrink-0 w-16 h-16 rounded-2xl border-2 border-about-accent flex items-center justify-center text-3xl" aria-hidden>
-          🎓
+        <div className="shrink-0 w-16 h-16 rounded-2xl border-2 border-about-accent flex items-center justify-center text-about-accent" aria-hidden>
+          <GraduationCap className="w-7 h-7" strokeWidth={1.75} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -167,9 +168,7 @@ export function ScormViewer({
                 onClick={() => setOpen(false)}
                 className="text-white/60 hover:text-white transition-colors text-xl leading-none font-bold px-2 py-1 rounded-lg hover:bg-white/10"
                 aria-label="Close orientation module"
-              >
-                ✕
-              </button>
+              ><X className="w-4 h-4" /></button>
             </div>
 
             {/* SCORM iframe */}
