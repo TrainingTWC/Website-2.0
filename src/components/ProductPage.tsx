@@ -387,8 +387,8 @@ function ImmersiveProductLayout({
       {/* ── HERO — editorial asymmetric layout ──────────────────────── */}
       <div
         ref={heroRef}
-        className={`relative overflow-hidden ${theme.fg}`}
-        style={{ minHeight: "100dvh", background: theme.bg }}
+        className={`relative overflow-hidden flex flex-col ${theme.fg}`}
+        style={{ height: "100dvh", background: theme.bg }}
       >
         {/* Terrazzo-style speckled background flecks (subtle, premium) */}
         <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`} aria-hidden>
@@ -464,70 +464,32 @@ function ImmersiveProductLayout({
           </motion.div>
         </div>
 
-        {/* ── MAIN STAGE — asymmetric grid ────────────────────────── */}
-        <div className="relative z-10 max-w-[1440px] mx-auto w-full px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-4 sm:gap-y-6 pt-4 sm:pt-6 pb-12">
+        {/* ── MAIN STAGE ────────────────────────────────────────────── */}
+        <div className="relative z-10 flex-1 flex items-center overflow-hidden">
+          <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-16 grid grid-cols-1 lg:grid-cols-12 gap-x-8 lg:gap-x-12 items-center py-4">
 
-          {/* HUGE TITLE — spans top, dominant */}
-          <motion.div
-            style={{ y: titleY, opacity: titleOpacity }}
-            className="lg:col-start-5 lg:col-end-13 lg:row-start-1 relative z-20"
-          >
-            {/* eyebrow */}
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-[11px] font-bold uppercase tracking-[0.4em] mb-2 sm:mb-3 ${theme.accentText}`}
-              style={{ opacity: 0.9 }}
-            >
-              {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
-              {product.origin ?? product.category}
-            </motion.p>
-
-            {/* TITLE — split words for stagger */}
-            <h1
-              className="font-serif font-light leading-[0.88] tracking-[-0.02em]"
-              style={{ fontSize: "clamp(2.6rem, 8.5vw, 8.5rem)" }}
-            >
-              {product.name.split(" ").map((word, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, y: 40, rotateX: -30 }}
-                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.15 + i * 0.08,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="inline-block mr-[0.25em]"
-                  style={{ transformOrigin: "left bottom" }}
-                >
-                  {word}
-                </motion.span>
-              ))}
-            </h1>
-          </motion.div>
-
-          {/* OVERSIZED PRODUCT IMAGE — bleeds left, interlocks with title */}
-          <motion.div
-            ref={imageWrapRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{ y: springY, scale: springScale }}
-            className="lg:col-start-1 lg:col-end-8 lg:row-start-2 relative flex items-center justify-center lg:justify-start lg:-ml-10 xl:-ml-20 -mt-4 sm:-mt-10 lg:-mt-28 z-10"
-          >
+            {/* IMAGE — left panel */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative"
-              style={{
-                width: "clamp(320px, 56vw, 760px)",
-                height: "clamp(320px, 56vw, 760px)",
-                perspective: "1400px",
-                filter: "drop-shadow(0 40px 60px rgba(0,0,0,0.45)) drop-shadow(0 20px 30px rgba(0,0,0,0.25))",
-              }}
+              ref={imageWrapRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{ y: springY, scale: springScale }}
+              className="lg:col-start-1 lg:col-end-6 flex items-center justify-center mb-8 lg:mb-0"
             >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="relative"
+                style={{
+                  width: "clamp(200px, 36vw, 500px)",
+                  height: "clamp(200px, 36vw, 500px)",
+                  maxHeight: "calc(100dvh - 11rem)",
+                  maxWidth: "calc(100dvh - 11rem)",
+                  perspective: "1400px",
+                  filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.45)) drop-shadow(0 8px 16px rgba(0,0,0,0.2))",
+                }}
+              >
               <motion.div
                 style={{
                   rotateX: rotateX3D,
@@ -597,167 +559,184 @@ function ImmersiveProductLayout({
 
               {/* Soft ground shadow */}
               <div
-                className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[55%] h-8 blur-2xl rounded-full pointer-events-none"
-                style={{ background: "rgba(0,0,0,0.4)" }}
+                className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1/2 h-6 blur-xl rounded-full pointer-events-none"
+                style={{ background: "rgba(0,0,0,0.35)" }}
               />
             </motion.div>
           </motion.div>
 
-          {/* PRODUCT CARD — pinned top-right, right under title */}
-          <motion.div
-            style={{ opacity: cardOpacity }}
-            className="lg:col-start-9 lg:col-end-13 lg:row-start-2 self-center relative z-20"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:max-w-[400px] ml-auto"
-            >
-              {/* Short description */}
-              <p
-                className="text-[15px] sm:text-base leading-[1.7] mb-7 font-normal"
-                style={{ opacity: 0.95 }}
+            {/* CONTENT PANEL — right, everything fits above the fold */}
+            <div className="lg:col-start-6 lg:col-end-13 flex flex-col justify-center">
+
+              {/* Eyebrow + Title */}
+              <motion.div style={{ y: titleY, opacity: titleOpacity }}>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className={`text-[11px] font-bold uppercase tracking-[0.4em] mb-3 ${theme.accentText}`}
+                >
+                  {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
+                  {product.origin ?? product.category}
+                </motion.p>
+
+                <h1
+                  className="font-serif font-normal leading-[0.9] tracking-[-0.025em] mb-5"
+                  style={{ fontSize: "clamp(2rem, 3.8vw, 4.2rem)" }}
+                >
+                  {product.name.split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 28, rotateX: -20 }}
+                      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                      transition={{
+                        duration: 0.7,
+                        delay: 0.15 + i * 0.06,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="inline-block mr-[0.18em]"
+                      style={{ transformOrigin: "left bottom" }}
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </h1>
+              </motion.div>
+
+              {/* Card content */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
               >
-                {product.description}
-              </p>
+                {/* Description */}
+                <p className={`text-sm leading-relaxed mb-4 ${theme.accentText}`}>
+                  {product.description}
+                </p>
 
-              {/* Inline product details — origin · roast · type · stock */}
-              {(() => {
-                const details = [
-                  product.origin && { label: "Origin", value: product.origin },
-                  product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
-                  { label: "Type", value: product.type },
-                  { label: "Stock", value: product.stockStatus.replace("-", " ") },
-                ].filter(Boolean) as { label: string; value: string }[];
-                return (
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-4 mb-7">
-                    {details.map((d) => (
-                      <div key={d.label}>
-                        <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-1.5 ${theme.accentText}`}>{d.label}</p>
-                        <p className="text-[15px] font-medium capitalize leading-snug">{d.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+                {/* Details inline row */}
+                {(() => {
+                  const details = [
+                    product.origin && { label: "Origin", value: product.origin },
+                    product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
+                    { label: "Type", value: product.type },
+                    { label: "Stock", value: product.stockStatus.replace("-", " ") },
+                  ].filter(Boolean) as { label: string; value: string }[];
+                  return (
+                    <div className="flex flex-wrap gap-x-7 gap-y-3 mb-4">
+                      {details.map((d) => (
+                        <div key={d.label}>
+                          <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-0.5 ${theme.accentText}`}>{d.label}</p>
+                          <p className="text-[13px] font-semibold capitalize">{d.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
-              {/* Tags */}
-              {product.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-7">
-                  {product.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border ${theme.pillBg}`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Hairline */}
-              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.18 }} />
-
-              {/* Price + edition row */}
-              <div className="flex items-end justify-between gap-6 mb-6">
-                <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2 ${theme.accentText}`}>Price</p>
-                  <p className="font-serif font-normal text-4xl sm:text-[2.75rem] leading-none tracking-tight">
-                    ₹{displayPrice.toLocaleString("en-IN")}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2 ${theme.accentText}`}>Edition</p>
-                  <p className="text-[15px] font-medium leading-snug">
-                    {variant}
-                    {product.weight && (
-                      <>
-                        <br />
-                        <span className={theme.accentText}>{product.weight}</span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {/* Size selector */}
-              <div className="mb-5">
-                <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2.5 ${theme.accentText}`}>Size</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {variants.map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setVariant(v)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold tracking-wide border transition-all ${
-                        v === variant
-                          ? `${theme.accent} border-transparent shadow-lg`
-                          : `${theme.pillBg} hover:scale-[1.04]`
-                      }`}
-                    >
-                      {v}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Flavor swatches */}
-              {product.flavorNotes.length > 0 && (
-                <div className="mb-6">
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.32em] mb-2.5 ${theme.accentText}`}>Notes</p>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {product.flavorNotes.slice(0, 4).map((note) => (
+                {/* Tags */}
+                {product.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {product.tags.map((tag) => (
                       <span
-                        key={note}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
+                        key={tag}
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${theme.pillBg}`}
                       >
-                        {note}
+                        {tag}
                       </span>
                     ))}
                   </div>
+                )}
+
+                {/* Divider */}
+                <div className="h-px w-full mb-4" style={{ background: "currentColor", opacity: 0.15 }} />
+
+                {/* Price + Size + Notes in one row */}
+                <div className="flex flex-wrap items-end gap-x-7 gap-y-3 mb-4">
+                  <div>
+                    <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1 ${theme.accentText}`}>Price</p>
+                    <p className="font-serif font-normal text-3xl sm:text-[2.5rem] leading-none tracking-tight">
+                      ₹{displayPrice.toLocaleString("en-IN")}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Size</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {variants.map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setVariant(v)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
+                            v === variant
+                              ? `${theme.accent} border-transparent shadow-lg`
+                              : `${theme.pillBg} hover:scale-[1.04]`
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {product.flavorNotes.length > 0 && (
+                    <div>
+                      <p className={`text-[9px] font-bold uppercase tracking-[0.35em] mb-1.5 ${theme.accentText}`}>Notes</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {product.flavorNotes.slice(0, 3).map((note) => (
+                          <span
+                            key={note}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
+                          >
+                            {note}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Hairline */}
-              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.18 }} />
+                {/* Divider */}
+                <div className="h-px w-full mb-4" style={{ background: "currentColor", opacity: 0.15 }} />
 
-              {/* Qty + CTA row */}
-              <div className="flex items-center gap-3">
-                <div className={`inline-flex items-center gap-1 rounded-full border ${theme.pillBg} px-1.5 py-1.5`}>
+                {/* Qty + CTA */}
+                <div className="flex items-center gap-3">
+                  <div className={`inline-flex items-center gap-0.5 rounded-full border ${theme.pillBg} px-1.5 py-1.5`}>
+                    <button
+                      onClick={() => setQty((q) => Math.max(1, q - 1))}
+                      className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="font-bold w-6 text-center text-sm tabular-nums">{qty}</span>
+                    <button
+                      onClick={() => setQty((q) => q + 1)}
+                      className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
                   <button
-                    onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-                    aria-label="Decrease quantity"
+                    onClick={() => onAddToCart(product._id, qty)}
+                    className={`flex-1 ${theme.accent} px-6 py-3.5 rounded-full text-[13px] font-bold tracking-wide uppercase flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
                   >
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="font-bold w-6 text-center text-sm tabular-nums">{qty}</span>
-                  <button
-                    onClick={() => setQty((q) => q + 1)}
-                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-                    aria-label="Increase quantity"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
+                    <ShoppingCart className="w-4 h-4" />
+                    Add to basket
                   </button>
                 </div>
 
-                <button
-                  onClick={() => onAddToCart(product._id, qty)}
-                  className={`flex-1 ${theme.accent} px-6 py-3.5 rounded-full text-[13px] font-bold tracking-wide uppercase flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  Add to basket
-                </button>
-              </div>
-
-              {product.stockStatus === "low-stock" && (
-                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5 mt-4">
-                  <Sparkles className="w-3 h-3" />
-                  Limited stock
-                </p>
-              )}
-            </motion.div>
-          </motion.div>
+                {product.stockStatus === "low-stock" && (
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5 mt-3">
+                    <Sparkles className="w-3 h-3" />
+                    Limited stock
+                  </p>
+                )}
+              </motion.div>
+            </div>
+          </div>
         </div>
 
         {/* Scroll cue */}
