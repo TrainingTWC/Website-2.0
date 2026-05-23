@@ -79,13 +79,16 @@ export function useActiveSection(chapterTargets: { target: string }[] = []) {
         })
         .filter((x): x is { key: string; el: HTMLElement } => !!x);
       if (!allItems.length) return;
-      const trigger = window.scrollY + window.innerHeight * 0.35;
-      let best = allItems[0];
-      let bestDist = Infinity;
-      for (const item of allItems) {
-        const top = window.scrollY + item.el.getBoundingClientRect().top;
-        const dist = Math.abs(top - trigger);
-        if (dist < bestDist) { bestDist = dist; best = item; }
+      // "Last section whose top has passed the 40% viewport trigger"
+      // Works correctly for full-screen parallax chapters
+      const trigger = window.scrollY + window.innerHeight * 0.4;
+      const withTops = allItems.map((item) => ({
+        ...item,
+        top: window.scrollY + item.el.getBoundingClientRect().top,
+      })).sort((a, b) => a.top - b.top);
+      let best = withTops[0];
+      for (const item of withTops) {
+        if (item.top <= trigger) best = item;
       }
       setActive((prev) => (prev === best.key ? prev : best.key));
     };
@@ -430,7 +433,7 @@ export function MorphingHeader({
           >
             {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
               const dropItems = getDropdownItems(item.key);
-              const showDrop = hoveredKey === item.key && dropItems.length > 0 && !compact;
+              const showDrop = hoveredKey === item.key && dropItems.length > 0;
               return (
                 <div
                   key={item.key}

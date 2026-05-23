@@ -465,13 +465,15 @@ function HeroSection({ hero }: { hero: Post | undefined }) {
 export function EditorialHub({
   onProductClick,
   onPostOpen,
+  filter: externalFilter,
 }: {
   onProductClick: (productId: string) => void;
   onPostOpen: (postId: string) => void;
+  filter?: FilterType;
 }) {
   const postsRaw = useQuery(convexApi.posts.listPublished);
   const discountsRaw = useQuery(convexApi.discounts.listDiscounts) ?? [];
-  const [filter, setFilter] = useState<FilterType>("all");
+  const filter = externalFilter ?? "all";
 
   // Session cache: show cached posts immediately while Convex loads
   const [cachedPosts, setCachedPostsState] = useState<Post[]>(() => getCachedPosts() ?? []);
@@ -518,23 +520,6 @@ export function EditorialHub({
         ) : (
           <HeroSection hero={hero} />
         )}
-
-        {/* Category filter pills */}
-        <div className="sticky top-[72px] z-20 flex gap-2 flex-wrap bg-natural-bg py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-natural-border/40">
-          {(Object.keys(FILTER_LABELS) as FilterType[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
-                filter === f
-                  ? "bg-natural-accent text-white border-natural-accent shadow"
-                  : "bg-natural-paper border-natural-border text-natural-text/60 hover:border-natural-accent hover:text-natural-accent"
-              }`}
-            >
-              {FILTER_LABELS[f]}
-            </button>
-          ))}
-        </div>
 
         {/* Magazine grid — skeletons while loading, real cards once ready */}
         {showSkeleton ? (
