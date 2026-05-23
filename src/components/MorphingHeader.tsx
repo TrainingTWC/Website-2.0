@@ -50,7 +50,10 @@ const STATIC_DROPDOWNS: Record<string, { label: string; target: string }[]> = {
     { label: "Chocolates", target: "section-merch-chocolates" },
   ],
   story: [
-    { label: "Our Story", target: "our-story" },
+    { label: "Our Story",  target: "/about/our-story"  },
+    { label: "Our Coffee", target: "/about/our-coffee" },
+    { label: "Careers",    target: "/about/careers"    },
+    { label: "Newsroom",   target: "/about/newsroom"   },
   ],
   editorial: [
     { label: "All",       target: "/third-circle"                    },

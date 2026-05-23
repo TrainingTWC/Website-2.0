@@ -24,9 +24,13 @@ Every customer leaves with a coffee recommendation that feels personally curated
 - [x] Brand context + 18 product personality profiles (`convex/productContext.ts`) — v1.1
 - [x] Enhanced AI prompt with personality-aware recommendations — v1.1
 
-### Active
+### Active (v7.0 — About Universe)
 
-- [ ] Next milestone to be planned (v5.0)
+- [ ] REQ-AB-01 — 4 About sub-pages routed under `/about/*` with full parallax scroll
+- [ ] REQ-AB-02 — Reusable `AboutPageShell` so each page shares topbar, smooth scroll, footer
+- [ ] REQ-AB-03 — Header `Our Story` dropdown surfaces all 4 sub-pages (per attached design)
+- [ ] REQ-AB-04 — Home "Our Story" section gains a chip-button link strip to all 4 pages
+- [ ] REQ-AB-05 — Each page uses scroll-driven layered parallax (image columns + pinned headlines)
 
 ### Completed (v4.0 — The Editorial Hub)
 
@@ -70,27 +74,31 @@ Every customer leaves with a coffee recommendation that feels personally curated
 | Widget-first architecture | Embeddable in any TWC POS / website | — Pending validation |
 | Personalities as in-code constants | No DB round-trip, always consistent | — Pending |
 
-## Current Milestone: v5.0 — Next.js Migration
+## Current Milestone: v7.0 — About Universe
 
-**Goal:** Migrate the React/Vite SPA to Next.js 15 App Router with `output: 'export'` for static GitHub Pages + Cloudflare deployment. Replace `?page=` query-param routing with file-based routes, extract App.tsx mega-state into providers, wrap SSR-incompatible components.
+**Goal:** Expand the brand surface beyond product discovery. Four new About sub-pages — Our Story, Our Coffee, Careers, Newsroom — each built as a full parallax/3D-scroll experience that matches the homepage's cinematic standard. Link from the existing home "Our Story" section AND from the header's About dropdown so a 40+ Indian buyer can verify the brand before spending ₹2,500.
 
 **Target features:**
-- Next.js 15 App Router + TypeScript + Tailwind v4 via postcss
-- `output: 'export'` static build → GitHub Pages (`./out` dir)
-- CartProvider, DiscountProvider, ToastProvider, CartPanelProvider at root
-- SSR-safe dynamic() wraps for Three.js, Leaflet, Lenis, MagneticCursor
-- 8 file-based routes replacing `?page=` switch in App.tsx
-- App.tsx retired
+- 4 new routes under `/about/*` (our-story, our-coffee, careers, newsroom)
+- Reusable `AboutPageShell` component: SmoothScroll + MorphingHeader + parallax sections + SiteFooter
+- Reusable parallax primitives: scroll-driven hero, pinned-text sections, layered image columns
+- Header `STATIC_DROPDOWNS.story` expanded to surface all 4 sub-pages (matches attached design)
+- Home "Our Story" section gains a chip-button row linking to all 4 pages
+- All content statically authored (TWC-flavored, editable later); Careers + Newsroom data static for now
 
 **Locked decisions:**
-- GitHub Pages + Cloudflare (no Vercel, no SSR)
-- Razorpay deferred to v6.0
+- Content stubbed inline (not Convex-driven) — ships faster, can migrate to CMS in v8.0
+- Careers/Newsroom = static arrays in component files — no schema churn
+- Each page wraps in `SmoothScroll` (full Lenis) and renders `MorphingHeader` so the topbar is identical to home
+- New planning state captured manually — `gsd-sdk` not installed in this runtime
 
 **Shipped milestones:**
 - v1.1 — Third Intelligence Context & Personality (2026-05-13)
 - v2.0 — Cart + Checkout + Orders (2026-05-15)
 - v3.0 — Admin Analytics + GPS + Order Portal (2026-05-15)
 - v4.0 — The Editorial Hub (2026-05-20) — [archive](.planning/milestones/v4.0-ROADMAP.md)
+- v5.0 — Next.js Migration (2026-05-20)
+- v6.0 — Performance & Fluidity Pass (code-complete pending UAT)
 
 This document evolves at phase transitions and milestone boundaries.
 

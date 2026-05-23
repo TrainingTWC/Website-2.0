@@ -1122,6 +1122,24 @@ function DemoStorefront({
                   </div>
                 ))}
               </div>
+              {/* v7.0 About Universe — chip-button links into the 4 sub-pages.
+                  Chips are deliberately big tap targets (44px+) per the 40+ buyer audit. */}
+              <div className="flex flex-wrap gap-3 pt-2">
+                {[
+                  { label: "Our Story",  href: "/about/our-story"  },
+                  { label: "Our Coffee", href: "/about/our-coffee" },
+                  { label: "Careers",    href: "/about/careers"    },
+                  { label: "Newsroom",   href: "/about/newsroom"   },
+                ].map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-natural-text/5 hover:bg-natural-text/10 border border-natural-border hover:border-natural-accent/40 text-sm font-bold text-natural-text transition-colors"
+                  >
+                    {link.label} <span aria-hidden="true">→</span>
+                  </a>
+                ))}
+              </div>
             </div>
             <OurStoryImage slides={story.slides.map((s) => s.url).filter(Boolean)} />
           </div>
