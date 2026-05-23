@@ -66,8 +66,16 @@ export function useActiveSection(chapterTargets: { target: string }[] = []) {
   const [active, setActive] = useState<string>("home");
   const chapRef = useRef(chapterTargets);
   chapRef.current = chapterTargets;
+  const updateRef = useRef<(() => void) | null>(null);
+  // Re-run update when chapter data arrives from Convex (user may not be scrolling)
+  useEffect(() => {
+    if (chapterTargets.length > 0) {
+      updateRef.current?.();
+    }
+  }, [chapterTargets]);
   useEffect(() => {
     const update = () => {
+      updateRef.current = update;
       const allItems = [
         ...NAV_ITEMS.map(({ key, target }) => ({ key, target })),
         ...chapRef.current.map(({ target }) => ({ key: "chapters", target })),
@@ -342,7 +350,11 @@ export function MorphingHeader({
                 Icon={item.Icon}
                 active={active === item.key}
                 compact
-                onClick={() => onNavTo(item.target)}
+                onClick={() => {
+                const dest = item.key === "chapters" && chapterItems?.length
+                  ? chapterItems[0].target : item.target;
+                onNavTo(dest);
+              }}
               />
             ))}
           </nav>
@@ -446,7 +458,12 @@ export function MorphingHeader({
                     Icon={item.Icon}
                     active={active === item.key}
                     compact={compact}
-                    onClick={() => { setHoveredKey(null); onNavTo(item.target); }}
+                    onClick={() => {
+                    setHoveredKey(null);
+                    const dest = item.key === "chapters" && chapterItems?.length
+                      ? chapterItems[0].target : item.target;
+                    onNavTo(dest);
+                  }}
                   />
                   <AnimatePresence>
                     {showDrop && (
