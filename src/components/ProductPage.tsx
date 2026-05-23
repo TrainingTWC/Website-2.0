@@ -610,9 +610,43 @@ function ImmersiveProductLayout({
               className="lg:max-w-md ml-auto"
             >
               {/* Short description */}
-              <p className={`text-sm sm:text-[15px] leading-relaxed mb-7 sm:mb-9 ${theme.accentText}`}>
+              <p className={`text-sm sm:text-[15px] leading-relaxed mb-6 ${theme.accentText}`}>
                 {product.description}
               </p>
+
+              {/* Inline product details — origin · roast · type · stock */}
+              {(() => {
+                const details = [
+                  product.origin && { label: "Origin", value: product.origin },
+                  product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
+                  { label: "Type", value: product.type },
+                  { label: "Stock", value: product.stockStatus.replace("-", " ") },
+                ].filter(Boolean) as { label: string; value: string }[];
+                return (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-6">
+                    {details.map((d) => (
+                      <div key={d.label}>
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.3em] mb-1 ${theme.accentText}`}>{d.label}</p>
+                        <p className="text-sm font-medium capitalize leading-snug">{d.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Tags */}
+              {product.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-6">
+                  {product.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${theme.pillBg}`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Hairline */}
               <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
@@ -739,9 +773,6 @@ function ImmersiveProductLayout({
         </motion.div>
       </div>
 
-      {/* ── CINEMATIC SPECS BAND ─────────────────────────────────────── */}
-      <SpecsBand product={product} theme={theme} />
-
       {/* ── EDITORIAL STORY SECTION ──────────────────────────────────── */}
       <StorySection product={product} />
 
@@ -807,88 +838,6 @@ function ImmersiveProductLayout({
             </div>
           </section>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ── Cinematic specs band ──────────────────────────────────────────────────────
-
-function SpecsBand({ product, theme }: { product: Product; theme: Theme }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const ghostX = useTransform(scrollYProgress, [0, 1], ["-8%", "4%"]);
-
-  const specs = [
-    product.origin && { label: "Origin", value: product.origin },
-    product.roastLevel && { label: "Roast", value: product.roastLevel.replace("-", " ") },
-    product.weight && { label: "Weight", value: product.weight },
-    { label: "Type", value: product.type },
-    { label: "Stock", value: product.stockStatus.replace("-", " ") },
-    ...(product.tags.length > 0 ? [{ label: "Tags", value: product.tags.join(" · ") }] : []),
-  ].filter(Boolean) as { label: string; value: string }[];
-
-  return (
-    <div
-      ref={ref}
-      className="relative overflow-hidden py-20 sm:py-28"
-      style={{ background: theme.bg }}
-    >
-      {/* Ambient */}
-      <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`}>
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[30rem] rounded-full bg-current blur-3xl opacity-50" />
-      </div>
-
-      {/* Ghost origin text — parallax */}
-      {product.origin && (
-        <motion.div
-          style={{ x: ghostX }}
-          className={`absolute inset-y-0 -left-8 flex items-center pointer-events-none select-none ${theme.fg}`}
-          aria-hidden
-        >
-          <span
-            className="font-sans font-black uppercase whitespace-nowrap"
-            style={{
-              fontSize: "clamp(6rem, 20vw, 18rem)",
-              opacity: 0.045,
-              letterSpacing: "-0.04em",
-              lineHeight: 1,
-            }}
-          >
-            {product.origin}
-          </span>
-        </motion.div>
-      )}
-
-      <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-8 ${theme.fg}`}>
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-10 ${theme.accentText}`}
-        >
-          Product details
-        </motion.p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px"
-          style={{ background: "rgba(255,255,255,0.1)" }}
-        >
-          {specs.map(({ label, value }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: i * 0.07 }}
-              className="flex flex-col gap-2 p-5 sm:p-6"
-              style={{ background: theme.bg }}
-            >
-              <span className={`text-[9px] font-bold uppercase tracking-[0.35em] ${theme.accentText}`}>{label}</span>
-              <span className="font-sans font-black text-lg sm:text-xl capitalize leading-tight">{value}</span>
-            </motion.div>
-          ))}
-        </div>
       </div>
     </div>
   );

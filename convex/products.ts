@@ -1,15 +1,20 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./authHelpers";
 
 // Generate a short-lived upload URL for image uploads from the admin panel.
+// Admin-only — uploads are CMS-driven so anonymous callers must be blocked.
 export const generateUploadUrl = mutation(async (ctx) => {
+  await requireAdmin(ctx);
   return await ctx.storage.generateUploadUrl();
 });
 
 // Resolve a storageId returned from an upload into a public CDN URL.
+// Admin-only — pairs with generateUploadUrl.
 export const getStorageUrl = mutation({
   args: { storageId: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     return await ctx.storage.getUrl(args.storageId as any);
   },
 });
