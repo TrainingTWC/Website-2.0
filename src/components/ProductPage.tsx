@@ -404,10 +404,10 @@ function ImmersiveProductLayout({
           </motion.span>
         </div>
 
-        {/* Product name — large, above image */}
+        {/* Product name — overlaps the image below */}
         <motion.div
-          style={{ y: nameY }}
-          className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-8 pt-8 sm:pt-10 pb-0"
+          style={{ y: nameY, paddingBottom: "clamp(2.5rem, 7vw, 9rem)" }}
+          className="relative z-20 max-w-7xl mx-auto w-full px-4 sm:px-8 pt-8 sm:pt-10"
         >
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -446,8 +446,8 @@ function ImmersiveProductLayout({
           </motion.div>
         </motion.div>
 
-        {/* Product image — large, centered, parallax */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-4">
+        {/* Product image — large, centered, parallax — pulled up to sit behind the title */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-4" style={{ marginTop: "calc(-1 * clamp(2.5rem, 7vw, 9rem))" }}>
           <motion.div
             style={{ y: springY, scale: springScale }}
             className="relative"
