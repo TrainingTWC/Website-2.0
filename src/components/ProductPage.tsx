@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
@@ -77,64 +77,64 @@ interface Theme {
 
 const THEMES: Record<string, Theme> = {
   dark: {
-    bg: "radial-gradient(circle at 30% 20%, #4A352A 0%, #2C1810 70%)",
+    bg: "#3A2419",
     fg: "text-white",
-    accent: "bg-amber-300 text-natural-text",
-    accentText: "text-amber-200",
-    pillBg: "bg-white/10 text-white border-white/20",
-    shadow: "drop-shadow-[0_40px_60px_rgba(0,0,0,0.55)]",
-    decorOpacity: "opacity-[0.12]",
-    accentHex: "#B8763A",
+    accent: "bg-amber-200 text-natural-text",
+    accentText: "text-amber-100/80",
+    pillBg: "bg-white/10 text-white border-white/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.6)]",
+    decorOpacity: "opacity-[0.14]",
+    accentHex: "#D4A062",
   },
   "medium-dark": {
-    bg: "radial-gradient(circle at 30% 20%, #8B5A3C 0%, #5A3A24 70%)",
+    bg: "#5C3A26",
     fg: "text-white",
-    accent: "bg-orange-200 text-natural-text",
-    accentText: "text-orange-100",
-    pillBg: "bg-white/10 text-white border-white/20",
-    shadow: "drop-shadow-[0_40px_60px_rgba(0,0,0,0.45)]",
-    decorOpacity: "opacity-[0.14]",
-    accentHex: "#C97B4A",
+    accent: "bg-orange-100 text-natural-text",
+    accentText: "text-orange-100/80",
+    pillBg: "bg-white/10 text-white border-white/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.5)]",
+    decorOpacity: "opacity-[0.16]",
+    accentHex: "#E8B583",
   },
   medium: {
-    bg: "radial-gradient(circle at 30% 20%, #D4A56A 0%, #A47148 70%)",
-    fg: "text-natural-text",
-    accent: "bg-natural-text text-white",
-    accentText: "text-natural-text/70",
-    pillBg: "bg-white/40 text-natural-text border-natural-text/15",
-    shadow: "drop-shadow-[0_40px_60px_rgba(60,30,15,0.35)]",
+    bg: "#3E5C4A",
+    fg: "text-white",
+    accent: "bg-white text-natural-text",
+    accentText: "text-white/70",
+    pillBg: "bg-white/10 text-white border-white/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.45)]",
     decorOpacity: "opacity-[0.18]",
-    accentHex: "#A47148",
+    accentHex: "#D4C8A8",
   },
   light: {
-    bg: "radial-gradient(circle at 30% 20%, #F5E6CC 0%, #E2C896 70%)",
+    bg: "#C5A572",
     fg: "text-natural-text",
     accent: "bg-natural-text text-white",
-    accentText: "text-natural-text/70",
-    pillBg: "bg-white/60 text-natural-text border-natural-text/15",
-    shadow: "drop-shadow-[0_40px_60px_rgba(80,50,20,0.25)]",
+    accentText: "text-natural-text/65",
+    pillBg: "bg-natural-text/8 text-natural-text border-natural-text/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(80,50,20,0.3)]",
     decorOpacity: "opacity-[0.2]",
-    accentHex: "#C49A5A",
+    accentHex: "#7A5A2C",
   },
   bags: {
-    bg: "radial-gradient(circle at 30% 20%, #E8D5B7 0%, #C4A57B 70%)",
-    fg: "text-natural-text",
-    accent: "bg-natural-text text-white",
-    accentText: "text-natural-text/70",
-    pillBg: "bg-white/60 text-natural-text border-natural-text/15",
-    shadow: "drop-shadow-[0_40px_60px_rgba(80,50,20,0.25)]",
-    decorOpacity: "opacity-[0.2]",
-    accentHex: "#B08A5C",
+    bg: "#4A6373",
+    fg: "text-white",
+    accent: "bg-white text-natural-text",
+    accentText: "text-white/70",
+    pillBg: "bg-white/10 text-white border-white/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.45)]",
+    decorOpacity: "opacity-[0.18]",
+    accentHex: "#C8D6DE",
   },
   merch: {
-    bg: "radial-gradient(circle at 30% 20%, #D9D1C7 0%, #A89F95 70%)",
-    fg: "text-natural-text",
-    accent: "bg-natural-text text-white",
-    accentText: "text-natural-text/70",
-    pillBg: "bg-white/60 text-natural-text border-natural-text/15",
-    shadow: "drop-shadow-[0_40px_60px_rgba(60,50,40,0.3)]",
+    bg: "#7A6F62",
+    fg: "text-white",
+    accent: "bg-white text-natural-text",
+    accentText: "text-white/70",
+    pillBg: "bg-white/10 text-white border-white/15",
+    shadow: "drop-shadow-[0_50px_70px_rgba(0,0,0,0.4)]",
     decorOpacity: "opacity-[0.18]",
-    accentHex: "#8C7F72",
+    accentHex: "#D9D1C7",
   },
 };
 
@@ -292,6 +292,7 @@ function ImmersiveProductLayout({
   goToProduct, containerRef,
 }: LayoutProps) {
   const heroRef = useRef<HTMLDivElement>(null);
+  const imageWrapRef = useRef<HTMLDivElement>(null);
   const [stickyVisible, setStickyVisible] = useState(false);
 
   // Sticky bar: show after hero scrolls out
@@ -304,18 +305,37 @@ function ImmersiveProductLayout({
     return () => obs.disconnect();
   }, []);
 
-  // Parallax on the hero image
+  // Scroll-driven parallax
   const { scrollYProgress: heroScroll } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const imageY = useTransform(heroScroll, [0, 1], ["0%", "18%"]);
-  const imageScale = useTransform(heroScroll, [0, 1], [1, 1.06]);
-  const nameY = useTransform(heroScroll, [0, 1], ["0%", "-12%"]);
-  const overlayOpacity = useTransform(heroScroll, [0, 0.6], [0, 0.35]);
+  const imageY = useTransform(heroScroll, [0, 1], ["0%", "12%"]);
+  const imageScale = useTransform(heroScroll, [0, 1], [1, 1.05]);
+  const titleY = useTransform(heroScroll, [0, 1], ["0%", "-18%"]);
+  const titleOpacity = useTransform(heroScroll, [0, 0.6], [1, 0.4]);
+  const cardOpacity = useTransform(heroScroll, [0, 0.4], [1, 0]);
 
   const springY = useSpring(imageY, { stiffness: 80, damping: 25 });
   const springScale = useSpring(imageScale, { stiffness: 80, damping: 25 });
+
+  // 3D mouse-tracked tilt on the product image
+  const mouseX = useSpring(0, { stiffness: 120, damping: 18 });
+  const mouseY = useSpring(0, { stiffness: 120, damping: 18 });
+  const rotateY3D = useTransform(mouseX, [-1, 1], [-14, 14]);
+  const rotateX3D = useTransform(mouseY, [-1, 1], [10, -10]);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!imageWrapRef.current) return;
+    const rect = imageWrapRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x * 2);
+    mouseY.set(y * 2);
+  };
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   const has3D = product.name === SOUTH_INDIAN_NAME || product.name === EL_DIABLO_NAME;
   const modelUrl = product.name === EL_DIABLO_NAME ? EL_DIABLO_3D_MODEL : SOUTH_INDIAN_3D_MODEL;
@@ -333,7 +353,7 @@ function ImmersiveProductLayout({
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b"
             style={{
-              background: `${theme.bg.replace("radial-gradient", "linear-gradient")}cc`,
+              background: `${theme.bg}e6`,
               borderColor: "rgba(255,255,255,0.1)",
             }}
           >
@@ -364,277 +384,357 @@ function ImmersiveProductLayout({
         )}
       </AnimatePresence>
 
-      {/* ── HERO — full viewport ──────────────────────────────────── */}
+      {/* ── HERO — editorial asymmetric layout ──────────────────────── */}
       <div
         ref={heroRef}
-        className={`relative overflow-hidden ${theme.fg} flex flex-col`}
-        style={{ minHeight: "100dvh" }}
+        className={`relative overflow-hidden ${theme.fg}`}
+        style={{ minHeight: "100dvh", background: theme.bg }}
       >
-        {/* Ambient orbs */}
-        <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`}>
-          <div className="absolute -left-24 top-1/3 w-[28rem] h-[28rem] rounded-full bg-current blur-3xl" />
-          <div className="absolute right-0 bottom-0 w-[36rem] h-[36rem] rounded-full bg-current blur-3xl" />
+        {/* Terrazzo-style speckled background flecks (subtle, premium) */}
+        <div className={`absolute inset-0 pointer-events-none ${theme.decorOpacity}`} aria-hidden>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle at 12% 18%, currentColor 0.5px, transparent 1px),
+                                radial-gradient(circle at 78% 32%, currentColor 0.5px, transparent 1px),
+                                radial-gradient(circle at 38% 76%, currentColor 0.5px, transparent 1px),
+                                radial-gradient(circle at 88% 88%, currentColor 0.5px, transparent 1px)`,
+              backgroundSize: "180px 180px, 220px 220px, 260px 260px, 200px 200px",
+              opacity: 0.5,
+            }}
+          />
         </div>
 
-        {/* Scroll-driven overlay to deepen depth */}
-        <motion.div
-          className="absolute inset-0 bg-black pointer-events-none z-[1]"
-          style={{ opacity: overlayOpacity }}
+        {/* Accent radial glow behind product */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: "10%",
+            top: "30%",
+            width: "55vw",
+            height: "55vw",
+            maxWidth: "900px",
+            maxHeight: "900px",
+            background: `radial-gradient(circle, ${theme.accentHex}30 0%, transparent 60%)`,
+            filter: "blur(40px)",
+          }}
+          aria-hidden
         />
 
-        {/* Top bar: back + category */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 pt-5 pb-0 flex items-center justify-between">
+        {/* ── TOP NAV BAR ─────────────────────────────────────────── */}
+        <div className="relative z-20 max-w-[1440px] mx-auto w-full px-6 sm:px-10 pt-6 sm:pt-8 grid grid-cols-3 items-start gap-4">
+          {/* Left: back / menu cue */}
           <motion.button
             onClick={goHome}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.25em] opacity-70 hover:opacity-100 transition-opacity`}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] opacity-80 hover:opacity-100 transition-opacity justify-self-start"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </motion.button>
-          <motion.span
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-            className={`text-[10px] font-bold uppercase tracking-[0.35em] px-3 py-1.5 rounded-full border backdrop-blur-sm ${theme.pillBg}`}
+
+          {/* Center: poetic tagline */}
+          <motion.p
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+            className={`hidden sm:block text-[10px] font-medium uppercase tracking-[0.3em] leading-relaxed text-center justify-self-center ${theme.accentText}`}
           >
-            {product.category}
-          </motion.span>
+            Slow craft
+            <br />
+            since 1975
+          </motion.p>
+
+          {/* Right: cart dot */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] opacity-80 justify-self-end"
+          >
+            <span className={`inline-block w-1.5 h-1.5 rounded-full bg-current`} />
+            <span className={`text-[10px] font-bold uppercase tracking-[0.3em] px-3 py-1.5 rounded-full border ${theme.pillBg}`}>
+              {product.category}
+            </span>
+          </motion.div>
         </div>
 
-        {/* Product name — overlaps the image below */}
-        <motion.div
-          style={{ y: nameY, paddingBottom: "clamp(2.5rem, 7vw, 9rem)" }}
-          className="relative z-20 max-w-7xl mx-auto w-full px-4 sm:px-8 pt-8 sm:pt-10"
-        >
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="font-sans font-black leading-[0.88] tracking-[-0.02em] text-[clamp(2.8rem,8vw,7rem)] uppercase"
-          >
-            {product.name}
-          </motion.h1>
+        {/* ── MAIN STAGE — asymmetric grid ────────────────────────── */}
+        <div className="relative z-10 max-w-[1440px] mx-auto w-full px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-10 pt-10 sm:pt-12 pb-12">
 
-          {/* Sub-row: origin + rating */}
+          {/* HUGE TITLE — spans top, dominant */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className={`flex items-center gap-5 mt-3 flex-wrap ${theme.accentText}`}
+            style={{ y: titleY, opacity: titleOpacity }}
+            className="lg:col-start-5 lg:col-end-13 lg:row-start-1 relative z-20"
           >
-            {product.origin && (
-              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                {product.origin}
-              </span>
-            )}
-            {product.roastLevel && (
-              <span className="text-xs font-bold uppercase tracking-widest opacity-70">
-                {product.roastLevel.replace("-", " ")} roast
-              </span>
-            )}
-            {product.rating !== undefined && (
-              <span className="flex items-center gap-1 text-xs font-bold">
-                <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
-                {product.rating.toFixed(1)}
-                <span className="opacity-60 font-normal">({product.reviewCount ?? 0})</span>
-              </span>
-            )}
+            {/* eyebrow */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-3 sm:mb-5 ${theme.accentText}`}
+            >
+              {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
+              {product.origin ?? product.category}
+            </motion.p>
+
+            {/* TITLE — split words for stagger */}
+            <h1
+              className="font-serif font-light leading-[0.88] tracking-[-0.02em]"
+              style={{ fontSize: "clamp(2.6rem, 8.5vw, 8.5rem)" }}
+            >
+              {product.name.split(" ").map((word, i) => (
+                <motion.span
+                  key={i}
+                  initial={{ opacity: 0, y: 40, rotateX: -30 }}
+                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 0.15 + i * 0.08,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="inline-block mr-[0.25em]"
+                  style={{ transformOrigin: "left bottom" }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </h1>
           </motion.div>
-        </motion.div>
 
-        {/* Product image — large, centered, parallax — pulled up to sit behind the title */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-4" style={{ marginTop: "calc(-1 * clamp(2.5rem, 7vw, 9rem))" }}>
+          {/* OVERSIZED PRODUCT IMAGE — bleeds left, dominates */}
           <motion.div
+            ref={imageWrapRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             style={{ y: springY, scale: springScale }}
-            className="relative"
+            className="lg:col-start-1 lg:col-end-8 lg:row-start-2 relative flex items-center justify-center lg:justify-start lg:-ml-8 xl:-ml-16 -mt-6 sm:-mt-12 lg:-mt-20 z-10"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.85, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, type: "spring", stiffness: 70, damping: 20 }}
+              transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className={`relative ${theme.shadow}`}
-              style={{ width: "clamp(240px, 42vw, 540px)", height: "clamp(240px, 42vw, 540px)" }}
+              style={{
+                width: "clamp(280px, 50vw, 680px)",
+                height: "clamp(280px, 50vw, 680px)",
+                perspective: "1400px",
+              }}
             >
-              {has3D ? (
-                <>
-                  <motion.div
-                    className="absolute inset-0"
-                    animate={{ opacity: model3DReady ? 0 : 1 }}
-                    transition={{ duration: 0.7 }}
-                    style={{ pointerEvents: "none" }}
-                  >
-                    <SmartImage
-                      src={product.imageUrl} blur={product.imageBlur} alt={product.name}
-                      className="object-contain object-center"
-                      wrapperClassName="w-full h-full"
-                      priority
-                    />
-                  </motion.div>
-                  <motion.div
-                    className="absolute inset-0"
-                    animate={{ opacity: model3DReady ? 1 : 0 }}
-                    transition={{ duration: 0.7 }}
-                  >
-                    <Suspense fallback={null}>
-                      <ProductHero3D
-                        modelUrl={modelUrl}
-                        shadowOpacity={0.3}
-                        onReady={() => setModel3DReady(true)}
+              <motion.div
+                style={{
+                  rotateX: rotateX3D,
+                  rotateY: rotateY3D,
+                  transformStyle: "preserve-3d",
+                }}
+                className="w-full h-full"
+              >
+                {has3D ? (
+                  <>
+                    <motion.div
+                      className="absolute inset-0"
+                      animate={{ opacity: model3DReady ? 0 : 1 }}
+                      transition={{ duration: 0.7 }}
+                      style={{ pointerEvents: "none" }}
+                    >
+                      <SmartImage
+                        src={product.imageUrl} blur={product.imageBlur} alt={product.name}
+                        className="object-contain object-center"
+                        wrapperClassName="w-full h-full"
+                        priority
                       />
-                    </Suspense>
-                  </motion.div>
-                </>
-              ) : (
-                <motion.div
-                  animate={{ rotateY: 360 }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-                  style={{ transformStyle: "preserve-3d", willChange: "transform", perspective: "1200px" }}
-                  className="relative w-full h-full"
-                >
-                  <div style={{ backfaceVisibility: "hidden" }} className="absolute inset-0">
-                    <SmartImage
-                      src={product.imageUrl} blur={product.imageBlur} alt={product.name}
-                      className="object-contain object-center"
-                      wrapperClassName="w-full h-full"
-                      priority
-                    />
-                  </div>
-                  <div
-                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                    className="absolute inset-0"
-                    aria-hidden
+                    </motion.div>
+                    <motion.div
+                      className="absolute inset-0"
+                      animate={{ opacity: model3DReady ? 1 : 0 }}
+                      transition={{ duration: 0.7 }}
+                    >
+                      <Suspense fallback={null}>
+                        <ProductHero3D
+                          modelUrl={modelUrl}
+                          shadowOpacity={0.3}
+                          onReady={() => setModel3DReady(true)}
+                        />
+                      </Suspense>
+                    </motion.div>
+                  </>
+                ) : (
+                  <motion.div
+                    animate={{ rotateY: 360 }}
+                    transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+                    style={{ transformStyle: "preserve-3d", willChange: "transform" }}
+                    className="relative w-full h-full"
                   >
-                    <SmartImage
-                      src={product.imageUrl} blur={product.imageBlur} alt=""
-                      className="object-contain object-center scale-x-[-1]"
-                      wrapperClassName="w-full h-full"
-                    />
-                  </div>
-                </motion.div>
-              )}
+                    <div style={{ backfaceVisibility: "hidden" }} className="absolute inset-0">
+                      <SmartImage
+                        src={product.imageUrl} blur={product.imageBlur} alt={product.name}
+                        className="object-contain object-center"
+                        wrapperClassName="w-full h-full"
+                        priority
+                      />
+                    </div>
+                    <div
+                      style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                      className="absolute inset-0"
+                      aria-hidden
+                    >
+                      <SmartImage
+                        src={product.imageUrl} blur={product.imageBlur} alt=""
+                        className="object-contain object-center scale-x-[-1]"
+                        wrapperClassName="w-full h-full"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
 
-              {/* Radial glow under the product image */}
+              {/* Soft ground shadow */}
               <div
-                className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 blur-2xl rounded-full pointer-events-none"
-                style={{ background: `${theme.accentHex}55` }}
+                className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-2/3 h-10 blur-2xl rounded-full pointer-events-none"
+                style={{ background: "rgba(0,0,0,0.35)" }}
               />
             </motion.div>
           </motion.div>
 
-          {/* Flavor notes — floating below image */}
-          {product.flavorNotes.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-wrap justify-center gap-2 mt-6"
-            >
-              {product.flavorNotes.map((note, i) => (
-                <motion.span
-                  key={note}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.35, delay: 0.45 + i * 0.07 }}
-                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${theme.pillBg} backdrop-blur-sm`}
-                >
-                  {note}
-                </motion.span>
-              ))}
-            </motion.div>
-          )}
-        </div>
-
-        {/* Purchase controls strip — anchored to bottom of hero */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.3 }}
-          className="relative z-10 border-t"
-          style={{ borderColor: "rgba(255,255,255,0.12)" }}
-        >
-          <div
-            className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-4 sm:gap-6 justify-between backdrop-blur-sm"
+          {/* PRODUCT CARD — pinned lower-right */}
+          <motion.div
+            style={{ opacity: cardOpacity }}
+            className="lg:col-start-8 lg:col-end-13 lg:row-start-2 self-end relative z-20"
           >
-            {/* Variant selector */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${theme.accentText} shrink-0`}>Size</span>
-              {variants.map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setVariant(v)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
-                    v === variant
-                      ? `${theme.accent} border-transparent shadow-md`
-                      : `${theme.pillBg} backdrop-blur-sm hover:bg-white/20`
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:max-w-md ml-auto"
+            >
+              {/* Short description */}
+              <p className={`text-sm sm:text-[15px] leading-relaxed mb-7 sm:mb-9 ${theme.accentText}`}>
+                {product.description}
+              </p>
 
-            {/* Qty + price + CTA */}
-            <div className="flex items-center gap-3 sm:gap-4 ml-auto">
-              {/* Qty */}
-              <div className={`inline-flex items-center gap-2 rounded-full border ${theme.pillBg} backdrop-blur-sm px-1.5 py-1`}>
+              {/* Hairline */}
+              <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
+
+              {/* Price + edition row */}
+              <div className="flex items-start justify-between gap-6 mb-5">
+                <div>
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-2 ${theme.accentText}`}>Price</p>
+                  <p className="font-serif font-light text-3xl sm:text-4xl tracking-tight">
+                    ₹{displayPrice.toLocaleString("en-IN")}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-2 ${theme.accentText}`}>Edition</p>
+                  <p className="text-sm font-medium">
+                    {variant}
+                    {product.weight && (
+                      <>
+                        <br />
+                        <span className={theme.accentText}>{product.weight}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Hairline */}
+              <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
+
+              {/* Size selector — labeled inline */}
+              <div className="flex items-center justify-between gap-4 mb-5">
+                <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${theme.accentText}`}>Size</span>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {variants.map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setVariant(v)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border transition-all ${
+                        v === variant
+                          ? `${theme.accent} border-transparent shadow-md`
+                          : `${theme.pillBg} backdrop-blur-sm hover:scale-105`
+                      }`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flavor swatches */}
+              {product.flavorNotes.length > 0 && (
+                <>
+                  <div className="h-px w-full mb-5" style={{ background: "currentColor", opacity: 0.15 }} />
+                  <div className="flex items-center justify-between gap-4 mb-5">
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.3em] ${theme.accentText}`}>Notes</span>
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      {product.flavorNotes.slice(0, 4).map((note) => (
+                        <span
+                          key={note}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${theme.pillBg}`}
+                        >
+                          {note}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Hairline */}
+              <div className="h-px w-full mb-6" style={{ background: "currentColor", opacity: 0.15 }} />
+
+              {/* Qty + CTA row */}
+              <div className="flex items-center gap-3">
+                <div className={`inline-flex items-center gap-1 rounded-full border ${theme.pillBg} px-1.5 py-1`}>
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="font-bold w-5 text-center text-sm">{qty}</span>
+                  <button
+                    onClick={() => setQty((q) => q + 1)}
+                    className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                  onClick={() => onAddToCart(product._id, qty)}
+                  className={`flex-1 ${theme.accent} px-5 py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] active:scale-95 transition-transform`}
                 >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="font-bold w-5 text-center text-sm">{qty}</span>
-                <button
-                  onClick={() => setQty((q) => q + 1)}
-                  className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
+                  <ShoppingCart className="w-4 h-4" />
+                  Add to basket
                 </button>
               </div>
 
-              {/* Price */}
-              <span className="font-sans font-black text-2xl sm:text-3xl tracking-tight">
-                ₹{displayPrice.toLocaleString("en-IN")}
-              </span>
-
-              {/* CTA */}
-              <button
-                onClick={() => onAddToCart(product._id, qty)}
-                className={`${theme.accent} px-5 sm:px-7 py-3 rounded-full text-sm font-bold flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-transform`}
-              >
-                <ShoppingCart className="w-4 h-4" />
-                <span className="hidden sm:inline">Add to cart</span>
-                <span className="sm:hidden">Buy</span>
-              </button>
-
-              {/* Low stock badge */}
               {product.stockStatus === "low-stock" && (
-                <span className={`hidden sm:flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-amber-400`}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5 mt-4">
                   <Sparkles className="w-3 h-3" />
-                  Low stock
-                </span>
+                  Limited stock
+                </p>
               )}
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          </motion.div>
+        </div>
 
         {/* Scroll cue */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-          className={`absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 ${theme.accentText} pointer-events-none`}
-          style={{ opacity: 0.45 }}
+          animate={{ opacity: 0.5 }}
+          transition={{ delay: 1.4, duration: 0.6 }}
+          className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 pointer-events-none ${theme.accentText}`}
         >
+          <span className="text-[9px] font-bold uppercase tracking-[0.4em]">Scroll</span>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
-            <ChevronDown className="w-5 h-5" />
+            <ChevronDown className="w-4 h-4" />
           </motion.div>
         </motion.div>
       </div>
