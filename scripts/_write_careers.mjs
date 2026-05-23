@@ -1,4 +1,111 @@
-"use client";
+import { writeFileSync } from "fs";
+
+/* ── PageTransition.tsx ─────────────────────────────────────────────────── */
+
+const pageTransition = `"use client";
+
+import React, { useEffect, useLayoutEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { motion, useAnimation, useReducedMotion } from "motion/react";
+
+// SSR-safe: useLayoutEffect in browser, useEffect on server.
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+const WAVE_FRONT =
+  "M0,20 C12,4 28,18 42,8 C58,-2 70,16 84,6 C92,1 96,12 100,8 L100,20 L0,20 Z";
+const WAVE_BACK =
+  "M0,20 C16,10 30,2 48,12 C66,22 78,4 92,10 C96,12 98,14 100,14 L100,20 L0,20 Z";
+const EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
+
+const HOLD_MS = 320;
+const EXIT_S  = 0.85;
+const STAGGER = 80;
+
+/**
+ * Instant-cover / wave-reveal page transition.
+ *
+ * Fix for "content visible before transition":
+ *   useLayoutEffect fires synchronously BEFORE the browser paints the new
+ *   render. controls.set() updates MotionValues immediately (no rAF delay),
+ *   so the overlay snaps to full-cover BEFORE the browser paints — the swap
+ *   is completely invisible.
+ */
+export function PageTransition({ children }: { children: React.ReactNode }) {
+  const pathname  = usePathname();
+  const reduced   = useReducedMotion();
+  const backCtrl  = useAnimation();
+  const frontCtrl = useAnimation();
+  const prev      = useRef(pathname);
+
+  useIsoLayoutEffect(() => {
+    if (prev.current === pathname) return;
+    prev.current = pathname;
+    if (reduced) return;
+
+    // COVER: synchronous set() fires before browser paint.
+    // The new page is never visible without the overlay on top.
+    backCtrl.set({ y: "0%", opacity: 1 });
+    frontCtrl.set({ y: "0%", opacity: 1 });
+
+    const scrollT = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }, 30);
+
+    const revealT = setTimeout(async () => {
+      backCtrl.start({ y: "-118%", transition: { duration: EXIT_S, ease: EASE } });
+      await new Promise<void>((r) => setTimeout(r, STAGGER));
+      await frontCtrl.start({ y: "-118%", transition: { duration: EXIT_S, ease: EASE } });
+      // Reset for next navigation.
+      backCtrl.set({ y: "-118%", opacity: 0 });
+      frontCtrl.set({ y: "-118%", opacity: 0 });
+    }, HOLD_MS);
+
+    return () => { clearTimeout(scrollT); clearTimeout(revealT); };
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (reduced) return <>{children}</>;
+
+  return (
+    <>
+      {children}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
+        <WaveLayer ctrl={backCtrl}  color="var(--color-natural-paper)" wave={WAVE_BACK}  />
+        <WaveLayer ctrl={frontCtrl} color="var(--color-natural-accent)" wave={WAVE_FRONT} />
+      </div>
+    </>
+  );
+}
+
+function WaveLayer({ ctrl, color, wave }: {
+  ctrl: ReturnType<typeof useAnimation>;
+  color: string;
+  wave: string;
+}) {
+  return (
+    <motion.div
+      animate={ctrl}
+      initial={{ y: "-118%", opacity: 0 }}
+      className="absolute inset-x-0 top-0 h-full"
+      style={{ backgroundColor: color, willChange: "transform" }}
+    >
+      <svg
+        viewBox="0 0 100 20"
+        preserveAspectRatio="none"
+        aria-hidden
+        className="absolute left-0 right-0 w-full"
+        style={{ bottom: "-10vh", height: "10vh", color, display: "block", transform: "scaleY(-1)" }}
+      >
+        <path d={wave} fill="currentColor" />
+      </svg>
+    </motion.div>
+  );
+}
+`;
+
+/* ── app/about/careers/page.tsx ─────────────────────────────────────────── */
+
+const careersPage = `"use client";
 
 import { useState } from "react";
 import { motion } from "motion/react";
@@ -31,48 +138,48 @@ const roles = [
   {
     title: "Barista",
     team: "Cafe Operations" as TeamFilter,
-    location: "Bengaluru · Multiple Locations",
-    salary: "Rs 3.6–4.5L",
-    experience: "0–2 yrs",
+    location: "Bengaluru \u00b7 Multiple Locations",
+    salary: "Rs 3.6\u20134.5L",
+    experience: "0\u20132 yrs",
     posted: "2 days ago",
   },
   {
     title: "Cafe Manager",
     team: "Cafe Operations" as TeamFilter,
-    location: "Mumbai · Bandra Flagship",
-    salary: "Rs 8–11L",
-    experience: "3–5 yrs",
+    location: "Mumbai \u00b7 Bandra Flagship",
+    salary: "Rs 8\u201311L",
+    experience: "3\u20135 yrs",
     posted: "5 days ago",
   },
   {
     title: "Head Roaster",
     team: "Roastery" as TeamFilter,
-    location: "Bengaluru · Whitefield",
-    salary: "Rs 20–28L",
+    location: "Bengaluru \u00b7 Whitefield",
+    salary: "Rs 20\u201328L",
     experience: "7+ yrs",
     posted: "8 days ago",
   },
   {
     title: "Coffee Educator",
     team: "Coffee Education" as TeamFilter,
-    location: "Delhi · Hauz Khas",
-    salary: "Rs 8–12L",
-    experience: "3–5 yrs",
+    location: "Delhi \u00b7 Hauz Khas",
+    salary: "Rs 8\u201312L",
+    experience: "3\u20135 yrs",
     posted: "3 days ago",
   },
   {
     title: "Senior Frontend Engineer",
     team: "Technology" as TeamFilter,
-    location: "Remote · India",
-    salary: "Rs 32–42L",
+    location: "Remote \u00b7 India",
+    salary: "Rs 32\u201342L",
     experience: "5+ yrs",
     posted: "6 days ago",
   },
   {
     title: "Origin & Trade Lead",
     team: "Supply Chain" as TeamFilter,
-    location: "Chikmagalur · Field",
-    salary: "Rs 22–32L",
+    location: "Chikmagalur \u00b7 Field",
+    salary: "Rs 22\u201332L",
     experience: "8+ yrs",
     posted: "12 days ago",
   },
@@ -80,7 +187,7 @@ const roles = [
 
 const stories = [
   {
-    name: "Meera D’Souza",
+    name: "Meera D\u2019Souza",
     role: "Regional Trainer",
     image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
     from: "Barista, 2022",
@@ -108,7 +215,7 @@ const stories = [
 const gridMoments = [
   {
     src: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"),
-    label: "Barista training · Indiranagar",
+    label: "Barista training \u00b7 Indiranagar",
     span: "col-span-2 row-span-2",
   },
   {
@@ -118,7 +225,7 @@ const gridMoments = [
   },
   {
     src: asset("assets/SSCR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-25.jpg"),
-    label: "Estate visit · Coorg",
+    label: "Estate visit \u00b7 Coorg",
     span: "",
   },
   {
@@ -133,18 +240,18 @@ const gridMoments = [
   },
   {
     src: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"),
-    label: "Competition prep · Delhi",
+    label: "Competition prep \u00b7 Delhi",
     span: "col-span-2",
   },
 ];
 
 const benefitTiles = [
-  { emoji: "❤️", title: "Health cover", detail: "You + family. Same plan, barista to exec.", color: "bg-rose-50 border-rose-200" },
-  { emoji: "🧠", title: "Mental health", detail: "Confidential sessions. No manager approval.", color: "bg-violet-50 border-violet-200" },
-  { emoji: "🏖️", title: "30 real days off", detail: "No fake unlimited. Actual 30 days.", color: "bg-sky-50 border-sky-200" },
-  { emoji: "📚", title: "Rs 50k/year to learn", detail: "Courses, books, certs, conferences.", color: "bg-amber-50 border-amber-200" },
-  { emoji: "☕", title: "Free beans forever", detail: "Two bags a month + cafe meals on shift.", color: "bg-orange-50 border-orange-200" },
-  { emoji: "🌏", title: "Sabbatical", detail: "Eligible every 5 years. Paid time to think.", color: "bg-emerald-50 border-emerald-200" },
+  { emoji: "\u2764\ufe0f", title: "Health cover", detail: "You + family. Same plan, barista to exec.", color: "bg-rose-50 border-rose-200" },
+  { emoji: "\ud83e\udde0", title: "Mental health", detail: "Confidential sessions. No manager approval.", color: "bg-violet-50 border-violet-200" },
+  { emoji: "\ud83c\udfd6\ufe0f", title: "30 real days off", detail: "No fake unlimited. Actual 30 days.", color: "bg-sky-50 border-sky-200" },
+  { emoji: "\ud83d\udcda", title: "Rs 50k/year to learn", detail: "Courses, books, certs, conferences.", color: "bg-amber-50 border-amber-200" },
+  { emoji: "\u2615", title: "Free beans forever", detail: "Two bags a month + cafe meals on shift.", color: "bg-orange-50 border-orange-200" },
+  { emoji: "\ud83c\udf0f", title: "Sabbatical", detail: "Eligible every 5 years. Paid time to think.", color: "bg-emerald-50 border-emerald-200" },
 ];
 
 export default function CareersPage() {
@@ -158,7 +265,7 @@ export default function CareersPage() {
         <CreativeHero
           eyebrow="Careers"
           title="Make great coffee. Get paid."
-          tagline="Real craft. Real growth. The best coffee education in the country — built into the job, from day one."
+          tagline="Real craft. Real growth. The best coffee education in the country \u2014 built into the job, from day one."
           imageUrl={asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg")}
           accentWord="great coffee"
           stickerText="WE'RE HIRING"
@@ -274,10 +381,10 @@ export default function CareersPage() {
                     <span className="text-xs text-natural-text/45">{role.experience}</span>
                   </div>
                   <a
-                    href={`mailto:careers@brewmatch.in?subject=Application: ${encodeURIComponent(role.title)}`}
+                    href={\`mailto:careers@brewmatch.in?subject=Application: \${encodeURIComponent(role.title)}\`}
                     className="mt-auto pt-5 inline-flex items-center gap-2 bg-natural-text text-natural-bg rounded-full px-5 py-2.5 text-sm font-bold w-fit hover:opacity-80 transition-opacity"
                   >
-                    Apply in 10 min →
+                    Apply in 10 min \u2192
                   </a>
                 </div>
               </TiltCard>
@@ -325,10 +432,10 @@ export default function CareersPage() {
                     </span>
                   </div>
                   <blockquote className="font-serif italic text-xl sm:text-2xl text-white leading-snug">
-                    “{s.quote}”
+                    \u201c{s.quote}\u201d
                   </blockquote>
                   <p className="mt-4 text-xs font-bold uppercase tracking-[0.3em] text-white/60">
-                    {s.name} · {s.role}
+                    {s.name} \u00b7 {s.role}
                   </p>
                 </div>
               </article>
@@ -431,7 +538,7 @@ export default function CareersPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {benefitTiles.map(({ emoji, title, detail, color }, i) => (
             <RevealOnScroll key={title} delay={i * 0.04}>
-              <TiltCard intensity={5} className={`rounded-2xl border p-6 h-full ${color} shadow-about-soft`}>
+              <TiltCard intensity={5} className={\`rounded-2xl border p-6 h-full \${color} shadow-about-soft\`}>
                 <div className="text-4xl mb-4" aria-hidden>{emoji}</div>
                 <h3 className="font-serif font-bold text-xl leading-snug">{title}</h3>
                 <p className="mt-2 text-sm text-natural-text/65 leading-relaxed">{detail}</p>
@@ -452,7 +559,7 @@ export default function CareersPage() {
               Know what you&apos;re walking into.
             </h2>
             <p className="text-natural-text/60 max-w-xl mb-10 leading-relaxed">
-              We made a 20-min orientation anyone can take — no account, no email, no catch.
+              We made a 20-min orientation anyone can take \u2014 no account, no email, no catch.
               Curious? Take it. Ready to apply? Take it first.
             </p>
           </RevealOnScroll>
@@ -482,7 +589,7 @@ export default function CareersPage() {
               href="mailto:careers@brewmatch.in"
               className="mt-10 inline-flex items-center gap-3 bg-[color:var(--about-accent)] text-[color:var(--about-accent-ink)] px-10 py-5 rounded-full font-bold text-lg hover:opacity-85 transition-opacity"
             >
-              Send your application →
+              Send your application \u2192
             </a>
             <p className="mt-6 text-xs opacity-35">
               We respond to everyone within 7 business days.
@@ -493,3 +600,9 @@ export default function CareersPage() {
     </AboutPageShell>
   );
 }
+`;
+
+writeFileSync("src/components/PageTransition.tsx", pageTransition, "utf8");
+writeFileSync("app/about/careers/page.tsx", careersPage, "utf8");
+
+console.log("Both files written as UTF-8.");
