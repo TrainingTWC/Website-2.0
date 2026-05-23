@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   motion,
@@ -46,7 +46,7 @@ import { slugify } from "../lib/slug";
 import type { Product } from "../types";
 import { resolveTaxonomy } from "../types";
 
-// -- Scroll helper ----------------------------------------------
+// ── Scroll helper ──────────────────────────────────────────────
 function scrollTo(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -59,8 +59,7 @@ function scrollTo(id: string) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-
-// -- ScrollReveal � fade + lift sections into view on scroll ----
+// ── ScrollReveal — fade + lift sections into view on scroll ────
 function ScrollReveal({
   children,
   delay = 0,
@@ -90,7 +89,7 @@ function ScrollReveal({
   );
 }
 
-// -- Scroll progress bar ---------------------------------------
+// ── Scroll progress bar ───────────────────────────────────────
 function ScrollProgressBar() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -106,7 +105,7 @@ function ScrollProgressBar() {
   );
 }
 
-// -- Hero banner 1 � Schweppes Fizz ----------------------------
+// ── Hero banner 1 — Schweppes Fizz ────────────────────────────
 function FizzBanner() {
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -117,7 +116,7 @@ function FizzBanner() {
       <div className="absolute inset-0 bg-linear-to-r from-[#1a3a8a]/85 via-[#2a4fa5]/55 to-[#ff6fa4]/40" />
       <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
         <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-amber-200/90 mb-4">
-          THIRD WAVE � Schweppes
+          THIRD WAVE × Schweppes
         </p>
         <h3 className="font-serif font-black leading-[0.9] tracking-tight text-[clamp(2.5rem,7vw,6rem)]">
           FIND YOUR
@@ -135,7 +134,7 @@ function FizzBanner() {
   );
 }
 
-// -- Hero banner 2 � Third Rush Desserts ----------------------
+// ── Hero banner 2 — Third Rush Desserts ──────────────────────
 function DessertsBanner() {
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -146,7 +145,7 @@ function DessertsBanner() {
       <div className="absolute inset-0 bg-linear-to-r from-[#d63384]/85 via-[#e84393]/55 to-[#5a0f3a]/55" />
       <div className="relative z-10 h-full flex flex-col justify-center px-8 sm:px-14 text-white">
         <p className="text-[10px] sm:text-xs font-bold tracking-[0.45em] uppercase text-amber-100/90 mb-4">
-          THIRD WAVE � Third Rush Desserts
+          THIRD WAVE × Third Rush Desserts
         </p>
         <h3 className="font-serif font-black leading-[0.9] tracking-tight text-[clamp(2.2rem,6vw,5.2rem)]">
           WIDE RANGE TO
@@ -154,7 +153,7 @@ function DessertsBanner() {
           <span className="italic">CHOOSE FROM.</span>
         </h3>
         <p className="mt-5 text-sm sm:text-base font-light tracking-wider text-white/85 max-w-xl">
-          Tres Leches � Cheesecakes � Tarts &amp; Pie � Cookies � Brownies
+          Tres Leches · Cheesecakes · Tarts &amp; Pie · Cookies · Brownies
         </p>
         <div className="mt-6 inline-flex w-fit items-center gap-3 px-5 py-2.5 rounded-full border border-white/40 backdrop-blur-sm">
           <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
@@ -166,7 +165,7 @@ function DessertsBanner() {
   );
 }
 
-// -- Mobile bottom nav pill ------------------------------------
+// ── Mobile bottom nav pill ────────────────────────────────────
 function MobileBottomNav({
   onOpenTI,
   onOpenCart,
@@ -253,7 +252,7 @@ function MobileBottomNav({
   );
 }
 
-// -- Product Card -----------------------------------------------
+// ── Product Card ───────────────────────────────────────────────
 function ProductCard({
   product,
   onAddToCart,
@@ -341,7 +340,7 @@ function ProductCard({
             {product.name}
           </h4>
           <span className="text-lg font-extrabold text-natural-accent whitespace-nowrap">
-            ?{product.price.toLocaleString("en-IN")}
+            ₹{product.price.toLocaleString("en-IN")}
           </span>
         </div>
         {product.origin && (
@@ -374,7 +373,7 @@ function ProductCard({
   );
 }
 
-// -- Horizontal Card --------------------------------------------
+// ── Horizontal Card ────────────────────────────────────────────
 function HorizontalCard({
   product,
   onAddToCart,
@@ -409,7 +408,7 @@ function HorizontalCard({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-2xl font-extrabold">
-            ?{product.price.toLocaleString("en-IN")}
+            ₹{product.price.toLocaleString("en-IN")}
           </span>
           <button
             onClick={() => onAddToCart(product.name)}
@@ -424,7 +423,7 @@ function HorizontalCard({
   );
 }
 
-// -- Horizontal scroll product row -----------------------------
+// ── Horizontal scroll product row ─────────────────────────────
 const HSCROLL_CARD_STRIDE = 276;
 
 function HScrollRow({
@@ -602,7 +601,7 @@ function HScrollCard({
   );
 }
 
-// -- Catalog parallax banner ------------------------------------
+// ── Catalog parallax banner ────────────────────────────────────
 function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string }) {
   const eyebrowText = eyebrow ?? "The Collection";
   const t = title ?? "Choose your\nritual.";
@@ -655,7 +654,7 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
             style={{ y: subY }}
             className="text-white/55 mt-6 text-base sm:text-lg max-w-md mx-auto leading-relaxed"
           >
-            Every coffee, every bag, every cup � handpicked by our master roasters.
+            Every coffee, every bag, every cup — handpicked by our master roasters.
           </motion.p>
         </motion.div>
       </motion.div>
@@ -663,7 +662,7 @@ function CatalogBanner({ eyebrow, title }: { eyebrow?: string; title?: string })
   );
 }
 
-// -- Bento tile -------------------------------------------------
+// ── Bento tile ─────────────────────────────────────────────────
 type BentoTileData = {
   title: string;
   target: string;
@@ -740,7 +739,7 @@ function BentoTile({
   );
 }
 
-// -- Our Story slideshow ----------------------------------------
+// ── Our Story slideshow ────────────────────────────────────────
 const FALLBACK_STORY_SLIDES = [asset("assets/our-story.png")];
 
 function OurStoryImage({ slides }: { slides?: string[] }) {
@@ -809,7 +808,7 @@ function OurStoryImage({ slides }: { slides?: string[] }) {
   );
 }
 
-// -- Demo Storefront --------------------------------------------
+// ── Demo Storefront ────────────────────────────────────────────
 function DemoStorefront({
   products,
   onAddToCart,
@@ -856,7 +855,7 @@ function DemoStorefront({
   const allTiles: Tile[] = [
     { title: "Freshly Roasted Beans",   target: "section-coffee-beans",     items: coffeeBeans,     span: "md:col-span-3 md:row-span-2", accent: "from-amber-100 via-amber-50 to-natural-paper" },
     { title: "Easy Coffee Bags",        target: "section-coffee-ecb",       items: coffeeEcb,       span: "md:col-span-2 md:row-span-1", accent: "from-orange-50 to-natural-muted" },
-    { title: "Coffee � Brewing Tools",  target: "section-coffee-brewing",   items: coffeeBrewing,   span: "md:col-span-1 md:row-span-1", accent: "from-stone-100 to-natural-paper" },
+    { title: "Coffee · Brewing Tools",  target: "section-coffee-brewing",   items: coffeeBrewing,   span: "md:col-span-1 md:row-span-1", accent: "from-stone-100 to-natural-paper" },
     { title: "Drinkware",               target: "section-merch-drinkware",  items: merchDrinkware,  span: "md:col-span-3 md:row-span-1", accent: "from-emerald-100 via-emerald-50 to-natural-paper" },
     { title: "Bags",                    target: "section-merch-bags",       items: merchBags,       span: "md:col-span-2 md:row-span-1", accent: "from-rose-50 to-natural-paper" },
     { title: "Keychains & Accessories", target: "section-merch-keychains",  items: merchKeychains,  span: "md:col-span-2 md:row-span-1", accent: "from-sky-50 to-natural-paper" },
@@ -867,12 +866,12 @@ function DemoStorefront({
   const sections: { id: string; title: string; items: Product[] }[] = [
     { id: "section-coffee-beans",     title: "Freshly Roasted Beans",   items: coffeeBeans },
     { id: "section-coffee-ecb",       title: "Easy Coffee Bags",        items: coffeeEcb },
-    { id: "section-coffee-brewing",   title: "Coffee � Brewing Tools",  items: coffeeBrewing },
+    { id: "section-coffee-brewing",   title: "Coffee · Brewing Tools",  items: coffeeBrewing },
     { id: "section-merch-drinkware",  title: "Drinkware",               items: merchDrinkware },
     { id: "section-merch-bags",       title: "Bags",                    items: merchBags },
     { id: "section-merch-keychains",  title: "Keychains & Accessories", items: merchKeychains },
     { id: "section-merch-chocolates", title: "Chocolates & Nuts",       items: merchChocolates },
-    { id: "section-merch-brewing",    title: "Merch � Brewing Tools",   items: merchBrewing },
+    { id: "section-merch-brewing",    title: "Merch · Brewing Tools",   items: merchBrewing },
   ].filter((s) => s.items.length > 0);
 
   const goToCatalog = () => {
@@ -964,7 +963,7 @@ function DemoStorefront({
                       The art of <em className="font-serif italic font-light">roasting.</em>
                     </>
                   ),
-                  body: "Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self � then packed whole, ground, or as Easy Coffee Bags ready to brew.",
+                  body: "Small-batch drums turn at the rhythm of our master roasters. Every degree, every minute is calibrated until the bean reveals its sweetest, most honest self — then packed whole, ground, or as Easy Coffee Bags ready to brew.",
                   callouts: ["Small batch", "Slow roasted", "Cupped daily", "Brew-ready"],
                   product: featuredBag,
                   align: "right",
@@ -981,7 +980,7 @@ function DemoStorefront({
                       Built to <em className="font-serif italic font-light">brew.</em>
                     </>
                   ),
-                  body: "Grinders that whisper, presses that bloom, kettles tuned for that gooseneck pour. The tools we trust to coax the best out of every roast � now in your kitchen.",
+                  body: "Grinders that whisper, presses that bloom, kettles tuned for that gooseneck pour. The tools we trust to coax the best out of every roast — now in your kitchen.",
                   callouts: ["Curated", "Barista-tested", "Coffee-first", "Built to last"],
                   product: featuredBrewing ?? featuredBag,
                   align: "left",
@@ -1015,7 +1014,7 @@ function DemoStorefront({
                       Pour. Pause. <em className="font-serif italic font-light">Repeat.</em>
                     </>
                   ),
-                  body: "From the first wisp of steam to the last warm sip � what we craft is meant to anchor the small, beautiful pauses in your day. Bags, keychains and trinkets that carry the ritual with you.",
+                  body: "From the first wisp of steam to the last warm sip — what we craft is meant to anchor the small, beautiful pauses in your day. Bags, keychains and trinkets that carry the ritual with you.",
                   callouts: ["Carry it everywhere", "Made to share", "Everyday joy"],
                   product: featuredKeychain ?? featuredMerch ?? featuredBean,
                   align: "left",
@@ -1143,7 +1142,7 @@ function DemoStorefront({
   );
 }
 
-// -- HomeContent � main export (replaces Storefront + App) -----
+// ── HomeContent — main export (replaces Storefront + App) ─────
 export default function HomeContent() {
   const router = useRouter();
   const products = useProducts();
@@ -1304,13 +1303,12 @@ export default function HomeContent() {
     [products, addToCart, showToast]
   );
 
-  // Simplified nav handler � TI is now an overlay, all other routes are real routes
+  // Simplified nav handler — TI is now an overlay, all other routes are real routes
   const handleNavTo = useCallback((target: string) => {
     if (target.startsWith("/")) { router.push(target); return; }
     if (target === "third-circle") { router.push("/third-circle"); return; }
     const el = typeof document !== "undefined" && document.getElementById(target);
     if (el) { scrollTo(target); return; }
-    // Chapter targets: scan [data-snap-chapter] to handle any CMS eyebrow mismatches
     if (target.startsWith("chapter-")) {
       const chapterEls = typeof document !== "undefined" && document.querySelectorAll("[data-snap-chapter]");
       if (chapterEls && chapterEls.length > 0) {
@@ -1321,11 +1319,10 @@ export default function HomeContent() {
         return;
       }
     }
-    // Fallback: window.location.hash (not router.push) to avoid static-export routing issues
     if (typeof window !== "undefined") window.location.hash = target;
   }, [router]);
 
-  // Handle /#chapter-xxx hash navigation when arriving from another page
+  // Hash-on-load: when page loads with #chapter-* hash, poll until element is ready
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.slice(1);
@@ -1347,6 +1344,7 @@ export default function HomeContent() {
     const t = setTimeout(poll, 300);
     return () => { clearTimeout(t); clearTimeout(pollTimer); };
   }, []);
+
   // Hard ceiling: never block the user for more than 6 s regardless of network.
   useEffect(() => {
     const t = setTimeout(() => setCriticalReady(true), 6000);
@@ -1437,4 +1435,3 @@ export default function HomeContent() {
     </SmoothScroll>
   );
 }
-
