@@ -20,6 +20,7 @@ export function hrefForNavTarget(target: string): string {
   if (target === "shop") return "/shop";
   if (target === "home" || target === "hero") return "/";
   if (HOME_SECTION_TARGETS.has(target)) return `/#${target}`;
+  if (target.startsWith("chapter-")) return `/#${target}`;
   return `/${target}`;
 }
 
