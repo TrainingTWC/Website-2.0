@@ -120,7 +120,13 @@ export default function NewsroomPage() {
                 className="bg-natural-paper rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow h-full flex flex-col"
               >
                 <div className="aspect-[5/3] overflow-hidden">
-                  <img src={p.imageUrl} alt={p.outlet} className="w-full h-full object-cover" />
+                  <img
+                    src={p.imageUrl}
+                    alt={p.outlet}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="p-6 sm:p-7 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-3">

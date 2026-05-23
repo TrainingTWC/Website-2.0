@@ -134,7 +134,13 @@ export default function OurCoffeePage() {
                 className="bg-natural-paper rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow"
               >
                 <div className="aspect-[5/3] overflow-hidden">
-                  <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" />
+                  <img
+                    src={r.imageUrl}
+                    alt={r.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="p-6 sm:p-8 space-y-3">
                   <div className="flex items-baseline justify-between">

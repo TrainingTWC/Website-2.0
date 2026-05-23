@@ -2,15 +2,22 @@
 /**
  * Parallax primitives for /about/* pages.
  *
- * Each primitive is a self-contained scroll-driven block. They're intentionally
- * over-built (spring-smoothed, tier-aware) because the user explicitly asked
- * for "parallax and 3d scrolling" on these pages.
+ * Each primitive is a self-contained scroll-driven block.
  *
- * Conventions:
- *   • All transforms route through `useSpring` for buttery motion (matches the
- *     critically-damped springs used in ProductPage.tsx).
- *   • All numeric ranges are in `px` not `%` strings — strings break springs.
- *   • Heavy 3D tilt is mouse-driven (gated to fine-pointer / non-touch).
+ * Performance contract (matches home-page conventions):
+ *   • Scroll-driven transforms use RAW `useTransform` — Lenis already
+ *     interpolates scrollY at lerp 0.08, so an extra `useSpring` layer just
+ *     adds float and lag. Springs are only used for mouse/pointer-driven
+ *     values (TiltCard rotation).
+ *   • Every animated layer is GPU-promoted via `translateZ(0)` +
+ *     `backfaceVisibility: hidden` so the compositor handles it on its own
+ *     thread (no main-thread paint on each scroll tick).
+ *   • Sections opt into `contain: layout paint` to isolate paint regions
+ *     and avoid invalidating siblings.
+ *   • All numeric ranges are in `px` not `%` strings — strings disable the
+ *     fast path in motion's animation pipeline.
+ *   • Reduced-motion / low-tier devices get a neutered version (zero y,
+ *     scale 1) so we never run a parallax that browsers can't keep up with.
  *
  * Components:
  *   • ParallaxHero            — full-viewport hero with image scale + content lift
@@ -30,9 +37,31 @@ import {
   type MotionValue,
 } from "motion/react";
 import { SmartImage } from "../SmartImage";
+import { usePerfMode } from "@/src/context/PerfModeContext";
 
-/* ─── Shared spring config — critically damped, no overshoot ────────────── */
-const SPRING = { stiffness: 100, damping: 30, restDelta: 0.001 };
+/* GPU layer promotion — applied inline on every scroll-animated wrapper.
+ * Setting these via the `style` prop is intentional: Tailwind's compiler
+ * can't statically generate `will-change: transform` without arbitrary
+ * values, and inline style lands in the same compositor layer as motion's
+ * transform writes (no className→class-name→specificity round-trip). */
+const GPU_LAYER: React.CSSProperties = {
+  willChange: "transform",
+  backfaceVisibility: "hidden",
+  transform: "translateZ(0)",
+};
+
+/** Sections that host scroll-driven children. `contain: layout paint`
+ * tells the browser this subtree can't affect siblings' layout or paint,
+ * so the compositor can skip them when only this section is moving. */
+const PAINT_CONTAINED: React.CSSProperties = {
+  contain: "layout paint",
+};
+
+/** Returns true when the device shouldn't run heavy parallax/3D. */
+function useShouldAnimate(): boolean {
+  const { tier, reducedMotion } = usePerfMode();
+  return !reducedMotion && tier !== "low";
+}
 
 /* ───────────────────────────────────────────────────────────────────────── */
 /* ParallaxHero                                                              */
@@ -61,30 +90,29 @@ export function ParallaxHero({
   scrollHint = "Scroll to explore",
 }: ParallaxHeroProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const animate = useShouldAnimate();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
 
-  // Image lifts up + scales gently as you scroll past
-  const imgY = useTransform(scrollYProgress, [0, 1], [0, 180]);
-  const imgScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.18]);
-  const imgYS = useSpring(imgY, SPRING);
-  const imgScaleS = useSpring(imgScale, SPRING);
-
-  // Content fades + lifts in the opposite direction
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  // Raw scroll-driven transforms — Lenis already smooths the input, so no
+  // additional spring layer (springs on top of Lenis create perceptible lag
+  // and a "floaty" feel rather than tight 120fps motion).
+  const imgY = useTransform(scrollYProgress, [0, 1], animate ? [0, 180] : [0, 0]);
+  const imgScale = useTransform(scrollYProgress, [0, 1], animate ? [1.05, 1.18] : [1, 1]);
+  const contentY = useTransform(scrollYProgress, [0, 1], animate ? [0, -60] : [0, 0]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const contentYS = useSpring(contentY, SPRING);
 
   return (
     <section
       ref={ref}
+      style={PAINT_CONTAINED}
       className="relative w-full h-[88vh] sm:h-screen overflow-hidden bg-natural-paper"
     >
       <motion.div
-        style={{ y: imgYS, scale: imgScaleS }}
-        className="absolute inset-0 will-change-transform"
+        style={{ y: imgY, scale: imgScale, ...GPU_LAYER }}
+        className="absolute inset-0"
       >
         <SmartImage
           src={imageUrl}
@@ -101,7 +129,7 @@ export function ParallaxHero({
       </motion.div>
 
       <motion.div
-        style={{ y: contentYS, opacity: contentOpacity }}
+        style={{ y: contentY, opacity: contentOpacity, ...GPU_LAYER }}
         className="absolute inset-0 flex flex-col items-start justify-end max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pb-24 sm:pb-32"
       >
         <motion.span
@@ -165,20 +193,24 @@ export function PinnedTextBlock({
   reverse = false,
 }: PinnedTextBlockProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const animate = useShouldAnimate();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  // Each image gets a different parallax speed for layered depth.
-  const yA = useSpring(useTransform(scrollYProgress, [0, 1], [60, -80]), SPRING);
-  const yB = useSpring(useTransform(scrollYProgress, [0, 1], [120, -160]), SPRING);
-  const yC = useSpring(useTransform(scrollYProgress, [0, 1], [40, -100]), SPRING);
+  // Raw scroll-driven offsets — different speeds per image for layered depth.
+  // No useSpring on top: Lenis already interpolates scrollY at lerp 0.08.
+  // On low-tier or reduced-motion, every speed collapses to 0 (no movement).
+  const yA = useTransform(scrollYProgress, [0, 1], animate ? [60, -80] : [0, 0]);
+  const yB = useTransform(scrollYProgress, [0, 1], animate ? [120, -160] : [0, 0]);
+  const yC = useTransform(scrollYProgress, [0, 1], animate ? [40, -100] : [0, 0]);
   const speeds = [yA, yB, yC];
 
   return (
     <section
       ref={ref}
+      style={PAINT_CONTAINED}
       className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-24 sm:py-32 md:py-40"
     >
       <div
@@ -203,13 +235,17 @@ export function PinnedTextBlock({
           </div>
         </div>
 
-        {/* Image stack — staggered parallax */}
+        {/* Image stack — staggered parallax.
+            We deliberately do NOT add a hover:scale on the inner image:
+            stacking a CSS transition-transform on top of a motion-driven y
+            translate forces the compositor to recombine matrices each frame,
+            visibly jitters on Lenis ticks at sub-pixel scroll. */}
         <div className="flex flex-col gap-6 sm:gap-10">
           {sideImages.slice(0, 3).map((img, i) => (
             <motion.div
               key={i}
-              style={{ y: speeds[i] }}
-              className={`will-change-transform overflow-hidden rounded-2xl shadow-xl ${
+              style={{ y: speeds[i], ...GPU_LAYER }}
+              className={`overflow-hidden rounded-2xl shadow-xl ${
                 i === 1 ? "md:translate-x-12" : ""
               }`}
             >
@@ -218,7 +254,7 @@ export function PinnedTextBlock({
                 alt={img.alt}
                 blur={img.blur}
                 aspectRatio={i === 0 ? "4/5" : i === 1 ? "1/1" : "5/4"}
-                className="w-full object-cover hover:scale-105 transition-transform duration-700"
+                className="w-full object-cover"
               />
             </motion.div>
           ))}
@@ -238,21 +274,30 @@ export function LayeredImageColumns({
   images: { url: string; alt: string; blur?: string }[];
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const animate = useShouldAnimate();
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  const yLeft = useSpring(useTransform(scrollYProgress, [0, 1], [80, -120]), SPRING);
-  const yRight = useSpring(useTransform(scrollYProgress, [0, 1], [-80, 120]), SPRING);
+  // Raw transforms — see file header for why no useSpring on scroll values.
+  const yLeft = useTransform(scrollYProgress, [0, 1], animate ? [80, -120] : [0, 0]);
+  const yRight = useTransform(scrollYProgress, [0, 1], animate ? [-80, 120] : [0, 0]);
 
   const left = images.filter((_, i) => i % 2 === 0);
   const right = images.filter((_, i) => i % 2 === 1);
 
   return (
-    <section ref={ref} className="relative w-full py-16 sm:py-24 overflow-hidden">
+    <section
+      ref={ref}
+      style={PAINT_CONTAINED}
+      className="relative w-full py-16 sm:py-24 overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-2 gap-4 sm:gap-8">
-        <motion.div style={{ y: yLeft }} className="space-y-4 sm:space-y-8 will-change-transform">
+        <motion.div
+          style={{ y: yLeft, ...GPU_LAYER }}
+          className="space-y-4 sm:space-y-8"
+        >
           {left.map((img, i) => (
             <div key={i} className="overflow-hidden rounded-xl shadow-lg">
               <SmartImage
@@ -265,7 +310,10 @@ export function LayeredImageColumns({
             </div>
           ))}
         </motion.div>
-        <motion.div style={{ y: yRight }} className="space-y-4 sm:space-y-8 will-change-transform pt-12 sm:pt-24">
+        <motion.div
+          style={{ y: yRight, ...GPU_LAYER }}
+          className="space-y-4 sm:space-y-8 pt-12 sm:pt-24"
+        >
           {right.map((img, i) => (
             <div key={i} className="overflow-hidden rounded-xl shadow-lg">
               <SmartImage
@@ -297,12 +345,16 @@ export function TiltCard({
   intensity?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const animate = useShouldAnimate();
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
+  // Springs are correct HERE — input is a discrete mouse event, not the
+  // already-smoothed Lenis scrollY. These give the tilt its tactile feel.
   const rxS = useSpring(rx, { stiffness: 180, damping: 22, restDelta: 0.001 });
   const ryS = useSpring(ry, { stiffness: 180, damping: 22, restDelta: 0.001 });
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!animate) return;
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -320,10 +372,16 @@ export function TiltCard({
   return (
     <motion.div
       ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      style={{ rotateX: rxS, rotateY: ryS, transformPerspective: 900 }}
-      className={`will-change-transform ${className}`}
+      onMouseMove={animate ? handleMove : undefined}
+      onMouseLeave={animate ? handleLeave : undefined}
+      style={{
+        rotateX: rxS,
+        rotateY: ryS,
+        transformPerspective: 900,
+        ...GPU_LAYER,
+        transformStyle: "preserve-3d",
+      }}
+      className={className}
     >
       {children}
     </motion.div>
