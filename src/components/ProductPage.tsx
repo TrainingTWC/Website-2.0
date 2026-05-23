@@ -435,17 +435,20 @@ function ImmersiveProductLayout({
             Back
           </motion.button>
 
-          {/* Center: poetic tagline */}
-          <motion.p
+          {/* Center: Third Wave Coffee logo */}
+          <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.05 }}
-            className={`hidden sm:block text-[10px] font-medium uppercase tracking-[0.3em] leading-relaxed text-center justify-self-center ${theme.accentText}`}
+            className="justify-self-center flex items-center"
           >
-            Slow craft
-            <br />
-            since 1975
-          </motion.p>
+            <img
+              src={asset("logo.png")}
+              alt="Third Wave Coffee"
+              className={`h-7 sm:h-8 w-auto object-contain ${theme.fg === "text-white" ? "invert" : ""}`}
+              style={{ filter: theme.fg === "text-white" ? "brightness(0) invert(1)" : "none" }}
+            />
+          </motion.div>
 
           {/* Right: cart dot */}
           <motion.div
@@ -462,7 +465,7 @@ function ImmersiveProductLayout({
         </div>
 
         {/* ── MAIN STAGE — asymmetric grid ────────────────────────── */}
-        <div className="relative z-10 max-w-[1440px] mx-auto w-full px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-10 pt-10 sm:pt-12 pb-12">
+        <div className="relative z-10 max-w-[1440px] mx-auto w-full px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-4 sm:gap-y-6 pt-4 sm:pt-6 pb-12">
 
           {/* HUGE TITLE — spans top, dominant */}
           <motion.div
@@ -474,7 +477,8 @@ function ImmersiveProductLayout({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-3 sm:mb-5 ${theme.accentText}`}
+              className={`text-[11px] font-bold uppercase tracking-[0.4em] mb-2 sm:mb-3 ${theme.accentText}`}
+              style={{ opacity: 0.9 }}
             >
               {product.type === "beans" ? "Single origin" : product.type === "bags" ? "Ready to brew" : "Crafted"} ·{" "}
               {product.origin ?? product.category}
@@ -598,10 +602,10 @@ function ImmersiveProductLayout({
             </motion.div>
           </motion.div>
 
-          {/* PRODUCT CARD — pinned lower-right */}
+          {/* PRODUCT CARD — pinned top-right, right under title */}
           <motion.div
             style={{ opacity: cardOpacity }}
-            className="lg:col-start-8 lg:col-end-13 lg:row-start-2 self-end relative z-20"
+            className="lg:col-start-8 lg:col-end-13 lg:row-start-2 self-start relative z-20"
           >
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -610,7 +614,10 @@ function ImmersiveProductLayout({
               className="lg:max-w-md ml-auto"
             >
               {/* Short description */}
-              <p className={`text-sm sm:text-[15px] leading-relaxed mb-6 ${theme.accentText}`}>
+              <p
+                className="text-[15px] sm:text-base leading-[1.65] mb-6 font-medium"
+                style={{ opacity: 0.92 }}
+              >
                 {product.description}
               </p>
 
@@ -847,8 +854,14 @@ function ImmersiveProductLayout({
 
 function StorySection({ product }: { product: Product }) {
   const ref = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const { scrollYProgress: ghostScroll } = useScroll({ target: ghostRef, offset: ["start end", "end start"] });
   const lineWidth = useTransform(scrollYProgress, [0.1, 0.5], ["0%", "100%"]);
+  // Scroll-driven horizontal sweep of the ghost product name
+  const ghostX = useTransform(ghostScroll, [0, 1], ["15%", "-35%"]);
+  const ghostOpacity = useTransform(ghostScroll, [0, 0.3, 0.7, 1], [0, 1, 1, 0.3]);
+  const ghostScale = useTransform(ghostScroll, [0, 1], [0.9, 1.1]);
 
   if (!product.description) return null;
 
@@ -895,7 +908,7 @@ function StorySection({ product }: { product: Product }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.55, delay: 0.12 }}
-              className="text-natural-text/70 leading-relaxed text-lg sm:text-xl max-w-xl"
+              className="text-natural-text/85 leading-[1.7] text-lg sm:text-xl max-w-xl font-medium"
             >
               {product.description}
             </motion.p>
@@ -932,14 +945,18 @@ function StorySection({ product }: { product: Product }) {
 
           {/* Right: large product name rotated + spec card */}
           <div className="space-y-6">
-            {/* Rotated decorative name */}
-            <div className="relative h-24 sm:h-32 overflow-hidden select-none" aria-hidden>
-              <div
-                className="absolute inset-0 flex items-center font-sans font-black uppercase text-natural-border leading-none"
-                style={{ fontSize: "clamp(4rem, 10vw, 8rem)", letterSpacing: "-0.04em", whiteSpace: "nowrap" }}
+            {/* Scroll-driven ghost product name */}
+            <div ref={ghostRef} className="relative h-28 sm:h-36 overflow-hidden select-none" aria-hidden>
+              <motion.div
+                style={{ x: ghostX, opacity: ghostOpacity, scale: ghostScale }}
+                className="absolute inset-0 flex items-center font-sans font-black uppercase text-natural-text/12 leading-none will-change-transform"
               >
-                {product.name}
-              </div>
+                <span
+                  style={{ fontSize: "clamp(4rem, 11vw, 9rem)", letterSpacing: "-0.04em", whiteSpace: "nowrap" }}
+                >
+                  {product.name} · {product.name}
+                </span>
+              </motion.div>
             </div>
 
             {/* Spec card */}
