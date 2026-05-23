@@ -41,6 +41,7 @@ import { DashboardOverview } from "./DashboardOverview";
 import { SalesAnalytics } from "./SalesAnalytics";
 import { EditorialCMS } from "./EditorialCMS";
 import { HomeContentCMS } from "./HomeContentCMS";
+import { AboutCMS } from "./AboutCMS";
 import {
   InventoryManager,
   CombinedAnalytics,
@@ -80,6 +81,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     | "orders"
     | "editorial"
     | "home"
+    | "about"
     | "rules"
     | "deep-analytics"
     | "admins"
@@ -150,6 +152,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
         { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
         { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
         { id: "home", label: "Home CMS", icon: <HomeIcon className="w-4 h-4" /> },
+        { id: "about", label: "About Pages", icon: <Globe className="w-4 h-4" /> },
         { id: "rules", label: "Logic Rules", icon: <SearchIcon className="w-4 h-4" /> },
       ],
     },
@@ -170,6 +173,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
     home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
+    about: { title: "About Pages", subtitle: "Edit Our Story, Our Coffee, Careers, and Newsroom with live preview." },
     rules: { title: "Logic Rules", subtitle: "Tune recommendation and discovery logic." },
     "deep-analytics": { title: "Site Analytics", subtitle: "Traffic, behavioural insights, cohorts, and trend analysis." },
     admins: { title: "Admins & Permissions", subtitle: "Invite teammates, set roles, control which sections they can access." },
@@ -203,6 +207,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}
       {activeTab === "home" && <HomeContentCMS />}
+      {activeTab === "about" && <AboutCMS />}
       {activeTab === "rules" && <RulesManager />}
       {activeTab === "deep-analytics" && <SiteAnalytics />}
       {activeTab === "admins" && <AdminsManager />}

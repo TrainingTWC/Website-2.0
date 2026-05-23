@@ -41,6 +41,7 @@ import { MAIN_CATEGORIES, SUBCATEGORIES, resolveTaxonomy } from "../../types";
 import { SalesAnalytics } from "./SalesAnalytics";
 import { EditorialCMS } from "./EditorialCMS";
 import { HomeContentCMS } from "./HomeContentCMS";
+import { AboutCMS } from "./AboutCMS";
 import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
 import { LayoutDashboard } from "lucide-react";
@@ -166,7 +167,7 @@ function formDataToProductPayload(form: ProductFormData) {
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard({ me }: { me?: AdminMe }) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "settings"
+    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "about" | "settings"
   >("overview");
 
   const products = (useQuery(api.products.list) ?? []) as any[];
@@ -214,6 +215,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
         { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
         { id: "editorial", label: "Editorial", icon: <Newspaper className="w-4 h-4" /> },
         { id: "home", label: "Home CMS", icon: <HomeIcon className="w-4 h-4" /> },
+        { id: "about", label: "About Pages", icon: <Globe className="w-4 h-4" /> },
       ],
     },
     {
@@ -233,6 +235,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
     orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
     home: { title: "Home CMS", subtitle: "Hero copy, banners, sections and scroll chapters." },
+    about: { title: "About Pages", subtitle: "Edit Our Story, Our Coffee, Careers, and Newsroom with live preview." },
     settings: { title: "Settings", subtitle: "Workspace preferences and integrations." },
   };
 
@@ -262,6 +265,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}
       {activeTab === "home" && <HomeContentCMS />}
+      {activeTab === "about" && <AboutCMS />}
       {activeTab === "settings" && (
         <div className="rounded-2xl border border-stone-200 bg-white/70 p-6 text-sm text-stone-600">
           <p className="font-bold text-stone-900 text-base mb-1">Workspace settings</p>

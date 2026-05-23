@@ -11,41 +11,9 @@ import {
 } from "@/src/components/about/ParallaxPrimitives";
 import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
+import { useStoryHero, useFounders } from "@/src/lib/useAboutContent";
 
-const founders = [
-  {
-    name: "Sushant Goel",
-    role: "Co-founder",
-    image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
-    bio: "Sushant grew up around South Indian filter coffee in a household where the morning cup was non-negotiable. After Wharton and a stint in consumer investing, he came home convinced India deserved fresh, traceable coffee — not warehouse beans dressed up in nice bags.",
-    quote: "We did not start a cafe chain. We started a roastery that opened cafes so people could taste what fresh actually means.",
-    note: "now reading: The Monk of Mokha",
-  },
-  {
-    name: "Anirudh Sharma",
-    role: "Co-founder",
-    image: asset("assets/our-story.png"),
-    bio: "Anirudh runs the parts of the business that do not make it into the brand film — the logistics, the cafe playbook, the unglamorous spreadsheets that decide whether a 130-cafe network can still ship a bag roasted on Monday.",
-    quote: "The romantic version is that we started with a dream. The honest version is that we started with a spreadsheet, a tiny roaster, and very little patience for stale coffee.",
-    note: "now listening: Peter Cat Recording Co.",
-  },
-  {
-    name: "Ayush Bathwal",
-    role: "Co-founder",
-    image: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-09.jpg"),
-    bio: "Ayush leads sourcing, partnerships, and the slow work of turning estate relationships into seasonal pricing contracts. If a bag carries a farm name on its back, he probably knows the person who grew it.",
-    quote: "Fourteen estates, fourteen relationships. None of them survive on price alone. They survive because we keep showing up the year after a bad monsoon.",
-    note: "now drinking: Attikan washed lot 04",
-  },
-  {
-    name: "Rajat Luthra",
-    role: "Chief Executive Officer",
-    image: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"),
-    bio: "Rajat joined as CEO in late 2023 after years building consumer brands at scale. He runs the next chapter — more cafes, a second roastery, and a training school built so a barista in Indore tastes the same espresso a barista in Bandra pulls.",
-    quote: "Growth is the easy part. Growing without losing the cup is the actual job.",
-    note: "now obsessing over: dispatch SLAs",
-  },
-] as const;
+// founders now loaded from CMS via useFounders()
 
 const timeline = [
   ["2016", "First roastery, Bengaluru", "A 600 sq ft space, one restored roaster, and a roast log held together by tape."],
@@ -75,16 +43,18 @@ const values = [
 ] as const;
 
 export default function OurStoryPage() {
+  const hero = useStoryHero();
+  const founders = useFounders();
   return (
     <AboutPageShell active="our-story">
       <>
         <CreativeHero
-          eyebrow="Our Story"
-          title="A small Bengaluru roastery, ten years on."
-          tagline="Made by people who care about the cup, the farm, and the person drinking it on a half-awake Tuesday."
-          imageUrl={asset("assets/our-story.png")}
-          accentWord="Bengaluru"
-          stickerText="EST. 2016"
+          eyebrow={hero.eyebrow}
+          title={hero.title}
+          tagline={hero.tagline}
+          imageUrl={hero.imageUrl}
+          accentWord={hero.accentWord}
+          stickerText={hero.stickerText}
           decorations={[
             { glyph: "bean", top: "12%", left: "4%", size: 38, color: "var(--about-accent)", rotate: -18, drift: 12, duration: 7 },
             { glyph: "sparkle", top: "8%", right: "10%", size: 26, color: "var(--about-accent)", rotate: 12, drift: 10, duration: 5, delay: 0.4 },

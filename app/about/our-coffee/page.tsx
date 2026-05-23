@@ -10,6 +10,7 @@ import {
 } from "@/src/components/about/ParallaxPrimitives";
 import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
+import { useCoffeeHero, useCoffeeRegions } from "@/src/lib/useAboutContent";
 
 const processSteps = [
   ["01", "Sourcing", "Direct relationships with 14 Indian estates, not anonymous bags from a trading desk."],
@@ -19,44 +20,7 @@ const processSteps = [
   ["05", "Dispatch", "Roasted, checked, packed, and sent out within 48 hours."],
 ] as const;
 
-const regions = [
-  {
-    name: "Chikmagalur",
-    elevation: "1,000-1,500 m",
-    varietals: "Arabica-heavy, SLN 795, Selection 9",
-    harvest: "Nov-Feb",
-    profile: "Citrus, cocoa, and a clean sweetness that works for people coming from both filter coffee and cafe lattes.",
-    estates: "6 partner estates",
-    image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"),
-  },
-  {
-    name: "Coorg / Kodagu",
-    elevation: "900-1,200 m",
-    varietals: "Arabica + shade-grown Robusta",
-    harvest: "Dec-Mar",
-    profile: "Deep body, spice, and nutty sweetness. The region that makes a French Press feel like a hug without turning muddy.",
-    estates: "3 partner estates",
-    image: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"),
-  },
-  {
-    name: "Wayanad",
-    elevation: "700-1,000 m",
-    varietals: "Robusta-dominant",
-    harvest: "Dec-Feb",
-    profile: "Full-bodied, low-acid, and quietly powerful. Good Robusta is not a shortcut. Bad Robusta gave it a bad reputation.",
-    estates: "2 partner estates",
-    image: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"),
-  },
-  {
-    name: "Araku Valley",
-    elevation: "900-1,100 m",
-    varietals: "Arabica, tribal cooperative lots",
-    harvest: "Jan-Mar",
-    profile: "Bright, floral, and easy to over-roast if you are impatient. We keep this one light and let it talk.",
-    estates: "1 partner cooperative",
-    image: asset("assets/SSIFB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-17.jpg"),
-  },
-] as const;
+// regions now loaded from CMS via useCoffeeRegions()
 
 const roastLevels = [
   ["Light", "Bright, fruit-forward, and best when you want to taste the region clearly.", "Pour-over, AeroPress", asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-02.jpg")],
@@ -117,16 +81,18 @@ const products = [
 ] as const;
 
 export default function OurCoffeePage() {
+  const hero = useCoffeeHero();
+  const regions = useCoffeeRegions();
   return (
     <AboutPageShell active="our-coffee">
       <>
         <CreativeHero
-          eyebrow="Our Coffee"
-          title="Single-origin, single-minded."
-          tagline="Coffee that tells you where it came from, how to brew it, and what to do if your first cup tastes weird."
-          imageUrl={asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg")}
-          accentWord="estates"
-          stickerText="14 ESTATES"
+          eyebrow={hero.eyebrow}
+          title={hero.title}
+          tagline={hero.tagline}
+          imageUrl={hero.imageUrl}
+          accentWord={hero.accentWord}
+          stickerText={hero.stickerText}
           decorations={[
             { glyph: "leaf", top: "10%", right: "8%", size: 44, color: "var(--about-accent)", rotate: 24, drift: 12, duration: 7 },
             { glyph: "bean", top: "62%", left: "4%", size: 40, color: "var(--about-accent)", rotate: -16, drift: 10, duration: 6, delay: 0.3 },

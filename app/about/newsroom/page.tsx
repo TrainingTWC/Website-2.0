@@ -10,6 +10,7 @@ import {
 } from "@/src/components/about/ParallaxPrimitives";
 import { CreativeHero, MarqueeStrip, StarDivider } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
+import { useNewsroomHero, usePressItems, useNewsroomFacts } from "@/src/lib/useAboutContent";
 
 type PressCategory = "Feature" | "Interview" | "Award" | "Industry";
 type PressItem = {
@@ -23,12 +24,7 @@ type PressItem = {
   href: string;
 };
 
-const press: PressItem[] = [
-  { outlet: "Economic Times", date: "Feb 2026", headline: "How Third Wave's CEO is taking a Bengaluru roastery national", excerpt: "Rajat Luthra on scaling cafes without breaking the roast-to-dispatch promise.", category: "Interview", readTime: "7 min", imageUrl: asset("assets/EDB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-01.jpg"), href: "#" },
-  { outlet: "Mint Lounge", date: "Nov 2025", headline: "Inside the Bengaluru roastery that ships fresh beans across India", excerpt: "A long-read on the 48-hour roast-to-dispatch operation and the cupping protocol.", category: "Feature", readTime: "9 min", imageUrl: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), href: "#" },
-  { outlet: "Forbes India", date: "Apr 2025", headline: "30 Under 30: The founders redefining Indian cafe culture", excerpt: "Co-founders Sushant Goel, Anirudh Sharma, and Ayush Bathwal featured under Food & Beverage.", category: "Award", readTime: "5 min", imageUrl: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"), href: "#" },
-  { outlet: "The Hindu", date: "Nov 2024", headline: "How a 28% premium to farmers is changing Chikmagalur", excerpt: "A field report on long-term estate partnerships and transparent pricing.", category: "Feature", readTime: "8 min", imageUrl: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"), href: "#" },
-];
+// press now loaded from CMS via usePressItems()
 
 const categories = ["All", "Feature", "Interview", "Award", "Industry"] as const;
 type Filter = (typeof categories)[number];
@@ -58,16 +54,12 @@ const pressKit = [
   ["Roastery Photography", "50+ editorial photos", "~200MB", "#"],
 ] as const;
 
-const facts = [
-  ["Founded", "2016, Bengaluru"],
-  ["Founders", "Sushant Goel, Anirudh Sharma, Ayush Bathwal"],
-  ["CEO", "Rajat Luthra (since 2023)"],
-  ["Cafes", "130+ across 18 cities · 14 partner estates"],
-  ["Latest round", "Series B, Rs 120 cr, Jan 2025"],
-  ["Press contact", "press@brewmatch.in"],
-] as const;
+// facts now loaded from CMS via useNewsroomFacts()
 
 export default function NewsroomPage() {
+  const hero = useNewsroomHero();
+  const press = usePressItems();
+  const facts = useNewsroomFacts();
   const [filter, setFilter] = useState<Filter>("All");
   const visiblePress = filter === "All" ? press : press.filter((item) => item.category === filter);
   const featured = press[0];
@@ -76,12 +68,12 @@ export default function NewsroomPage() {
     <AboutPageShell active="newsroom">
       <>
         <CreativeHero
-          eyebrow="Newsroom"
-          title="In the news, in our own words."
-          tagline="Receipts, interviews, facts, and direct contact. Quiet design. Verifiable claims. No investor-deck cosplay."
-          imageUrl={asset("assets/SSRR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-33.jpg")}
-          accentWord="words"
-          stickerText="PRESS ROOM"
+          eyebrow={hero.eyebrow}
+          title={hero.title}
+          tagline={hero.tagline}
+          imageUrl={hero.imageUrl}
+          accentWord={hero.accentWord}
+          stickerText={hero.stickerText}
           decorations={[
             { glyph: "star", top: "10%", right: "8%", size: 30, color: "var(--about-accent)", rotate: 14, drift: 12, duration: 6 },
             { glyph: "sparkle", bottom: "20%", right: "14%", size: 26, color: "var(--about-accent)", rotate: -8, drift: 10, duration: 5, delay: 0.3 },
@@ -249,9 +241,9 @@ export default function NewsroomPage() {
             <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">The quotable version.</h2>
           </RevealOnScroll>
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 border-t border-natural-border">
-            {facts.map(([key, value]) => (
-              <div key={key} className="grid grid-cols-[130px_1fr] gap-4 border-b border-natural-border py-4">
-                <dt className="font-serif font-bold text-natural-text">{key}</dt>
+            {facts.map(({ label, value }) => (
+              <div key={label} className="grid grid-cols-[130px_1fr] gap-4 border-b border-natural-border py-4">
+                <dt className="font-serif font-bold text-natural-text">{label}</dt>
                 <dd className="font-mono text-sm text-natural-text/70">{value}</dd>
               </div>
             ))}

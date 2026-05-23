@@ -7,7 +7,18 @@ import { TiltCard, RevealOnScroll } from "@/src/components/about/ParallaxPrimiti
 import { CreativeHero, MarqueeStrip } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
 import { ScormViewer } from "@/src/components/about/ScormViewer";
-import { Heart, Brain, Palmtree, BookOpen, Coffee, Globe } from "lucide-react";
+import { Heart, Brain, Palmtree, BookOpen, Coffee, Globe, Sparkles, Shield, Star, Gift, Sun, Award, Briefcase, GraduationCap } from "lucide-react";
+import {
+  useCareersHero,
+  useCareerRoles,
+  useCareerBenefits,
+  useCareerStories,
+} from "@/src/lib/useAboutContent";
+
+const BENEFIT_ICONS: Record<string, any> = {
+  Heart, Brain, Palmtree, BookOpen, Coffee, Globe,
+  Sparkles, Shield, Star, Gift, Sun, Award, Briefcase, GraduationCap,
+};
 
 type TeamFilter =
   | "All"
@@ -28,83 +39,7 @@ const teams: TeamFilter[] = [
   "Supply Chain",
 ];
 
-const roles = [
-  {
-    title: "Barista",
-    team: "Cafe Operations" as TeamFilter,
-    location: "Bengaluru · Multiple Locations",
-    salary: "Rs 3.6–4.5L",
-    experience: "0–2 yrs",
-    posted: "2 days ago",
-  },
-  {
-    title: "Cafe Manager",
-    team: "Cafe Operations" as TeamFilter,
-    location: "Mumbai · Bandra Flagship",
-    salary: "Rs 8–11L",
-    experience: "3–5 yrs",
-    posted: "5 days ago",
-  },
-  {
-    title: "Head Roaster",
-    team: "Roastery" as TeamFilter,
-    location: "Bengaluru · Whitefield",
-    salary: "Rs 20–28L",
-    experience: "7+ yrs",
-    posted: "8 days ago",
-  },
-  {
-    title: "Coffee Educator",
-    team: "Coffee Education" as TeamFilter,
-    location: "Delhi · Hauz Khas",
-    salary: "Rs 8–12L",
-    experience: "3–5 yrs",
-    posted: "3 days ago",
-  },
-  {
-    title: "Senior Frontend Engineer",
-    team: "Technology" as TeamFilter,
-    location: "Remote · India",
-    salary: "Rs 32–42L",
-    experience: "5+ yrs",
-    posted: "6 days ago",
-  },
-  {
-    title: "Origin & Trade Lead",
-    team: "Supply Chain" as TeamFilter,
-    location: "Chikmagalur · Field",
-    salary: "Rs 22–32L",
-    experience: "8+ yrs",
-    posted: "12 days ago",
-  },
-] as const;
 
-const stories = [
-  {
-    name: "Meera D’Souza",
-    role: "Regional Trainer",
-    image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
-    from: "Barista, 2022",
-    to: "Trains 80 people, 2026",
-    quote: "I joined thinking coffee was a job. Three years later I train 80 people.",
-  },
-  {
-    name: "Aarav Menon",
-    role: "Head of Roasting",
-    image: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"),
-    from: "Apprentice, 2021",
-    to: "Runs Mumbai roastery, 2025",
-    quote: "I was hired to clean machines. Now I own the roast profile.",
-  },
-  {
-    name: "Kabir Sethi",
-    role: "Senior Engineer",
-    image: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"),
-    from: "Intern, 2023",
-    to: "Senior Engineer, 2025",
-    quote: "Three weeks on the cafe floor taught me more about UX than any course.",
-  },
-];
 
 const gridMoments = [
   {
@@ -139,16 +74,12 @@ const gridMoments = [
   },
 ];
 
-const benefitTiles = [
-  { Icon: Heart, title: "Health cover", detail: "You + family. Same plan, barista to exec.", color: "bg-rose-50 border-rose-200", iconColor: "text-rose-500" },
-  { Icon: Brain, title: "Mental health", detail: "Confidential sessions. No manager approval.", color: "bg-violet-50 border-violet-200", iconColor: "text-violet-500" },
-  { Icon: Palmtree, title: "30 real days off", detail: "No fake unlimited. Actual 30 days.", color: "bg-sky-50 border-sky-200", iconColor: "text-sky-500" },
-  { Icon: BookOpen, title: "Rs 50k/year to learn", detail: "Courses, books, certs, conferences.", color: "bg-amber-50 border-amber-200", iconColor: "text-amber-600" },
-  { Icon: Coffee, title: "Free beans forever", detail: "Two bags a month + cafe meals on shift.", color: "bg-orange-50 border-orange-200", iconColor: "text-orange-500" },
-  { Icon: Globe, title: "Sabbatical", detail: "Eligible every 5 years. Paid time to think.", color: "bg-emerald-50 border-emerald-200", iconColor: "text-emerald-500" },
-];
 
 export default function CareersPage() {
+  const hero = useCareersHero();
+  const roles = useCareerRoles();
+  const benefitTiles = useCareerBenefits();
+  const stories = useCareerStories();
   const [filter, setFilter] = useState<TeamFilter>("All");
   const visibleRoles =
     filter === "All" ? roles : roles.filter((r) => r.team === filter);
@@ -157,12 +88,12 @@ export default function CareersPage() {
     <AboutPageShell active="careers">
       <>
         <CreativeHero
-          eyebrow="Careers"
-          title="Make great coffee. Get paid."
-          tagline="Real craft. Real growth. The best coffee education in the country — built into the job, from day one."
-          imageUrl={asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg")}
-          accentWord="great coffee"
-          stickerText="WE'RE HIRING"
+          eyebrow={hero.eyebrow}
+          title={hero.title}
+          tagline={hero.tagline}
+          imageUrl={hero.imageUrl}
+          accentWord={hero.accentWord}
+          stickerText={hero.stickerText}
           decorations={[
             { glyph: "sparkle", top: "10%", right: "12%", size: 32, color: "var(--about-accent)", rotate: 16, drift: 14, duration: 6 },
             { glyph: "star", top: "20%", left: "6%", size: 28, color: "var(--about-accent)", rotate: -10, drift: 12, duration: 5, delay: 0.3 },
@@ -430,7 +361,9 @@ export default function CareersPage() {
           </h2>
         </RevealOnScroll>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {benefitTiles.map(({ Icon, title, detail, color, iconColor }, i) => (
+          {benefitTiles.map(({ iconKey, title, detail, color, iconColor }, i) => {
+            const Icon = BENEFIT_ICONS[iconKey] ?? Heart;
+            return (
             <RevealOnScroll key={title} delay={i * 0.04}>
               <TiltCard intensity={5} className={`rounded-2xl border p-6 h-full ${color} shadow-about-soft`}>
                 <div className={`mb-4 ${iconColor}`} aria-hidden>
@@ -440,7 +373,8 @@ export default function CareersPage() {
                 <p className="mt-2 text-sm text-natural-text/65 leading-relaxed">{detail}</p>
               </TiltCard>
             </RevealOnScroll>
-          ))}
+            );
+          })}
         </div>
       </section>
 
