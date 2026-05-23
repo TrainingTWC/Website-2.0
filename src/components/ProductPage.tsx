@@ -315,18 +315,21 @@ function ImmersiveProductLayout({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const imageY = useTransform(heroScroll, [0, 1], ["0%", "12%"]);
-  const imageScale = useTransform(heroScroll, [0, 1], [1, 1.05]);
+  // Use numeric px values (not % strings) so useSpring interpolates correctly
+  const imageY = useTransform(heroScroll, [0, 1], [0, 60]);
+  const imageScale = useTransform(heroScroll, [0, 1], [1, 1.04]);
   const titleY = useTransform(heroScroll, [0, 1], ["0%", "-18%"]);
   const titleOpacity = useTransform(heroScroll, [0, 0.6], [1, 0.4]);
   const cardOpacity = useTransform(heroScroll, [0, 0.4], [1, 0]);
 
-  const springY = useSpring(imageY, { stiffness: 80, damping: 25 });
-  const springScale = useSpring(imageScale, { stiffness: 80, damping: 25 });
+  // stiffness 100 / damping 30 → ζ ≈ 1.5 (overdamped, no oscillation, snappy enough)
+  const springY = useSpring(imageY, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const springScale = useSpring(imageScale, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
   // 3D mouse-tracked tilt on the product image
-  const mouseX = useSpring(0, { stiffness: 120, damping: 18 });
-  const mouseY = useSpring(0, { stiffness: 120, damping: 18 });
+  // stiffness 120 / damping 22 → ζ ≈ 1.0 (critically damped, fastest settle, no overshoot)
+  const mouseX = useSpring(0, { stiffness: 120, damping: 22, restDelta: 0.001 });
+  const mouseY = useSpring(0, { stiffness: 120, damping: 22, restDelta: 0.001 });
   const rotateY3D = useTransform(mouseX, [-1, 1], [-14, 14]);
   const rotateX3D = useTransform(mouseY, [-1, 1], [10, -10]);
   const handleMouseMove = (e: React.MouseEvent) => {
