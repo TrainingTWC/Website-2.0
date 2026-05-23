@@ -437,10 +437,10 @@ export function MorphingHeader({
             className="relative flex items-center gap-0.5 pointer-events-auto z-10 px-2 py-1"
             style={{
               borderRadius: 999,
-              background: "rgba(250,249,246,0.38)",
-              backdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
-              WebkitBackdropFilter: "blur(48px) saturate(180%) brightness(1.08)",
-              boxShadow: "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset",
+              background: compact ? "rgba(250,249,246,0.38)" : "transparent",
+              backdropFilter: compact ? "blur(48px) saturate(180%) brightness(1.08)" : "none",
+              WebkitBackdropFilter: compact ? "blur(48px) saturate(180%) brightness(1.08)" : "none",
+              boxShadow: compact ? "0 8px 40px -8px rgba(44,24,16,0.18), 0 1.5px 0 rgba(255,255,255,0.75) inset" : "none",
             }}
           >
             {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => {
