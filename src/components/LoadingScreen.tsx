@@ -34,6 +34,22 @@ export function LoadingScreen({ ready, onExitComplete }: LoadingScreenProps) {
     "Welcome",
   ];
 
+  // Lock native scroll while the splash covers the page.
+  // This prevents any scroll event from reaching the content before Lenis
+  // has had a chance to pre-warm (its first rAF tick), eliminating the
+  // "cold start" feel on first scroll after the curtain exits.
+  useEffect(() => {
+    if (!visible) return;
+    const html = document.documentElement;
+    const prev = html.style.overflowY;
+    html.style.overflowY = "hidden";
+    // Also snap back to top in case anything moved during SSR hydration
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    return () => {
+      html.style.overflowY = prev;
+    };
+  }, [visible]);
+
   // Drive progress: fast climb to ~92%, then wait for `ready`, then snap to 100.
   useEffect(() => {
     let raf: number;

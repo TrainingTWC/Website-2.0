@@ -35,9 +35,40 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.raf(time);
       raf = requestAnimationFrame(loop);
     };
+
+    // Pre-warm: tick Lenis once synchronously so its internal virtual-scroll
+    // state is set up before the first rAF fires. Without this, the very first
+    // wheel event can produce a native-scroll frame before Lenis takes over.
+    lenis.raf(performance.now());
     raf = requestAnimationFrame(loop);
 
     (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
+
+    // ── Tab suspension recovery ─────────────────────────────────────────────
+    // requestAnimationFrame is paused by the browser when the tab is hidden.
+    // When the user switches back, the rAF queue resumes automatically, but
+    // if the page was hard-suspended (e.g. mobile background kill), the loop
+    // may have been garbage-collected. Restart it whenever the tab re-enters
+    // the foreground to guarantee Lenis is always ticking.
+    let velRafRef = { current: 0 }; // forward-ref so the handler can access velRaf
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      cancelAnimationFrame(raf);
+      cancelAnimationFrame(velRafRef.current);
+      raf = requestAnimationFrame(loop);
+      velRafRef.current = requestAnimationFrame(watchVelocity);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // ── bfcache restoration ─────────────────────────────────────────────────
+    // When the browser restores a page from Back-Forward Cache, React effects
+    // do NOT re-run, so the cleanup already ran (Lenis.destroy()) but the new
+    // Lenis instance was never created. The result: a frozen page where clicks
+    // and scrolls appear broken until a manual refresh. Force a clean reload.
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", handlePageShow);
 
     // -------------------------------------------------------------
     // Soft chapter snap (desktop only, proximity-based)
@@ -145,8 +176,10 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
         }
       }
       velRaf = requestAnimationFrame(watchVelocity);
+      velRafRef.current = velRaf;
     };
-    velRaf = requestAnimationFrame(watchVelocity);
+    velRafRef.current = requestAnimationFrame(watchVelocity);
+    velRaf = velRafRef.current;
 
     window.addEventListener("wheel", markInput, { passive: true });
     window.addEventListener("touchstart", markInput, { passive: true });
@@ -161,6 +194,8 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       window.removeEventListener("touchstart", markInput);
       window.removeEventListener("touchmove", markInput);
       window.removeEventListener("keydown", markInput);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pageshow", handlePageShow);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
     };
