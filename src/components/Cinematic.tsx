@@ -224,7 +224,7 @@ export function ChapterReveal({
   const hasImage = !!(imageUrl || product?.imageUrl);
 
   return (
-    <section ref={ref} className={`relative ${hasImage ? "min-h-screen" : "min-h-[60vh]"} ${bg} ${fg} overflow-hidden`}>
+    <section ref={ref} data-snap-chapter className={`relative ${hasImage ? "min-h-screen" : "min-h-[60vh]"} ${bg} ${fg} overflow-hidden`}>
       {/* Background editorial wordmark — slowest moving (skipped in static mode) */}
       <motion.div
         style={staticRender ? { transform: "none" } : { y: bigTextY, willChange }}
