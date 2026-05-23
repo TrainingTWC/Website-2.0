@@ -1,16 +1,9 @@
 "use client";
-/**
- * /about/careers
- *
- * Recruiting page. The funnel: convey culture (parallax + pinned narrative)
- * then drop straight into a tilt-card grid of open roles. Static role list for
- * v7.0 — wire to Convex / Greenhouse / Lever when the talent stack lands.
- */
+
 import { useState } from "react";
 import { AboutPageShell } from "@/src/components/about/AboutPageShell";
 import {
   ParallaxHero,
-  PinnedTextBlock,
   StatStrip,
   TiltCard,
   RevealOnScroll,
@@ -19,54 +12,285 @@ import { asset } from "@/src/lib/asset";
 
 type Role = {
   title: string;
-  team: "Café Operations" | "Roastery" | "Coffee Education" | "Technology" | "Brand & Marketing" | "Supply Chain";
+  team: "Cafe Operations" | "Roastery" | "Coffee Education" | "Technology" | "Brand & Marketing" | "Supply Chain";
   location: string;
   type: "Full-time" | "Part-time" | "Contract";
   level: "Entry" | "Mid" | "Senior" | "Lead";
+  salary: string;
+  experience: string;
+  posted: string;
 };
 
-const ROLES: Role[] = [
-  { title: "Barista", team: "Café Operations", location: "Bengaluru · Multiple Locations", type: "Full-time", level: "Entry" },
-  { title: "Café Manager", team: "Café Operations", location: "Mumbai · Bandra Flagship", type: "Full-time", level: "Mid" },
-  { title: "Head Roaster", team: "Roastery", location: "Bengaluru · Whitefield Roastery", type: "Full-time", level: "Senior" },
-  { title: "QC Cupper", team: "Roastery", location: "Bengaluru · Whitefield Roastery", type: "Full-time", level: "Mid" },
-  { title: "Coffee Educator", team: "Coffee Education", location: "Delhi · Hauz Khas", type: "Full-time", level: "Mid" },
-  { title: "Senior Frontend Engineer (Next.js)", team: "Technology", location: "Remote · India", type: "Full-time", level: "Senior" },
-  { title: "Brand Storyteller", team: "Brand & Marketing", location: "Bengaluru · HQ", type: "Full-time", level: "Mid" },
-  { title: "Origin & Trade Lead", team: "Supply Chain", location: "Chikmagalur · Field-based", type: "Full-time", level: "Lead" },
-  { title: "Weekend Barista", team: "Café Operations", location: "Pune · Koregaon Park", type: "Part-time", level: "Entry" },
+const roles: Role[] = [
+  { title: "Barista", team: "Cafe Operations", location: "Bengaluru · Multiple Locations", type: "Full-time", level: "Entry", salary: "Rs 3.2-4.2L LPA", experience: "0-2 yrs", posted: "2 days ago" },
+  { title: "Cafe Manager", team: "Cafe Operations", location: "Mumbai · Bandra Flagship", type: "Full-time", level: "Mid", salary: "Rs 7-10L LPA", experience: "3-5 yrs", posted: "5 days ago" },
+  { title: "Head Roaster", team: "Roastery", location: "Bengaluru · Whitefield", type: "Full-time", level: "Senior", salary: "Rs 18-25L LPA", experience: "7+ yrs", posted: "8 days ago" },
+  { title: "QC Cupper", team: "Roastery", location: "Bengaluru · Whitefield", type: "Full-time", level: "Mid", salary: "Rs 8-12L LPA", experience: "3+ yrs", posted: "11 days ago" },
+  { title: "Coffee Educator", team: "Coffee Education", location: "Delhi · Hauz Khas", type: "Full-time", level: "Mid", salary: "Rs 7-11L LPA", experience: "3-5 yrs", posted: "3 days ago" },
+  { title: "Senior Frontend Engineer", team: "Technology", location: "Remote · India", type: "Full-time", level: "Senior", salary: "Rs 28-38L LPA", experience: "5+ yrs", posted: "6 days ago" },
+  { title: "Brand Storyteller", team: "Brand & Marketing", location: "Bengaluru · HQ", type: "Full-time", level: "Mid", salary: "Rs 10-16L LPA", experience: "3+ yrs", posted: "4 days ago" },
+  { title: "Origin & Trade Lead", team: "Supply Chain", location: "Chikmagalur · Field", type: "Full-time", level: "Lead", salary: "Rs 20-30L LPA", experience: "8+ yrs", posted: "12 days ago" },
+  { title: "Weekend Barista", team: "Cafe Operations", location: "Pune · Koregaon Park", type: "Part-time", level: "Entry", salary: "Rs 450/hr", experience: "0-1 yr", posted: "1 day ago" },
 ];
 
-const TEAMS = ["All", "Café Operations", "Roastery", "Coffee Education", "Technology", "Brand & Marketing", "Supply Chain"] as const;
-type TeamFilter = (typeof TEAMS)[number];
+const teams = ["All", "Cafe Operations", "Roastery", "Coffee Education", "Technology", "Brand & Marketing", "Supply Chain"] as const;
+type TeamFilter = (typeof teams)[number];
+
+const photos = [
+  [asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"), "Barista training, Indiranagar · Jan 2026", "md:col-span-2"],
+  [asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-11.jpg"), "Coffee School cohort 18", ""],
+  [asset("assets/SSCR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-25.jpg"), "Estate visit, Coorg", ""],
+  [asset("assets/our-story.png"), "Quarterly lunch: engineers + cafe team", "md:col-span-2"],
+  [asset("assets/FR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-06.jpg"), "Roastery morning shift", ""],
+] as const;
+
+const stories = [
+  {
+    name: "Meera D'Souza",
+    role: "Regional Trainer, South India",
+    image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
+    timeline: ["Barista · Mar 2022", "Senior Barista · Oct 2022", "Cafe Lead · Jul 2023", "Regional Trainer · Mar 2025"],
+    quote: "I joined thinking coffee was a job. Three years later I train 80 people and still remember the first latte I absolutely ruined.",
+    story: "Meera started in Indiranagar with no coffee background and a lot of nerves. Her first month was mostly milk texture, cleaning routines, and learning to handle rush-hour feedback without taking it personally. Now she runs trainer calibration across South India.",
+  },
+  {
+    name: "Kabir Sethi",
+    role: "Senior Frontend Engineer",
+    image: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg"),
+    timeline: ["Product intern · Jun 2023", "Engineer · Jan 2024", "Senior Engineer · Aug 2025"],
+    quote: "Three weeks shadowing baristas taught me more about user empathy than any product course online.",
+    story: "Kabir joined to fix menu performance and ended up rebuilding parts of the ordering flow after working cafe shifts. He still pairs with baristas before shipping customer-facing features because edge cases show up at the counter first.",
+  },
+  {
+    name: "Aarav Menon",
+    role: "Head of Roasting, Mumbai",
+    image: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"),
+    timeline: ["Roastery apprentice · 2021", "Assistant roaster · 2022", "Profile lead · 2024", "Head of Roasting · 2025"],
+    quote: "I was hired to clean machines. Now I own the Mumbai roast profile. The jump was not luck. It was feedback, every week.",
+    story: "Aarav's first job was cleaning chaff trays and logging roast defects. Four years later he leads a new roastery setup because he understands the machine, the cup, and the people who drink the cup.",
+  },
+] as const;
+
+const benefits = [
+  ["You & family", "Health cover including parents", "Same plan from barista to executive."],
+  ["You & family", "Mental health support", "Confidential sessions, no manager approval."],
+  ["Time", "30 days paid leave", "No fake unlimited leave theatre."],
+  ["Time", "Paid sabbatical", "Eligible every 5 years."],
+  ["Learning", "Rs 50k annual budget", "Courses, books, certifications, conferences."],
+  ["Learning", "Free beans for life", "Two fresh bags a month, plus cafe meals."],
+] as const;
+
+const faqs = [
+  ["I do not have coffee experience. Can I apply?", "Yes. Entry cafe roles are designed for curious beginners. We train for coffee; we hire for hospitality."],
+  ["Is the trial shift paid?", "Yes. Cafe trials and corporate work samples are paid. Free labour is not a culture test."],
+  ["Are remote roles available?", "Mostly Technology and a few Brand roles. Cafe, Roastery, and Supply Chain roles are location-based."],
+  ["Do you respond to rejected applicants?", "Yes. Every applicant gets a response within 7 business days, even when it is a no."],
+  ["What if there is no role for me today?", "Write in anyway. The best people on our team rarely arrived through a perfect job posting."],
+] as const;
 
 export default function CareersPage() {
   const [filter, setFilter] = useState<TeamFilter>("All");
-  const visibleRoles = filter === "All" ? ROLES : ROLES.filter((r) => r.team === filter);
+  const visibleRoles = filter === "All" ? roles : roles.filter((role) => role.team === filter);
 
   return (
     <AboutPageShell active="careers">
       <ParallaxHero
         eyebrow="Careers"
-        title={"Brew your career\nwith us."}
-        tagline="We're hiring across cafés, roastery, technology, and origin teams. Whatever your craft, we want people who get excited about the unglamorous details."
+        title="Hospitality, not customer service."
+        tagline="Fast growth, real training, transparent bands, and people who take the work seriously without turning into a corporate portal."
         imageUrl={asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-10.jpg")}
       />
 
-      <PinnedTextBlock
-        eyebrow="The Team"
-        title={"450 people.\nOne shared standard."}
-        paragraphs={[
-          "From the barista pulling shots at 7 AM in Indiranagar to the QC cupper grading green beans in Whitefield, every person who works here is a coffee professional. Not 'staff'. Not 'crew'. Professionals.",
-          "We invest in that distinction. Every new café hire goes through 3 weeks of paid coffee school before they ever touch a customer's order. Every roaster spends time at a partner estate during harvest. Every engineer can talk you through a roast curve.",
-          "The result is a team that takes the work seriously without taking themselves seriously. We laugh a lot. We disagree productively. We never apologise for caring about details no one else notices.",
-        ]}
-        sideImages={[
-          { url: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"), alt: "Barista at espresso bar" },
-          { url: asset("assets/our-story.png"), alt: "Roastery floor" },
-          { url: asset("assets/MM WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-11.jpg"), alt: "Coffee school" },
-        ]}
-      />
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
+        <RevealOnScroll>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Open roles</span>
+              <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">{visibleRoles.length} role{visibleRoles.length === 1 ? "" : "s"} open right now.</h2>
+              <p className="mt-4 text-natural-text/65">9 open roles across 6 teams. Salary bands included because hiding them is tired.</p>
+            </div>
+          </div>
+        </RevealOnScroll>
+
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-8">
+          {teams.map((team) => {
+            const active = filter === team;
+            return (
+              <button
+                key={team}
+                onClick={() => setFilter(team)}
+                className={["inline-flex min-h-11 items-center px-4 py-2 rounded-full text-sm font-bold transition-colors border", active ? "bg-natural-text text-natural-bg border-natural-text" : "bg-transparent text-natural-text/75 border-natural-border hover:bg-natural-text/5"].join(" ")}
+              >
+                {team}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {visibleRoles.map((role, index) => (
+            <RevealOnScroll key={`${role.title}-${role.location}`} delay={index * 0.04}>
+              <TiltCard intensity={4} className="bg-natural-paper rounded-xl p-6 h-full border border-natural-border hover:border-natural-accent/45 transition-colors flex flex-col">
+                <div className="flex justify-between gap-3 mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{role.team}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/45">{role.posted}</span>
+                </div>
+                <h3 className="font-serif font-bold text-2xl leading-snug">{role.title}</h3>
+                <p className="mt-3 text-sm text-natural-text/65">{role.location}</p>
+                <dl className="mt-5 space-y-2 text-sm">
+                  <div className="flex justify-between gap-3"><dt className="text-natural-text/50">Salary</dt><dd className="font-bold text-right">{role.salary}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-natural-text/50">Experience</dt><dd className="font-bold text-right">{role.experience}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-natural-text/50">Level</dt><dd className="font-bold text-right">{role.level} · {role.type}</dd></div>
+                </dl>
+                <a href={`mailto:careers@brewmatch.in?subject=Application: ${encodeURIComponent(role.title)}`} className="mt-auto pt-6 text-sm font-bold text-natural-accent hover:text-natural-text transition-colors">Apply →</a>
+              </TiltCard>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-natural-paper py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
+          <RevealOnScroll>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Life here</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">A photo wall, not stock culture.</h2>
+          </RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[240px]">
+            {photos.map(([image, caption, span], index) => (
+              <RevealOnScroll key={caption} delay={index * 0.05} className={span}>
+                <figure className="relative h-full overflow-hidden rounded-xl border border-natural-border bg-natural-bg">
+                  <img src={image} alt={caption} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <figcaption className="absolute left-4 bottom-4 right-4 text-[10px] font-bold uppercase tracking-[0.25em] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">{caption}</figcaption>
+                </figure>
+              </RevealOnScroll>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <RevealOnScroll>
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Success stories</span>
+          <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">Growth speed you can screenshot.</h2>
+        </RevealOnScroll>
+        <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:grid md:grid-cols-3 md:overflow-visible md:mx-0 md:px-0">
+          {stories.map((story, index) => (
+            <RevealOnScroll key={story.name} delay={index * 0.06} className="min-w-[82vw] sm:min-w-[420px] md:min-w-0 snap-start">
+              <article className="bg-natural-paper border border-natural-border rounded-xl overflow-hidden h-full">
+                <img src={story.image} alt={story.name} loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover" />
+                <div className="p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-accent">{story.role}</p>
+                  <h3 className="font-serif font-bold text-2xl mt-2">{story.name}</h3>
+                  <div className="mt-5 space-y-2">
+                    {story.timeline.map((step) => <div key={step} className="border-l border-natural-accent pl-3 text-sm font-bold text-natural-text/75">{step}</div>)}
+                  </div>
+                  <p className="mt-5 text-natural-text/68 leading-relaxed">{story.story}</p>
+                  <blockquote className="font-serif text-xl leading-snug mt-5">“{story.quote}”</blockquote>
+                </div>
+              </article>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-natural-paper py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
+          <RevealOnScroll>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Coffee School</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">Three paid weeks before the counter.</h2>
+          </RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {["Week 1: Origins, varietals, harvest, processing", "Week 2: Roast theory, grind, extraction, water", "Week 3: Service, conflict, cafe operations"].map((week, index) => (
+              <RevealOnScroll key={week} delay={index * 0.05}>
+                <div className="bg-natural-bg border border-natural-border rounded-xl p-6 h-full">
+                  <p className="font-serif font-bold text-2xl">{week.split(": ")[0]}</p>
+                  <p className="mt-3 text-natural-text/70 leading-relaxed">{week.split(": ")[1]}</p>
+                </div>
+              </RevealOnScroll>
+            ))}
+          </div>
+          <p className="mt-8 font-serif text-2xl sm:text-3xl max-w-3xl">Rs 0 cost. Full salary. SCA-aligned curriculum. 12 cohorts a year.</p>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <RevealOnScroll>
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Career paths</span>
+          <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">The ladder is visible before you climb it.</h2>
+        </RevealOnScroll>
+        <div className="space-y-4">
+          {[
+            ["Cafe", "Barista", "Senior Barista", "Cafe Lead", "Regional Trainer", "Operations Manager"],
+            ["Roastery", "Apprentice", "Assistant Roaster", "Profile Lead", "Head Roaster", "Roastery Director"],
+            ["Corporate", "Associate", "Manager", "Lead", "Head", "Director"],
+          ].map(([lane, ...steps]) => (
+            <RevealOnScroll key={lane}>
+              <div className="bg-natural-paper border border-natural-border rounded-xl p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent mb-4">{lane}</p>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  {steps.map((step, index) => <div key={step} className="rounded-lg bg-natural-bg px-4 py-3 text-sm font-bold">{index + 1}. {step}</div>)}
+                </div>
+              </div>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-natural-paper py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
+          <RevealOnScroll>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Benefits</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">The specifics, not the brochure version.</h2>
+          </RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {benefits.map(([group, title, detail], index) => (
+              <RevealOnScroll key={`${group}-${title}`} delay={index * 0.04}>
+                <div className="bg-natural-bg border border-natural-border rounded-xl p-6 h-full">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{group}</p>
+                  <h3 className="font-serif font-bold text-xl mt-3">{title}</h3>
+                  <p className="text-sm text-natural-text/68 mt-3">{detail}</p>
+                </div>
+              </RevealOnScroll>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <RevealOnScroll>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Hiring process</span>
+              <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">No mystery rounds.</h2>
+            </div>
+          </RevealOnScroll>
+          <div className="space-y-4">
+            {["Apply: 10 min form + portfolio if relevant", "Cup & chat: 30 min call; we mail beans beforehand", "Trial day or work sample: paid", "Offer: within 5 business days"].map((step, index) => (
+              <RevealOnScroll key={step} delay={index * 0.05}>
+                <div className="border-l-2 border-natural-accent pl-5 py-2 font-bold">{index + 1}. {step}</div>
+              </RevealOnScroll>
+            ))}
+            <p className="text-natural-text/65">We respond to every applicant within 7 business days, even rejections.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-natural-paper py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RevealOnScroll>
+            <div className="bg-natural-bg rounded-xl border border-natural-border p-6 sm:p-8 h-full">
+              <h2 className="font-serif font-bold text-3xl">We look for</h2>
+              <ul className="mt-6 space-y-3 list-disc list-inside text-natural-text/70"><li>Curiosity that survives boredom.</li><li>Hospitality as instinct, not performance.</li><li>The ability to be wrong without flinching.</li><li>Specificity in how you describe past work.</li></ul>
+            </div>
+          </RevealOnScroll>
+          <RevealOnScroll delay={0.08}>
+            <div className="bg-natural-bg rounded-xl border border-natural-border p-6 sm:p-8 h-full">
+              <h2 className="font-serif font-bold text-3xl">We do not hire for</h2>
+              <ul className="mt-6 space-y-3 list-disc list-inside text-natural-text/70"><li>Coffee-influencer aesthetics.</li><li>Performative passion.</li><li>Ego that does not match output.</li><li>Resumes optimized only for keywords.</li></ul>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
 
       <StatStrip
         eyebrow="The team, in numbers"
@@ -74,124 +298,32 @@ export default function CareersPage() {
         stats={[
           { value: "450+", label: "Teammates pan-India" },
           { value: "3 wks", label: "Paid coffee school" },
-          { value: "₹0", label: "Cost of barista certification" },
-          { value: "92%", label: "Promote-from-within rate" },
+          { value: "Rs 0", label: "Cost of certification" },
+          { value: "92%", label: "Leadership promoted within" },
         ]}
       />
 
-      <PinnedTextBlock
-        reverse
-        eyebrow="Benefits"
-        title={"The basics, done properly."}
-        paragraphs={[
-          "Health cover for you and your immediate family, including parents. Standard for every full-time role — barista to senior engineer, same plan, same coverage.",
-          "Two pounds of fresh beans every month, on the house. A 40 % discount in any of our cafés, any day of the week, for you and a guest. Sabbatical eligibility after 5 years.",
-          "And the unglamorous one we're most proud of: we publish our salary bands internally. You'll always know what the next level pays before you ask for it.",
-        ]}
-        sideImages={[
-          { url: asset("assets/WEBSITE ECB MM IMAGES 2026 2048x2048-07.jpg"), alt: "Team café" },
-          { url: asset("assets/SSCR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-26.jpg"), alt: "Team training" },
-          { url: asset("assets/FR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-06.jpg"), alt: "Team brew demo" },
-        ]}
-      />
-
-      {/* Roles list */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-24 sm:py-32">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
         <RevealOnScroll>
-          <div className="text-center mb-12 sm:mb-16">
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">
-              Open Roles
-            </span>
-            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">
-              {visibleRoles.length} role{visibleRoles.length === 1 ? "" : "s"} open right now.
-            </h2>
-          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">FAQ</span>
+          <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-8 leading-[1.1]">Questions applicants actually ask.</h2>
         </RevealOnScroll>
-
-        {/* Filter chips */}
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10">
-          {TEAMS.map((t) => {
-            const active = filter === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setFilter(t)}
-                className={[
-                  "inline-flex items-center px-4 py-2 rounded-full text-sm font-bold transition-colors border",
-                  active
-                    ? "bg-natural-text text-natural-bg border-natural-text"
-                    : "bg-transparent text-natural-text/75 border-natural-border hover:bg-natural-text/5 hover:text-natural-text",
-                ].join(" ")}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {visibleRoles.map((r, i) => (
-            <RevealOnScroll key={`${r.title}-${r.location}`} delay={i * 0.04}>
-              <TiltCard
-                intensity={5}
-                className="bg-natural-paper rounded-2xl p-6 sm:p-7 h-full border border-natural-border hover:border-natural-accent/40 transition-colors flex flex-col"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">
-                    {r.team}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/40">
-                    {r.level}
-                  </span>
-                </div>
-                <h3 className="font-serif font-bold text-xl text-natural-text leading-snug">
-                  {r.title}
-                </h3>
-                <p className="mt-3 text-sm text-natural-text/65 leading-snug">{r.location}</p>
-                <div className="mt-auto pt-5 flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-widest text-natural-text/55">
-                    {r.type}
-                  </span>
-                  <a
-                    href="mailto:careers@brewmatch.in?subject=Application"
-                    className="text-sm font-bold text-natural-accent hover:text-natural-text transition-colors"
-                  >
-                    Apply →
-                  </a>
-                </div>
-              </TiltCard>
-            </RevealOnScroll>
+        <div className="space-y-3">
+          {faqs.map(([question, answer]) => (
+            <details key={question} className="bg-natural-paper border border-natural-border rounded-xl p-5 group">
+              <summary className="font-serif font-bold text-xl cursor-pointer">{question}</summary>
+              <p className="mt-4 text-natural-text/68 leading-relaxed">{answer}</p>
+            </details>
           ))}
         </div>
-
-        {visibleRoles.length === 0 && (
-          <p className="text-center text-natural-text/55 mt-12">
-            No open roles in this team right now. Email us at{" "}
-            <a className="underline" href="mailto:careers@brewmatch.in">
-              careers@brewmatch.in
-            </a>{" "}
-            anyway — we keep good resumes on file.
-          </p>
-        )}
       </section>
 
       <RevealOnScroll>
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-32 text-center">
-          <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">
-            Don't see your role?
-          </p>
-          <h2 className="font-serif font-bold text-2xl sm:text-4xl leading-[1.2] text-natural-text">
-            We hire for craft, not titles.
-          </h2>
-          <p className="mt-6 text-natural-text/70 leading-relaxed">
-            If you're great at what you do and our story resonates, write to us. The best people on our team rarely arrived through a job posting.
-          </p>
-          <a
-            href="mailto:careers@brewmatch.in"
-            className="inline-flex mt-8 items-center gap-2 px-6 py-3 rounded-full bg-natural-text text-natural-bg font-bold text-sm hover:bg-natural-accent transition-colors"
-          >
-            careers@brewmatch.in →
-          </a>
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24 text-center">
+          <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">Do not see your role?</p>
+          <h2 className="font-serif font-bold text-2xl sm:text-4xl leading-[1.2] text-natural-text">We hire people, not job descriptions.</h2>
+          <p className="mt-6 text-natural-text/70 leading-relaxed">If you are great at what you do and this page made you nod, write in anyway.</p>
+          <a href="mailto:careers@brewmatch.in" className="inline-flex mt-8 items-center gap-2 px-6 py-3 rounded-full bg-natural-text text-natural-bg font-bold text-sm hover:bg-natural-accent transition-colors">careers@brewmatch.in →</a>
         </section>
       </RevealOnScroll>
     </AboutPageShell>

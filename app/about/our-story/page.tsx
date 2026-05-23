@@ -1,46 +1,154 @@
 "use client";
-/**
- * /about/our-story
- *
- * The brand origin narrative. Three pinned-text chapters with parallax image
- * stacks between each, capped by a stat strip. Designed for a 40-something
- * Indian buyer who wants to know "who am I buying from?" before spending ₹2,500.
- *
- * Content is statically authored (v7.0 decision). Replace headlines/paragraphs
- * here when the brand team has finalised copy.
- */
+
 import { AboutPageShell } from "@/src/components/about/AboutPageShell";
 import {
   ParallaxHero,
   PinnedTextBlock,
   LayeredImageColumns,
   StatStrip,
+  TiltCard,
   RevealOnScroll,
 } from "@/src/components/about/ParallaxPrimitives";
 import { asset } from "@/src/lib/asset";
+
+const founders = [
+  {
+    name: "Anjali Iyer",
+    role: "Co-founder & Head of Coffee",
+    image: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"),
+    bio: "Anjali was 27, working in product at a startup that did not deserve her, and had just paid too much for a flat white in BKC that tasted like cardboard. She moved to Bengaluru, learnt roasting the slow way, and still runs Friday cuppings herself.",
+    quote: "Good coffee is not a personality trait. It is a supply chain with taste. If we cannot explain why a cup costs what it costs, we should not be selling it.",
+    note: "now reading: The Creative Act",
+  },
+  {
+    name: "Sushant Rao",
+    role: "Co-founder & Operations",
+    image: asset("assets/our-story.png"),
+    bio: "Sushant came in as the person who could turn a stubborn coffee idea into a company that actually opens on time. He built the first cafe playbook, the roast-to-dispatch promise, and the habit of putting numbers next to every brand claim.",
+    quote: "The romantic version is that we started with a dream. The honest version is that we started with a spreadsheet, a tiny roaster, and very little patience for stale coffee.",
+    note: "now playing: Peter Cat Recording Co.",
+  },
+] as const;
+
+const timeline = [
+  ["2016", "First roastery, Bengaluru", "A 600 sq ft space, one restored roaster, and a roast log held together by tape."],
+  ["2017", "Indiranagar cafe opens", "The first place people could taste the coffee before they trusted the bag."],
+  ["2018", "First estate partnership", "Chikmagalur stopped being a sourcing line and became a relationship."],
+  ["2019", "National e-commerce launch", "Fresh beans started reaching kitchens outside the cafe cities."],
+  ["2021", "8 estates locked in", "Long-term pricing replaced opportunistic buying."],
+  ["2023", "Coffee School launches", "Three paid weeks before a new barista touches a guest's order."],
+  ["2025", "Series B closed", "Rs 120 cr to grow cafes, roastery capacity, and direct trade."],
+  ["2026", "130+ cafes, 14 estates", "Still small enough for the founders to read the bad reviews."],
+] as const;
+
+const estates = [
+  ["Attikan", "Bababudangiri", "1,450 m", "Arabica"],
+  ["Kelagur", "Chikmagalur", "1,220 m", "SLN 795"],
+  ["Mooley Maneh", "Coorg", "1,050 m", "Arabica + Robusta"],
+  ["Ratnagiri", "Bababudangiri", "1,350 m", "Catuai"],
+  ["Sangameshwar", "Chikmagalur", "1,100 m", "Kent"],
+  ["Venkids Valley", "Coorg", "980 m", "Robusta"],
+  ["Karadykan", "Chikmagalur", "1,380 m", "Selection 9"],
+  ["Baarbara", "Bababudangiri", "1,500 m", "Arabica"],
+  ["Kerehaklu", "Chikmagalur", "1,320 m", "Catimor"],
+  ["Harley", "Sakleshpur", "1,100 m", "Arabica"],
+  ["Moganad", "Wayanad", "920 m", "Robusta"],
+  ["Balanoor", "Chikmagalur", "1,250 m", "Arabica"],
+  ["Thogarihunkal", "Bababudangiri", "1,420 m", "SLN 795"],
+  ["Kalledevarapura", "Chikmagalur", "1,180 m", "Mixed lots"],
+] as const;
+
+const values = [
+  ["Roast dates, not best-before stamps", "Every bag tells you when it was roasted. If the date is more than 21 days old when it reaches you, we replace it."],
+  ["No post-rationalised blends", "Single-origin lots stay intact. If a lot tastes flat, we do not hide it inside a blend and call it balance."],
+  ["SCA 80 is the floor", "Three lots were rejected in 2024 because they cleared price but failed cup quality. That is expensive. That is the point."],
+  ["One health plan", "Barista to executive, same coverage. A company cannot sell care at the counter and ration it behind the counter."],
+] as const;
 
 export default function OurStoryPage() {
   return (
     <AboutPageShell active="our-story">
       <ParallaxHero
-        eyebrow="Since 2016"
-        title={"From a single roastery\nin Bengaluru."}
-        tagline="A decade of obsessing over what makes a cup of coffee feel like home — and what it takes to ship that feeling across India."
+        eyebrow="Our Story"
+        title="A small Bengaluru roastery, ten years on."
+        tagline="Made by people who care about the cup, the farm, and the person drinking it on a half-awake Tuesday."
         imageUrl={asset("assets/our-story.png")}
       />
 
       <PinnedTextBlock
-        eyebrow="The Beginning"
-        title={"Three friends.\nOne roaster.\nA stubborn belief."}
+        eyebrow="Bengaluru, 2016"
+        title="How a stale-cup epiphany became a roastery."
         paragraphs={[
-          "In 2016, when most of India still associated coffee with a tin of instant powder, three friends opened a 600-square-foot roastery in Bengaluru's Indiranagar with one idea: the beans grown in our own hills deserve better than to be shipped abroad and forgotten.",
-          "We started with a single Probat sample roaster, two espresso machines, and the conviction that a properly brewed cup of Chikmagalur coffee could stand shoulder to shoulder with anything from Ethiopia or Colombia.",
-          "Ten years on, that conviction has become 130 cafés, a national e-commerce footprint, and a community that calls itself the Third Circle.",
+          "In 2016, India's specialty wave was just starting. You could find a serious espresso machine in a few cafes, but too many cups were still built on beans that had been roasted months ago and shipped around like dry goods.",
+          "The founders had tasted what fresh Indian coffee could do outside India, then came home to a gap that felt silly: we were growing beautiful beans and drinking the tired version ourselves.",
+          "So the first decision was simple. Roast in small batches, ship within a week, print the roast date, and stop pretending freshness is a luxury feature.",
         ]}
         sideImages={[
-          { url: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"), alt: "First roastery" },
-          { url: asset("assets/our-story.png"), alt: "Roasting floor" },
-          { url: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"), alt: "First espresso bar" },
+          { url: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-13.jpg"), alt: "First roastery exterior" },
+          { url: asset("assets/our-story.png"), alt: "Founders at the first cupping table" },
+          { url: asset("assets/SCB WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-14.jpg"), alt: "Hand-written roast log" },
+        ]}
+      />
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <RevealOnScroll>
+          <div className="max-w-3xl mb-10 sm:mb-14">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">The humans</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">Meet the people who still cup the bad batches.</h2>
+          </div>
+        </RevealOnScroll>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
+          {founders.map((founder, index) => (
+            <RevealOnScroll key={founder.name} delay={index * 0.08}>
+              <article className="bg-natural-paper border border-natural-border rounded-xl overflow-hidden shadow-sm">
+                <img src={founder.image} alt={founder.name} loading="lazy" decoding="async" className="aspect-[3/4] w-full object-cover" />
+                <div className="p-6 sm:p-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{founder.role}</p>
+                  <h3 className="font-serif font-bold text-2xl sm:text-3xl mt-2">{founder.name}</h3>
+                  <p className="mt-4 text-natural-text/70 leading-relaxed">{founder.bio}</p>
+                  <blockquote className="font-serif text-xl sm:text-2xl leading-snug mt-6 text-natural-text">“{founder.quote}”</blockquote>
+                  <p className="mt-5 text-xs italic text-natural-text/50">{founder.note}</p>
+                </div>
+              </article>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-natural-paper py-20 sm:py-28">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
+          <RevealOnScroll>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">The timeline</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-12 leading-[1.1]">Ten years, no mythology.</h2>
+          </RevealOnScroll>
+          <div className="space-y-6">
+            {timeline.map(([year, title, copy], index) => (
+              <RevealOnScroll key={year} delay={index * 0.04}>
+                <div className="grid grid-cols-[72px_1fr] sm:grid-cols-[120px_1fr] gap-5 border-t border-natural-border pt-6">
+                  <div className="sticky top-28 self-start font-serif font-bold text-3xl sm:text-5xl text-natural-accent">{year}</div>
+                  <div>
+                    <h3 className="font-serif font-bold text-xl sm:text-2xl">{title}</h3>
+                    <p className="mt-2 text-natural-text/68 leading-relaxed">{copy}</p>
+                  </div>
+                </div>
+              </RevealOnScroll>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <PinnedTextBlock
+        eyebrow="The Promise"
+        title="Roasted on Monday, in your cup by Friday."
+        paragraphs={[
+          "Coffee is not shelf decor. Most people in India have only tasted beans that spent their best weeks in a warehouse, then got sold as premium because the bag looked expensive.",
+          "Every bag we ship leaves the roastery within 48 hours of roasting. The date on the back is the roasted-on date, not a best-before stamp doing legal gymnastics.",
+          "If it reaches you tired, we replace it. Simple promise, complicated operation, worth the headache.",
+        ]}
+        sideImages={[
+          { url: asset("assets/WEBSITE ECB SO IMAGES 2026 2048x2048-09.jpg"), alt: "Fresh-packed bag" },
+          { url: asset("assets/WEBSITE COLD BREW IMAGES MDR 2026 2048x2048-01.jpg"), alt: "Dispatch line" },
+          { url: asset("assets/WEBSITE ECB MM IMAGES 2026 2048x2048-07.jpg"), alt: "Roast-date stamp" },
         ]}
       />
 
@@ -53,59 +161,96 @@ export default function OurStoryPage() {
         ]}
       />
 
-      <PinnedTextBlock
-        reverse
-        eyebrow="The Craft"
-        title={"We roast every batch\nlike it's the first."}
-        paragraphs={[
-          "Every Friday at 6 AM, our head roaster Anjali walks the cupping table with the production team. Twenty-three samples. Same hot water, same grind, same timer. Same one question: would we pour this for someone we love?",
-          "If the answer is no, the batch doesn't ship. It's the most expensive quality gate in the industry, and it's the only one we've ever trusted. It's why a 250 g bag from us costs what it costs — and why we don't apologise for it.",
-          "Our beans come from 14 estates across Chikmagalur, Coorg, and the Baba Budangiri hills. We pay 28 % above the C-market price, every season, because the farmers who get our shade-grown Arabicas to the mill at dawn deserve to send their kids to college.",
-        ]}
-        sideImages={[
-          { url: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), alt: "Roast curves" },
-          { url: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"), alt: "Green bean QC" },
-          { url: asset("assets/FR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-05.jpg"), alt: "Packed bags" },
-        ]}
-      />
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <RevealOnScroll>
+          <div className="max-w-3xl mb-10 sm:mb-14">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">14 partner estates</span>
+            <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 leading-[1.1]">Where your coffee is actually from.</h2>
+            <p className="mt-5 text-natural-text/68 leading-relaxed">Placeholder estate data until the final farm list is confirmed. The design is built to show named places, not vague mountain poetry.</p>
+          </div>
+        </RevealOnScroll>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {estates.map(([name, region, elevation, varietal], index) => (
+            <RevealOnScroll key={name} delay={(index % 4) * 0.04}>
+              <TiltCard intensity={4} className="bg-natural-paper border border-natural-border rounded-xl p-5 h-full">
+                <h3 className="font-serif font-bold text-xl">{name}</h3>
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-accent mt-2">{region}</p>
+                <dl className="mt-5 space-y-2 text-sm text-natural-text/68">
+                  <div className="flex justify-between gap-3"><dt>Elevation</dt><dd className="font-bold text-natural-text">{elevation}</dd></div>
+                  <div className="flex justify-between gap-3"><dt>Varietal</dt><dd className="font-bold text-natural-text text-right">{varietal}</dd></div>
+                </dl>
+              </TiltCard>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
+
+      <RevealOnScroll>
+        <section className="bg-natural-text text-natural-bg py-20 sm:py-28">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-12">
+            <blockquote className="font-serif font-bold text-3xl sm:text-5xl leading-tight max-w-4xl">“We pay 28% above the C-market price. Not as charity. As the actual cost of the coffee we want to drink.”</blockquote>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 text-natural-bg/75 leading-relaxed">
+              <p>The C-market can make a farmer's best work feel like a commodity spreadsheet. We set seasonal prices with partners before the harvest pressure hits, then grade lots transparently.</p>
+              <p>It costs us more per kilo. It also means better cherries, fewer defects, and a relationship that survives one bad monsoon. That is not a sustainability slogan. It is procurement.</p>
+            </div>
+          </div>
+        </section>
+      </RevealOnScroll>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
+        <RevealOnScroll>
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Values with receipts</span>
+          <h2 className="font-serif font-bold text-3xl sm:text-5xl mt-4 mb-10 leading-[1.1]">What we will not compromise on.</h2>
+        </RevealOnScroll>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {values.map(([title, copy], index) => (
+            <RevealOnScroll key={title} delay={index * 0.06}>
+              <TiltCard intensity={5} className="bg-natural-paper border border-natural-border rounded-xl p-6 h-full">
+                <h3 className="font-serif font-bold text-xl leading-snug">{title}</h3>
+                <p className="mt-4 text-sm text-natural-text/68 leading-relaxed">{copy}</p>
+              </TiltCard>
+            </RevealOnScroll>
+          ))}
+        </div>
+      </section>
 
       <StatStrip
         eyebrow="Ten years in"
-        caption="A small Bengaluru roastery turned into a national specialty coffee company — one estate, one café, one careful cup at a time."
+        caption="A small Bengaluru roastery turned into a national specialty coffee company — one estate, one cafe, one careful cup at a time."
         stats={[
           { value: "2016", label: "Founded in Bengaluru" },
           { value: "14", label: "Partner estates" },
-          { value: "130+", label: "Cafés across India" },
+          { value: "130+", label: "Cafes across India" },
           { value: "28%", label: "Above C-market to farmers" },
         ]}
       />
 
       <PinnedTextBlock
-        eyebrow="The Promise"
-        title={"Roasted on Monday,\nin your cup by Friday."}
+        reverse
+        eyebrow="Today + next"
+        title="Still growing. Still allergic to stale coffee."
         paragraphs={[
-          "Coffee is a perishable good. Most Indian buyers have only ever tasted stale coffee — beans that left their origin nine months ago and sat in a warehouse before reaching their kitchen.",
-          "Every bag we ship leaves the roastery within 48 hours of the roast. The 'roasted on' date is printed on the back of every pack — not the 'best before', which any brand can game. Look at the date. If it's more than 21 days old, we'll replace it free.",
-          "This is the promise that runs the company. Not the marketing line — the operational discipline behind it. It's why we control our own logistics, our own packaging, and our own café supply chain end-to-end.",
+          "Today BrewMatch runs 130+ cafes across India, buys from 14 partner estates, and ships fresh coffee to people who once thought specialty coffee was not for them.",
+          "The next chapter is not world-domination theatre. It is a second roastery, better training, more transparent sourcing, and fewer reasons for anyone to settle for dead beans.",
         ]}
         sideImages={[
-          { url: asset("assets/WEBSITE ECB SO IMAGES 2026 2048x2048-09.jpg"), alt: "Fresh-packed bag" },
-          { url: asset("assets/WEBSITE COLD BREW IMAGES MDR 2026 2048x2048-01.jpg"), alt: "Dispatch line" },
-          { url: asset("assets/WEBSITE ECB MM IMAGES 2026 2048x2048-07.jpg"), alt: "Roast-date stamp" },
+          { url: asset("assets/SSBR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-21.jpg"), alt: "Roastery floor" },
+          { url: asset("assets/VR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-29.jpg"), alt: "Green bean quality check" },
+          { url: asset("assets/FR WEBSITE COFFEE BEAN IMAGES 2026 2048x2048-05.jpg"), alt: "Packed bags" },
         ]}
       />
 
       <RevealOnScroll>
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 md:px-12 py-24 sm:py-40 text-center">
-          <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">
-            A note from the founders
-          </p>
-          <blockquote className="font-serif text-2xl sm:text-3xl md:text-4xl leading-[1.3] text-natural-text">
-            “Coffee isn't a commodity we sell. It's a ritual we get the privilege of being part of every morning. That's not marketing — it's how we decide everything from roast curve to packaging weight.”
-          </blockquote>
-          <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-natural-text/60">
-            — Anjali, Sushant & Ayushi · Co-founders
-          </p>
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28 text-center">
+          <div className="bg-natural-paper border border-natural-border rounded-xl px-6 py-10 sm:p-12 shadow-sm">
+            <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">A note from the founders</p>
+            <blockquote className="font-serif text-2xl sm:text-4xl leading-[1.3] text-natural-text">We started because the cup felt wrong. We are still here because fixing it turned out to mean farmers, baristas, logistics, design, training, and a thousand boring decisions done carefully.</blockquote>
+            <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-natural-text/60">Anjali, Sushant & Ayushi</p>
+          </div>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+            <a href="/about/our-coffee" className="inline-flex justify-center px-5 py-3 rounded-full bg-natural-text text-natural-bg font-bold text-sm">Read about our coffee →</a>
+            <a href="mailto:hello@brewmatch.in?subject=Roastery visit" className="inline-flex justify-center px-5 py-3 rounded-full border border-natural-border text-natural-text font-bold text-sm">Visit the roastery →</a>
+          </div>
         </section>
       </RevealOnScroll>
     </AboutPageShell>
