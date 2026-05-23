@@ -1,11 +1,13 @@
 ﻿import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./authHelpers";
 
 // ── getSalesOverview ────────────────────────────────────────────────────────
 // Reads the O(1) orderSummary singleton instead of scanning all orders.
 export const getSalesOverview = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const summary = await ctx.db
       .query("orderSummary")
       .withIndex("by_key", (q) => q.eq("key", "global"))
@@ -36,6 +38,7 @@ export const getSalesOverview = query({
 export const getDailyRevenue = query({
   args: { days: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const windowDays = Math.min(args.days ?? 30, 90);
     const since = Date.now() - windowDays * 24 * 60 * 60 * 1000;
     const orders = await ctx.db
@@ -65,6 +68,7 @@ export const getDailyRevenue = query({
 export const getTopProducts = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const since = Date.now() - 90 * 24 * 60 * 60 * 1000;
     const orders = await ctx.db
       .query("orders")
@@ -93,6 +97,7 @@ export const getTopProducts = query({
 export const getOrderStatusBreakdown = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const summary = await ctx.db
       .query("orderSummary")
       .withIndex("by_key", (q) => q.eq("key", "global"))
@@ -111,6 +116,7 @@ export const getOrderStatusBreakdown = query({
 export const rebuildSummary = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const REVENUE_STATUSES = new Set(["confirmed", "shipped", "delivered"]);
     const all = await ctx.db.query("orders").collect();
 

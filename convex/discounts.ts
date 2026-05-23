@@ -1,11 +1,11 @@
 import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import { requireAdmin } from "./authHelpers";
 
 // ── Admin: list all discount codes ────────────────────────────────────────
 export const listDiscounts = query({
   args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("discounts").order("desc").take(200);
+  handler: async (ctx) => {    await requireAdmin(ctx);    return await ctx.db.query("discounts").order("desc").take(200);
   },
 });
 
@@ -96,10 +96,8 @@ export const claimDiscount = mutation({
       }
     }
 
-    await ctx.db.patch(discount._id, {
-      usageCount: discount.usageCount + 1,
-    });
-
+    // Do NOT increment usageCount here — only submitOrder increments it.
+    // Incrementing in both places causes a TOCTOU double-use bug (API-03).
     return {
       code: discount.code,
       discountType: discount.discountType,
@@ -118,8 +116,7 @@ export const createDiscount = mutation({
     expiresAt: v.optional(v.number()),
     maxUses: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
-    // Ensure code is unique
+  handler: async (ctx, args) => {    await requireAdmin(ctx);    // Ensure code is unique
     const existing = await ctx.db
       .query("discounts")
       .withIndex("by_code", (q) => q.eq("code", args.code))
@@ -137,7 +134,6 @@ export const createDiscount = mutation({
 // ── Admin: delete a discount code ─────────────────────────────────────────
 export const deleteDiscount = mutation({
   args: { id: v.id("discounts") },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
+  handler: async (ctx, args) => {    await requireAdmin(ctx);    await ctx.db.delete(args.id);
   },
 });

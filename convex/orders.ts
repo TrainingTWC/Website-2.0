@@ -1,5 +1,8 @@
 ﻿import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAdmin, getCallerAdmin } from "./authHelpers";
 
 // Revenue-counting statuses
 const REVENUE_STATUSES = new Set(["confirmed", "shipped", "delivered"]);
@@ -102,9 +105,22 @@ export const submitOrder = mutation({
   handler: async (ctx, args) => {
     const orderId = `TWC-${randomAlphaNum(8)}`;
 
+    // ── Server-side price verification (API-01) ───────────────────────────
+    // Recompute subtotal from database prices; reject if client value differs
+    // by more than ₹1 (floating-point rounding tolerance).
+    let serverSubtotal = 0;
+    for (const item of args.items) {
+      const product = await ctx.db.get(item.productId as Id<"products">);
+      if (!product) throw new ConvexError(`Product not found: ${item.productId}`);
+      serverSubtotal += product.price * item.qty;
+    }
+    if (Math.abs(serverSubtotal - args.subtotal) > 1) {
+      throw new ConvexError("Order total mismatch. Please refresh and try again.");
+    }
+
     let discountApplied: number | undefined;
     let validatedDiscountCode: string | undefined;
-    let serverTotal = args.subtotal + args.shipping;
+    let serverTotal = serverSubtotal + args.shipping;
 
     if (args.discountCode) {
       const discount = await ctx.db
@@ -123,7 +139,7 @@ export const submitOrder = mutation({
             ? Math.round(args.subtotal * (discount.amount / 100))
             : Math.min(discount.amount, args.subtotal);
 
-        const discountedSubtotal = args.subtotal - savings;
+        const discountedSubtotal = serverSubtotal - savings;
         serverTotal = discountedSubtotal + args.shipping;
         discountApplied = savings;
         validatedDiscountCode = discount.code;
@@ -138,7 +154,7 @@ export const submitOrder = mutation({
       orderId,
       customer: args.customer,
       items: args.items,
-      subtotal: args.subtotal,
+      subtotal: serverSubtotal,
       shipping: args.shipping,
       total: serverTotal,
       status: "pending",
@@ -154,14 +170,31 @@ export const submitOrder = mutation({
 });
 
 // ── getOrder ───────────────────────────────────────────────────────────────
+// Authenticated admins receive the full record.
+// Unauthenticated callers (customer order-tracking) receive a PII-stripped
+// view: status, items, and totals only — no name, phone, email, or address.
 export const getOrder = query({
   args: { orderId: v.string() },
   handler: async (ctx, args) => {
-    const results = await ctx.db
+    const order = await ctx.db
       .query("orders")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
       .first();
-    return results ?? null;
+    if (!order) return null;
+
+    const admin = await getCallerAdmin(ctx);
+    if (admin) return order;
+
+    // Public order-tracking view — PII stripped
+    return {
+      orderId: order.orderId,
+      status: order.status,
+      items: order.items,
+      subtotal: order.subtotal,
+      shipping: order.shipping,
+      total: order.total,
+      discountApplied: order.discountApplied,
+    };
   },
 });
 
@@ -169,6 +202,7 @@ export const getOrder = query({
 export const listOrders = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     return await ctx.db.query("orders").order("desc").collect();
   },
 });
@@ -186,6 +220,7 @@ export const updateStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const order = await ctx.db.get(args.id);
     if (!order) throw new ConvexError("Order not found.");
     await ctx.db.patch(args.id, { status: args.status });
@@ -197,6 +232,7 @@ export const updateStatus = mutation({
 export const cancelOrder = mutation({
   args: { orderId: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const order = await ctx.db
       .query("orders")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
@@ -214,6 +250,7 @@ export const cancelOrder = mutation({
 export const getOrdersByContact = query({
   args: { contact: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     if (!args.contact.trim()) return [];
     const normalized = args.contact.toLowerCase().trim();
     const byPhone = await ctx.db
@@ -236,6 +273,10 @@ export const addOrderNote = mutation({
     role: v.union(v.literal("customer"), v.literal("system")),
   },
   handler: async (ctx, args) => {
+    // Only admins may post system-role notes
+    if (args.role === "system") {
+      await requireAdmin(ctx);
+    }
     const order = await ctx.db
       .query("orders")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))

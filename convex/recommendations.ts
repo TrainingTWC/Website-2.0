@@ -79,29 +79,55 @@ export const getRecommendation = action({
       try { return JSON.parse(cachedEntry.value); } catch { /* corrupted — fall through to fresh call */ }
     }
 
-    // ── Rate limiting via Upstash Redis (optional) ────────────────────────────────
-    // Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Convex dashboard.
-    // Allows 5 AI requests per sessionId per 15 minutes; gracefully skipped if
-    // env vars are absent so the feature degrades without breaking anything.
-    const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-    const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (args.sessionId && redisUrl && redisToken) {
-      try {
-        const rlKey = `rl:rec:${args.sessionId}`;
-        const pipeRes = await fetch(`${redisUrl}/pipeline`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify([["INCR", rlKey], ["EXPIRE", rlKey, 900]]),
-        });
-        const rlResults = await pipeRes.json() as { result: number }[];
-        if ((rlResults[0]?.result ?? 0) > 5) {
-          return {
-            primaryProductIds: [],
-            crossSellProductIds: [],
-            explanation: "You’ve requested several matches recently. Please wait a few minutes and try again.",
-          };
-        }
-      } catch { /* Redis unavailable — allow the request through */ }
+    // ── Rate limiting (EDGE-01) ──────────────────────────────────────────────────────────────
+    // Primary: Upstash Redis (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+    // in the Convex dashboard). Allows 5 unique AI calls per sessionId per 15 min.
+    // Fallback: Convex-native counter stored in aiCache keyed by session+window.
+    // Both layers are active; the Convex fallback fires whenever Redis is unavailable.
+    if (args.sessionId) {
+      const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+      const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+      let blockedByRedis = false;
+
+      if (redisUrl && redisToken) {
+        try {
+          const rlKey = `rl:rec:${args.sessionId}`;
+          const pipeRes = await fetch(`${redisUrl}/pipeline`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify([["INCR", rlKey], ["EXPIRE", rlKey, 900]]),
+          });
+          const rlResults = await pipeRes.json() as { result: number }[];
+          if ((rlResults[0]?.result ?? 0) > 5) {
+            blockedByRedis = true;
+          }
+        } catch { /* Redis unavailable — Convex-native fallback handles limiting */ }
+      }
+
+      if (blockedByRedis) {
+        return {
+          primaryProductIds: [],
+          crossSellProductIds: [],
+          explanation: "You’ve requested several matches recently. Please wait a few minutes and try again.",
+        };
+      }
+
+      // Convex-native fallback: max 5 calls per sessionId per 15-min window.
+      // Uses aiCache (keys prefixed "rl:" — never served as recommendation results).
+      const windowKey = `rl:${args.sessionId}:${Math.floor(Date.now() / 900_000)}`;
+      const rlEntry = await ctx.runQuery(internal.cache.get, { key: windowKey });
+      const callCount = rlEntry ? (JSON.parse(rlEntry.value) as number) : 0;
+      if (callCount >= 5) {
+        return {
+          primaryProductIds: [],
+          crossSellProductIds: [],
+          explanation: "You’ve requested several matches recently. Please wait a few minutes and try again.",
+        };
+      }
+      await ctx.runMutation(internal.cache.set, {
+        key: windowKey,
+        value: JSON.stringify(callCount + 1),
+      });
     }
 
     const productNames = args.products.map((p) => p.name);

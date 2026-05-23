@@ -4,6 +4,7 @@
  */
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireSuperadmin } from "./authHelpers";
 
 async function clearTable(ctx: any, table: string) {
   const rows = await (ctx.db as any).query(table).collect();
@@ -27,6 +28,7 @@ async function log(ctx: any, action: string, detail: string) {
 export const clearPageViews = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "pageViews");
     await log(ctx, "DANGER:clearPageViews", `Deleted ${n} page view records`);
     return n;
@@ -36,6 +38,7 @@ export const clearPageViews = mutation({
 export const clearSessions = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "sessions");
     await log(ctx, "DANGER:clearSessions", `Deleted ${n} AI session records`);
     return n;
@@ -45,6 +48,7 @@ export const clearSessions = mutation({
 export const clearOrders = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "orders");
     await log(ctx, "DANGER:clearOrders", `Deleted ${n} orders`);
     return n;
@@ -54,6 +58,7 @@ export const clearOrders = mutation({
 export const clearAiCache = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "aiCache");
     await log(ctx, "DANGER:clearAiCache", `Deleted ${n} AI cache entries`);
     return n;
@@ -63,6 +68,7 @@ export const clearAiCache = mutation({
 export const clearAuditLog = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "auditLog");
     return n;
   },
@@ -71,6 +77,7 @@ export const clearAuditLog = mutation({
 export const clearDiscounts = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "discounts");
     await log(ctx, "DANGER:clearDiscounts", `Deleted ${n} discounts`);
     return n;
@@ -80,6 +87,7 @@ export const clearDiscounts = mutation({
 export const clearProducts = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "products");
     await log(ctx, "DANGER:clearProducts", `Deleted ${n} products`);
     return n;
@@ -89,6 +97,7 @@ export const clearProducts = mutation({
 export const clearCategories = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "categories");
     await log(ctx, "DANGER:clearCategories", `Deleted ${n} categories`);
     return n;
@@ -98,6 +107,7 @@ export const clearCategories = mutation({
 export const clearPosts = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const n = await clearTable(ctx, "posts");
     await log(ctx, "DANGER:clearPosts", `Deleted ${n} blog/editorial posts`);
     return n;
@@ -109,6 +119,7 @@ export const clearPosts = mutation({
 export const resetAnalytics = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const pv = await clearTable(ctx, "pageViews");
     const s = await clearTable(ctx, "sessions");
     const ai = await clearTable(ctx, "aiCache");
@@ -120,6 +131,7 @@ export const resetAnalytics = mutation({
 export const resetOrders = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const o = await clearTable(ctx, "orders");
     const d = await clearTable(ctx, "discounts");
     await log(ctx, "DANGER:resetOrders", `Cleared orders(${o}), discounts(${d})`);
@@ -130,6 +142,7 @@ export const resetOrders = mutation({
 export const resetCatalog = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireSuperadmin(ctx);
     const p = await clearTable(ctx, "products");
     const c = await clearTable(ctx, "categories");
     const po = await clearTable(ctx, "posts");
@@ -143,6 +156,7 @@ export const resetCatalog = mutation({
 export const nukeEverything = mutation({
   args: { confirmPhrase: v.string() },
   handler: async (ctx, { confirmPhrase }) => {
+    await requireSuperadmin(ctx);
     if (confirmPhrase !== "WIPE EVERYTHING") {
       throw new Error("Confirmation phrase mismatch");
     }

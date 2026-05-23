@@ -24,9 +24,14 @@ export const answerSupportQuery = action({
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) throw new Error("MISTRAL_API_KEY not configured.");
 
-    const userMessage = `Order context: Order ID ${args.orderContext.orderId}, status "${args.orderContext.status}", ${args.orderContext.itemCount} item(s), total ₹${args.orderContext.total}, customer ${args.orderContext.customerName} from ${args.orderContext.city}.
+    // ── Prompt-injection mitigation (XSS-03) ──────────────────────────────
+    // 1. Hard length cap prevents large injection payloads
+    // 2. Order context and user question are sent in separate message turns
+    //    so there is a role boundary between trusted data and user input
+    const safeQuestion = args.question.slice(0, 500);
 
-Customer question: ${args.question}`;
+    // Trusted order context goes in its own user turn (no user-supplied data)
+    const contextMessage = `Order context: ID ${args.orderContext.orderId}, status "${args.orderContext.status}", ${args.orderContext.itemCount} item(s), total ₹${args.orderContext.total}.`;
 
     const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
@@ -41,7 +46,9 @@ Customer question: ${args.question}`;
         reasoning_effort: "none",
         messages: [
           { role: "system", content: SUPPORT_SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
+          { role: "user", content: contextMessage },
+          { role: "assistant", content: "Got it — I have your order details. How can I help?" },
+          { role: "user", content: safeQuestion },
         ],
       }),
     });
