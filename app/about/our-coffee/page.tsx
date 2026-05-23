@@ -153,7 +153,7 @@ export default function OurCoffeePage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {processSteps.map(([number, title, copy], index) => (
             <RevealOnScroll key={title} delay={index * 0.05}>
-              <div className="bg-natural-paper border border-natural-border rounded-xl p-5 h-full">
+              <div className="about-page-panel border rounded-xl p-5 h-full shadow-about-soft">
                 <p className="font-serif text-4xl font-bold text-natural-accent">{number}</p>
                 <h3 className="font-serif font-bold text-xl mt-4">{title}</h3>
                 <p className="text-sm text-natural-text/68 leading-relaxed mt-3">{copy}</p>
@@ -163,7 +163,7 @@ export default function OurCoffeePage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Origins</span>
@@ -172,7 +172,7 @@ export default function OurCoffeePage() {
           <div className="space-y-8 sm:space-y-10">
             {regions.map((region, index) => (
               <RevealOnScroll key={region.name} delay={index * 0.04}>
-                <article className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-10 items-center border border-natural-border rounded-xl bg-natural-bg overflow-hidden">
+                <article className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-10 items-center border border-about-accent rounded-xl bg-natural-bg overflow-hidden shadow-about-soft">
                   <img src={region.image} alt={region.name} loading="lazy" decoding="async" className="aspect-[3/2] w-full h-full object-cover" />
                   <div className="p-6 sm:p-8">
                     <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">{region.estates}</p>
@@ -216,7 +216,7 @@ export default function OurCoffeePage() {
             </div>
           </RevealOnScroll>
           <RevealOnScroll delay={0.08}>
-            <div className="bg-natural-paper border border-natural-border rounded-xl p-6 sm:p-8">
+            <div className="about-page-panel border rounded-xl p-6 sm:p-8 shadow-about-soft">
               <h3 className="font-serif font-bold text-2xl">Rejected in the last 12 months</h3>
               <ol className="mt-6 space-y-4 text-natural-text/70 leading-relaxed list-decimal list-inside">
                 <li>Monsoon lot, defects above 3% after second screen.</li>
@@ -228,7 +228,7 @@ export default function OurCoffeePage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Roast levels</span>
@@ -237,7 +237,7 @@ export default function OurCoffeePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {roastLevels.map(([level, copy, bestFor, image], index) => (
               <RevealOnScroll key={level} delay={index * 0.06}>
-                <TiltCard intensity={4} className="bg-natural-bg border border-natural-border rounded-xl overflow-hidden h-full">
+                <TiltCard intensity={4} className="bg-natural-bg border border-about-accent rounded-xl overflow-hidden h-full shadow-about-soft">
                   <img src={image} alt={`${level} roast beans`} loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
                   <div className="p-6">
                     <h3 className="font-serif font-bold text-2xl">{level}</h3>
@@ -260,7 +260,7 @@ export default function OurCoffeePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {brewMethods.map((method, index) => (
             <RevealOnScroll key={method.method} delay={index * 0.05}>
-              <article className="bg-natural-paper border border-natural-border rounded-xl p-6 sm:p-8 h-full">
+              <article className="about-page-panel border rounded-xl p-6 sm:p-8 h-full shadow-about-soft">
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent">{method.label}</p>
                 <h3 className="font-serif font-bold text-2xl sm:text-3xl mt-2">{method.method}</h3>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-sm">
@@ -301,7 +301,7 @@ export default function OurCoffeePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {notes.map(([note, analog], index) => (
             <RevealOnScroll key={note} delay={index * 0.04}>
-              <div className="bg-natural-paper border border-natural-border rounded-xl p-5 h-full">
+              <div className="about-page-panel border rounded-xl p-5 h-full shadow-about-soft">
                 <p className="font-serif font-bold text-xl">{note}</p>
                 <p className="text-sm text-natural-text/65 mt-2">{analog}</p>
               </div>
@@ -324,7 +324,7 @@ export default function OurCoffeePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RevealOnScroll>
-            <div className="bg-natural-paper border border-natural-border rounded-xl p-6 sm:p-8 h-full">
+            <div className="about-page-panel border rounded-xl p-6 sm:p-8 h-full shadow-about-soft">
               <h2 className="font-serif font-bold text-3xl">Sustainability without the greenwash.</h2>
               <ul className="mt-6 space-y-3 text-natural-text/70 leading-relaxed list-disc list-inside">
                 <li>Estate-direct buying cuts middlemen and repeat transport.</li>
@@ -334,7 +334,7 @@ export default function OurCoffeePage() {
             </div>
           </RevealOnScroll>
           <RevealOnScroll delay={0.08}>
-            <div className="bg-natural-paper border border-natural-border rounded-xl p-6 sm:p-8 h-full">
+            <div className="about-page-panel border rounded-xl p-6 sm:p-8 h-full shadow-about-soft">
               <h3 className="font-serif font-bold text-3xl">What we are working on.</h3>
               <ul className="mt-6 space-y-3 text-natural-text/70 leading-relaxed list-disc list-inside">
                 <li>Carbon-neutral shipping target for 2027.</li>
@@ -346,7 +346,7 @@ export default function OurCoffeePage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Shop the range</span>

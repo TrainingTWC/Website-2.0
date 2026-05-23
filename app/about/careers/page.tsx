@@ -130,7 +130,7 @@ export default function CareersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {visibleRoles.map((role, index) => (
             <RevealOnScroll key={`${role.title}-${role.location}`} delay={index * 0.04}>
-              <TiltCard intensity={4} className="bg-natural-paper rounded-xl p-6 h-full border border-natural-border hover:border-natural-accent/45 transition-colors flex flex-col">
+              <TiltCard intensity={4} className="about-page-panel rounded-xl p-6 h-full border hover:border-about-accent transition-colors flex flex-col shadow-about-soft">
                 <div className="flex justify-between gap-3 mb-4">
                   <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{role.team}</span>
                   <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-text/45">{role.posted}</span>
@@ -149,7 +149,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Life here</span>
@@ -176,7 +176,7 @@ export default function CareersPage() {
         <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 md:grid md:grid-cols-3 md:overflow-visible md:mx-0 md:px-0">
           {stories.map((story, index) => (
             <RevealOnScroll key={story.name} delay={index * 0.06} className="min-w-[82vw] sm:min-w-[420px] md:min-w-0 snap-start">
-              <article className="bg-natural-paper border border-natural-border rounded-xl overflow-hidden h-full">
+              <article className="about-page-panel border rounded-xl overflow-hidden h-full shadow-about-soft">
                 <img src={story.image} alt={story.name} loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover" />
                 <div className="p-6">
                   <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-accent">{story.role}</p>
@@ -193,7 +193,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Coffee School</span>
@@ -202,7 +202,7 @@ export default function CareersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {["Week 1: Origins, varietals, harvest, processing", "Week 2: Roast theory, grind, extraction, water", "Week 3: Service, conflict, cafe operations"].map((week, index) => (
               <RevealOnScroll key={week} delay={index * 0.05}>
-                <div className="bg-natural-bg border border-natural-border rounded-xl p-6 h-full">
+                <div className="bg-natural-bg border border-about-accent rounded-xl p-6 h-full shadow-about-soft">
                   <p className="font-serif font-bold text-2xl">{week.split(": ")[0]}</p>
                   <p className="mt-3 text-natural-text/70 leading-relaxed">{week.split(": ")[1]}</p>
                 </div>
@@ -225,7 +225,7 @@ export default function CareersPage() {
             ["Corporate", "Associate", "Manager", "Lead", "Head", "Director"],
           ].map(([lane, ...steps]) => (
             <RevealOnScroll key={lane}>
-              <div className="bg-natural-paper border border-natural-border rounded-xl p-5">
+              <div className="about-page-panel border rounded-xl p-5 shadow-about-soft">
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-natural-accent mb-4">{lane}</p>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   {steps.map((step, index) => <div key={step} className="rounded-lg bg-natural-bg px-4 py-3 text-sm font-bold">{index + 1}. {step}</div>)}
@@ -236,7 +236,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Benefits</span>
@@ -245,7 +245,7 @@ export default function CareersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {benefits.map(([group, title, detail], index) => (
               <RevealOnScroll key={`${group}-${title}`} delay={index * 0.04}>
-                <div className="bg-natural-bg border border-natural-border rounded-xl p-6 h-full">
+                <div className="bg-natural-bg border border-about-accent rounded-xl p-6 h-full shadow-about-soft">
                   <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{group}</p>
                   <h3 className="font-serif font-bold text-xl mt-3">{title}</h3>
                   <p className="text-sm text-natural-text/68 mt-3">{detail}</p>
@@ -275,16 +275,16 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RevealOnScroll>
-            <div className="bg-natural-bg rounded-xl border border-natural-border p-6 sm:p-8 h-full">
+            <div className="bg-natural-bg rounded-xl border border-about-accent p-6 sm:p-8 h-full shadow-about-soft">
               <h2 className="font-serif font-bold text-3xl">We look for</h2>
               <ul className="mt-6 space-y-3 list-disc list-inside text-natural-text/70"><li>Curiosity that survives boredom.</li><li>Hospitality as instinct, not performance.</li><li>The ability to be wrong without flinching.</li><li>Specificity in how you describe past work.</li></ul>
             </div>
           </RevealOnScroll>
           <RevealOnScroll delay={0.08}>
-            <div className="bg-natural-bg rounded-xl border border-natural-border p-6 sm:p-8 h-full">
+            <div className="bg-natural-bg rounded-xl border border-about-accent p-6 sm:p-8 h-full shadow-about-soft">
               <h2 className="font-serif font-bold text-3xl">We do not hire for</h2>
               <ul className="mt-6 space-y-3 list-disc list-inside text-natural-text/70"><li>Coffee-influencer aesthetics.</li><li>Performative passion.</li><li>Ego that does not match output.</li><li>Resumes optimized only for keywords.</li></ul>
             </div>

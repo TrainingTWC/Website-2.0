@@ -12,6 +12,13 @@
   --color-natural-paper: #FAF9F6;
   --color-natural-muted: #EBE7E0;
   --color-natural-stone: #D9D1C7;
+  --color-natural-ink: #1F1814;
+  --color-natural-rust: #A85F3F;
+  --color-natural-saffron: #C48A35;
+  --color-natural-moss: #3F6B4A;
+  --color-natural-teal: #2F6F73;
+  --color-natural-plum: #7A4059;
+  --color-natural-rose: #B76E63;
 }
 
 @layer base {
@@ -50,6 +57,57 @@
     border: 2px solid var(--color-natural-bg);
   }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-natural-accent); }
+}
+
+@layer components {
+  :root {
+    --about-accent: var(--color-natural-accent);
+    --about-accent-ink: var(--color-natural-text);
+    --about-tint: color-mix(in srgb, var(--color-natural-accent) 9%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-accent) 15%, var(--color-natural-paper));
+  }
+
+  [data-active-about="our-story"] {
+    --about-accent: var(--color-natural-rust);
+    --about-accent-ink: #3B1F14;
+    --about-tint: color-mix(in srgb, var(--color-natural-rust) 10%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-rust) 17%, var(--color-natural-paper));
+  }
+
+  [data-active-about="our-coffee"] {
+    --about-accent: var(--color-natural-moss);
+    --about-accent-ink: #182B1D;
+    --about-tint: color-mix(in srgb, var(--color-natural-moss) 9%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-moss) 16%, var(--color-natural-paper));
+  }
+
+  [data-active-about="careers"] {
+    --about-accent: var(--color-natural-teal);
+    --about-accent-ink: #102D30;
+    --about-tint: color-mix(in srgb, var(--color-natural-teal) 9%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-teal) 15%, var(--color-natural-paper));
+  }
+
+  [data-active-about="newsroom"] {
+    --about-accent: var(--color-natural-plum);
+    --about-accent-ink: #301520;
+    --about-tint: color-mix(in srgb, var(--color-natural-plum) 9%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-plum) 15%, var(--color-natural-paper));
+  }
+
+  .about-page .text-natural-accent { color: var(--about-accent); }
+  .about-page .bg-natural-accent { background-color: var(--about-accent); }
+  .about-page .border-natural-accent { border-color: var(--about-accent); }
+
+  .about-page-tone {
+    background-color: var(--about-tint);
+    border-color: color-mix(in srgb, var(--about-accent) 20%, var(--color-natural-border));
+  }
+
+  .about-page-panel {
+    background-color: var(--about-tint-strong);
+    border-color: color-mix(in srgb, var(--about-accent) 24%, var(--color-natural-border));
+  }
 }
 
 @utility scrollbar-hide {
@@ -115,4 +173,24 @@
     inset 0 1px 0 0 color-mix(in srgb, white 50%, transparent),
     0 1px 2px 0 color-mix(in srgb, var(--color-natural-text) 4%, transparent),
     0 8px 24px -10px color-mix(in srgb, var(--color-natural-text) 10%, transparent);
+}
+
+@utility text-about-accent {
+  color: var(--about-accent);
+}
+
+@utility bg-about-tint {
+  background-color: var(--about-tint);
+}
+
+@utility bg-about-tint-strong {
+  background-color: var(--about-tint-strong);
+}
+
+@utility border-about-accent {
+  border-color: color-mix(in srgb, var(--about-accent) 42%, var(--color-natural-border));
+}
+
+@utility shadow-about-soft {
+  box-shadow: 0 18px 60px -34px color-mix(in srgb, var(--about-accent) 58%, transparent);
 }

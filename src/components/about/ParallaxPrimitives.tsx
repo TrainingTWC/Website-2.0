@@ -123,9 +123,8 @@ export function ParallaxHero({
           className="w-full h-full object-cover"
           style={{ aspectRatio: undefined }}
         />
-        {/* Warm gradient wash — keeps text legible without flattening the image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-natural-bg/35 via-natural-bg/10 to-natural-bg/55" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-natural-text/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-natural-ink/36" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-natural-ink/22" />
       </motion.div>
 
       <motion.div
@@ -466,15 +465,8 @@ export function StatStrip({
       style={PAINT_CONTAINED}
       className="relative bg-natural-text text-natural-bg overflow-hidden"
     >
-      {/* Subtle radial accent so the band has texture, not just flat color. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 45%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.5) 0%, transparent 50%)",
-        }}
-      />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-natural-bg/20" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-natural-bg/15" />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28">
         {(eyebrow || caption) && (
           <RevealOnScroll>

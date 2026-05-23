@@ -60,7 +60,7 @@ export function AboutPageShell({ active, children }: AboutPageShellProps) {
   return (
     <SmoothScroll>
       <div
-        className="min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20"
+        className="about-page min-h-screen bg-natural-bg text-natural-text font-sans selection:bg-natural-accent/20"
         data-active-about={active}
       >
         <MorphingHeader

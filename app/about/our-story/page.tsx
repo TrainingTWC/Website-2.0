@@ -100,7 +100,7 @@ export default function OurStoryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
           {founders.map((founder, index) => (
             <RevealOnScroll key={founder.name} delay={index * 0.08}>
-              <article className="bg-natural-paper border border-natural-border rounded-xl overflow-hidden shadow-sm">
+              <article className="about-page-panel border rounded-xl overflow-hidden shadow-about-soft">
                 <img src={founder.image} alt={founder.name} loading="lazy" decoding="async" className="aspect-[3/4] w-full object-cover" />
                 <div className="p-6 sm:p-8">
                   <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-natural-accent">{founder.role}</p>
@@ -115,7 +115,7 @@ export default function OurStoryPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">The timeline</span>
@@ -172,7 +172,7 @@ export default function OurStoryPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {estates.map(([name, region, elevation, varietal], index) => (
             <RevealOnScroll key={name} delay={(index % 4) * 0.04}>
-              <TiltCard intensity={4} className="bg-natural-paper border border-natural-border rounded-xl p-5 h-full">
+              <TiltCard intensity={4} className="about-page-panel border rounded-xl p-5 h-full shadow-about-soft">
                 <h3 className="font-serif font-bold text-xl">{name}</h3>
                 <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-accent mt-2">{region}</p>
                 <dl className="mt-5 space-y-2 text-sm text-natural-text/68">
@@ -205,7 +205,7 @@ export default function OurStoryPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {values.map(([title, copy], index) => (
             <RevealOnScroll key={title} delay={index * 0.06}>
-              <TiltCard intensity={5} className="bg-natural-paper border border-natural-border rounded-xl p-6 h-full">
+              <TiltCard intensity={5} className="about-page-panel border rounded-xl p-6 h-full shadow-about-soft">
                 <h3 className="font-serif font-bold text-xl leading-snug">{title}</h3>
                 <p className="mt-4 text-sm text-natural-text/68 leading-relaxed">{copy}</p>
               </TiltCard>
@@ -242,7 +242,7 @@ export default function OurStoryPage() {
 
       <RevealOnScroll>
         <section className="max-w-4xl mx-auto px-4 sm:px-6 md:px-12 py-20 sm:py-28 text-center">
-          <div className="bg-natural-paper border border-natural-border rounded-xl px-6 py-10 sm:p-12 shadow-sm">
+          <div className="about-page-panel border rounded-xl px-6 py-10 sm:p-12 shadow-about-soft">
             <p className="text-natural-text/55 text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] mb-6">A note from the founders</p>
             <blockquote className="font-serif text-2xl sm:text-4xl leading-[1.3] text-natural-text">We started because the cup felt wrong. We are still here because fixing it turned out to mean farmers, baristas, logistics, design, training, and a thousand boring decisions done carefully.</blockquote>
             <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-natural-text/60">Anjali, Sushant & Ayushi</p>

@@ -91,7 +91,7 @@ export default function NewsroomPage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-16 sm:py-24">
         <RevealOnScroll>
-          <article className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 bg-natural-paper border border-natural-border rounded-xl overflow-hidden">
+          <article className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-0 about-page-panel border rounded-xl overflow-hidden shadow-about-soft">
             <img src={featured.imageUrl} alt={featured.headline} loading="eager" decoding="async" className="aspect-[16/10] lg:aspect-auto w-full h-full object-cover" />
             <div className="p-6 sm:p-10 flex flex-col justify-center">
               <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Featured right now · {featured.date}</p>
@@ -121,7 +121,7 @@ export default function NewsroomPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {visiblePress.map((item, index) => (
             <RevealOnScroll key={item.headline} delay={index * 0.05}>
-              <TiltCard intensity={4} className="bg-natural-paper rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow h-full flex flex-col border border-natural-border">
+              <TiltCard intensity={4} className="about-page-panel rounded-xl overflow-hidden shadow-about-soft transition-shadow h-full flex flex-col border">
                 <img src={item.imageUrl} alt={item.outlet} loading="lazy" decoding="async" className="aspect-[5/3] w-full object-cover" />
                 <div className="p-6 flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-4">
@@ -142,7 +142,7 @@ export default function NewsroomPage() {
         <p className="mt-8 text-sm text-natural-text/55">View all 120+ mentions in our press archive — coming soon.</p>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Awards</span>
@@ -151,7 +151,7 @@ export default function NewsroomPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {awards.map(([body, years, category], index) => (
               <RevealOnScroll key={`${body}-${category}`} delay={index * 0.05}>
-                <div className="bg-natural-bg border border-natural-border rounded-xl p-6 h-full">
+                <div className="bg-natural-bg border border-about-accent rounded-xl p-6 h-full shadow-about-soft">
                   <p className="font-serif font-bold text-2xl">{body}</p>
                   <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-accent mt-3">{years}</p>
                   <p className="text-natural-text/68 mt-4">{category}</p>
@@ -170,7 +170,7 @@ export default function NewsroomPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {media.map(([show, title, meta, image, cta], index) => (
             <RevealOnScroll key={title} delay={index * 0.05}>
-              <a href="#" target="_blank" rel="noopener noreferrer" className="block bg-natural-paper border border-natural-border rounded-xl overflow-hidden h-full hover:border-natural-accent/50 transition-colors">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="block about-page-panel border rounded-xl overflow-hidden h-full hover:border-about-accent transition-colors shadow-about-soft">
                 <div className="relative">
                   <img src={image} alt={show} loading="lazy" decoding="async" className="aspect-video w-full object-cover" />
                   <span className="absolute inset-0 m-auto flex h-14 w-14 items-center justify-center rounded-full bg-natural-bg/90 text-natural-text font-bold">▶</span>
@@ -186,7 +186,7 @@ export default function NewsroomPage() {
         </div>
       </section>
 
-      <section className="bg-natural-paper py-16 sm:py-24">
+      <section className="bg-about-tint py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Speaking</span>
@@ -225,7 +225,7 @@ export default function NewsroomPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           {pressKit.map(([name, detail, size, href], index) => (
             <RevealOnScroll key={name} delay={index * 0.05}>
-              <TiltCard intensity={3} className="bg-natural-paper border border-natural-border rounded-xl p-6 h-full">
+              <TiltCard intensity={3} className="about-page-panel border rounded-xl p-6 h-full shadow-about-soft">
                 <p className="font-serif font-bold text-xl">{name}</p>
                 <p className="text-sm text-natural-text/65 mt-3">{detail}</p>
                 <p className="text-xs font-bold uppercase tracking-[0.25em] text-natural-text/45 mt-5">{size}</p>
@@ -237,7 +237,7 @@ export default function NewsroomPage() {
         <p className="mt-6 text-sm text-natural-text/55">Released for editorial use under attribution. Please credit photography appropriately.</p>
       </section>
 
-      <section className="bg-natural-paper py-20 sm:py-28">
+      <section className="bg-about-tint py-20 sm:py-28">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">Fact sheet</span>
