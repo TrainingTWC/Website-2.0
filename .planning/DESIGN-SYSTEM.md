@@ -2,7 +2,7 @@
 
 ## Intent
 
-BrewMatch should feel young, modern, and quietly premium without looking like a generic luxury cafe site. The brand base stays warm and tactile: cream paper, deep coffee ink, olive, stone, and brown. The expanded palette adds restrained accents that can make the site feel alive, editorial, and easier to scan without using gradients or loud decoration.
+BrewMatch should feel young, modern, and quietly premium without looking like a generic luxury cafe site. The brand base stays warm and tactile: cream paper, deep coffee ink, olive, stone, and brown. The expanded palette uses soft pastel pink, green, and orange so pages feel warmer and more expressive without becoming loud or tricolor-coded.
 
 The visual rule is simple: cream is the canvas, coffee ink is the structure, olive is the brand memory, and accent colors are used as punctuation.
 
@@ -22,20 +22,20 @@ Defined in `src/index.css` under Tailwind v4 `@theme`.
 | `natural-stone` | `#D9D1C7` | Dividers, scrollbars, low-contrast structure |
 | `natural-text` | `#2C1810` | Primary coffee-brown text |
 | `natural-accent` | `#5A5A40` | Olive brand anchor |
-| `natural-ink` | `#1F1814` | Dark editorial bands and transition panels |
+| `natural-ink` | `#1F1814` | Dark editorial bands and deep overlays |
 
 ## Accent Tokens
 
-These accents extend the existing cream, olive, and brown system. They should never dominate a page. Use them for eyebrows, counters, active filters, borders, light tinted bands, and small calls to action.
+These accents extend the existing cream, olive, and brown system. They should never dominate a page. Use them for eyebrows, counters, active filters, borders, light tinted bands, and small calls to action. Keep them pastel and dusty; avoid saturated saffron-plus-green combinations because they immediately read like the India flag.
 
 | Token | Hex | Mood | Best Use |
 | --- | --- | --- | --- |
-| `natural-rust` | `#A85F3F` | Roasted, human, founder-led | Our Story, provenance, origin moments |
-| `natural-saffron` | `#C48A35` | Warm, optimistic, Indian pantry | Limited badges, product highlights, festival campaigns |
-| `natural-moss` | `#3F6B4A` | Farm, freshness, craft | Our Coffee, sourcing, sustainability |
-| `natural-teal` | `#2F6F73` | Contemporary, capable, career energy | Careers, systems, growth, technology |
-| `natural-plum` | `#7A4059` | Editorial, media, authority | Newsroom, press, awards, long-form content |
-| `natural-rose` | `#B76E63` | Soft hospitality | Small service details, gifting, warm microcopy |
+| `natural-pink` | `#D98FA1` | Young, warm, hospitable | Careers, people, service, community |
+| `natural-pink-soft` | `#F4D7DE` | Blush paper tint | Section bands and panels |
+| `natural-green` | `#93B88E` | Fresh, farm-led, calm | Coffee, sourcing, sustainability |
+| `natural-green-soft` | `#DDEBD5` | Matcha-pale tint | Section bands and panels |
+| `natural-orange` | `#E3A46B` | Roasted, sunny, human | Our Story, timelines, provenance |
+| `natural-orange-soft` | `#F5DEC8` | Apricot paper tint | Section bands and panels |
 
 ## About Page Tones
 
@@ -43,10 +43,10 @@ Each About page owns a scoped accent through `data-active-about` on `AboutPageSh
 
 | Page | Accent | Why |
 | --- | --- | --- |
-| Our Story | Rust | Founder warmth, roast color, timeline energy |
-| Our Coffee | Moss | Origin, farm relationships, freshness |
-| Careers | Teal | Young professional energy without startup neon |
-| Newsroom | Plum | Editorial confidence, press-room polish |
+| Our Story | Pastel orange | Founder warmth, roast color, timeline energy |
+| Our Coffee | Pastel green | Origin, farm relationships, freshness |
+| Careers | Pastel pink | Young professional warmth without startup neon |
+| Newsroom | Pink-orange blend | Editorial warmth without a hard press-room feel |
 
 The implementation exposes scoped CSS variables:
 
@@ -78,6 +78,7 @@ Shared utilities:
 5. Use accent colors for structure: eyebrows, numbers, active filters, borders, timeline markers, and small CTAs.
 6. If an accent appears in a section heading, repeat it once in that section as a border, stat, or active state so it feels intentional.
 7. Dark bands should use `natural-text` or `natural-ink`, with cream text. They are editorial pauses, not decoration.
+8. Do not place saturated orange beside saturated green. When orange and green both appear in a global moment, include pastel pink and cream so the read stays brand-led, not flag-led.
 
 ## Page Transitions
 
@@ -85,9 +86,9 @@ The site uses a global `PageTransition` wrapper in `app/layout.tsx`. It applies 
 
 The transition is built from four solid horizontal panels that sweep across the viewport in alternating directions:
 
-- `natural-ink`
-- `natural-rust`
-- `natural-moss`
+- `natural-pink-soft`
+- `natural-green-soft`
+- `natural-orange-soft`
 - `natural-paper`
 
 The content itself fades, lifts, and sharpens from a slight blur. This keeps the transition fluid and cinematic without gradients, blobs, or heavy effects.
@@ -106,10 +107,10 @@ Reduced-motion users skip the transition entirely.
 
 The four recent About pages now use the accent system as follows:
 
-- Our Story uses rust for founder cards, estate tiles, values, timeline markers, and soft section tinting.
-- Our Coffee uses moss for process cards, origin borders, roast cards, brew recipes, tasting notes, and shop range context.
-- Careers uses teal for job cards, photo-wall framing, growth paths, benefits, hiring process, and applicant CTAs.
-- Newsroom uses plum for featured press, press cards, awards, media appearances, speaking rows, press kit, and fact sheet surfaces.
+- Our Story uses pastel orange for founder cards, estate tiles, values, timeline markers, and soft section tinting.
+- Our Coffee uses pastel green for process cards, origin borders, roast cards, brew recipes, tasting notes, and shop range context.
+- Careers uses pastel pink for job cards, photo-wall framing, growth paths, benefits, hiring process, and applicant CTAs.
+- Newsroom uses a pink-orange blend for featured press, press cards, awards, media appearances, speaking rows, press kit, and fact sheet surfaces.
 
 ## UI Texture
 
@@ -130,4 +131,4 @@ Texture should be tactile but quiet:
 
 ## Future Extensions
 
-Use `natural-saffron` for seasonal product drops, loyalty moments, and limited-time coffee releases. Use `natural-rose` for softer hospitality moments such as gifting, support, and cafe-service notes. Do not introduce more accent colors until one of the existing six has a clear repeated role.
+Use pastel orange for seasonal product drops, pastel pink for gifting/support/hospitality moments, and pastel green for sustainability or freshness. Do not introduce more accent colors until one of these pastel families has a clear repeated role.

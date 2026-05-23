@@ -6,9 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const PANELS = [
-  "bg-natural-ink",
-  "bg-natural-rust",
-  "bg-natural-moss",
+  "bg-natural-pink-soft",
+  "bg-natural-green-soft",
+  "bg-natural-orange-soft",
   "bg-natural-paper",
 ] as const;
 

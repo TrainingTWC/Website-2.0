@@ -13,12 +13,12 @@
   --color-natural-muted: #EBE7E0;
   --color-natural-stone: #D9D1C7;
   --color-natural-ink: #1F1814;
-  --color-natural-rust: #A85F3F;
-  --color-natural-saffron: #C48A35;
-  --color-natural-moss: #3F6B4A;
-  --color-natural-teal: #2F6F73;
-  --color-natural-plum: #7A4059;
-  --color-natural-rose: #B76E63;
+  --color-natural-pink: #D98FA1;
+  --color-natural-pink-soft: #F4D7DE;
+  --color-natural-green: #93B88E;
+  --color-natural-green-soft: #DDEBD5;
+  --color-natural-orange: #E3A46B;
+  --color-natural-orange-soft: #F5DEC8;
 }
 
 @layer base {
@@ -68,31 +68,31 @@
   }
 
   [data-active-about="our-story"] {
-    --about-accent: var(--color-natural-rust);
-    --about-accent-ink: #3B1F14;
-    --about-tint: color-mix(in srgb, var(--color-natural-rust) 10%, var(--color-natural-bg));
-    --about-tint-strong: color-mix(in srgb, var(--color-natural-rust) 17%, var(--color-natural-paper));
+    --about-accent: var(--color-natural-orange);
+    --about-accent-ink: #5A351C;
+    --about-tint: color-mix(in srgb, var(--color-natural-orange-soft) 68%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-orange-soft) 76%, var(--color-natural-paper));
   }
 
   [data-active-about="our-coffee"] {
-    --about-accent: var(--color-natural-moss);
-    --about-accent-ink: #182B1D;
-    --about-tint: color-mix(in srgb, var(--color-natural-moss) 9%, var(--color-natural-bg));
-    --about-tint-strong: color-mix(in srgb, var(--color-natural-moss) 16%, var(--color-natural-paper));
+    --about-accent: var(--color-natural-green);
+    --about-accent-ink: #31452D;
+    --about-tint: color-mix(in srgb, var(--color-natural-green-soft) 70%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-green-soft) 78%, var(--color-natural-paper));
   }
 
   [data-active-about="careers"] {
-    --about-accent: var(--color-natural-teal);
-    --about-accent-ink: #102D30;
-    --about-tint: color-mix(in srgb, var(--color-natural-teal) 9%, var(--color-natural-bg));
-    --about-tint-strong: color-mix(in srgb, var(--color-natural-teal) 15%, var(--color-natural-paper));
+    --about-accent: var(--color-natural-pink);
+    --about-accent-ink: #5A2E39;
+    --about-tint: color-mix(in srgb, var(--color-natural-pink-soft) 68%, var(--color-natural-bg));
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-pink-soft) 76%, var(--color-natural-paper));
   }
 
   [data-active-about="newsroom"] {
-    --about-accent: var(--color-natural-plum);
-    --about-accent-ink: #301520;
-    --about-tint: color-mix(in srgb, var(--color-natural-plum) 9%, var(--color-natural-bg));
-    --about-tint-strong: color-mix(in srgb, var(--color-natural-plum) 15%, var(--color-natural-paper));
+    --about-accent: color-mix(in srgb, var(--color-natural-pink) 72%, var(--color-natural-orange));
+    --about-accent-ink: #5B2F2D;
+    --about-tint: color-mix(in srgb, var(--color-natural-pink-soft) 42%, var(--color-natural-orange-soft) 36%);
+    --about-tint-strong: color-mix(in srgb, var(--color-natural-pink-soft) 54%, var(--color-natural-paper));
   }
 
   .about-page .text-natural-accent { color: var(--about-accent); }
