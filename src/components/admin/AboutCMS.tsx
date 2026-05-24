@@ -812,7 +812,7 @@ function MarqueeEditor({ onSave }: { onSave: () => void }) {
   async function handleSave() {
     const next = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     setItems(next);
-    await setContent({ key: "about.careers.marqueeSpeed", json: speed });
+    await setContent({ key: "about.careers.marqueeSpeed", json: JSON.stringify(speed) });
     setTimeout(async () => { if (await save()) onSave(); }, 0);
   }
 
