@@ -60,7 +60,7 @@ export const getRecommendation = action({
     // Optional: passed by the client to enable per-session rate limiting.
     sessionId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ primaryProductIds: string[]; crossSellProductIds: string[]; explanation: string }> => {
     const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
       return {
@@ -74,7 +74,7 @@ export const getRecommendation = action({
     // ── L1: Convex AI response cache ────────────────────────────────────────────────
     // Cache key covers only the user’s answers (product catalog is stable).
     const cacheKey = makeCacheKey("getRecommendation", { answers: args.answers });
-    const cachedEntry = await ctx.runQuery(internal.cache.get, { key: cacheKey });
+    const cachedEntry: { value: string } | null = await ctx.runQuery(internal.cache.get, { key: cacheKey });
     if (cachedEntry) {
       try { return JSON.parse(cachedEntry.value); } catch { /* corrupted — fall through to fresh call */ }
     }
