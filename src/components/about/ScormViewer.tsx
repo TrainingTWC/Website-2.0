@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { GraduationCap, X } from "lucide-react";
+import { GraduationCap, X, ExternalLink, RefreshCw } from "lucide-react";
 
 type Status = "not_started" | "incomplete" | "completed" | "passed" | "failed";
 
@@ -68,7 +68,9 @@ export function ScormViewer({
     : `/scorm/player.html?launch=${encodeURIComponent(launchFile ?? "story.html")}`;
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("not_started");
+  const [iframeState, setIframeState] = useState<"loading" | "loaded" | "timeout">("loading");
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Read persisted status on mount.
   useEffect(() => {
@@ -92,6 +94,17 @@ export function ScormViewer({
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  // Reset loading state + start timeout when modal opens.
+  useEffect(() => {
+    if (open) {
+      setIframeState("loading");
+      timeoutRef.current = setTimeout(() => setIframeState("timeout"), 18000);
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [open]);
 
   // Lock body scroll while modal is open.
   useEffect(() => {
@@ -152,7 +165,7 @@ export function ScormViewer({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="fixed inset-0 z-[9999] flex flex-col bg-[#0f0e0c]"
+            className="fixed inset-0 z-[9999] flex flex-col bg-[#0f0e0c] relative"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -177,6 +190,45 @@ export function ScormViewer({
               ><X className="w-4 h-4" /></button>
             </div>
 
+            {/* Loading / timeout overlay */}
+            {iframeState !== "loaded" && (
+              <div className="absolute inset-0 top-[49px] flex flex-col items-center justify-center bg-[#0f0e0c] gap-5 z-10 px-6 text-center">
+                {iframeState === "loading" && (
+                  <>
+                    <div className="w-10 h-10 rounded-full border-2 border-white/15 border-t-white/70 animate-spin" />
+                    <p className="text-white/50 text-sm font-medium">Loading orientation content…</p>
+                  </>
+                )}
+                {iframeState === "timeout" && (
+                  <>
+                    <div className="w-14 h-14 rounded-2xl bg-white/6 flex items-center justify-center">
+                      <RefreshCw className="w-6 h-6 text-white/50" />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-base mb-1">Taking too long?</p>
+                      <p className="text-white/45 text-sm max-w-xs">The content server may be slow. Try opening it directly in a new tab.</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 items-center">
+                      <button
+                        onClick={() => { setIframeState("loading"); timeoutRef.current = setTimeout(() => setIframeState("timeout"), 25000); if (iframeRef.current) { iframeRef.current.src = ""; requestAnimationFrame(() => { if (iframeRef.current) iframeRef.current.src = resolvedUrl; }); } }}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-sm font-bold transition-colors"
+                      >
+                        <RefreshCw className="w-4 h-4" /> Retry
+                      </button>
+                      <a
+                        href={resolvedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-natural-accent text-white text-sm font-bold hover:opacity-85 transition-opacity"
+                      >
+                        <ExternalLink className="w-4 h-4" /> Open in new tab
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* SCORM iframe */}
             <iframe
               ref={iframeRef}
@@ -185,6 +237,10 @@ export function ScormViewer({
               className="flex-1 w-full border-none"
               allow="fullscreen"
               allowFullScreen
+              onLoad={() => {
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                setIframeState("loaded");
+              }}
             />
           </motion.div>
         )}
