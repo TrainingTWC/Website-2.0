@@ -72,7 +72,7 @@ export function useGeoAddress() {
             {
               headers: {
                 "User-Agent":
-                  "brewmatch-ai/3.0 (contact: support@thirdwavecoffee.in)",
+                  "website-2.0/3.0 (contact: support@thirdwavecoffee.in)",
               },
             }
           );
