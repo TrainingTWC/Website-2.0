@@ -7,7 +7,7 @@
  *  - Max 5 failed verify attempts per code before invalidation
  *  - Max 3 OTP send requests per email per 15-minute window
  *  - Password brute-force lockout: 5 failures → 15-minute lock per email
- *  - Emails sent via Resend from noreply@TWC.prismintelligence.in
+ *  - Emails sent via Resend from noreply@prismintelligence.in
  */
 
 import {
@@ -232,7 +232,7 @@ export const requestOTP = action({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TWC Admin <noreply@TWC.prismintelligence.in>",
+        from: "TWC Admin <noreply@prismintelligence.in>",
         to: [normalEmail],
         subject: `Your TWC Admin ${purposeLabel} Code`,
         html: `
