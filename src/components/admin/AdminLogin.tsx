@@ -70,7 +70,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
       await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
       lockedEmail.current = email.trim().toLowerCase();
       setStep("otp");
-      setInfo("Code sent. If no email arrives in 30 seconds, check Convex Dashboard → Functions → Logs for the code.");
+      setInfo("OTP Sent");
     } catch (signInErr: any) {
       // Try sign-up (new account)
       try {
@@ -81,7 +81,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
         await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
         lockedEmail.current = email.trim().toLowerCase();
         setStep("otp");
-        setInfo("A 6-digit code has been sent to your email.");
+        setInfo("OTP Sent");
       } catch (signUpErr: any) {
         await recordFailure({ email: email.trim().toLowerCase() }).catch(() => {});
         const msg =
@@ -119,10 +119,10 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
         // Force a re-render of the auth gate by doing a soft navigation
         window.location.reload();
       } else {
-        setError(result.error ?? "Invalid code.");
+        setError("Failed");
       }
     } catch (err: any) {
-      setError((err?.data as string) ?? err?.message ?? "Verification failed.");
+      setError("Failed");
     } finally {
       setLoading(false);
     }
@@ -134,9 +134,9 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setLoading(true);
     try {
       await requestOTP({ email: lockedEmail.current, purpose: "login" });
-      setInfo("New code sent! Check your email.");
+      setInfo("OTP Sent");
     } catch (err: any) {
-      setError((err?.data as string) ?? err?.message ?? "Failed to resend code.");
+      setError("Failed");
     } finally {
       setLoading(false);
     }

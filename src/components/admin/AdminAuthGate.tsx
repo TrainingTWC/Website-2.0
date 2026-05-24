@@ -101,9 +101,9 @@ function AuthenticatedShell({
     setOtpError(null);
     try {
       await requestOTP({ email: emailAddr, purpose: "login" });
-      setOtpInfo("Code sent. If you don't receive an email within 30 seconds, check your Convex Dashboard → Functions → Logs for the code (email setup pending).");
+      setOtpInfo("OTP Sent");
     } catch (err: any) {
-      setOtpError((err?.data as string) ?? err?.message ?? "Failed to send verification code.");
+      setOtpError("Failed");
       otpSentRef.current = false; // allow retry
     }
   }
@@ -128,10 +128,10 @@ function AuthenticatedShell({
         setVerifiedAt(now);
         setOtpVerified(true);
       } else {
-        setOtpError(result.error ?? "Invalid code.");
+        setOtpError("Failed");
       }
     } catch (err: any) {
-      setOtpError((err?.data as string) ?? err?.message ?? "Verification failed.");
+      setOtpError("Failed");
     } finally {
       setOtpLoading(false);
     }
