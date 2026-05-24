@@ -79,7 +79,7 @@ export function CmsVerifyProvider({
       await requestOTP({ email, purpose: "cms_action" });
       setOtpInfo("Code sent! Check your email.");
     } catch (err: any) {
-      setOtpError(err?.message ?? "Failed to send code.");
+      setOtpError((err?.data as string) ?? err?.message ?? "Failed to send code.");
     } finally {
       setSending(false);
     }
@@ -104,7 +104,7 @@ export function CmsVerifyProvider({
         setOtpError(result.error ?? "Invalid code.");
       }
     } catch (err: any) {
-      setOtpError(err?.message ?? "Verification failed.");
+      setOtpError((err?.data as string) ?? err?.message ?? "Verification failed.");
     } finally {
       setVerifying(false);
     }

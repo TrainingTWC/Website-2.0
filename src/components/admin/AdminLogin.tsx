@@ -122,7 +122,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
         setError(result.error ?? "Invalid code.");
       }
     } catch (err: any) {
-      setError(err?.message ?? "Verification failed.");
+      setError((err?.data as string) ?? err?.message ?? "Verification failed.");
     } finally {
       setLoading(false);
     }
@@ -136,7 +136,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
       await requestOTP({ email: lockedEmail.current, purpose: "login" });
       setInfo("New code sent! Check your email.");
     } catch (err: any) {
-      setError(err?.message ?? "Failed to resend code.");
+      setError((err?.data as string) ?? err?.message ?? "Failed to resend code.");
     } finally {
       setLoading(false);
     }
