@@ -1,5 +1,5 @@
 "use client";
-import { Info, Heart, Instagram, Mail, MapPin, Lock } from "lucide-react";
+import { Info, Heart, Instagram, Mail, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { asset } from "../lib/asset";
 import { hrefForNavTarget } from "../lib/navigation";
@@ -161,15 +161,13 @@ export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
           </span>
           <a
             href="/admin"
-            className="flex items-center gap-1 opacity-40 hover:opacity-70 transition-opacity"
-            title="Staff login"
+            className="flex items-center gap-1.5"
+            style={{ cursor: "default", textDecoration: "none", color: "inherit" }}
+            tabIndex={-1}
+            aria-hidden="true"
           >
-            <Lock className="w-3 h-3" />
-            <span>Staff</span>
-          </a>
-          <span className="flex items-center gap-1.5">
             Made with <Heart className="w-3 h-3 fill-red-400 text-red-400" /> in India
-          </span>
+          </a>
         </div>
       </div>
     </footer>
