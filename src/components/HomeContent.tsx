@@ -1409,15 +1409,8 @@ export default function HomeContent() {
           chapterItems={chapterNavItems}
         />
 
-        <MobileBottomNav
-          onOpenTI={openTI}
-          onOpenCart={openCart}
-          onNavTo={handleNavTo}
-          cartCount={cartCount}
-        />
-
         <div>
-          <main className="pt-20 md:pt-20 lg:pt-20 pb-28 sm:pb-12 px-0" id="storefront-view">
+          <main className="pt-20 md:pt-20 lg:pt-20 pb-8 px-0" id="storefront-view">
             <DemoStorefront products={products ?? []} onAddToCart={onAddToCart} />
           </main>
 
