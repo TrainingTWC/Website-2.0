@@ -24,6 +24,9 @@ import {
   type CareerBenefit,
   type CareerStory,
   type CareerStat,
+  type CoffeeSchoolCard,
+  type CoffeeSchool,
+  type OrientationModule,
   type PressItem,
   type FactItem,
 } from "../../lib/useAboutContent";
@@ -657,10 +660,134 @@ function CareersEditors({ onSave }: { onSave: () => void }) {
       <HeroEditor storageKey="about.careers.hero" defaults={AboutDefaults.careersHero} onSave={onSave} />
       <MarqueeEditor onSave={onSave} />
       <StatsEditor onSave={onSave} />
+      <CoffeeSchoolEditor onSave={onSave} />
+      <OrientationEditor onSave={onSave} />
       <RolesEditor onSave={onSave} />
       <BenefitsEditor onSave={onSave} />
       <StoriesEditor onSave={onSave} />
     </>
+  );
+}
+
+
+function CoffeeSchoolEditor({ onSave }: { onSave: () => void }) {
+  const { form, setForm, save, reset, status, error } = useContentForm<CoffeeSchool>(
+    "about.careers.coffeeSchool",
+    AboutDefaults.coffeeSchool as CoffeeSchool
+  );
+  async function handleSave() { if (await save()) onSave(); }
+  function updateCard(i: number, patch: Partial<CoffeeSchoolCard>) {
+    const next = form.cards.map((c, idx) => idx === i ? { ...c, ...patch } : c);
+    setForm({ ...form, cards: next });
+  }
+  function addCard() { setForm({ ...form, cards: [...form.cards, { number: String(form.cards.length + 1).padStart(2, "0"), title: "", description: "" }] }); }
+  function removeCard(i: number) { setForm({ ...form, cards: form.cards.filter((_, idx) => idx !== i) }); }
+  return (
+    <section className={PANEL}>
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h4 className="font-serif font-bold text-lg text-stone-800">Coffee School section</h4>
+          <p className="text-xs text-stone-500">The pink "3 paid weeks" band and its curriculum cards.</p>
+        </div>
+        <span className="text-[11px] uppercase tracking-wider text-stone-400 font-bold">about.careers.coffeeSchool</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className={LABEL}>Eyebrow</label>
+          <input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} className={INPUT} placeholder="Before day one" />
+        </div>
+        <div>
+          <label className={LABEL}>Headline (use \n for line break)</label>
+          <input value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} className={INPUT} placeholder="3 paid
+weeks." />
+        </div>
+        <div className="md:col-span-2">
+          <label className={LABEL}>Tagline</label>
+          <textarea value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} className={TEXTAREA} rows={2} />
+        </div>
+      </div>
+      <div className="space-y-3 mt-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold uppercase tracking-wider text-stone-500">Curriculum cards</p>
+          <button onClick={addCard} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-bold hover:bg-stone-700 transition-colors">
+            + Add card
+          </button>
+        </div>
+        {form.cards.map((card, i) => (
+          <div key={i} className="grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_32px] gap-3 items-start p-3 rounded-xl bg-stone-50 border border-stone-200">
+            <div>
+              <label className={LABEL}>No.</label>
+              <input value={card.number} onChange={(e) => updateCard(i, { number: e.target.value })} className={INPUT} placeholder="01" />
+            </div>
+            <div>
+              <label className={LABEL}>Title</label>
+              <input value={card.title} onChange={(e) => updateCard(i, { title: e.target.value })} className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Description</label>
+              <input value={card.description} onChange={(e) => updateCard(i, { description: e.target.value })} className={INPUT} />
+            </div>
+            <button onClick={() => removeCard(i)} className="mt-6 text-stone-400 hover:text-rose-500 transition-colors" title="Remove">✕</button>
+          </div>
+        ))}
+      </div>
+      <SaveBar status={status} error={error} onSave={handleSave} onReset={reset} />
+    </section>
+  );
+}
+
+function OrientationEditor({ onSave }: { onSave: () => void }) {
+  const { form, setForm, save, reset, status, error } = useContentForm<OrientationModule>(
+    "about.careers.orientation",
+    AboutDefaults.orientation as OrientationModule
+  );
+  async function handleSave() { if (await save()) onSave(); }
+  return (
+    <section className={PANEL}>
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h4 className="font-serif font-bold text-lg text-stone-800">Orientation / Training module</h4>
+          <p className="text-xs text-stone-500">The viewer card shown on the Careers page. Paste a hosted URL below to replace the built-in SCORM player.</p>
+        </div>
+        <span className="text-[11px] uppercase tracking-wider text-stone-400 font-bold">about.careers.orientation</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className={LABEL}>Section eyebrow</label>
+          <input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} className={INPUT} placeholder="Before you apply" />
+        </div>
+        <div>
+          <label className={LABEL}>Module title</label>
+          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={INPUT} placeholder="Company Orientation" />
+        </div>
+        <div>
+          <label className={LABEL}>Duration label</label>
+          <input value={form.durationLabel} onChange={(e) => setForm({ ...form, durationLabel: e.target.value })} className={INPUT} placeholder="~20 min" />
+        </div>
+        <div>
+          <label className={LABEL}>Launch URL</label>
+          <input
+            value={form.launchUrl}
+            onChange={(e) => setForm({ ...form, launchUrl: e.target.value })}
+            className={INPUT}
+            placeholder="https://cdn.example.com/orientation/index.html (leave blank for local)"
+          />
+          <p className="text-[11px] text-stone-400 mt-1">
+            Supports: Hosted SCORM, HTML, Articulate Storyline, Rise 360, or any hosted URL.
+            Leave blank to use the built-in /scorm/orientation/ package.
+          </p>
+        </div>
+        <div className="md:col-span-2">
+          <label className={LABEL}>Section intro text</label>
+          <textarea value={form.intro} onChange={(e) => setForm({ ...form, intro: e.target.value })} className={TEXTAREA} rows={2} />
+        </div>
+        <div className="md:col-span-2">
+          <label className={LABEL}>Module description (shown in the viewer card)</label>
+          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={TEXTAREA} rows={2} />
+        </div>
+      </div>
+      <SaveBar status={status} error={error} onSave={handleSave} onReset={reset} />
+    </section>
   );
 }
 

@@ -54,6 +54,29 @@ export interface CareerBenefit {
   iconColor: string;
 }
 
+export interface CoffeeSchoolCard {
+  number: string;
+  title: string;
+  description: string;
+}
+
+export interface CoffeeSchool {
+  eyebrow: string;
+  headline: string;
+  tagline: string;
+  cards: CoffeeSchoolCard[];
+}
+
+export interface OrientationModule {
+  eyebrow: string;
+  intro: string;
+  title: string;
+  description: string;
+  durationLabel: string;
+  /** Full URL to the training content. Empty string = use local /scorm/player.html */
+  launchUrl: string;
+}
+
 export interface CareerStat {
   value: string;
   label: string;
@@ -217,6 +240,26 @@ const DEFAULT_BENEFITS: CareerBenefit[] = [
   { iconKey: "Globe", title: "Sabbatical", detail: "Eligible every 5 years. Paid time to think.", color: "bg-emerald-50 border-emerald-200", iconColor: "text-emerald-500" },
 ];
 
+const DEFAULT_COFFEE_SCHOOL: CoffeeSchool = {
+  eyebrow: "Before day one",
+  headline: "3 paid\nweeks.",
+  tagline: "Origins. Roasting. Extraction. Service. You get paid the whole time. Rs 0 cost to you.",
+  cards: [
+    { number: "01", title: "Origins & farm", description: "Where beans come from, why it matters, how to talk about it." },
+    { number: "02", title: "Roast & grind", description: "Heat curves, extraction, what makes espresso go wrong." },
+    { number: "03", title: "Service & team", description: "Hospitality as a skill, not a personality type." },
+  ],
+};
+
+const DEFAULT_ORIENTATION: OrientationModule = {
+  eyebrow: "Before you apply",
+  intro: "We made a 20-min orientation anyone can take — no account, no email, no catch. Curious? Take it. Ready to apply? Take it first.",
+  title: "Company Orientation",
+  description: "Our sourcing philosophy, cafe standards, feedback culture, training programme, and what a genuinely good cup costs to make.",
+  durationLabel: "~20 min",
+  launchUrl: "",
+};
+
 const DEFAULT_CAREERS_MARQUEE: string[] = [
   "NO EXPERIENCE NEEDED",
   "DAY 1 PAID TRAINING",
@@ -329,6 +372,12 @@ export function useCareerBenefits(): CareerBenefit[] {
 export function useCareerStories(): CareerStory[] {
   return useListValue<CareerStory>("about.careers.stories", DEFAULT_STORIES);
 }
+export function useCoffeeSchool(): CoffeeSchool {
+  return useContentValue<CoffeeSchool>("about.careers.coffeeSchool", DEFAULT_COFFEE_SCHOOL);
+}
+export function useOrientationModule(): OrientationModule {
+  return useContentValue<OrientationModule>("about.careers.orientation", DEFAULT_ORIENTATION);
+}
 export function useCareerMarquee(): string[] {
   return useListValue<string>("about.careers.marquee", DEFAULT_CAREERS_MARQUEE);
 }
@@ -359,6 +408,8 @@ export const AboutDefaults = {
   stories: DEFAULT_STORIES,
   careersMarquee: DEFAULT_CAREERS_MARQUEE,
   careersStats: DEFAULT_CAREERS_STATS,
+  coffeeSchool: DEFAULT_COFFEE_SCHOOL,
+  orientation: DEFAULT_ORIENTATION,
   newsroomHero: DEFAULT_NEWSROOM_HERO,
   press: DEFAULT_PRESS,
   facts: DEFAULT_FACTS,

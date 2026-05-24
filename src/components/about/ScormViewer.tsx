@@ -50,15 +50,22 @@ const STATUS_BADGE: Record<Status, { label: string; style: string } | null> = {
 
 export function ScormViewer({
   launchFile = "story.html",
+  launchUrl,
   durationLabel = "~20 min",
   title = "Company Orientation",
   description = "Everything we expect you to know before day one — our sourcing philosophy, cafe standards, feedback culture, and what a genuinely good cup costs to make. Self-paced. No sign-in required.",
 }: {
   launchFile?: string;
+  launchUrl?: string;
   durationLabel?: string;
   title?: string;
   description?: string;
 }) {
+  // If launchUrl is provided (externally hosted), use it directly in the iframe.
+  // Otherwise fall back to the local SCORM player with launchFile.
+  const resolvedUrl = launchUrl
+    ? launchUrl
+    : `/scorm/player.html?launch=${encodeURIComponent(launchFile ?? "story.html")}`;
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("not_started");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -102,7 +109,6 @@ export function ScormViewer({
 
   const badge = STATUS_BADGE[status];
   const ctaLabel = STATUS_LABEL[status];
-  const playerUrl = `/scorm/player.html?launch=${encodeURIComponent(launchFile)}`;
 
   return (
     <>
@@ -174,7 +180,7 @@ export function ScormViewer({
             {/* SCORM iframe */}
             <iframe
               ref={iframeRef}
-              src={playerUrl}
+              src={resolvedUrl}
               title={title}
               className="flex-1 w-full border-none"
               allow="fullscreen"

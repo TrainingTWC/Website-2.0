@@ -15,6 +15,8 @@ import {
   useCareerStories,
   useCareerMarquee,
   useCareerStats,
+  useCoffeeSchool,
+  useOrientationModule,
 } from "@/src/lib/useAboutContent";
 
 const BENEFIT_ICONS: Record<string, any> = {
@@ -84,6 +86,8 @@ export default function CareersPage() {
   const stories = useCareerStories();
   const marqueeItems = useCareerMarquee();
   const statTiles = useCareerStats();
+  const coffeeSchool = useCoffeeSchool();
+  const orientation = useOrientationModule();
   const [filter, setFilter] = useState<TeamFilter>("All");
   const visibleRoles =
     filter === "All" ? roles : roles.filter((r) => r.team === filter);
@@ -277,28 +281,26 @@ export default function CareersPage() {
                 className="text-[10px] font-bold uppercase tracking-[0.45em] opacity-70"
                 style={{ color: "var(--about-accent-ink)" }}
               >
-                Before day one
+                {coffeeSchool.eyebrow}
               </p>
               <h2
                 className="font-serif font-bold text-7xl sm:text-9xl leading-[0.88] mt-4"
                 style={{ color: "var(--about-accent-ink)" }}
               >
-                3 paid<br />weeks.
+                {coffeeSchool.headline.split("\n").map((line, i) => (
+                  <span key={i}>{line}{i < coffeeSchool.headline.split("\n").length - 1 && <br />}</span>
+                ))}
               </h2>
               <p
                 className="mt-6 text-lg opacity-75 max-w-sm leading-relaxed"
                 style={{ color: "var(--about-accent-ink)" }}
               >
-                Origins. Roasting. Extraction. Service. You get paid the whole time. Rs 0 cost to you.
+                {coffeeSchool.tagline}
               </p>
             </RevealOnScroll>
             <div className="grid grid-cols-1 gap-3">
-              {([
-                ["01", "Origins & farm", "Where beans come from, why it matters, how to talk about it."],
-                ["02", "Roast & grind", "Heat curves, extraction, what makes espresso go wrong."],
-                ["03", "Service & team", "Hospitality as a skill, not a personality type."],
-              ] as const).map(([n, title, desc], i) => (
-                <RevealOnScroll key={n} delay={i * 0.06}>
+              {coffeeSchool.cards.map((card, i) => (
+                <RevealOnScroll key={card.number + i} delay={i * 0.06}>
                   <div
                     className="rounded-xl p-5 border"
                     style={{
@@ -310,19 +312,19 @@ export default function CareersPage() {
                       className="font-serif font-bold text-3xl opacity-30"
                       style={{ color: "var(--about-accent-ink)" }}
                     >
-                      {n}
+                      {card.number}
                     </span>
                     <p
                       className="font-bold text-lg mt-1"
                       style={{ color: "var(--about-accent-ink)" }}
                     >
-                      {title}
+                      {card.title}
                     </p>
                     <p
                       className="text-sm mt-1 opacity-65 leading-relaxed"
                       style={{ color: "var(--about-accent-ink)" }}
                     >
-                      {desc}
+                      {card.description}
                     </p>
                   </div>
                 </RevealOnScroll>
@@ -382,22 +384,22 @@ export default function CareersPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <RevealOnScroll>
             <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-natural-accent">
-              Before you apply
+              {orientation.eyebrow}
             </span>
             <h2 className="font-serif font-bold text-4xl sm:text-5xl mt-3 mb-4 leading-[1.05]">
               Know what you&apos;re walking into.
             </h2>
             <p className="text-natural-text/60 max-w-xl mb-10 leading-relaxed">
-              We made a 20-min orientation anyone can take — no account, no email, no catch.
-              Curious? Take it. Ready to apply? Take it first.
+              {orientation.intro}
             </p>
           </RevealOnScroll>
           <RevealOnScroll>
             <ScormViewer
               launchFile="story.html"
-              durationLabel="~20 min"
-              title="Company Orientation"
-              description="Our sourcing philosophy, cafe standards, feedback culture, training programme, and what a genuinely good cup costs to make."
+              launchUrl={orientation.launchUrl || undefined}
+              durationLabel={orientation.durationLabel}
+              title={orientation.title}
+              description={orientation.description}
             />
           </RevealOnScroll>
         </div>
