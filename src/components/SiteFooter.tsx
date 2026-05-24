@@ -1,5 +1,5 @@
 "use client";
-import { Info, Heart, Instagram, Mail, MapPin } from "lucide-react";
+import { Info, Heart, Instagram, Mail, MapPin, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { asset } from "../lib/asset";
 import { hrefForNavTarget } from "../lib/navigation";
@@ -159,6 +159,14 @@ export function SiteFooter({ onNavigate, onScrollTo }: SiteFooterProps) {
           <span className="flex items-center gap-1.5">
             <Info className="w-3 h-3" /> © {new Date().getFullYear()} Third Wave Coffee. All rights reserved.
           </span>
+          <a
+            href="/admin"
+            className="flex items-center gap-1 opacity-40 hover:opacity-70 transition-opacity"
+            title="Staff login"
+          >
+            <Lock className="w-3 h-3" />
+            <span>Staff</span>
+          </a>
           <span className="flex items-center gap-1.5">
             Made with <Heart className="w-3 h-3 fill-red-400 text-red-400" /> in India
           </span>
