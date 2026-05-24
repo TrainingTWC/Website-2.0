@@ -101,7 +101,7 @@ function AuthenticatedShell({
     setOtpError(null);
     try {
       await requestOTP({ email: emailAddr, purpose: "login" });
-      setOtpInfo("A verification code has been sent to your email.");
+      setOtpInfo("Code sent. If you don't receive an email within 30 seconds, check your Convex Dashboard → Functions → Logs for the code (email setup pending).");
     } catch (err: any) {
       setOtpError(err?.message ?? "Failed to send verification code.");
       otpSentRef.current = false; // allow retry

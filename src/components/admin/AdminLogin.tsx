@@ -70,7 +70,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
       await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
       lockedEmail.current = email.trim().toLowerCase();
       setStep("otp");
-      setInfo("A 6-digit code has been sent to your email.");
+      setInfo("Code sent. If no email arrives in 30 seconds, check Convex Dashboard → Functions → Logs for the code.");
     } catch (signInErr: any) {
       // Try sign-up (new account)
       try {

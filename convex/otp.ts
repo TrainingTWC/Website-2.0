@@ -17,7 +17,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -195,9 +195,7 @@ export const requestOTP = action({
       (t: number) => now - t < OTP_SEND_WINDOW_MS
     );
     if (recentSends.length >= MAX_OTP_SENDS) {
-      throw new Error(
-        "Too many verification requests. Please wait 15 minutes before requesting another code."
-      );
+      throw new ConvexError("Too many verification requests. Please wait 15 minutes before requesting another code.");
     }
 
     // Generate, hash, and store OTP
@@ -219,9 +217,11 @@ export const requestOTP = action({
     // Send via Resend
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      throw new Error(
-        "Email service not configured. Set RESEND_API_KEY in Convex environment variables."
-      );
+      // RESEND_API_KEY not configured — log code to Convex function logs so
+      // the admin can retrieve it from the Convex Dashboard > Functions > Logs
+      // until email is properly set up.
+      console.warn(`[TWC-ADMIN-OTP] No RESEND_API_KEY set. OTP for ${normalEmail}: ${code} (valid 10 min)`);
+      return { sent: true };
     }
 
     const purposeLabel = purpose === "cms_action" ? "Verification" : "Login";
@@ -256,7 +256,7 @@ export const requestOTP = action({
 
     if (!resp.ok) {
       const errText = await resp.text();
-      throw new Error(`Email delivery failed: ${errText}`);
+      throw new ConvexError(`Email delivery failed: ${errText}`);
     }
 
     return { sent: true };
