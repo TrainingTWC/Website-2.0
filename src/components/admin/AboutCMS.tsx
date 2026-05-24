@@ -799,12 +799,26 @@ function MarqueeEditor({ onSave }: { onSave: () => void }) {
   const [text, setText] = useState(items.join("\n"));
   // keep textarea in sync when convex data hydrates
   useEffect(() => { setText(items.join("\n")); }, [items.join("\u0001")]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Speed control — separate Convex key
+  const speedData = useQuery(convexApi.siteContent.get, { key: "about.careers.marqueeSpeed" });
+  const setContent = useMutation(convexApi.siteContent.set);
+  const [speed, setSpeed] = useState(28);
+  useEffect(() => {
+    const v = speedData?.value;
+    if (typeof v === "number") setSpeed(v);
+  }, [speedData]);
+
   async function handleSave() {
     const next = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     setItems(next);
-    // give state a tick then save
+    await setContent({ key: "about.careers.marqueeSpeed", json: speed });
     setTimeout(async () => { if (await save()) onSave(); }, 0);
   }
+
+  // Speed label helper: lower duration = faster scroll
+  const speedLabel = speed <= 16 ? "Very fast" : speed <= 24 ? "Fast" : speed <= 35 ? "Medium" : speed <= 50 ? "Slow" : "Very slow";
+
   return (
     <section className={PANEL}>
       <div className="flex items-baseline justify-between">
@@ -821,7 +835,30 @@ function MarqueeEditor({ onSave }: { onSave: () => void }) {
         rows={Math.max(6, text.split(/\r?\n/).length + 1)}
         placeholder={"NO EXPERIENCE NEEDED\nDAY 1 PAID TRAINING\n..."}
       />
-      <SaveBar status={status} error={error} onSave={handleSave} onReset={() => { reset(); setText((AboutDefaults.careersMarquee as string[]).join("\n")); }} />
+
+      {/* Speed control */}
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-stone-700 uppercase tracking-wide">Scroll speed</label>
+          <span className="text-xs font-bold text-natural-accent px-2 py-0.5 rounded-full bg-natural-accent/10">{speedLabel}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-stone-400 font-bold w-8 text-right">Fast</span>
+          <input
+            type="range"
+            min={10}
+            max={70}
+            step={2}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="flex-1 h-1.5 accent-natural-accent cursor-pointer"
+          />
+          <span className="text-[10px] text-stone-400 font-bold w-8">Slow</span>
+        </div>
+        <p className="text-[10px] text-stone-400">Current: {speed}s per loop. Lower = faster scroll.</p>
+      </div>
+
+      <SaveBar status={status} error={error} onSave={handleSave} onReset={() => { reset(); setText((AboutDefaults.careersMarquee as string[]).join("\n")); setSpeed(28); }} />
     </section>
   );
 }

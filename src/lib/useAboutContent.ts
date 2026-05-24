@@ -381,6 +381,10 @@ export function useOrientationModule(): OrientationModule {
 export function useCareerMarquee(): string[] {
   return useListValue<string>("about.careers.marquee", DEFAULT_CAREERS_MARQUEE);
 }
+
+export function useCareerMarqueeSpeed(): number {
+  return useContentValue<number>("about.careers.marqueeSpeed", 28);
+}
 export function useCareerStats(): CareerStat[] {
   return useListValue<CareerStat>("about.careers.stats", DEFAULT_CAREERS_STATS);
 }

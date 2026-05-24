@@ -14,6 +14,7 @@ import {
   useCareerBenefits,
   useCareerStories,
   useCareerMarquee,
+  useCareerMarqueeSpeed,
   useCareerStats,
   useCoffeeSchool,
   useOrientationModule,
@@ -85,6 +86,7 @@ export default function CareersPage() {
   const benefitTiles = useCareerBenefits();
   const stories = useCareerStories();
   const marqueeItems = useCareerMarquee();
+  const marqueeSpeed = useCareerMarqueeSpeed();
   const statTiles = useCareerStats();
   const coffeeSchool = useCoffeeSchool();
   const orientation = useOrientationModule();
@@ -114,6 +116,7 @@ export default function CareersPage() {
         <MarqueeStrip
           items={marqueeItems}
           variant="accent"
+          speed={marqueeSpeed}
         />
       </>
 
