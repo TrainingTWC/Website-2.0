@@ -225,7 +225,10 @@ export default defineSchema({
       v.literal("superadmin"),
       v.literal("admin"),
       v.literal("editor"),
-      v.literal("viewer")
+      v.literal("viewer"),
+      v.literal("hr"),
+      v.literal("marketing"),
+      v.literal("pr")
     ),
     permissions: v.object({
       overview: v.boolean(),

@@ -13,6 +13,10 @@
  * nav items. One control surface, no hunting.
  */
 import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+
+const convexApi = api as any;
 import {
   Home as HomeIcon,
   Newspaper,
@@ -49,21 +53,35 @@ const TABS: TabDef[] = [
   { id: "newsroom",     label: "Newsroom",      hint: "Press, releases, facts",          icon: <Megaphone className="w-4 h-4" /> },
 ];
 
+const ROLE_TAB_ALLOW: Partial<Record<string, TabId[]>> = {
+  hr:        ["careers"],
+  marketing: ["home", "third-circle", "story", "coffee"],
+  pr:        ["newsroom"],
+};
+
 export function UnifiedCMS() {
+  const me = useQuery(convexApi.admins.me) as any;
+  const role: string = me?.admin?.role ?? "admin";
+  const allowedIds = ROLE_TAB_ALLOW[role];
+  const visibleTabs = allowedIds ? TABS.filter((t) => allowedIds.includes(t.id)) : TABS;
+
   const [active, setActive] = useState<TabId>("home");
-  const activeDef = TABS.find((t) => t.id === active)!;
+  const effectiveActive: TabId = visibleTabs.some((t) => t.id === active)
+    ? active
+    : (visibleTabs[0]?.id ?? "home");
+  const activeDef = visibleTabs.find((t) => t.id === effectiveActive) ?? TABS[0];
 
   return (
     <div className="relative">
       {/* Top tab strip (sticky) */}
       <div className="sticky top-0 z-20 -mx-4 px-4 py-3 mb-1 border-b border-stone-200/70 bg-white/70 backdrop-blur-xl">
         <div className="flex flex-wrap gap-2">
-          {TABS.map((t) => {
-            const on = active === t.id;
+          {visibleTabs.map((t) => {
+            const on = effectiveActive === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setActive(t.id)}
+                onClick={() => setActive(t.id as TabId)}
                 title={t.hint}
                 className={
                   "group inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold tracking-wide border transition " +
@@ -87,12 +105,12 @@ export function UnifiedCMS() {
 
       {/* Active editor */}
       <div className="relative">
-        {active === "home" && <HomeContentCMS />}
-        {active === "third-circle" && <EditorialCMS />}
-        {active === "story" && <AboutCMS page="story" />}
-        {active === "coffee" && <AboutCMS page="coffee" />}
-        {active === "careers" && <AboutCMS page="careers" />}
-        {active === "newsroom" && <AboutCMS page="newsroom" />}
+        {effectiveActive === "home" && <HomeContentCMS />}
+        {effectiveActive === "third-circle" && <EditorialCMS />}
+        {effectiveActive === "story" && <AboutCMS page="story" />}
+        {effectiveActive === "coffee" && <AboutCMS page="coffee" />}
+        {effectiveActive === "careers" && <AboutCMS page="careers" />}
+        {effectiveActive === "newsroom" && <AboutCMS page="newsroom" />}
       </div>
     </div>
   );

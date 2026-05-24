@@ -53,10 +53,23 @@ const VIEWER_PERMS = {
   settings: false,
 };
 
-function permsForRole(role: "superadmin" | "admin" | "editor" | "viewer") {
+const CMS_ONLY_PERMS = {
+  overview: false,
+  inventory: false,
+  orders: false,
+  analytics: false,
+  editorial: false,
+  home: true,
+  rules: false,
+  customers: false,
+  settings: false,
+};
+
+function permsForRole(role: "superadmin" | "admin" | "editor" | "viewer" | "hr" | "marketing" | "pr") {
   if (role === "superadmin") return FULL_PERMS;
   if (role === "admin") return DEFAULT_ADMIN_PERMS;
   if (role === "editor") return EDITOR_PERMS;
+  if (role === "hr" || role === "marketing" || role === "pr") return CMS_ONLY_PERMS;
   return VIEWER_PERMS;
 }
 
@@ -223,7 +236,10 @@ export const invite = mutation({
     role: v.union(
       v.literal("admin"),
       v.literal("editor"),
-      v.literal("viewer")
+      v.literal("viewer"),
+      v.literal("hr"),
+      v.literal("marketing"),
+      v.literal("pr")
     ),
     permissions: v.optional(
       v.object({
@@ -290,7 +306,10 @@ export const update = mutation({
         v.literal("superadmin"),
         v.literal("admin"),
         v.literal("editor"),
-        v.literal("viewer")
+        v.literal("viewer"),
+        v.literal("hr"),
+        v.literal("marketing"),
+        v.literal("pr")
       )
     ),
     permissions: v.optional(

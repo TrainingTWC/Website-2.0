@@ -54,7 +54,7 @@ import type { AdminMe } from "./AdminAuthGate";
 
 const convexApi = api as any;
 
-type Role = "superadmin" | "admin" | "editor" | "viewer";
+type Role = "superadmin" | "admin" | "editor" | "viewer" | "hr" | "marketing" | "pr";
 type Perms = {
   overview: boolean;
   inventory: boolean;
@@ -71,7 +71,10 @@ const ROLE_META: Record<Role, { label: string; icon: any; tone: string }> = {
   superadmin: { label: "Superadmin", icon: Crown, tone: "bg-amber-100 text-amber-700 border-amber-200" },
   admin: { label: "Admin", icon: ShieldCheck, tone: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   editor: { label: "Editor", icon: ScrollText, tone: "bg-sky-100 text-sky-700 border-sky-200" },
-  viewer: { label: "Viewer", icon: Eye, tone: "bg-stone-100 text-stone-700 border-stone-200" },
+  viewer:    { label: "Viewer",    icon: Eye,       tone: "bg-stone-100 text-stone-700 border-stone-200"    },
+  hr:        { label: "HR",         icon: Users,     tone: "bg-violet-100 text-violet-700 border-violet-200" },
+  marketing: { label: "Marketing",  icon: Globe,     tone: "bg-orange-100 text-orange-700 border-orange-200" },
+  pr:        { label: "PR",         icon: Newspaper, tone: "bg-teal-100 text-teal-700 border-teal-200"       },
 };
 
 export function SuperAdminDashboard({ me }: { me: AdminMe }) {
@@ -364,7 +367,7 @@ function AdminRow({ admin }: { admin: any }) {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-500 mb-2">Role</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {(["admin", "editor", "viewer"] as Role[]).map((r) => (
+                  {(["admin", "editor", "viewer", "hr", "marketing", "pr"] as Role[]).map((r) => (
                     <button
                       key={r}
                       disabled={admin.role === "superadmin"}
@@ -439,7 +442,7 @@ function AdminRow({ admin }: { admin: any }) {
 function InviteAdminModal({ onClose }: { onClose: () => void }) {
   const invite = useMutation(convexApi.admins.invite);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "editor" | "viewer">("admin");
+  const [role, setRole] = useState<"admin" | "editor" | "viewer" | "hr" | "marketing" | "pr">("admin");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -498,7 +501,7 @@ function InviteAdminModal({ onClose }: { onClose: () => void }) {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-500 mb-2">Role</p>
             <div className="grid grid-cols-3 gap-2">
-              {(["admin", "editor", "viewer"] as const).map((r) => {
+              {(["admin", "editor", "viewer", "hr", "marketing", "pr"] as const).map((r) => {
                 const Meta = ROLE_META[r];
                 const Icon = Meta.icon;
                 return (

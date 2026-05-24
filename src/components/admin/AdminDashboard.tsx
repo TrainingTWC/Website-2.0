@@ -167,9 +167,10 @@ function formDataToProductPayload(form: ProductFormData) {
 
 // ─── Root dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard({ me }: { me?: AdminMe }) {
+  const isCmsOnly = me?.admin?.role === "hr" || me?.admin?.role === "marketing" || me?.admin?.role === "pr";
   const [activeTab, setActiveTab] = useState<
     "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "about" | "settings"
-  >("overview");
+  >(isCmsOnly ? "home" : "overview");
 
   const products = (useQuery(api.products.list) ?? []) as any[];
   const orders = useQuery((api as any).orders.listOrders) as any[] | undefined;
@@ -201,30 +202,32 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
     return notes;
   }, [products, orders]);
 
-  const navGroups: NavGroup[] = [
-    {
-      label: "Workspace",
-      items: [
-        { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-        { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
-        { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
-      ],
-    },
-    {
-      label: "Catalog",
-      items: [
-        { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
-        { id: "home", label: "CMS", icon: <Globe className="w-4 h-4" /> },
-      ],
-    },
-    {
-      label: "System",
-      items: [
-        { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
-        { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
-      ],
-    },
-  ];
+  const navGroups: NavGroup[] = isCmsOnly
+    ? [{ label: "Content", items: [{ id: "home", label: "CMS", icon: <Globe className="w-4 h-4" /> }] }]
+    : [
+        {
+          label: "Workspace",
+          items: [
+            { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+            { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+            { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
+          ],
+        },
+        {
+          label: "Catalog",
+          items: [
+            { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
+            { id: "home", label: "CMS", icon: <Globe className="w-4 h-4" /> },
+          ],
+        },
+        {
+          label: "System",
+          items: [
+            { id: "rules", label: "Logic Rules", icon: <Search className="w-4 h-4" /> },
+            { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
+          ],
+        },
+      ];
 
   const titles: Record<typeof activeTab, { title: string; subtitle: string }> = {
     overview: { title: "Dashboard", subtitle: "Bird's-eye view of revenue, orders, inventory and customers." },
@@ -251,7 +254,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
       user={{
         name: me?.name ?? me?.email?.split("@")[0] ?? "Merchant",
         email: me?.email ?? "",
-        role: me?.admin?.role === "superadmin" ? "Superadmin" : "Admin",
+        role: ({ superadmin: "Superadmin", admin: "Admin", editor: "Editor", viewer: "Viewer", hr: "HR", marketing: "Marketing", pr: "PR" } as Record<string, string>)[me?.admin?.role ?? "admin"] ?? "Admin",
       }}
       notifications={notifications}
       workspaceTitle={meta.title}

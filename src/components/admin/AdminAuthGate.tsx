@@ -14,7 +14,7 @@ export type AdminMe = {
   name: string | null;
   admin: {
     _id: string;
-    role: "superadmin" | "admin" | "editor" | "viewer";
+    role: "superadmin" | "admin" | "editor" | "viewer" | "hr" | "marketing" | "pr";
     permissions: Record<string, boolean>;
     active: boolean;
     invitedAt: number;
