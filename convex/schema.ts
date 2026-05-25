@@ -466,4 +466,18 @@ export default defineSchema({
   })
     .index("by_slot_key", ["slot", "slotKey"])
     .index("by_status_slot", ["status", "slot"]),
+
+  // ── External API keys for data-export integrations ──────────────────────
+  // Only the SHA-256 hash of the full key is ever stored; the raw key is
+  // shown exactly once at creation time and cannot be recovered.
+  // Managed by superadmins only. See convex/apiKeys.ts + convex/http.ts.
+  apiKeys: defineTable({
+    label: v.string(),           // human-readable name, e.g. "Analytics App"
+    keyPrefix: v.string(),       // first 20 chars of raw key — shown in UI for identification
+    keyHash: v.string(),         // SHA-256 hex of the full key — NEVER the key itself
+    createdBy: v.string(),       // superadmin email that created it
+    createdAt: v.number(),       // Unix ms
+    lastUsedAt: v.optional(v.number()), // Unix ms, updated on every export request
+    active: v.boolean(),
+  }).index("by_keyHash", ["keyHash"]),
 });
