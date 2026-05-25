@@ -72,38 +72,47 @@ export function UnifiedCMS() {
   const activeDef = visibleTabs.find((t) => t.id === effectiveActive) ?? TABS[0];
 
   return (
-    <div className="relative">
-      {/* Top tab strip (sticky) */}
-      <div className="sticky top-0 z-20 -mx-4 px-4 py-3 mb-1 border-b border-stone-200/70 bg-white/70 backdrop-blur-xl">
-        <div className="flex flex-wrap gap-2">
-          {visibleTabs.map((t) => {
-            const on = effectiveActive === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setActive(t.id as TabId)}
-                title={t.hint}
-                className={
-                  "group inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold tracking-wide border transition " +
-                  (on
-                    ? "bg-stone-900 text-white border-stone-900 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.35)]"
-                    : "bg-white/80 text-stone-700 border-stone-200 hover:bg-white hover:border-stone-300")
-                }
-              >
-                <span className={on ? "text-white" : "text-stone-500 group-hover:text-stone-700"}>
-                  {t.icon}
-                </span>
-                <span>{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-stone-400 font-semibold">
-          Editing · {activeDef.label} <span className="text-stone-300">— {activeDef.hint}</span>
+    <div className="space-y-0 rounded-2xl border border-stone-200 bg-white overflow-hidden">
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div className="px-5 py-4 border-b border-stone-100 bg-stone-50/60">
+        <h2 className="text-base font-bold text-stone-900">Content Editor</h2>
+        <p className="text-xs text-stone-500 mt-0.5">
+          Edit every public-facing page from one place.
         </p>
       </div>
 
-      {/* Active editor */}
+      {/* ── Tab bar ─────────────────────────────────────────────────────── */}
+      <div className="flex gap-0.5 px-4 pt-3 border-b border-stone-100 overflow-x-auto bg-white">
+        {visibleTabs.map((t) => {
+          const on = effectiveActive === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActive(t.id as TabId)}
+              title={t.hint}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 whitespace-nowrap transition-colors ${
+                on
+                  ? "border-stone-800 text-stone-900 bg-white"
+                  : "border-transparent text-stone-500 hover:text-stone-700 hover:bg-stone-50"
+              }`}
+            >
+              <span className={on ? "text-stone-700" : "text-stone-400"}>{t.icon}</span>
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Section description bar ─────────────────────────────────────── */}
+      <div className="px-5 py-3 border-b border-stone-100 bg-white flex items-center gap-2">
+        <span className="text-stone-400">{activeDef.icon}</span>
+        <div>
+          <span className="text-sm font-semibold text-stone-800">{activeDef.label}</span>
+          <span className="text-xs text-stone-400 ml-2">— {activeDef.hint}</span>
+        </div>
+      </div>
+
+      {/* ── Active editor ────────────────────────────────────────────────── */}
       <div className="relative">
         {effectiveActive === "home" && <HomeContentCMS />}
         {effectiveActive === "third-circle" && <EditorialCMS />}
