@@ -121,3 +121,44 @@ export const backfillTaxonomy = mutation({
     return { scanned: products.length, updated, byBucket };
   },
 });
+
+/**
+ * Repoint all product imageUrls from the old GitHub Pages repo URL
+ * (trainingtwc.github.io/brewmatch-ai/) to the stable custom domain
+ * (thirdwavecoffee.prismintelligence.in/).
+ *
+ * Safe to re-run — skips products whose imageUrl is already on the
+ * custom domain or doesn't contain the old repo path.
+ *
+ * Also patches any siteContent rows whose stored JSON contains the old URL
+ * (e.g. banner slides, chapter images).
+ */
+export const patchImageBaseUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const OLD = "https://trainingtwc.github.io/brewmatch-ai/";
+    const NEW = "https://thirdwavecoffee.prismintelligence.in/";
+
+    // ── Products ────────────────────────────────────────────────────────────
+    const products = await ctx.db.query("products").collect();
+    let productsPatched = 0;
+    for (const p of products) {
+      if (typeof p.imageUrl === "string" && p.imageUrl.includes(OLD)) {
+        await ctx.db.patch(p._id, { imageUrl: p.imageUrl.replaceAll(OLD, NEW) });
+        productsPatched++;
+      }
+    }
+
+    // ── siteContent (banner slides, chapter images) ──────────────────────────
+    const rows = await ctx.db.query("siteContent").collect();
+    let contentPatched = 0;
+    for (const row of rows) {
+      if (typeof row.json === "string" && row.json.includes(OLD)) {
+        await ctx.db.patch(row._id, { json: row.json.replaceAll(OLD, NEW) });
+        contentPatched++;
+      }
+    }
+
+    return { productsPatched, contentPatched };
+  },
+});

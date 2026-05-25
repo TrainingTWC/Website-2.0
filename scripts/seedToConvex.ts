@@ -14,10 +14,10 @@ console.log(`Targeting: ${convexUrl}`);
 const client = new ConvexHttpClient(convexUrl);
 
 // ── Image serving ────────────────────────────────────────────────────────────
-// Images are served from GitHub Pages CDN (Fastly) — not Convex file storage.
+// Images are served from the stable custom domain CDN — not Convex file storage.
 // This keeps Convex File Bandwidth at zero regardless of traffic volume.
-// Update this if the GitHub Pages URL changes.
-const GITHUB_PAGES_BASE = "https://trainingtwc.github.io/brewmatch-ai";
+// Using the custom domain means this URL never breaks on GitHub repo renames.
+const GITHUB_PAGES_BASE = "https://thirdwavecoffee.prismintelligence.in";
 
 // Optimized WebP manifest for LQIP blur hashes
 const IMAGE_DIR = path.join(process.cwd(), "public", "optimized");
