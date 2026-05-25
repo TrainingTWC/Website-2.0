@@ -18,3 +18,22 @@
 
 ---
 *v1.0 completed: 2026-05-13*
+
+## v8.0 — CRM & Order Fulfillment (in planning)
+
+**Goal:** Make every order from add-to-cart to delivered (or refunded) observable, recoverable, and tied to a real customer record we own.
+
+**Scope (3 phases):**
+- Phase 1 — CRM Data Foundation (customers, addresses, events, segmentation)
+- Phase 2 — Order Lifecycle Hardening (draft→reservation→payment→fulfillment state machine, returns, refunds, Razorpay webhook)
+- Phase 3 — Comms & Observability (notifications, abandoned-cart recovery, ops dashboard, metrics)
+
+**Artifacts:**
+- `.planning/milestones/v8.0-REQUIREMENTS.md` — 35 requirements across 3 pillars
+- `.planning/milestones/v8.0-FAILURE-MODES.md` — exhaustive catalog of every failure mode in the flow with mitigations
+- `.planning/milestones/v8.0-DATA-CAPTURE.md` — event schema, derived metrics, retention policy
+- `.planning/milestones/v8.0-ROADMAP.md` — phase breakdown with success criteria and threat models
+
+**Status:** Requirements + roadmap drafted 2026-05-25 — awaiting stakeholder review before `/gsd-plan-phase 1`.
+
+**Validation gate:** See "Validation Gate Before Phase 1 Begins" in `v8.0-ROADMAP.md` — pincode data source, notification providers, Razorpay webhook secret, and `submitOrder` deprecation decision must be locked before planning starts.
