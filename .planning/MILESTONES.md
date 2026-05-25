@@ -32,6 +32,7 @@
 - `.planning/milestones/v8.0-REQUIREMENTS.md` — 35 requirements across 3 pillars
 - `.planning/milestones/v8.0-FAILURE-MODES.md` — exhaustive catalog of every failure mode in the flow with mitigations
 - `.planning/milestones/v8.0-DATA-CAPTURE.md` — event schema, derived metrics, retention policy
+- `.planning/milestones/v8.0-ANALYTICS-CATALOG.md` — 122 behavioural data points + 20 derived friction metrics (dropouts, abandonment, friction, point-of-dropout)
 - `.planning/milestones/v8.0-ROADMAP.md` — phase breakdown with success criteria and threat models
 
 **Status:** Requirements + roadmap drafted 2026-05-25 — awaiting stakeholder review before `/gsd-plan-phase 1`.
