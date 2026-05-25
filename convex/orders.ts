@@ -139,7 +139,21 @@ export const submitOrder = mutation({
         (!discount.expiresAt || discount.expiresAt > Date.now()) &&
         (discount.maxUses === undefined || discount.usageCount < discount.maxUses);
 
-      if (isValid && discount) {
+      // Enforce firstOrderOnly server-side (DISC-FIRST-ORDER-01).
+      // The client-facing validateDiscount query does this check too, but
+      // submitOrder is the authoritative enforcement point.
+      let firstOrderOk = true;
+      if (isValid && discount.firstOrderOnly) {
+        const priorOrder = await ctx.db
+          .query("orders")
+          .withIndex("by_customerPhone", (q) =>
+            q.eq("customerPhone", args.customer.phone)
+          )
+          .first();
+        if (priorOrder) firstOrderOk = false;
+      }
+
+      if (isValid && firstOrderOk && discount) {
         const savings =
           discount.discountType === "percent"
             ? Math.round(serverSubtotal * (discount.amount / 100))
@@ -289,8 +303,13 @@ export const addOrderNote = mutation({
       .first();
     if (!order) throw new ConvexError("Order not found.");
     const notes = order.notes ?? [];
+    // Cap notes per order at 50 to prevent unbounded growth (NOTE-SPAM-01).
+    if (notes.length >= 50) throw new ConvexError("Note limit reached for this order.");
+    // Cap message length.
+    const safeMessage = args.message.trim().slice(0, 1000);
+    if (!safeMessage) throw new ConvexError("Message cannot be empty.");
     await ctx.db.patch(order._id, {
-      notes: [...notes, { role: args.role, message: args.message, ts: Date.now() }],
+      notes: [...notes, { role: args.role, message: safeMessage, ts: Date.now() }],
     });
   },
 });

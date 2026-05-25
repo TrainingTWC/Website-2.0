@@ -71,7 +71,12 @@ export const trackBatch = mutation({
     for (const ev of args.events) {
       // Defensive: cap propsJson size at 4 KB.
       const props = ev.propsJson.length > 4096 ? ev.propsJson.slice(0, 4096) : ev.propsJson;
-      await ctx.db.insert("customerEventsAnonymous", { ...ev, propsJson: props });
+      // Cap anonId/sessionId/route to reject oversized spam payloads (TELEMETRY-FLOOD-01).
+      const anonId    = ev.anonId.slice(0, 128);
+      const sessionId = ev.sessionId.slice(0, 128);
+      const route     = ev.route ? ev.route.slice(0, 256) : ev.route;
+      const name      = ev.name.slice(0, 128);
+      await ctx.db.insert("customerEventsAnonymous", { ...ev, anonId, sessionId, route, name, propsJson: props });
     }
     return { written: args.events.length };
   },
@@ -143,7 +148,17 @@ export const logClientError = mutation({
     extraJson: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("clientErrors", { ...args, ts: Date.now() });
+    // Cap string fields to prevent DB-flooding via oversized payloads (TELEMETRY-FLOOD-01).
+    const safeMessage = args.message.slice(0, 2000);
+    const safeStack   = args.stack ? args.stack.slice(0, 4000) : undefined;
+    const safeExtra   = args.extraJson ? args.extraJson.slice(0, 2000) : undefined;
+    await ctx.db.insert("clientErrors", {
+      ...args,
+      message: safeMessage,
+      stack: safeStack,
+      extraJson: safeExtra,
+      ts: Date.now(),
+    });
     return { ok: true };
   },
 });

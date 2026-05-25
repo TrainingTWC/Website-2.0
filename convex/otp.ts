@@ -19,6 +19,7 @@ import {
 } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const OTP_EXPIRY_MS = 10 * 60 * 1000;        // 10 minutes
@@ -158,10 +159,16 @@ export const recordPasswordFailure = mutation({
 
 /**
  * Clear failed password counter on successful login.
+ * Requires the caller to be authenticated — only a signed-in user can clear
+ * their own lockout. This prevents unauthenticated callers from wiping the
+ * brute-force counter for any admin email (LOCKOUT-BYPASS-01).
  */
 export const recordPasswordSuccess = mutation({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
+    // Must be called by an authenticated session — not publicly accessible.
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new ConvexError("Unauthorized");
     const normalEmail = email.toLowerCase().trim();
     const doc = await ctx.db
       .query("adminLoginAttempts")
@@ -181,7 +188,8 @@ export const recordPasswordSuccess = mutation({
 export const requestOTP = action({
   args: {
     email: v.string(),
-    purpose: v.optional(v.string()),
+    // Allowlisted purposes only — no free-form strings stored in adminOtp (OTP-PURPOSE-01).
+    purpose: v.optional(v.union(v.literal("login"), v.literal("cms_action"))),
   },
   handler: async (ctx, { email, purpose = "login" }) => {
     const normalEmail = email.toLowerCase().trim();
@@ -271,7 +279,8 @@ export const verifyOTP = mutation({
   args: {
     email: v.string(),
     code: v.string(),
-    purpose: v.optional(v.string()),
+    // Allowlisted purposes only (OTP-PURPOSE-01).
+    purpose: v.optional(v.union(v.literal("login"), v.literal("cms_action"))),
   },
   handler: async (ctx, { email, code, purpose = "login" }) => {
     const normalEmail = email.toLowerCase().trim();
