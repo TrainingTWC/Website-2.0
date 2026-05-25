@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
 import { X, ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { Product } from "../types";
+import { snapshotCart, track } from "../lib/analytics";
 
 export interface CartItem {
   productId: string;
@@ -38,6 +40,30 @@ export function CartPanel({
 
   const subtotal = cartProducts.reduce((s, c) => s + c.product.price * c.qty, 0);
   const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+
+  // ── v8.0 funnel: snapshot cart on every change + emit cart_viewed when opened
+  const snapKey = useRef<string>("");
+  useEffect(() => {
+    if (cartProducts.length === 0) return;
+    const key = cartProducts.map((c) => `${c.productId}:${c.qty}`).join("|");
+    if (key === snapKey.current) return;
+    snapKey.current = key;
+    void snapshotCart(
+      cartProducts.map((c) => ({
+        productId: c.productId,
+        qty: c.qty,
+        price: c.product.price,
+        name: c.product.name,
+      })),
+      subtotal,
+      "cart_changed"
+    );
+  }, [cartProducts, subtotal]);
+
+  useEffect(() => {
+    if (open) track("cart_viewed", { itemCount: totalQty, subtotal }, { stage: 3 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   return (
     <AnimatePresence>

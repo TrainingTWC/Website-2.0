@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingCart, MapPin, Phone, Mail, User, CreditCard, Truck, 
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useGeoAddress } from "../lib/useGeoAddress";
+import { track, snapshotCart, markConverted, logError } from "../lib/analytics";
 import type { Product } from "../types";
 import type { CartItem } from "./CartPanel";
 
@@ -44,6 +45,20 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
   const [errors, setErrors] = useState<Partial<typeof form>>({});
   const submitOrder = useMutation(api.orders.submitOrder);
 
+  // ── v8.0 funnel: emit checkout_initiated once on mount
+  useEffect(() => {
+    track("checkout_initiated", {
+      itemCount: cartProducts.reduce((s, c) => s + c.qty, 0),
+      subtotal,
+    }, { stage: 5 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── v8.0 funnel: emit payment_method_selected on change
+  useEffect(() => {
+    track("payment_method_selected", { method: payment }, { stage: 8 });
+  }, [payment]);
+
   const { loading: geoLoading, error: geoError, address: geoAddress, requestLocation, clearCache } = useGeoAddress();
   const geoApplied = useRef(false);
   useEffect(() => {
@@ -80,8 +95,24 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      track("checkout_validation_failed", { fields: Object.keys(errors) }, { stage: 7 });
+      return;
+    }
     setSubmitting(true);
+    track("payment_initiated", { method: payment, total: discountedTotal }, { stage: 8 });
+    // Capture identity tuple onto the cart snapshot (used for recovery comms).
+    void snapshotCart(
+      cartProducts.map((c) => ({
+        productId: c.productId,
+        qty: c.qty,
+        price: c.product.price,
+        name: c.product.name,
+      })),
+      subtotal,
+      "checkout_submit",
+      { phone: form.phone, email: form.email }
+    );
     try {
       const doSubmit = async (withDiscount: boolean) => {
         return submitOrder({
@@ -133,8 +164,17 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
       }
 
       onOrderCreated(result.orderId);
+      track("order_confirmed", {
+        orderId: result.orderId,
+        method: payment,
+        total: discountedTotal,
+      }, { stage: 10 });
+      void markConverted();
     } catch (err) {
       console.error("submitOrder failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      track("payment_failed", { method: payment, reason: msg.slice(0, 120) }, { stage: 9 });
+      void logError(err, { type: "api", extra: { mutation: "submitOrder", method: payment } });
       setErrors({ name: "Something went wrong. Please try again." });
     } finally {
       setSubmitting(false);

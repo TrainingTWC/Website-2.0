@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { CartItem } from "../components/CartPanel";
 import { capture } from "../lib/posthog";
+import { track } from "../lib/analytics";
 
 interface CartContextValue {
   cart: CartItem[];
@@ -49,6 +50,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = useCallback((productId: string, qty = 1) => {
     capture("add_to_cart", { product_id: productId, qty });
+    track("cart_item_added", { productId, qty }, { stage: 3 });
     setCart((prev) => {
       const idx = prev.findIndex((c) => c.productId === productId);
       if (idx >= 0) {
@@ -61,10 +63,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
+    track("cart_item_removed", { productId }, { stage: 3 });
     setCart((prev) => prev.filter((c) => c.productId !== productId));
   }, []);
 
   const updateQty = useCallback((productId: string, delta: number) => {
+    track("cart_item_quantity_changed", { productId, delta }, { stage: 3 });
     setCart((prev) =>
       prev.map((c) =>
         c.productId === productId ? { ...c, qty: Math.max(1, c.qty + delta) } : c
@@ -73,6 +77,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearCart = useCallback(() => {
+    track("cart_emptied_manually", {}, { stage: 3 });
     setCart([]);
     try {
       localStorage.removeItem("twc_cart");

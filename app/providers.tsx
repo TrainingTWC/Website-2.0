@@ -13,10 +13,11 @@ import { CartPanelProvider } from "../src/context/CartPanelContext";
 import { PerfModeProvider } from "../src/context/PerfModeContext";
 import { ThemeProvider } from "../src/context/ThemeContext";
 import { WebVitalsBootstrap } from "../src/components/WebVitalsBootstrap";
+import { AnalyticsBootstrap } from "../src/components/AnalyticsBootstrap";
 import { LazyMotionRoot } from "../src/components/LazyMotionRoot";
 import { ThemePicker } from "../src/components/ThemePicker";
 
-const convex = new ConvexReactClient(
+export const convex = new ConvexReactClient(
   process.env.NEXT_PUBLIC_CONVEX_URL || "https://different-bulldog-772.convex.cloud"
 );
 
@@ -40,6 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <PerfModeProvider>
             <WebVitalsBootstrap />
+            <AnalyticsBootstrap />
             <LazyMotionRoot>
               <CartProvider>
                 <DiscountProvider>

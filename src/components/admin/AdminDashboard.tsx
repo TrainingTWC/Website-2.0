@@ -45,6 +45,7 @@ import { AboutCMS } from "./AboutCMS";
 import { UnifiedCMS } from "./UnifiedCMS";
 import { AdminShell, type NavGroup } from "./AdminShell";
 import { DashboardOverview } from "./DashboardOverview";
+import { FunnelDashboard } from "./FunnelDashboard";
 import { LayoutDashboard } from "lucide-react";
 import { ImagePicker } from "./ImagePicker";
 import { VisitorMap } from "./VisitorMapLazy";
@@ -169,7 +170,7 @@ function formDataToProductPayload(form: ProductFormData) {
 export function AdminDashboard({ me }: { me?: AdminMe }) {
   const isCmsOnly = me?.admin?.role === "hr" || me?.admin?.role === "marketing" || me?.admin?.role === "pr";
   const [activeTab, setActiveTab] = useState<
-    "overview" | "inventory" | "analytics" | "rules" | "orders" | "editorial" | "home" | "about" | "settings"
+    "overview" | "inventory" | "analytics" | "funnel" | "rules" | "orders" | "editorial" | "home" | "about" | "settings"
   >(isCmsOnly ? "home" : "overview");
 
   const products = (useQuery(api.products.list) ?? []) as any[];
@@ -210,6 +211,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
           items: [
             { id: "overview", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
             { id: "analytics", label: "Analytics", icon: <TrendingUp className="w-4 h-4" /> },
+            { id: "funnel", label: "Funnel", icon: <Filter className="w-4 h-4" /> },
             { id: "orders", label: "Orders", icon: <ShoppingBag className="w-4 h-4" /> },
           ],
         },
@@ -233,6 +235,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
     overview: { title: "Dashboard", subtitle: "Bird's-eye view of revenue, orders, inventory and customers." },
     inventory: { title: "Inventory", subtitle: "Manage products, stock levels and categories." },
     analytics: { title: "Analytics", subtitle: "Sales performance, traffic and behavioural insights." },
+    funnel: { title: "Funnel & CRM", subtitle: "Live conversion funnel, abandoned carts, payment failures, friction signals." },
     rules: { title: "Logic Rules", subtitle: "Tune recommendation and discovery logic." },
     orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
@@ -263,6 +266,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
       {activeTab === "overview" && <DashboardOverview />}
       {activeTab === "inventory" && <InventoryManager />}
       {activeTab === "analytics" && <CombinedAnalytics />}
+      {activeTab === "funnel" && <FunnelDashboard />}
       {activeTab === "rules" && <RulesManager />}
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}

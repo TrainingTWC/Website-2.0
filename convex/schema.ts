@@ -330,4 +330,90 @@ export default defineSchema({
     otpSentAt: v.array(v.number()),     // timestamps of OTP send requests
     lockedUntil: v.optional(v.number()), // lock expiry (Unix ms)
   }).index("by_email", ["email"]),
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  v8.0 — CRM & Order Fulfillment funnel telemetry (lightweight MVP)
+  //  Companion docs: .planning/milestones/v8.0-{ANALYTICS-CATALOG,DATA-CAPTURE}.md
+  // ════════════════════════════════════════════════════════════════════════
+
+  // Anonymous event stream — every cart/checkout/PDP/friction event.
+  // Identity tuple (phone/email) is captured server-side only after an order
+  // is placed; this table itself stores NO PII.
+  customerEventsAnonymous: defineTable({
+    anonId: v.string(),           // long-lived localStorage uuid
+    sessionId: v.string(),        // per-tab session
+    ts: v.number(),               // client timestamp (ms)
+    name: v.string(),             // event name, e.g. "cart_item_added"
+    stage: v.optional(v.number()),// 1..12 funnel stage (see catalog)
+    route: v.optional(v.string()),
+    propsJson: v.string(),        // JSON blob of event-specific props
+    // Lightweight session context (denormalized for cheap segmentation)
+    device: v.optional(v.union(v.literal("mobile"), v.literal("tablet"), v.literal("desktop"))),
+    connection: v.optional(v.string()),  // e.g. "4g", "3g", "wifi", "unknown"
+    referrer: v.optional(v.string()),
+    utmSource: v.optional(v.string()),
+    utmMedium: v.optional(v.string()),
+    utmCampaign: v.optional(v.string()),
+  })
+    .index("by_session", ["sessionId"])
+    .index("by_anon", ["anonId"])
+    .index("by_name_ts", ["name", "ts"])
+    .index("by_ts", ["ts"]),
+
+  // Rolling snapshot of the current cart per anon session.
+  // Updated on every cart mutation; used for "abandoned cart" detection
+  // and to populate the recovery email payload.
+  cartSnapshots: defineTable({
+    anonId: v.string(),
+    sessionId: v.string(),
+    updatedAt: v.number(),
+    itemsJson: v.string(),        // JSON: [{ productId, qty, price, name }]
+    itemCount: v.number(),
+    subtotal: v.number(),
+    lastEventName: v.optional(v.string()),
+    lastRoute: v.optional(v.string()),
+    // Set true by submitOrder finaliser → excludes from abandonment cron
+    converted: v.boolean(),
+    // Set by abandonment cron once classified
+    abandonedAt: v.optional(v.number()),
+    // Contact captured during checkout (NULL until provided)
+    contactPhone: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
+  })
+    .index("by_anon", ["anonId"])
+    .index("by_session", ["sessionId"])
+    .index("by_updatedAt", ["updatedAt"])
+    .index("by_converted", ["converted"]),
+
+  // JS errors + API failures from the browser.
+  clientErrors: defineTable({
+    anonId: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
+    ts: v.number(),
+    route: v.optional(v.string()),
+    type: v.string(),             // "js" | "api" | "offline" | "unhandled_rejection"
+    message: v.string(),
+    stack: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    extraJson: v.optional(v.string()),
+  })
+    .index("by_ts", ["ts"])
+    .index("by_type", ["type"]),
+
+  // Pre-aggregated daily funnel summary (rolled up by cron in Phase 3).
+  // For now we keep a "global" singleton that's recomputed on demand by the
+  // dashboard, so the MVP works without a cron.
+  funnelSummary: defineTable({
+    key: v.string(),              // always "global" for the singleton
+    windowDays: v.number(),       // 1 | 7 | 30
+    sessions: v.number(),
+    sessionsWithPdpView: v.number(),
+    sessionsWithCart: v.number(),
+    sessionsWithCheckoutInit: v.number(),
+    sessionsWithPaymentInit: v.number(),
+    sessionsWithOrder: v.number(),
+    abandonedCarts: v.number(),
+    abandonedCartValue: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key_window", ["key", "windowDays"]),
 });

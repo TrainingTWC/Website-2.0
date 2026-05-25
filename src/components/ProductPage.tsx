@@ -166,6 +166,20 @@ export function ProductPage({ productId, onAddToCart, onOpenCart, cartCount, onB
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [productId]);
 
+  // ── v8.0 funnel: emit product_viewed once we have the resolved product
+  useEffect(() => {
+    if (!product) return;
+    void import("../lib/analytics").then(({ track }) => {
+      track("product_viewed", {
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        type: product.type,
+        category: product.category,
+      }, { stage: 2 });
+    });
+  }, [product?._id]);
+
   if (products === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-natural-bg">
