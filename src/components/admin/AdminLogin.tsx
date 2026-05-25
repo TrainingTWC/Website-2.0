@@ -59,40 +59,58 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setError(null);
     setInfo(null);
     setLoading(true);
-    const fd = new FormData();
-    fd.set("email", email.trim().toLowerCase());
-    fd.set("password", password);
+
+    const normalEmail = email.trim().toLowerCase();
+
+    // ── Step A: authenticate (signIn, fall back to signUp) ────────────────
+    let authed = false;
     try {
+      const fd = new FormData();
+      fd.set("email", normalEmail);
+      fd.set("password", password);
       fd.set("flow", "signIn");
       await signIn("password", fd);
-      // signIn succeeded — record success + send OTP
-      await recordSuccess({ email: email.trim().toLowerCase() });
-      await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
-      lockedEmail.current = email.trim().toLowerCase();
-      setStep("otp");
-      setInfo("OTP Sent");
+      authed = true;
     } catch (signInErr: any) {
-      // Try sign-up (new account)
       try {
-        fd.set("flow", "signUp");
-        if (name) fd.set("name", name);
-        await signIn("password", fd);
-        await recordSuccess({ email: email.trim().toLowerCase() });
-        await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
-        lockedEmail.current = email.trim().toLowerCase();
-        setStep("otp");
-        setInfo("OTP Sent");
+        const fd2 = new FormData();
+        fd2.set("email", normalEmail);
+        fd2.set("password", password);
+        fd2.set("flow", "signUp");
+        if (name) fd2.set("name", name);
+        await signIn("password", fd2);
+        authed = true;
       } catch (signUpErr: any) {
-        await recordFailure({ email: email.trim().toLowerCase() }).catch(() => {});
+        await recordFailure({ email: normalEmail }).catch(() => {});
         const msg =
           signUpErr?.data?.toString?.() ??
           signUpErr?.message ??
           signInErr?.message ??
           "Unknown error";
         setError(
-          `Couldn't sign in or create the account. Server said: ${msg}. If you forgot the password, use 'Reset & set new password' below.`
+          `Couldn't sign in. ${msg}. If you forgot the password, use 'Reset & set new password' below.`
         );
       }
+    }
+
+    if (!authed) {
+      setLoading(false);
+      return;
+    }
+
+    // ── Step B: send OTP (separate from auth — errors here don't re-trigger signUp) ──
+    try {
+      await recordSuccess({ email: normalEmail });
+      await requestOTP({ email: normalEmail, purpose: "login" });
+      lockedEmail.current = normalEmail;
+      setStep("otp");
+      setInfo(`Code sent to ${normalEmail}`);
+    } catch (otpErr: any) {
+      const msg =
+        otpErr?.data?.toString?.() ??
+        otpErr?.message ??
+        "Could not send verification code";
+      setError(`Signed in, but the verification email failed: ${msg}. Try again or contact your superadmin.`);
     } finally {
       setLoading(false);
     }
@@ -119,10 +137,11 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
         // Force a re-render of the auth gate by doing a soft navigation
         window.location.reload();
       } else {
-        setError("Failed");
+        setError(result.error ?? "Incorrect code — please try again.");
       }
     } catch (err: any) {
-      setError("Failed");
+      const msg = (err as any)?.data?.toString?.() ?? (err as any)?.message ?? "Verification failed";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -134,9 +153,10 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setLoading(true);
     try {
       await requestOTP({ email: lockedEmail.current, purpose: "login" });
-      setInfo("OTP Sent");
+      setInfo(`New code sent to ${lockedEmail.current} — check your inbox.`);
     } catch (err: any) {
-      setError("Failed");
+      const msg = (err as any)?.data?.toString?.() ?? (err as any)?.message ?? "Could not send code";
+      setError(`Resend failed: ${msg}`);
     } finally {
       setLoading(false);
     }
