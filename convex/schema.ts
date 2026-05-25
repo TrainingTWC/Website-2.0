@@ -454,6 +454,5 @@ export default defineSchema({
     })),
   })
     .index("by_slot_key", ["slot", "slotKey"])
-    .index("by_status_slot", ["status", "slot"])
-    .index("by_creation", ["_creationTime"]),
+    .index("by_status_slot", ["status", "slot"]),
 });

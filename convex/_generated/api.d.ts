@@ -8,17 +8,23 @@
  * @module
  */
 
+import type * as _authHelpers from "../_authHelpers.js";
 import type * as admins from "../admins.js";
 import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
 import type * as authAdmin from "../authAdmin.js";
+import type * as authHelpers from "../authHelpers.js";
 import type * as cache from "../cache.js";
 import type * as categories from "../categories.js";
+import type * as crons from "../crons.js";
 import type * as dangerZone from "../dangerZone.js";
 import type * as discounts from "../discounts.js";
+import type * as funnel from "../funnel.js";
 import type * as http from "../http.js";
+import type * as media from "../media.js";
 import type * as migrations from "../migrations.js";
 import type * as orders from "../orders.js";
+import type * as otp from "../otp.js";
 import type * as pageViews from "../pageViews.js";
 import type * as posts from "../posts.js";
 import type * as productContext from "../productContext.js";
@@ -28,6 +34,7 @@ import type * as seed from "../seed.js";
 import type * as sessions from "../sessions.js";
 import type * as siteContent from "../siteContent.js";
 import type * as support from "../support.js";
+import type * as webVitals from "../webVitals.js";
 
 import type {
   ApiFromModules,
@@ -36,17 +43,23 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  _authHelpers: typeof _authHelpers;
   admins: typeof admins;
   analytics: typeof analytics;
   auth: typeof auth;
   authAdmin: typeof authAdmin;
+  authHelpers: typeof authHelpers;
   cache: typeof cache;
   categories: typeof categories;
+  crons: typeof crons;
   dangerZone: typeof dangerZone;
   discounts: typeof discounts;
+  funnel: typeof funnel;
   http: typeof http;
+  media: typeof media;
   migrations: typeof migrations;
   orders: typeof orders;
+  otp: typeof otp;
   pageViews: typeof pageViews;
   posts: typeof posts;
   productContext: typeof productContext;
@@ -56,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   sessions: typeof sessions;
   siteContent: typeof siteContent;
   support: typeof support;
+  webVitals: typeof webVitals;
 }>;
 
 /**
