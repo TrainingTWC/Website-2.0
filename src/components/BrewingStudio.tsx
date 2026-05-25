@@ -239,6 +239,8 @@ export function BrewingStudio({
 
   return (
     <section className="relative max-w-7xl mx-auto px-4 sm:px-8 py-16 sm:py-24">
+      {/* Ambience background video */}
+      <StudioMedia slot="ambience" slotKey="studio" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] pointer-events-none select-none" />
 
       {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex flex-col sm:flex-row sm:items-end gap-6 mb-12">

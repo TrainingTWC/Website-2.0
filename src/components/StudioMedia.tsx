@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -37,7 +37,7 @@ export function StudioMedia({ slot, slotKey, className, alt }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoInView, setVideoInView] = useState(false);
 
-  const canAutoplay = tier === "high" && !prefersReducedMotion;
+  const canAutoplay = tier !== "low" && !prefersReducedMotion;
 
   useEffect(() => {
     const el = videoRef.current;
