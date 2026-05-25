@@ -34,6 +34,10 @@ import {
   AlertTriangle,
   Trash2,
   ShieldAlert,
+  Key,
+  Copy,
+  Check,
+  XCircle as XIcon,
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { AdminShell, GlassCard, KpiTile, type NavGroup } from "./AdminShell";
@@ -89,6 +93,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     | "deep-analytics"
     | "admins"
     | "audit"
+    | "api-keys"
     | "settings";
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -163,6 +168,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       items: [
         { id: "admins", label: "Admins", icon: <Users className="w-4 h-4" /> },
         { id: "audit", label: "Audit Log", icon: <ScrollText className="w-4 h-4" /> },
+        { id: "api-keys", label: "API Keys", icon: <Key className="w-4 h-4" /> },
         { id: "settings", label: "Settings", icon: <Shield className="w-4 h-4" /> },
       ],
     },
@@ -179,6 +185,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
     "deep-analytics": { title: "Site Analytics", subtitle: "Traffic, behavioural insights, cohorts, and trend analysis." },
     admins: { title: "Admins & Permissions", subtitle: "Invite teammates, set roles, control which sections they can access." },
     audit: { title: "Audit Log", subtitle: "Every admin action — invites, revocations, configuration changes." },
+    "api-keys": { title: "API Keys", subtitle: "Create and revoke keys for your external analytics or data pipeline." },
     settings: { title: "Settings", subtitle: "System preferences, security, and integrations." },
   };
   const meta = titles[activeTab];
@@ -212,6 +219,7 @@ export function SuperAdminDashboard({ me }: { me: AdminMe }) {
       {activeTab === "deep-analytics" && <SiteAnalytics />}
       {activeTab === "admins" && <AdminsManager />}
       {activeTab === "audit" && <AuditLogViewer />}
+      {activeTab === "api-keys" && <ApiKeysManager />}
       {activeTab === "settings" && (
         <SettingsPanel
           theme={theme}
@@ -1087,6 +1095,207 @@ function InfoRow({ label, value, badge }: { label: string; value: string; badge?
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── API Keys manager ───────────────────────────────────────────────────────
+function ApiKeysManager() {
+  const keys = useQuery(convexApi.apiKeys.listApiKeys) as any[] | undefined;
+  const createKey = useMutation(convexApi.apiKeys.createApiKey);
+  const revokeKey = useMutation(convexApi.apiKeys.revokeApiKey);
+
+  const [label, setLabel] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [newKey, setNewKey] = useState<{ key: string; keyPrefix: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [revoking, setRevoking] = useState<string | null>(null);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!label.trim()) return;
+    setCreating(true);
+    try {
+      const result = await createKey({ label: label.trim() });
+      setNewKey(result as { key: string; keyPrefix: string });
+      setLabel("");
+      setShowForm(false);
+    } catch (err: any) {
+      alert(err.message ?? "Failed to create key.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleRevoke(id: string) {
+    if (!confirm("Revoke this API key? Any app using it will stop working immediately.")) return;
+    setRevoking(id);
+    try {
+      await revokeKey({ id } as any);
+    } finally {
+      setRevoking(null);
+    }
+  }
+
+  function copyKey() {
+    if (!newKey) return;
+    navigator.clipboard.writeText(newKey.key).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const endpoint = "https://watchful-cormorant-351.convex.site/api/v1/export";
+
+  return (
+    <div className="space-y-6">
+      {/* One-time key reveal */}
+      <AnimatePresence>
+        {newKey && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-5"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700 mb-0.5">API key created</p>
+                <p className="text-[11px] text-emerald-800">Copy this key now — it will <strong>never</strong> be shown again.</p>
+              </div>
+              <button onClick={() => setNewKey(null)} className="text-emerald-600 hover:text-emerald-800">
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-[11px] font-mono break-all bg-white border border-emerald-200 rounded-xl px-3 py-2.5 text-emerald-900 select-all">
+                {newKey.key}
+              </code>
+              <button
+                onClick={copyKey}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                  copied
+                    ? "bg-emerald-500 text-white"
+                    : "bg-emerald-700 text-white hover:bg-emerald-800"
+                }`}
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Endpoint reference */}
+      <GlassCard className="p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-stone-500 mb-1">Export endpoint</p>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 text-xs font-mono text-stone-800 bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 break-all">
+            GET {endpoint}
+          </code>
+        </div>
+        <p className="text-[11px] text-stone-500 mt-2">
+          Pass <code className="font-mono">Authorization: Bearer &lt;key&gt;</code> · optional <code className="font-mono">?from=&lt;unix_ms&gt;</code> for incremental sync.
+        </p>
+      </GlassCard>
+
+      {/* Create form */}
+      <GlassCard className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-stone-500">Active keys</p>
+            <p className="text-lg font-bold text-stone-900">{keys?.filter((k) => k.active).length ?? "—"} in use</p>
+          </div>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition"
+          >
+            <Key className="w-3.5 h-3.5" />
+            New key
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showForm && (
+            <motion.form
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              onSubmit={handleCreate}
+              className="mb-4 overflow-hidden"
+            >
+              <div className="flex gap-2 pt-1">
+                <input
+                  autoFocus
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="e.g. Analytics App"
+                  maxLength={100}
+                  className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+                <button
+                  type="submit"
+                  disabled={creating || !label.trim()}
+                  className="px-4 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold disabled:opacity-50 hover:bg-amber-700 transition"
+                >
+                  {creating ? "Creating…" : "Create"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-3 py-2 rounded-xl border border-stone-200 text-xs text-stone-600 hover:bg-stone-100 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {/* Key list */}
+        <div className="space-y-2">
+          {(keys ?? []).map((k) => (
+            <div
+              key={k._id}
+              className={`flex items-center gap-3 p-3 rounded-xl border ${
+                k.active ? "border-stone-200 bg-white/70" : "border-stone-100 bg-stone-50 opacity-60"
+              }`}
+            >
+              <Key className={`w-4 h-4 shrink-0 ${k.active ? "text-amber-500" : "text-stone-300"}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-stone-800 truncate">{k.label}</p>
+                <p className="text-[11px] text-stone-400 font-mono">{k.keyPrefix}…</p>
+              </div>
+              <div className="text-right shrink-0">
+                {k.lastUsedAt ? (
+                  <p className="text-[11px] text-stone-400">
+                    Last used {new Date(k.lastUsedAt).toLocaleDateString()}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-stone-300">Never used</p>
+                )}
+                <p className="text-[10px] text-stone-300">Created {new Date(k.createdAt).toLocaleDateString()}</p>
+              </div>
+              {k.active ? (
+                <button
+                  onClick={() => handleRevoke(k._id)}
+                  disabled={revoking === k._id}
+                  className="shrink-0 px-2.5 py-1 rounded-lg border border-red-200 text-red-600 text-[11px] font-bold hover:bg-red-50 transition disabled:opacity-50"
+                >
+                  {revoking === k._id ? "…" : "Revoke"}
+                </button>
+              ) : (
+                <span className="shrink-0 px-2.5 py-1 rounded-lg bg-stone-100 text-stone-400 text-[11px] font-bold">Revoked</span>
+              )}
+            </div>
+          ))}
+          {keys?.length === 0 && (
+            <p className="text-sm text-stone-400 text-center py-6">No API keys yet. Create one above.</p>
+          )}
+        </div>
+      </GlassCard>
     </div>
   );
 }
