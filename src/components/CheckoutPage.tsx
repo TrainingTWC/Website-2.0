@@ -136,8 +136,6 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
             price: c.product.price,
           })),
           subtotal,
-          shipping,
-          total: discountedTotal,
           paymentMethod: payment,
           ...(withDiscount && activeDiscount ? { discountCode: activeDiscount.code } : {}),
         });

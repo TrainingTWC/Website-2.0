@@ -1,5 +1,5 @@
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { requireAdmin } from "./authHelpers";
 
 // Generate a short-lived upload URL for image uploads from the admin panel.
@@ -87,6 +87,8 @@ export const add = mutation({
     reviewCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    if (args.price <= 0) throw new ConvexError("Price must be greater than zero.");
     return await ctx.db.insert("products", args);
   },
 });
@@ -94,6 +96,7 @@ export const add = mutation({
 export const remove = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     await ctx.db.delete(args.id);
   },
 });
@@ -145,7 +148,9 @@ export const update = mutation({
     reviewCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const { id, ...fields } = args;
+    if (fields.price !== undefined && fields.price <= 0) throw new ConvexError("Price must be greater than zero.");
     // Filter out undefined fields
     const updates: Record<string, any> = {};
     for (const [key, value] of Object.entries(fields)) {
@@ -164,6 +169,7 @@ export const updateStock = mutation({
     lowStockThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
     const threshold = args.lowStockThreshold ?? 10;
     const stockStatus =
       args.stockQty === 0

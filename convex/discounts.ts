@@ -116,7 +116,12 @@ export const createDiscount = mutation({
     expiresAt: v.optional(v.number()),
     maxUses: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {    await requireAdmin(ctx);    // Ensure code is unique
+  handler: async (ctx, args) => {    await requireAdmin(ctx);
+    // Validate bounds
+    if (args.amount <= 0) throw new ConvexError("Discount amount must be greater than zero.");
+    if (args.discountType === "percent" && args.amount > 100) throw new ConvexError("Percent discount cannot exceed 100.");
+    if (args.maxUses !== undefined && args.maxUses < 1) throw new ConvexError("maxUses must be at least 1 if set.");
+    // Ensure code is unique
     const existing = await ctx.db
       .query("discounts")
       .withIndex("by_code", (q) => q.eq("code", args.code))

@@ -317,6 +317,42 @@ export const verifyOTP = mutation({
     }
 
     await ctx.db.patch(otpDoc._id, { used: true });
-    return { ok: true };
+
+    // ── Create a server-side OTP session (30 minutes) ────────────────────
+    // Storing the session in Convex means the browser cannot bypass 2FA by
+    // writing to sessionStorage. AdminAuthGate validates this token on every
+    // page load via the validateOtpSession query.
+    const sessionToken = crypto.randomUUID();
+    const sessionExpiry = now + 30 * 60 * 1000;
+    const oldSessions = await ctx.db
+      .query("adminOtpSessions")
+      .withIndex("by_email", (q) => q.eq("email", normalEmail))
+      .collect();
+    for (const s of oldSessions) await ctx.db.delete(s._id);
+    await ctx.db.insert("adminOtpSessions", {
+      email: normalEmail,
+      token: sessionToken,
+      expiresAt: sessionExpiry,
+    });
+
+    return { ok: true as const, sessionToken };
+  },
+});
+
+/**
+ * Validate a server-side OTP session token.
+ * Called by AdminAuthGate on every page load to verify the stored token.
+ */
+export const validateOtpSession = query({
+  args: { email: v.string(), token: v.string() },
+  handler: async (ctx, { email, token }) => {
+    const session = await ctx.db
+      .query("adminOtpSessions")
+      .withIndex("by_token", (q) => q.eq("token", token))
+      .first();
+    if (!session) return { valid: false };
+    if (session.email !== email.toLowerCase().trim()) return { valid: false };
+    if (Date.now() > session.expiresAt) return { valid: false };
+    return { valid: true };
   },
 });

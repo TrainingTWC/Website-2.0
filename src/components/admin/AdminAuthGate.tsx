@@ -64,38 +64,43 @@ function AuthenticatedShell({
   const requestOTP = useAction(otpApi.requestOTP);
   const verifyOTP  = useMutation(otpApi.verifyOTP);
 
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [verifiedAt,  setVerifiedAt]  = useState(0);
-  const [otpCode,     setOtpCode]     = useState("");
-  const [otpError,    setOtpError]    = useState<string | null>(null);
-  const [otpInfo,     setOtpInfo]     = useState<string | null>(null);
-  const [otpLoading,  setOtpLoading]  = useState(false);
+  // Read stored session token from sessionStorage once on init (synchronous)
+  const [sessionToken, setSessionToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("otp_session_token");
+  });
+
+  const [otpCode,    setOtpCode]    = useState("");
+  const [otpError,   setOtpError]   = useState<string | null>(null);
+  const [otpInfo,    setOtpInfo]    = useState<string | null>(null);
+  const [otpLoading, setOtpLoading] = useState(false);
   const otpSentRef = useRef(false);
+
+  // Server-side session validation — cannot be faked by writing to sessionStorage
+  const sessionValidation = useQuery(
+    otpApi.validateOtpSession,
+    sessionToken && me?.email
+      ? { email: me.email.toLowerCase(), token: sessionToken }
+      : "skip"
+  );
+
+  // Derived: are we still waiting for the server to confirm an existing token?
+  const checkingSession = sessionToken !== null && me?.email != null && sessionValidation === undefined;
+  const otpVerified = sessionValidation?.valid === true;
 
   useEffect(() => { bootstrap().catch(() => {}); }, [bootstrap]);
 
-  // Check sessionStorage on mount once email is known
+  // Send OTP once we know session is invalid and we're not still checking
   useEffect(() => {
     if (!me?.email) return;
-    const normalEmail = me.email.toLowerCase();
-    try {
-      const stored = sessionStorage.getItem("otp_verified");
-      if (stored) {
-        const { email: storedEmail, verifiedAt: storedAt } = JSON.parse(stored);
-        if (storedEmail === normalEmail && Date.now() - storedAt < 30 * 60 * 1000) {
-          setVerifiedAt(storedAt);
-          setOtpVerified(true);
-          return; // valid session, skip OTP screen
-        }
-      }
-    } catch {}
-    // No valid sessionStorage entry — need OTP
+    if (checkingSession) return;
+    if (otpVerified) return;
     if (!otpSentRef.current) {
       otpSentRef.current = true;
-      sendOTP(normalEmail);
+      sendOTP(me.email.toLowerCase());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.email]);
+  }, [me?.email, checkingSession, otpVerified]);
 
   async function sendOTP(emailAddr: string) {
     setOtpError(null);
@@ -120,13 +125,8 @@ function AuthenticatedShell({
         purpose: "login",
       });
       if (result.ok) {
-        const now = Date.now();
-        sessionStorage.setItem(
-          "otp_verified",
-          JSON.stringify({ email: me.email.toLowerCase(), verifiedAt: now })
-        );
-        setVerifiedAt(now);
-        setOtpVerified(true);
+        sessionStorage.setItem("otp_session_token", result.sessionToken);
+        setSessionToken(result.sessionToken);
       } else {
         setOtpError("Failed");
       }
@@ -144,6 +144,10 @@ function AuthenticatedShell({
     return <NotSuperadmin email={me.email ?? ""} role={me.admin.role} />;
   }
   void panelLabel;
+
+  // While we are waiting for the server to validate an existing session token,
+  // show the loading screen to avoid a flash of the OTP form.
+  if (checkingSession) return <LoadingScreen />;
 
   // ── OTP gate ──────────────────────────────────────────────────────────────
   if (!otpVerified) {
@@ -231,7 +235,7 @@ function AuthenticatedShell({
 
   // ── Dashboard (OTP verified) ──────────────────────────────────────────────
   return (
-    <CmsVerifyProvider email={me.email ?? ""} initialVerifiedAt={verifiedAt}>
+    <CmsVerifyProvider email={me.email ?? ""} initialVerifiedAt={Date.now()}>
       {children(me)}
     </CmsVerifyProvider>
   );
@@ -242,7 +246,7 @@ function SignOutButton() {
   const { signOut } = useAuthActions();
   return (
     <button
-      onClick={() => { sessionStorage.removeItem("otp_verified"); signOut(); }}
+      onClick={() => { sessionStorage.removeItem("otp_session_token"); signOut(); }}
       className="w-full text-xs text-stone-400 hover:text-stone-700 transition inline-flex items-center justify-center gap-1.5"
     >
       <LogOut className="w-3 h-3" /> Sign out

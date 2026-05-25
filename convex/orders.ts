@@ -93,34 +93,40 @@ export const submitOrder = mutation({
         name: v.string(),
         imageUrl: v.string(),
         qty: v.number(),
-        price: v.number(),
+        price: v.number(), // client value accepted for receipt display; overwritten by server below
       })
     ),
     subtotal: v.number(),
-    shipping: v.number(),
-    total: v.number(),
     paymentMethod: v.optional(v.string()),
     discountCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const orderId = `TWC-${randomAlphaNum(8)}`;
 
-    // ── Server-side price verification (API-01) ───────────────────────────
-    // Recompute subtotal from database prices; reject if client value differs
-    // by more than ₹1 (floating-point rounding tolerance).
+    // ── Server-side price + qty verification ─────────────────────────────
+    // Re-fetch every product price from the DB. Reject invalid quantities.
+    // Build serverItems using DB prices so the stored receipt is authoritative.
     let serverSubtotal = 0;
+    const serverItems = [] as typeof args.items;
     for (const item of args.items) {
+      if (item.qty < 1 || item.qty > 100) {
+        throw new ConvexError("Invalid item quantity.");
+      }
       const product = await ctx.db.get(item.productId as Id<"products">);
       if (!product) throw new ConvexError(`Product not found: ${item.productId}`);
       serverSubtotal += product.price * item.qty;
+      serverItems.push({ ...item, price: product.price }); // override client price
     }
     if (Math.abs(serverSubtotal - args.subtotal) > 1) {
       throw new ConvexError("Order total mismatch. Please refresh and try again.");
     }
 
+    // ── Server-side shipping (same rule as client: free above ₹499) ──────
+    const serverShipping = serverSubtotal > 499 ? 0 : 49;
+
     let discountApplied: number | undefined;
     let validatedDiscountCode: string | undefined;
-    let serverTotal = serverSubtotal + args.shipping;
+    let serverTotal = serverSubtotal + serverShipping;
 
     if (args.discountCode) {
       const discount = await ctx.db
@@ -136,11 +142,11 @@ export const submitOrder = mutation({
       if (isValid && discount) {
         const savings =
           discount.discountType === "percent"
-            ? Math.round(args.subtotal * (discount.amount / 100))
-            : Math.min(discount.amount, args.subtotal);
+            ? Math.round(serverSubtotal * (discount.amount / 100))
+            : Math.min(discount.amount, serverSubtotal);
 
         const discountedSubtotal = serverSubtotal - savings;
-        serverTotal = discountedSubtotal + args.shipping;
+        serverTotal = discountedSubtotal + serverShipping;
         discountApplied = savings;
         validatedDiscountCode = discount.code;
 
@@ -153,9 +159,9 @@ export const submitOrder = mutation({
     await ctx.db.insert("orders", {
       orderId,
       customer: args.customer,
-      items: args.items,
+      items: serverItems,       // server-authoritative prices
       subtotal: serverSubtotal,
-      shipping: args.shipping,
+      shipping: serverShipping, // server-computed, not client-supplied
       total: serverTotal,
       status: "pending",
       paymentMethod: args.paymentMethod,
