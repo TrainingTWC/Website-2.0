@@ -1,9 +1,9 @@
 # BrewMatch AI · Third Wave Coffee — Project Changelog
 
-A complete, chronological record of every change shipped from the initial commit (`8ee9b01`, May 12 2026) through the latest deploy (`57791ef`, May 15 2026). Grouped by theme/milestone, with commit SHAs preserved for traceability.
+A complete, chronological record of every change shipped from the initial commit (`8ee9b01`, May 12 2026) through the latest deploy (`dc648e4`, May 25 2026). Grouped by theme/milestone, with commit SHAs preserved for traceability.
 
-- **Repo:** <https://github.com/TrainingTWC/brewmatch-ai>
-- **Live:** <https://trainingtwc.github.io/brewmatch-ai/>
+- **Repo:** <https://github.com/TrainingTWC/Website-2.0>
+- **Live:** <https://thirdwavecoffee.prismintelligence.in>
 - **Convex (prod):** `https://watchful-cormorant-351.convex.cloud`
 
 ---
@@ -153,13 +153,65 @@ A complete, chronological record of every change shipped from the initial commit
 
 ---
 
-## Architecture snapshot (as of May 15 2026)
+## 16 · v8.0 — Admin auth hardening, OTP 2FA, RBAC (May 15–24)
+
+> This section covers the large v4.0–v7.0 feature work that bridged the May 15 architecture snapshot and the v8.0 analytics milestone. Commits `5a6700b` → `138e87b`.
+
+- `5a6700b` OTP error messages use `err.data` for ConvexError propagation.
+- `ee3cc23` OTP messages simplified to "OTP Sent / Failed" to avoid leaking email existence.
+- `68578f6` Repo renamed → **Website-2.0**; all internal references updated.
+- `282e4a8` Product image URLs repointed to custom domain (`thirdwavecoffee.prismintelligence.in`) after repo rename.
+- `3696198` v8.0 CRM & order-fulfillment milestone drafted in `.planning/`.
+- `178680f` Analytics & friction event catalog (`ANALYTICS-CATALOG.md`) — 122 data-point inventory.
+- `17f8894` **v8.0 live: Funnel telemetry + Admin Funnel Dashboard MVP** — `convex/funnel.ts` (8 reactive queries); `src/lib/analytics.ts` client tracker (5 s flush, 20-event batch, UTM first-touch); `AnalyticsBootstrap` component wired into root layout; `FunnelDashboard` (10 dashboard sections: KPI tiles, funnel bar chart, daily trend, dropout hotspots, abandoned carts, payment funnel, device breakdown, friction signals, client errors feed); `customerEventsAnonymous`, `cartSnapshots`, `clientErrors`, `funnelSummary` Convex tables.
+- `8235386` v9.0 Studio Media: `media` table added to Convex schema.
+- `8e08fbf` `STUDIO_SLOTS` registry + media dependency graph.
+- `eadb6b4` Studio Media CRUD module (`convex/media.ts`).
+- `ee9746c` v9.0 phase-01-01 plan summary docs.
+- `23837e7` Drop invalid `by_creation` index; regenerate Convex TypeScript bindings.
+- `c0efd27` Media leaf components: `BlurhashImage`, `LottiePlayer`, `GLBViewer`.
+- `fa7817d` `StudioMedia` root renderer — resolves slot + key against `media` table, renders correct leaf.
+- `7ef7f9b` v9.0 phase-01-02 plan docs.
+- `0371642` Admin **Studio Media CMS tab** — upload, publish/unpublish, delete media for any slot.
+- `138e87b` Convex schema comments normalised from mojibake box-drawing chars to ASCII.
+- `176a781` **`ANALYTICS-TRACKING.md`** — 354-line reference doc covering every tracked event, all DB tables, sampling policy, UTM attribution, and all 10 dashboard sections.
+- `de9cbd9` `StudioMedia` wired into `BrewingStudio` brew-step renderer — each step renders its CMS media after the detail text; component returns `null` when no media published so unset steps are unaffected.
+
+---
+
+## 17 · Security audit & critical vulnerability fixes (May 25)
+
+> Commit: `dc648e4` — 7 files changed, 133 insertions(+), 67 deletions(−). Convex redeployed.
+
+### Vulnerabilities patched
+
+| ID | Severity | File(s) | Description |
+|---|---|---|---|
+| API-AUTH-01 | 🔴 Critical | `convex/products.ts` | `add`, `remove`, `update`, `updateStock` had **zero auth guards** — any anonymous caller on the internet could delete the catalog, set prices to ₹0, or inject fake products. Added `await requireAdmin(ctx)` as the first line of all four handlers. |
+| PRICE-BOUND-01 | 🔴 Critical | `convex/products.ts` | Product price accepted `0` and negative values. Added `price > 0` validation in `add` and `update`. |
+| API-ORDER-01 | 🔴 Critical | `convex/orders.ts` + `src/components/CheckoutPage.tsx` | `shipping` and `total` were fully client-supplied and trusted. A shopper could send `shipping: -99999` for a free order. Also, stored order receipts used client-supplied item prices instead of DB prices. **Fix:** removed `shipping` and `total` from mutation args entirely; server now computes `shipping = subtotal > 499 ? 0 : 49`; item prices in the stored receipt are overwritten from DB. Added per-item `qty` validation (1–100). |
+| DISC-BOUNDS-01 | 🔴 Critical | `convex/discounts.ts` | Discount `amount` had no bounds — `amount: 150` on a percent discount gave 150% off (negative bill); `amount: -500` on a flat discount *added* ₹500. `maxUses: 0` created a permanently broken code. Added: `amount > 0`, `amount ≤ 100` for percent type, `maxUses ≥ 1` if set. |
+| OTP-SESSION-01 | 🔴 Critical | `convex/schema.ts` + `convex/otp.ts` | OTP verification state was stored only in browser `sessionStorage` — no server-side record existed. Added new `adminOtpSessions` Convex table. `verifyOTP` now creates a 30-minute server session row and returns a random `sessionToken`. |
+| OTP-BYPASS-01 | 🔴 Critical | `src/components/admin/AdminAuthGate.tsx` | The admin 2FA gate read `sessionStorage.getItem("otp_verified")` and trusted whatever was there. Anyone with browser devtools could run one command and gain full admin access. **Fix:** `AdminAuthGate` now calls `useQuery(api.otp.validateOtpSession, {email, token})` on every mount — the token is validated against the `adminOtpSessions` Convex table server-side. A fake or missing token returns `{valid: false}` and the OTP screen appears. |
+
+### Files changed
+- `convex/products.ts` — `ConvexError` import added; `requireAdmin` + price guard on all 4 write mutations.
+- `convex/discounts.ts` — Bounds validation block in `createDiscount` handler.
+- `convex/orders.ts` — `shipping` / `total` removed from args; server-computed shipping; `serverItems` array built from DB prices; qty 1–100 guard.
+- `convex/schema.ts` — `adminOtpSessions` table (`email`, `token`, `expiresAt`) with `by_token` + `by_email` indexes.
+- `convex/otp.ts` — `verifyOTP` creates server session + returns `sessionToken`; new `validateOtpSession` query.
+- `src/components/admin/AdminAuthGate.tsx` — Removed client-side `otp_verified` sessionStorage check; added server-validated `useQuery(validateOtpSession)`; `otp_session_token` key replaces `otp_verified`.
+- `src/components/CheckoutPage.tsx` — Removed `shipping` and `total` from `submitOrder` call.
+
+---
+
+## Architecture snapshot (as of May 25 2026)
 
 ### Stack
 - **Frontend:** React 18 + Vite + TypeScript; Tailwind v4 `@theme`; Framer Motion (`motion/react`); Lenis smooth scroll.
 - **Backend:** Convex (`watchful-cormorant-351.convex.cloud`).
 - **AI:** Mistral `mistral-small-latest` for all surfaces (TI shortlist, Brewing Recipe, Sip Forecast, Signature Drink, support chat). Responses cached SHA-256 keyed in Convex.
-- **Deploy:** GitHub Actions → GitHub Pages at base path `/brewmatch-ai/`.
+- **Deploy:** GitHub Actions → GitHub Pages at `thirdwavecoffee.prismintelligence.in` (custom domain).
 
 ### URL-driven routes
 - `/` — Landing: `CinematicHero` → `CurtainTransition` → `ChapterDeck` (5 cards) → `CurtainTransition` → `CatalogBanner` → bento → 8 subcategory `HScrollRow` sections → Our Story → footer.
@@ -175,10 +227,17 @@ A complete, chronological record of every change shipped from the initial commit
 | Table | Purpose |
 | --- | --- |
 | `products` | Two-tier taxonomy: `mainCategory ∈ {coffee, merch}` · `subCategory ∈ {beans, ecb, drinkware, bags, keychains, chocolates-nuts, brewing-tools}`. Legacy `type` retained; `resolveTaxonomy()` reads either. |
-| `orders` | Order lifecycle, status timeline, cancel support, line items. |
+| `orders` | Order lifecycle, status timeline, cancel support, line items. Shipping + total are **server-computed** (never trusted from client). |
 | `categories` | Editable in admin. |
 | `pageViews` | Site analytics. |
 | `cache` | SHA-256-keyed AI response cache (version-tagged). |
+| `customerEventsAnonymous` | Client-side funnel events: page views, add-to-cart, checkout starts, etc. 5 s flush / 20-event batch. |
+| `cartSnapshots` | Full cart state snapped on change for abandoned-cart analysis. |
+| `clientErrors` | JS runtime error reports from the client analytics tracker. |
+| `funnelSummary` | Pre-aggregated hourly/daily funnel counters for fast dashboard queries. |
+| `media` | Studio Media CMS: slot-keyed media assets (image/Lottie/GLB) with blurhash + publish state. |
+| `adminLoginAttempts` | Tracks failed admin login attempts for rate-limiting. |
+| `adminOtpSessions` | 30-min server-side OTP session tokens (`email`, `token`, `expiresAt`). Validated by `AdminAuthGate` on every mount — forgery grants no access. |
 
 ### Key feature components
 - **`GalaxySweep`** — softened radial-burst transition overlay (translucent wash + morphing bloom + 2 thin ripples + 28 sparse glitters + grain).
@@ -207,4 +266,4 @@ A complete, chronological record of every change shipped from the initial commit
 
 ---
 
-_Generated May 15 2026 from `git log` `8ee9b01..57791ef`._
+_Generated May 25 2026 from `git log` `8ee9b01..dc648e4`._
