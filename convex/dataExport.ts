@@ -29,7 +29,7 @@ export const _getOrders = internalQuery({
       .query("orders")
       .withIndex("by_creation_time")
       .filter((q) => q.gte(q.field("_creationTime"), from))
-      .order("asc")
+      .order("desc")
       .take(5000),
 });
 
@@ -61,7 +61,8 @@ export const _getAdmins = internalQuery({
   handler: async (ctx) => {
     const rows = await ctx.db.query("admins").collect();
     // Strip `userId` and `invitedBy` (internal Convex auth IDs — no value outside Convex)
-    return rows.map(({ email, name, role, permissions, active, invitedAt, lastSeenAt }) => ({
+    return rows.map(({ _id, email, name, role, permissions, active, invitedAt, lastSeenAt }) => ({
+      _id,
       email,
       name,
       role,
@@ -104,7 +105,7 @@ export const _getPageViews = internalQuery({
     ctx.db
       .query("pageViews")
       .withIndex("by_timestamp", (q) => q.gte("timestamp", from))
-      .order("asc")
+      .order("desc")
       .take(2000),
 });
 
@@ -116,7 +117,7 @@ export const _getCustomerEvents = internalQuery({
     ctx.db
       .query("customerEventsAnonymous")
       .withIndex("by_ts", (q) => q.gte("ts", from))
-      .order("asc")
+      .order("desc")
       .take(5000),
 });
 
@@ -126,7 +127,7 @@ export const _getCartSnapshots = internalQuery({
     ctx.db
       .query("cartSnapshots")
       .withIndex("by_updatedAt", (q) => q.gte("updatedAt", from))
-      .order("asc")
+      .order("desc")
       .take(2000),
 });
 
@@ -136,7 +137,7 @@ export const _getClientErrors = internalQuery({
     ctx.db
       .query("clientErrors")
       .withIndex("by_ts", (q) => q.gte("ts", from))
-      .order("asc")
+      .order("desc")
       .take(1000),
 });
 
@@ -154,6 +155,7 @@ export const _getWebVitals = internalQuery({
       .query("webVitals")
       .withIndex("by_creation_time")
       .filter((q) => q.gte(q.field("_creationTime"), from))
+      .order("desc")
       .take(2000),
 });
 
@@ -165,7 +167,7 @@ export const _getAuditLog = internalQuery({
     ctx.db
       .query("auditLog")
       .withIndex("by_timestamp", (q) => q.gte("timestamp", from))
-      .order("asc")
+      .order("desc")
       .take(2000),
 });
 

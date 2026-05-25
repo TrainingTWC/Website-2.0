@@ -77,9 +77,12 @@ const exportHandler = httpAction(async (ctx, request) => {
   // ── Parse query params ─────────────────────────────────────────────────────
   const url = new URL(request.url);
   const fromParam = url.searchParams.get("from");
-  const defaultFrom = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7-day default window
-  const from = fromParam ? Math.max(0, parseInt(fromParam, 10)) : defaultFrom;
-  const fromDate = new Date(from).toISOString().slice(0, 10); // "YYYY-MM-DD"
+  // Default = 0 (all-time) so first sync always returns everything.
+  // For incremental sync, pass the previous response's `generatedAt` as ?from=
+  const from = fromParam ? Math.max(0, parseInt(fromParam, 10)) : 0;
+  const fromDate = from > 0
+    ? new Date(from).toISOString().slice(0, 10) // "YYYY-MM-DD"
+    : "2020-01-01"; // safe all-time floor for the daily summary string index
 
   // ── Fetch all data in parallel ─────────────────────────────────────────────
   const [
