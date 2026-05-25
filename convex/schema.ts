@@ -66,7 +66,7 @@ export default defineSchema({
     resultProductIds: v.array(v.string()),
   }),
 
-  // AI response cache â€” keyed by stable SHA-256 hash of action name + args.
+  // AI response cache — keyed by stable SHA-256 hash of action name + args.
   // Eliminates repeat Mistral calls for identical inputs.
   aiCache: defineTable({
     key: v.string(),     // SHA-256 hex of (version + actionName + sorted args)
@@ -343,11 +343,11 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  //  v8.0 â€” CRM & Order Fulfillment funnel telemetry (lightweight MVP)
+  //  v8.0 — CRM & Order Fulfillment funnel telemetry (lightweight MVP)
   //  Companion docs: .planning/milestones/v8.0-{ANALYTICS-CATALOG,DATA-CAPTURE}.md
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // Anonymous event stream â€” every cart/checkout/PDP/friction event.
+  // Anonymous event stream — every cart/checkout/PDP/friction event.
   // Identity tuple (phone/email) is captured server-side only after an order
   // is placed; this table itself stores NO PII.
   customerEventsAnonymous: defineTable({

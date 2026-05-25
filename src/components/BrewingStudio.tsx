@@ -215,7 +215,7 @@ export function BrewingStudio({
 
   const progressPct = brewRecipe ? Math.min(100, (elapsed / brewRecipe.totalTimeSec) * 100) : 0;
 
-  // Live cumulative water poured â€” interpolated within the active step
+  // Live cumulative water poured — interpolated within the active step
   const { flowWaterG, totalWaterG } = useMemo(() => {
     if (!brewRecipe) return { flowWaterG: 0, totalWaterG: 0 };
     const total = brewRecipe.steps.reduce((s, st) => s + (st.waterG ?? 0), 0);
@@ -375,7 +375,7 @@ export function BrewingStudio({
               transition={{ duration: 0.22 }}
               className="bg-natural-paper border border-natural-border rounded-3xl p-6 sm:p-8 space-y-6"
             >
-              {/* Temperature â€” gates drink availability */}
+              {/* Temperature — gates drink availability */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-natural-text/40 mb-3">Temperature</p>
                 <div className="flex gap-2">
@@ -489,13 +489,13 @@ export function BrewingStudio({
             background: "linear-gradient(150deg, #1e1208 0%, #110c06 55%, #090704 100%)",
           }}
         >
-          {/* Ambient glow â€” top-right */}
+          {/* Ambient glow — top-right */}
           <div
             aria-hidden
             className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 pointer-events-none"
             style={{ background: accentHex }}
           />
-          {/* Ambient glow â€” bottom-left */}
+          {/* Ambient glow — bottom-left */}
           <div
             aria-hidden
             className="absolute -bottom-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-10 pointer-events-none"
@@ -524,7 +524,7 @@ export function BrewingStudio({
                 <p className="text-white/35 text-xs mt-3 leading-relaxed">
                   {mode === "brew"
                     ? "Set dose & ratio, then generate. Every step tuned to this bean."
-                    : "Choose a style, flavor, and milk â€” then let us craft the build."}
+                    : "Choose a style, flavor, and milk — then let us craft the build."}
                 </p>
               </motion.div>
             )}
@@ -541,8 +541,8 @@ export function BrewingStudio({
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: accentHex }} />
                 <p className="font-serif italic text-white/55 text-sm">
                   {mode === "brew"
-                    ? "Third Intelligence is dialing in your recipeâ€¦"
-                    : "Crafting your signature drinkâ€¦"}
+                    ? "Third Intelligence is dialing in your recipe…"
+                    : "Crafting your signature drink…"}
                 </p>
               </motion.div>
             )}
@@ -872,7 +872,7 @@ function GenerateButton({ loading, hasResult, mode, accentHex, onClick }: {
       {loading ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
-          {mode === "brew" ? "Brewing your recipeâ€¦" : "Crafting your drinkâ€¦"}
+          {mode === "brew" ? "Brewing your recipe…" : "Crafting your drink…"}
         </>
       ) : (
         <>
