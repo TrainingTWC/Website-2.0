@@ -233,38 +233,52 @@ export const requestOTP = action({
     }
 
     const purposeLabel = purpose === "cms_action" ? "Verification" : "Login";
-    const resp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "TWC Admin <noreply@prismintelligence.in>",
-        to: [normalEmail],
-        subject: `Your TWC Admin ${purposeLabel} Code`,
-        html: `
-          <div style="font-family:system-ui,Arial,sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;background:#faf7f2;border-radius:12px;border:1px solid #e8dfd4;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
-              <div style="width:36px;height:36px;background:#5a3e28;border-radius:8px;"></div>
-              <span style="font-size:16px;font-weight:700;color:#1a1a1a;">Third Wave Coffee</span>
-            </div>
-            <p style="color:#444;margin-bottom:6px;font-size:14px;">Your one-time ${purposeLabel.toLowerCase()} code:</p>
-            <div style="font-size:38px;font-weight:800;letter-spacing:12px;color:#5a3e28;background:#f0e8dc;padding:20px;border-radius:10px;text-align:center;margin:16px 0;">
-              ${code}
-            </div>
-            <p style="color:#888;font-size:12px;margin-top:16px;line-height:1.5;">
-              This code expires in <strong>10 minutes</strong>.<br/>
-              Never share it with anyone — TWC staff will never ask for it.<br/>
-              If you didn't request this, you can safely ignore this email.
-            </p>
-          </div>`,
-      }),
-    });
+
+    let resp: Response;
+    try {
+      resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "TWC Admin <noreply@prismintelligence.in>",
+          to: [normalEmail],
+          subject: `Your TWC Admin ${purposeLabel} Code`,
+          html: `
+            <div style="font-family:system-ui,Arial,sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;background:#faf7f2;border-radius:12px;border:1px solid #e8dfd4;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+                <div style="width:36px;height:36px;background:#5a3e28;border-radius:8px;"></div>
+                <span style="font-size:16px;font-weight:700;color:#1a1a1a;">Third Wave Coffee</span>
+              </div>
+              <p style="color:#444;margin-bottom:6px;font-size:14px;">Your one-time ${purposeLabel.toLowerCase()} code:</p>
+              <div style="font-size:38px;font-weight:800;letter-spacing:12px;color:#5a3e28;background:#f0e8dc;padding:20px;border-radius:10px;text-align:center;margin:16px 0;">
+                ${code}
+              </div>
+              <p style="color:#888;font-size:12px;margin-top:16px;line-height:1.5;">
+                This code expires in <strong>10 minutes</strong>.<br/>
+                Never share it with anyone — TWC staff will never ask for it.<br/>
+                If you didn't request this, you can safely ignore this email.
+              </p>
+            </div>`,
+        }),
+      });
+    } catch (fetchErr: unknown) {
+      const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      console.error(`[TWC-ADMIN-OTP] Resend fetch error for ${normalEmail}: ${msg}`);
+      throw new ConvexError("Could not reach the email service. Please try again in a moment.");
+    }
 
     if (!resp.ok) {
-      const errText = await resp.text();
-      throw new ConvexError(`Email delivery failed: ${errText}`);
+      let errText = "(no body)";
+      try { errText = await resp.text(); } catch { /* ignore */ }
+      console.error(`[TWC-ADMIN-OTP] Resend HTTP ${resp.status} for ${normalEmail}: ${errText}`);
+      throw new ConvexError(
+        resp.status === 403
+          ? "Email sending is not authorised. Check that the sending domain is verified in Resend."
+          : `Email delivery failed (${resp.status}). Please try again or contact support.`,
+      );
     }
 
     return { sent: true };
