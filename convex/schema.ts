@@ -1,4 +1,4 @@
-import { defineSchema, defineTable } from "convex/server";
+﻿import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
@@ -10,7 +10,7 @@ export default defineSchema({
     description: v.string(),
     type: v.union(v.literal("beans"), v.literal("bags"), v.literal("merch")),
     category: v.string(),
-    // ── Two-tier taxonomy ──
+    // â”€â”€ Two-tier taxonomy â”€â”€
     mainCategory: v.optional(
       v.union(v.literal("coffee"), v.literal("merch"))
     ),
@@ -66,7 +66,7 @@ export default defineSchema({
     resultProductIds: v.array(v.string()),
   }),
 
-  // AI response cache — keyed by stable SHA-256 hash of action name + args.
+  // AI response cache â€” keyed by stable SHA-256 hash of action name + args.
   // Eliminates repeat Mistral calls for identical inputs.
   aiCache: defineTable({
     key: v.string(),     // SHA-256 hex of (version + actionName + sorted args)
@@ -157,7 +157,7 @@ export default defineSchema({
     .index("by_customerPhone", ["customerPhone"])
     .index("by_customerEmail", ["customerEmail"]),
 
-  // ── Editorial posts ──────────────────────────────────────────────────────
+  // â”€â”€ Editorial posts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   posts: defineTable({
     type: v.union(
       v.literal("flash-sale"),
@@ -189,7 +189,7 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_status_and_type", ["status", "type"]),
 
-  // ── Discount codes ────────────────────────────────────────────────────────
+  // â”€â”€ Discount codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   discounts: defineTable({
     code: v.string(),
     discountType: v.union(v.literal("percent"), v.literal("flat")),
@@ -200,7 +200,7 @@ export default defineSchema({
     usageCount: v.number(),             // starts at 0
   }).index("by_code", ["code"]),
 
-  // ── Site content: editable copy + media for homepage sections ────────────
+  // â”€â”€ Site content: editable copy + media for homepage sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Generic key/value store so we can add fields without schema migrations.
   // Examples:
   //   key="story.headline"     value={ text: "From bean to cup..." }
@@ -215,7 +215,7 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
 
-  // ── Admin RBAC ──────────────────────────────────────────────────────────
+  // â”€â”€ Admin RBAC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Maps Convex Auth users to admin roles + per-section permissions.
   admins: defineTable({
     userId: v.optional(v.id("users")),
@@ -249,7 +249,7 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_email", ["email"]),
 
-  // ── Web vitals (RUM telemetry) ───────────────────────────────────────────
+  // â”€â”€ Web vitals (RUM telemetry) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Real-user FCP/LCP/INP/CLS/TTFB samples, tagged with the device perf tier.
   // Written by src/lib/webVitals.ts on every page load. Used to verify the
   // v6.0 performance phase actually moved the needle on real hardware.
@@ -274,7 +274,7 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_page", ["page"]),
 
-  // ── Audit log ───────────────────────────────────────────────────────────
+  // â”€â”€ Audit log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   auditLog: defineTable({
     adminUserId: v.id("users"),
     adminEmail: v.string(),
@@ -286,7 +286,7 @@ export default defineSchema({
     .index("by_admin", ["adminUserId"])
     .index("by_timestamp", ["timestamp"]),
 
-  // ── Pre-aggregated daily page-view counters (Fix #1) ────────────────────
+  // â”€â”€ Pre-aggregated daily page-view counters (Fix #1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   pageViewDailySummary: defineTable({
     date: v.string(),            // ISO "YYYY-MM-DD" in UTC
     totalViews: v.number(),
@@ -300,7 +300,7 @@ export default defineSchema({
     sessionIdsJson: v.optional(v.string()), // capped at 10k session IDs
   }).index("by_date", ["date"]),
 
-  // ── Materialized order counters for O(1) analytics (Fix #3) ────────────
+  // â”€â”€ Materialized order counters for O(1) analytics (Fix #3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   orderSummary: defineTable({
     key: v.string(),              // always "global"
     totalRevenue: v.number(),
@@ -312,7 +312,7 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
 
-  // ── Admin OTP codes ──────────────────────────────────────────────────────
+  // â”€â”€ Admin OTP codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Stores hashed one-time codes for login 2FA and CMS action re-verification.
   adminOtp: defineTable({
     email: v.string(),
@@ -323,7 +323,7 @@ export default defineSchema({
     purpose: v.string(),     // "login" | "cms_action"
   }).index("by_email_purpose", ["email", "purpose"]),
 
-  // ── Admin brute-force / rate-limit tracking ───────────────────────────────
+  // â”€â”€ Admin brute-force / rate-limit tracking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   adminLoginAttempts: defineTable({
     email: v.string(),
     failedPassAt: v.array(v.number()),  // timestamps of failed password attempts
@@ -331,12 +331,12 @@ export default defineSchema({
     lockedUntil: v.optional(v.number()), // lock expiry (Unix ms)
   }).index("by_email", ["email"]),
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  v8.0 — CRM & Order Fulfillment funnel telemetry (lightweight MVP)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //  v8.0 â€” CRM & Order Fulfillment funnel telemetry (lightweight MVP)
   //  Companion docs: .planning/milestones/v8.0-{ANALYTICS-CATALOG,DATA-CAPTURE}.md
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // Anonymous event stream — every cart/checkout/PDP/friction event.
+  // Anonymous event stream â€” every cart/checkout/PDP/friction event.
   // Identity tuple (phone/email) is captured server-side only after an order
   // is placed; this table itself stores NO PII.
   customerEventsAnonymous: defineTable({
@@ -372,7 +372,7 @@ export default defineSchema({
     subtotal: v.number(),
     lastEventName: v.optional(v.string()),
     lastRoute: v.optional(v.string()),
-    // Set true by submitOrder finaliser → excludes from abandonment cron
+    // Set true by submitOrder finaliser â†’ excludes from abandonment cron
     converted: v.boolean(),
     // Set by abandonment cron once classified
     abandonedAt: v.optional(v.number()),
@@ -416,4 +416,44 @@ export default defineSchema({
     abandonedCartValue: v.number(),
     updatedAt: v.number(),
   }).index("by_key_window", ["key", "windowDays"]),
+  // ── Brewing Studio Media (v9.0) ──────────────────────────────────────────
+  // Slot-bound media assets (image/video/gif/lottie/glb). One row per upload;
+  // only one row per (slot, slotKey) is `published` at a time. See convex/media.ts.
+  media: defineTable({
+    kind: v.union(
+      v.literal("image"),
+      v.literal("video"),
+      v.literal("gif"),
+      v.literal("lottie"),
+      v.literal("glb")
+    ),
+    slot: v.union(
+      v.literal("brew_method"),
+      v.literal("brew_step"),
+      v.literal("signature"),
+      v.literal("product"),
+      v.literal("ambience")
+    ),
+    slotKey: v.string(),
+    storageId: v.id("_storage"),
+    posterStorageId: v.optional(v.id("_storage")),
+    width: v.optional(v.number()),
+    height: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
+    blurhash: v.optional(v.string()),
+    status: v.union(v.literal("draft"), v.literal("published")),
+    publishedAt: v.optional(v.number()),
+    provenance: v.union(v.literal("upload"), v.literal("ai")),
+    aiMeta: v.optional(v.object({
+      provider: v.string(),
+      model: v.string(),
+      prompt: v.string(),
+      seed: v.optional(v.number()),
+      costUsd: v.optional(v.number()),
+      predictionId: v.optional(v.string()),
+    })),
+  })
+    .index("by_slot_key", ["slot", "slotKey"])
+    .index("by_status_slot", ["status", "slot"])
+    .index("by_creation", ["_creationTime"]),
 });
