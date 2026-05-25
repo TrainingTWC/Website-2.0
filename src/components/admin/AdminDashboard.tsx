@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Package,
@@ -30,6 +31,7 @@ import {
   Filter,
   Sparkles,
   Newspaper,
+  Film,
   Home as HomeIcon,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
@@ -50,6 +52,16 @@ import { LayoutDashboard } from "lucide-react";
 import { ImagePicker } from "./ImagePicker";
 import { VisitorMap } from "./VisitorMapLazy";
 import type { AdminMe } from "./AdminAuthGate";
+
+// Lazy-load Studio Media admin tab so customer bundle stays clean.
+const StudioMediaTab = dynamic(() => import("./StudioMediaTab"), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+      Loading Studio Media…
+    </div>
+  ),
+});
 
 // ─── Shared design tokens ─────────────────────────────────────────────────────
 const INPUT =
@@ -170,7 +182,7 @@ function formDataToProductPayload(form: ProductFormData) {
 export function AdminDashboard({ me }: { me?: AdminMe }) {
   const isCmsOnly = me?.admin?.role === "hr" || me?.admin?.role === "marketing" || me?.admin?.role === "pr";
   const [activeTab, setActiveTab] = useState<
-    "overview" | "inventory" | "analytics" | "funnel" | "rules" | "orders" | "editorial" | "home" | "about" | "settings"
+    "overview" | "inventory" | "analytics" | "funnel" | "rules" | "orders" | "editorial" | "home" | "about" | "studio-media" | "settings"
   >(isCmsOnly ? "home" : "overview");
 
   const products = (useQuery(api.products.list) ?? []) as any[];
@@ -220,6 +232,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
           items: [
             { id: "inventory", label: "Inventory", icon: <Package className="w-4 h-4" /> },
             { id: "home", label: "CMS", icon: <Globe className="w-4 h-4" /> },
+            { id: "studio-media", label: "Studio Media", icon: <Film className="w-4 h-4" /> },
           ],
         },
         {
@@ -240,6 +253,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
     orders: { title: "Orders", subtitle: "Track and fulfil incoming customer orders." },
     editorial: { title: "Editorial", subtitle: "Publish stories, journal entries and editorial pieces." },
     home: { title: "CMS", subtitle: "Edit every page — Home, Third Circle, and About — with live preview." },
+    "studio-media": { title: "Studio Media", subtitle: "Upload, publish, and manage Brewing Studio assets per slot." },
     about: { title: "About Pages", subtitle: "Edit Our Story, Our Coffee, Careers, and Newsroom with live preview." },
     settings: { title: "Settings", subtitle: "Workspace preferences and integrations." },
   };
@@ -271,6 +285,7 @@ export function AdminDashboard({ me }: { me?: AdminMe }) {
       {activeTab === "orders" && <OrdersView />}
       {activeTab === "editorial" && <EditorialCMS />}
       {activeTab === "home" && <UnifiedCMS />}
+      {activeTab === "studio-media" && <StudioMediaTab />}
       {activeTab === "settings" && (
         <div className="rounded-2xl border border-stone-200 bg-white/70 p-6 text-sm text-stone-600">
           <p className="font-bold text-stone-900 text-base mb-1">Workspace settings</p>

@@ -193,3 +193,15 @@ export const deleteMedia = mutation({
     await ctx.db.delete(args.mediaId);
   },
 });
+
+// 7) Unpublish - demote a published row back to draft. Storage is preserved.
+export const unpublish = mutation({
+  args: { mediaId: v.id("media") },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const row = await ctx.db.get(args.mediaId);
+    if (!row) throw new ConvexError("Media not found");
+    if (row.status !== "published") return;
+    await ctx.db.patch(args.mediaId, { status: "draft", publishedAt: undefined });
+  },
+});
