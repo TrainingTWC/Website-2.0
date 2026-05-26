@@ -389,6 +389,10 @@ export function useCareerStats(): CareerStat[] {
   return useListValue<CareerStat>("about.careers.stats", DEFAULT_CAREERS_STATS);
 }
 
+export function useApplyLink(): string {
+  return useContentValue<string>("about.careers.applyLink", "mailto:careers@brewmatch.in");
+}
+
 // Newsroom
 export function useNewsroomHero() {
   return useHeroValue("about.newsroom.hero", DEFAULT_NEWSROOM_HERO);
@@ -412,6 +416,7 @@ export const AboutDefaults = {
   stories: DEFAULT_STORIES,
   careersMarquee: DEFAULT_CAREERS_MARQUEE,
   careersStats: DEFAULT_CAREERS_STATS,
+  applyLink: "mailto:careers@brewmatch.in",
   coffeeSchool: DEFAULT_COFFEE_SCHOOL,
   orientation: DEFAULT_ORIENTATION,
   newsroomHero: DEFAULT_NEWSROOM_HERO,

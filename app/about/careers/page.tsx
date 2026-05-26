@@ -10,6 +10,7 @@ import { ScormViewer } from "@/src/components/about/ScormViewer";
 import { Heart, Brain, Palmtree, BookOpen, Coffee, Globe, Sparkles, Shield, Star, Gift, Sun, Award, Briefcase, GraduationCap } from "lucide-react";
 import {
   useCareersHero,
+  useApplyLink,
   useCareerRoles,
   useCareerBenefits,
   useCareerStories,
@@ -88,6 +89,7 @@ export default function CareersPage() {
   const marqueeItems = useCareerMarquee();
   const marqueeSpeed = useCareerMarqueeSpeed();
   const statTiles = useCareerStats();
+  const applyLink = useApplyLink();
   const coffeeSchool = useCoffeeSchool();
   const orientation = useOrientationModule();
   const [filter, setFilter] = useState<TeamFilter>("All");
@@ -420,7 +422,7 @@ export default function CareersPage() {
               No cover letter. No coffee degree needed. Tell us who you are.
             </p>
             <a
-              href="mailto:careers@brewmatch.in"
+              href={applyLink}
               className="mt-10 inline-flex items-center gap-3 bg-[color:var(--about-accent)] text-[color:var(--about-accent-ink)] px-10 py-5 rounded-full font-bold text-lg hover:opacity-85 transition-opacity"
             >
               Send your application →
