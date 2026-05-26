@@ -34,12 +34,12 @@ export default function RootLayout({
         />
         <link
           rel="preconnect"
-          href="https://different-bulldog-772.convex.cloud"
+          href="https://watchful-cormorant-351.convex.cloud"
           crossOrigin=""
         />
         <link
           rel="dns-prefetch"
-          href="https://different-bulldog-772.convex.cloud"
+          href="https://watchful-cormorant-351.convex.cloud"
         />
       </head>
       <body>

@@ -18,7 +18,7 @@ import { LazyMotionRoot } from "../src/components/LazyMotionRoot";
 import { ThemePicker } from "../src/components/ThemePicker";
 
 export const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL || "https://different-bulldog-772.convex.cloud"
+  process.env.NEXT_PUBLIC_CONVEX_URL || "https://watchful-cormorant-351.convex.cloud"
 );
 
 export function Providers({ children }: { children: ReactNode }) {
