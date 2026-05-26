@@ -10,7 +10,7 @@ auth.addHttpRoutes(http);
 // ── Data Export API ──────────────────────────────────────────────────────────
 //
 // GET  https://watchful-cormorant-351.convex.site/api/v1/export
-//      ?from=<unix_ms>   — optional; default: 7 days ago
+//      ?from=<unix_ms>   — optional; default: 0 (all-time)
 //                          pass the previous response's `generatedAt` value
 //                          for incremental / delta syncs
 //

@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TWC Data Export API — Reference</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #e8e3da;
+    --muted: #8a8278;
+    --amber: #d97706;
+    --amber-light: #fbbf24;
+    --green: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --code-bg: #1a1a2e;
+    --pill-bg: #1e1e1e;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  a { color: var(--amber-light); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Layout ──────────────────────────────────────────── */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .brand { font-size: 13px; font-weight: 700; color: var(--amber-light); letter-spacing: .08em; text-transform: uppercase; }
+  .sidebar-logo .version { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .nav-section { padding: 8px 24px 4px; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+  .nav-item { display: block; padding: 6px 24px; font-size: 13px; color: var(--muted); cursor: pointer; transition: color .15s, background .15s; border-left: 2px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); border-left-color: var(--border); text-decoration: none; }
+  .nav-item.active { color: var(--amber-light); border-left-color: var(--amber-light); background: rgba(217,119,6,.07); }
+
+  /* ── Main content ────────────────────────────────────── */
+  .main { flex: 1; max-width: 900px; padding: 48px 56px; }
+  @media (max-width: 900px) { .sidebar { display: none; } .main { padding: 32px 24px; } }
+
+  /* ── Section headings ────────────────────────────────── */
+  .page-title { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .page-subtitle { color: var(--muted); font-size: 15px; margin-bottom: 48px; line-height: 1.5; }
+  h2 {
+    font-size: 22px; font-weight: 700; color: #fff;
+    margin: 56px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 32px;
+  }
+  h3 { font-size: 16px; font-weight: 700; color: var(--text); margin: 28px 0 10px; }
+  p { color: var(--muted); margin-bottom: 12px; }
+  p strong { color: var(--text); }
+
+  /* ── Code blocks ─────────────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid #2a2a4a;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 12px 0 20px;
+  }
+  code { font-family: "SF Mono", "Fira Code", Consolas, monospace; }
+  p code, li code, td code {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+    color: var(--amber-light);
+  }
+  .kw  { color: #c084fc; }   /* keywords */
+  .str { color: #86efac; }   /* strings */
+  .num { color: #fdba74; }   /* numbers */
+  .cmt { color: #4b5563; }   /* comments */
+  .key { color: #93c5fd; }   /* object keys */
+  .url { color: var(--amber-light); }
+
+  /* ── Badges ──────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .badge-get    { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.3); }
+  .badge-opt    { background: rgba(96,165,250,.15); color: var(--blue);  border: 1px solid rgba(96,165,250,.3); }
+  .badge-req    { background: rgba(248,113,113,.15); color: var(--red);  border: 1px solid rgba(248,113,113,.3); }
+  .badge-200    { background: rgba(52,211,153,.15); color: var(--green); border: 1px solid rgba(52,211,153,.3); }
+  .badge-401    { background: rgba(248,113,113,.15); color: var(--red);  border: 1px solid rgba(248,113,113,.3); }
+  .badge-500    { background: rgba(167,139,250,.15); color: var(--purple); border: 1px solid rgba(167,139,250,.3); }
+  .badge-array  { background: rgba(251,191,36,.1); color: var(--amber-light); border: 1px solid rgba(251,191,36,.2); }
+  .badge-object { background: rgba(96,165,250,.1); color: var(--blue);  border: 1px solid rgba(96,165,250,.2); }
+  .badge-string { background: rgba(52,211,153,.1); color: var(--green); border: 1px solid rgba(52,211,153,.2); }
+  .badge-number { background: rgba(167,139,250,.1); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+  .badge-bool   { background: rgba(248,113,113,.1); color: var(--red);  border: 1px solid rgba(248,113,113,.2); }
+
+  /* ── Endpoint pill ───────────────────────────────────── */
+  .endpoint-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    margin: 16px 0 24px;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 14px;
+    overflow-x: auto;
+  }
+  .endpoint-pill .method { color: var(--green); font-weight: 700; min-width: 44px; }
+  .endpoint-pill .url-text { color: var(--amber-light); }
+
+  /* ── Tables ──────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 12px 0 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--bg3);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.02); }
+  tbody td { padding: 10px 16px; vertical-align: top; color: var(--muted); }
+  tbody td:first-child { color: var(--text); font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 12px; white-space: nowrap; }
+  tbody td:nth-child(2) { white-space: nowrap; }
+
+  /* ── Alert boxes ─────────────────────────────────────── */
+  .alert {
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .alert-amber  { background: rgba(217,119,6,.12); border: 1px solid rgba(217,119,6,.3); color: #fcd34d; }
+  .alert-green  { background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.3); color: #6ee7b7; }
+  .alert-blue   { background: rgba(96,165,250,.1); border: 1px solid rgba(96,165,250,.3); color: #93c5fd; }
+  .alert strong { color: inherit; }
+
+  /* ── Divider ─────────────────────────────────────────── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ── Object schema blocks ────────────────────────────── */
+  .schema-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 8px 0 20px;
+    overflow: hidden;
+  }
+  .schema-header {
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .schema-row {
+    display: grid;
+    grid-template-columns: 200px 110px 1fr;
+    gap: 0;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    align-items: start;
+  }
+  .schema-row:last-child { border-bottom: none; }
+  .schema-row .field-name { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 12px; color: var(--amber-light); }
+  .schema-row .field-opt { color: var(--muted); font-size: 11px; }
+  .schema-row .field-desc { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+  /* ── Lang tabs ───────────────────────────────────────── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+  .tab-btn {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--amber-light); border-bottom-color: var(--amber-light); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .tabs-wrapper { background: var(--code-bg); border: 1px solid #2a2a4a; border-radius: var(--radius); overflow: hidden; margin: 12px 0 20px; }
+  .tabs-header { padding: 0 12px; background: #111125; border-bottom: 1px solid #2a2a4a; }
+  .tabs-body pre { border: none; border-radius: 0; margin: 0; background: transparent; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ────────────────────────────── Sidebar ─────────────────────────────── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">TWC · Data Export API</div>
+    <div class="version">v1.0 &nbsp;·&nbsp; Convex HTTP Actions</div>
+  </div>
+
+  <div class="nav-section">Getting Started</div>
+  <a class="nav-item" href="#overview">Overview</a>
+  <a class="nav-item" href="#auth">Authentication</a>
+  <a class="nav-item" href="#create-key">Creating an API Key</a>
+
+  <div class="nav-section">Endpoint</div>
+  <a class="nav-item" href="#endpoint">GET /api/v1/export</a>
+  <a class="nav-item" href="#parameters">Parameters</a>
+  <a class="nav-item" href="#response-meta">Response · Meta</a>
+  <a class="nav-item" href="#response-counts">Response · Counts</a>
+
+  <div class="nav-section">Data Types</div>
+  <a class="nav-item" href="#orders">Orders</a>
+  <a class="nav-item" href="#order-summary">Order Summary</a>
+  <a class="nav-item" href="#products">Products</a>
+  <a class="nav-item" href="#categories">Categories</a>
+  <a class="nav-item" href="#discounts">Discounts</a>
+  <a class="nav-item" href="#posts">Posts</a>
+  <a class="nav-item" href="#admins">Admins</a>
+  <a class="nav-item" href="#page-view-daily">Page View Daily</a>
+  <a class="nav-item" href="#page-views">Page Views</a>
+  <a class="nav-item" href="#customer-events">Customer Events</a>
+  <a class="nav-item" href="#cart-snapshots">Cart Snapshots</a>
+  <a class="nav-item" href="#client-errors">Client Errors</a>
+  <a class="nav-item" href="#funnel-summary">Funnel Summary</a>
+  <a class="nav-item" href="#web-vitals">Web Vitals</a>
+  <a class="nav-item" href="#audit-log">Audit Log</a>
+  <a class="nav-item" href="#media">Media</a>
+
+  <div class="nav-section">Reference</div>
+  <a class="nav-item" href="#errors">Error Codes</a>
+  <a class="nav-item" href="#rate-limits">Limits &amp; Pagination</a>
+  <a class="nav-item" href="#incremental">Incremental Sync</a>
+  <a class="nav-item" href="#examples">Code Examples</a>
+</nav>
+
+<!-- ─────────────────────────────── Main ───────────────────────────────── -->
+<main class="main">
+
+  <p class="page-title">Data Export API</p>
+  <p class="page-subtitle">
+    Single authenticated endpoint that snapshots every superadmin-visible table
+    in the Third Wave Coffee Convex backend. Designed for external analytics,
+    BI dashboards, and data pipeline ingestion.
+  </p>
+
+  <!-- ── Overview ──────────────────────────────────────────────────────────── -->
+  <h2 id="overview">Overview</h2>
+  <p>The export API is a single <strong>HTTP GET endpoint</strong> hosted on Convex's edge infrastructure. One call returns up to 16 datasets in a single JSON payload — no pagination tokens, no GraphQL schemas, no SDK required.</p>
+
+  <div class="alert alert-green">
+    <strong>Base URL:</strong>&nbsp;
+    <code>https://watchful-cormorant-351.convex.site</code>
+    <br/>All requests are HTTPS. CORS headers are included so browser-side calls also work.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Protocol</td><td>HTTPS</td></tr>
+        <tr><td>Format</td><td>JSON</td></tr>
+        <tr><td>Auth</td><td>Bearer token (API key)</td></tr>
+        <tr><td>CORS</td><td><code>Access-Control-Allow-Origin: *</code></td></tr>
+        <tr><td>Max rows per call</td><td>5 000 orders / events; 2 000 page views / cart / vitals; unlimited for reference tables</td></tr>
+        <tr><td>Deployment</td><td>Convex Production — <code>watchful-cormorant-351</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Authentication ────────────────────────────────────────────────────── -->
+  <h2 id="auth">Authentication</h2>
+  <p>Every request must include an <code>Authorization</code> header with a valid API key as a Bearer token.</p>
+
+  <pre><code><span class="cmt"># Required header on every request</span>
+Authorization: Bearer twc_live_&lt;64-hex-chars&gt;</code></pre>
+
+  <h3>Key format</h3>
+  <p>Keys follow the pattern <code>twc_live_</code> followed by 64 lowercase hexadecimal characters (32 random bytes), giving a total of 73 characters.</p>
+  <pre><code>twc_live_a3f9c2b1e8d74f0a5b6c2d9e1f4a7b3c2d5e8f1a0b4c7d2e5f8a1b3c6d9e2f5</code></pre>
+
+  <h3>Security model</h3>
+  <p>Only the <strong>SHA-256 hash</strong> of each key is stored in the database. The raw key is displayed exactly once at creation and cannot be recovered — treat it like a password.</p>
+
+  <div class="alert alert-amber">
+    <strong>⚠ Never embed a key in client-side JavaScript.</strong> Call the export endpoint from your backend server or a secure environment. The endpoint returns PII (customer names, phone numbers, emails).
+  </div>
+
+  <!-- ── Creating a key ─────────────────────────────────────────────────────── -->
+  <h2 id="create-key">Creating an API Key</h2>
+  <p>API keys are managed entirely within the Super Admin panel — no CLI or Convex dashboard access needed.</p>
+
+  <ol style="color:var(--muted); padding-left:20px; line-height:2.2;">
+    <li>Navigate to <strong style="color:var(--text)">thirdwavecoffee.prismintelligence.in/admin?role=superadmin</strong></li>
+    <li>Open the <strong style="color:var(--text)">Governance → API Keys</strong> sidebar section</li>
+    <li>Click <strong style="color:var(--text)">New key</strong>, enter a descriptive label (e.g. <em>Analytics App</em>)</li>
+    <li>Click <strong style="color:var(--text)">Create</strong> — the full key appears highlighted in green</li>
+    <li><strong style="color:var(--red)">Copy it immediately.</strong> It will not be shown again.</li>
+  </ol>
+
+  <p>To revoke a key, find it in the list and click <strong>Revoke</strong>. Revoked keys are rejected on the next request.</p>
+
+  <!-- ── Endpoint ───────────────────────────────────────────────────────────── -->
+  <h2 id="endpoint">GET /api/v1/export</h2>
+
+  <div class="endpoint-pill">
+    <span class="method">GET</span>
+    <span class="url-text">https://watchful-cormorant-351.convex.site/api/v1/export</span>
+  </div>
+
+  <p>Returns a full snapshot of all exportable data. All 16 datasets are fetched in parallel server-side and returned in a single response body.</p>
+
+  <!-- ── Parameters ────────────────────────────────────────────────────────── -->
+  <h2 id="parameters">Query Parameters</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>from</td>
+          <td><span class="badge badge-number">number</span></td>
+          <td><span class="badge badge-opt">Optional</span></td>
+          <td><code>0</code></td>
+          <td>
+            Unix milliseconds. All time-series tables return records created/updated <em>at or after</em> this timestamp. Reference tables (products, categories, admins, etc.) always return their full set regardless.
+            <br/><br/>
+            <strong style="color:var(--text)">Incremental sync:</strong> Pass the <code>generatedAt</code> value from the previous response to receive only records newer than your last sync.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-blue">
+    <strong>Default is all-time (<code>from=0</code>).</strong> Your first call always returns the full historical dataset. For subsequent calls, pass <code>generatedAt</code> from the previous response as <code>?from=</code> to fetch only new records.
+  </div>
+
+  <!-- ── Response meta ──────────────────────────────────────────────────────── -->
+  <h2 id="response-meta">Response · Top-level Fields</h2>
+  <p>HTTP <span class="badge badge-200">200</span> — <code>Content-Type: application/json</code></p>
+
+  <div class="schema-block">
+    <div class="schema-header">Root object</div>
+    <div class="schema-row"><span class="field-name">generatedAt</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when the response was generated. Use this as <code>?from=</code> on your next incremental sync call.</span></div>
+    <div class="schema-row"><span class="field-name">generatedAtISO</span><span class="badge badge-string">string</span><span class="field-desc">ISO 8601 representation of <code>generatedAt</code>, e.g. <code>"2026-05-26T12:00:00.000Z"</code></span></div>
+    <div class="schema-row"><span class="field-name">from</span><span class="badge badge-number">number</span><span class="field-desc">The Unix ms lower bound that was applied to time-series tables. Mirrors the <code>?from=</code> query param (or <code>0</code> if omitted).</span></div>
+    <div class="schema-row"><span class="field-name">fromISO</span><span class="badge badge-string">string</span><span class="field-desc">ISO 8601 representation of <code>from</code>.</span></div>
+    <div class="schema-row"><span class="field-name">tip</span><span class="badge badge-string">string</span><span class="field-desc">Human-readable hint about incremental sync. Safe to ignore.</span></div>
+    <div class="schema-row"><span class="field-name">counts</span><span class="badge badge-object">object</span><span class="field-desc">Row count for each dataset in <code>data</code>. Use for quick sanity checks without deserialising the full payload.</span></div>
+    <div class="schema-row"><span class="field-name">data</span><span class="badge badge-object">object</span><span class="field-desc">All datasets. See individual sections below.</span></div>
+  </div>
+
+  <!-- ── Counts ─────────────────────────────────────────────────────────────── -->
+  <h2 id="response-counts">Response · Counts Object</h2>
+  <div class="schema-block">
+    <div class="schema-header">counts</div>
+    <div class="schema-row"><span class="field-name">orders</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.orders</code></span></div>
+    <div class="schema-row"><span class="field-name">products</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.products</code></span></div>
+    <div class="schema-row"><span class="field-name">categories</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.categories</code></span></div>
+    <div class="schema-row"><span class="field-name">admins</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.admins</code></span></div>
+    <div class="schema-row"><span class="field-name">discounts</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.discounts</code></span></div>
+    <div class="schema-row"><span class="field-name">posts</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.posts</code></span></div>
+    <div class="schema-row"><span class="field-name">pageViewDailySummary</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.pageViewDailySummary</code></span></div>
+    <div class="schema-row"><span class="field-name">pageViews</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.pageViews</code></span></div>
+    <div class="schema-row"><span class="field-name">customerEvents</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.customerEvents</code></span></div>
+    <div class="schema-row"><span class="field-name">cartSnapshots</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.cartSnapshots</code></span></div>
+    <div class="schema-row"><span class="field-name">clientErrors</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.clientErrors</code></span></div>
+    <div class="schema-row"><span class="field-name">funnelSummary</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.funnelSummary</code></span></div>
+    <div class="schema-row"><span class="field-name">webVitals</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.webVitals</code></span></div>
+    <div class="schema-row"><span class="field-name">auditLog</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.auditLog</code></span></div>
+    <div class="schema-row"><span class="field-name">media</span><span class="badge badge-number">number</span><span class="field-desc">Items in <code>data.media</code></span></div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ═══════════════════════ DATA TYPES ═══════════════════════════════════ -->
+
+  <!-- ── Orders ────────────────────────────────────────────────────────────── -->
+  <h2 id="orders">data.orders <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p>Customer orders. <strong>Time-bounded</strong> — filtered by <code>from</code>. Sorted newest-first. Max 5 000 records per call.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">Order object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID (opaque).</span></div>
+    <div class="schema-row"><span class="field-name">_creationTime</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms — when the order was placed. Use this field for <code>from</code> pagination.</span></div>
+    <div class="schema-row"><span class="field-name">orderId</span><span class="badge badge-string">string</span><span class="field-desc">Human-readable order ID, format <code>TWC-XXXXXXXX</code>.</span></div>
+    <div class="schema-row"><span class="field-name">status</span><span class="badge badge-string">string</span><span class="field-desc"><code>"pending"</code> · <code>"confirmed"</code> · <code>"shipped"</code> · <code>"delivered"</code> · <code>"cancelled"</code></span></div>
+    <div class="schema-row"><span class="field-name">customer</span><span class="badge badge-object">object</span><span class="field-desc">Customer PII — <code>name</code>, <code>phone</code>, <code>email</code>, <code>address</code> (<code>line1</code>, <code>line2?</code>, <code>city</code>, <code>state</code>, <code>pincode</code>).</span></div>
+    <div class="schema-row"><span class="field-name">items</span><span class="badge badge-array">array</span><span class="field-desc">Line items — each has <code>productId</code>, <code>name</code>, <code>imageUrl</code>, <code>qty</code>, <code>price</code> (server-computed at time of order).</span></div>
+    <div class="schema-row"><span class="field-name">subtotal</span><span class="badge badge-number">number</span><span class="field-desc">Sum of (qty × price) across items. In INR (₹).</span></div>
+    <div class="schema-row"><span class="field-name">shipping</span><span class="badge badge-number">number</span><span class="field-desc">Shipping charge. In INR (₹).</span></div>
+    <div class="schema-row"><span class="field-name">total</span><span class="badge badge-number">number</span><span class="field-desc">subtotal + shipping − discountApplied. Final charged amount.</span></div>
+    <div class="schema-row"><span class="field-name">paymentMethod</span><span class="badge badge-string">string?</span><span class="field-desc"><code>"razorpay"</code> or other values.</span></div>
+    <div class="schema-row"><span class="field-name">razorpayOrderId</span><span class="badge badge-string">string?</span><span class="field-desc">Razorpay order ID for payment reconciliation.</span></div>
+    <div class="schema-row"><span class="field-name">razorpayPaymentId</span><span class="badge badge-string">string?</span><span class="field-desc">Razorpay payment ID — set after successful payment capture.</span></div>
+    <div class="schema-row"><span class="field-name">paidAt</span><span class="badge badge-number">number?</span><span class="field-desc">Unix ms when payment was confirmed.</span></div>
+    <div class="schema-row"><span class="field-name">discountCode</span><span class="badge badge-string">string?</span><span class="field-desc">Discount code applied, if any.</span></div>
+    <div class="schema-row"><span class="field-name">discountApplied</span><span class="badge badge-number">number?</span><span class="field-desc">Amount discounted in INR (₹).</span></div>
+    <div class="schema-row"><span class="field-name">notes</span><span class="badge badge-array">array?</span><span class="field-desc">Order timeline notes — each has <code>role</code> (<code>"customer"</code>|<code>"system"</code>), <code>message</code>, <code>ts</code>.</span></div>
+  </div>
+
+  <!-- ── Order Summary ──────────────────────────────────────────────────────── -->
+  <h2 id="order-summary">data.orderSummary <span class="badge badge-object" style="font-size:12px;vertical-align:middle">object | null</span></h2>
+  <p>Materialised global order counters — updated atomically on every order status change. Singleton keyed <code>"global"</code>. Returns <code>null</code> if no orders have been placed yet.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">OrderSummary object</div>
+    <div class="schema-row"><span class="field-name">totalRevenue</span><span class="badge badge-number">number</span><span class="field-desc">Sum of all non-cancelled order totals. In INR (₹).</span></div>
+    <div class="schema-row"><span class="field-name">totalOrders</span><span class="badge badge-number">number</span><span class="field-desc">All orders ever placed.</span></div>
+    <div class="schema-row"><span class="field-name">completedOrders</span><span class="badge badge-number">number</span><span class="field-desc">Orders with status <code>"delivered"</code>.</span></div>
+    <div class="schema-row"><span class="field-name">pendingOrders</span><span class="badge badge-number">number</span><span class="field-desc">Orders awaiting fulfilment.</span></div>
+    <div class="schema-row"><span class="field-name">cancelledOrders</span><span class="badge badge-number">number</span><span class="field-desc">Cancelled orders.</span></div>
+    <div class="schema-row"><span class="field-name">avgOrderValue</span><span class="badge badge-number">number</span><span class="field-desc">Mean order total across all non-cancelled orders.</span></div>
+    <div class="schema-row"><span class="field-name">updatedAt</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when this summary was last recalculated.</span></div>
+  </div>
+
+  <!-- ── Products ───────────────────────────────────────────────────────────── -->
+  <h2 id="products">data.products <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong> All products are always returned. No row cap.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">Product object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">name</span><span class="badge badge-string">string</span><span class="field-desc">Product display name.</span></div>
+    <div class="schema-row"><span class="field-name">description</span><span class="badge badge-string">string</span><span class="field-desc">Long-form product description.</span></div>
+    <div class="schema-row"><span class="field-name">type</span><span class="badge badge-string">string</span><span class="field-desc"><code>"beans"</code> · <code>"bags"</code> · <code>"merch"</code></span></div>
+    <div class="schema-row"><span class="field-name">mainCategory</span><span class="badge badge-string">string?</span><span class="field-desc"><code>"coffee"</code> · <code>"merch"</code></span></div>
+    <div class="schema-row"><span class="field-name">subCategory</span><span class="badge badge-string">string?</span><span class="field-desc"><code>"beans"</code> · <code>"ecb"</code> · <code>"drinkware"</code> · <code>"bags"</code> · <code>"keychains"</code> · <code>"chocolates-nuts"</code> · <code>"brewing-tools"</code></span></div>
+    <div class="schema-row"><span class="field-name">price</span><span class="badge badge-number">number</span><span class="field-desc">Current price in INR (₹). Always &gt; 0.</span></div>
+    <div class="schema-row"><span class="field-name">stockStatus</span><span class="badge badge-string">string</span><span class="field-desc"><code>"in-stock"</code> · <code>"low-stock"</code> · <code>"out-of-stock"</code></span></div>
+    <div class="schema-row"><span class="field-name">stockQty</span><span class="badge badge-number">number?</span><span class="field-desc">Current inventory count.</span></div>
+    <div class="schema-row"><span class="field-name">lowStockThreshold</span><span class="badge badge-number">number?</span><span class="field-desc">Quantity below which status flips to <code>"low-stock"</code>.</span></div>
+    <div class="schema-row"><span class="field-name">roastLevel</span><span class="badge badge-string">string?</span><span class="field-desc">Coffee only — <code>"light"</code> · <code>"medium"</code> · <code>"medium-dark"</code> · <code>"dark"</code></span></div>
+    <div class="schema-row"><span class="field-name">origin</span><span class="badge badge-string">string?</span><span class="field-desc">Coffee origin region / estate.</span></div>
+    <div class="schema-row"><span class="field-name">weight</span><span class="badge badge-string">string?</span><span class="field-desc">e.g. <code>"250g"</code>, <code>"1kg"</code></span></div>
+    <div class="schema-row"><span class="field-name">flavorNotes</span><span class="badge badge-array">array&lt;string&gt;</span><span class="field-desc">Tasting note tags, e.g. <code>["chocolate", "caramel"]</code></span></div>
+    <div class="schema-row"><span class="field-name">tags</span><span class="badge badge-array">array&lt;string&gt;</span><span class="field-desc">General searchable tags.</span></div>
+    <div class="schema-row"><span class="field-name">rating</span><span class="badge badge-number">number?</span><span class="field-desc">Average rating 0–5.</span></div>
+    <div class="schema-row"><span class="field-name">reviewCount</span><span class="badge badge-number">number?</span><span class="field-desc">Number of reviews.</span></div>
+    <div class="schema-row"><span class="field-name">imageUrl</span><span class="badge badge-string">string</span><span class="field-desc">Primary image URL.</span></div>
+  </div>
+
+  <!-- ── Categories ────────────────────────────────────────────────────────── -->
+  <h2 id="categories">data.categories <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong></p>
+
+  <div class="schema-block">
+    <div class="schema-header">Category object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">name</span><span class="badge badge-string">string</span><span class="field-desc">Display name.</span></div>
+    <div class="schema-row"><span class="field-name">slug</span><span class="badge badge-string">string</span><span class="field-desc">URL-safe identifier, e.g. <code>"single-origin"</code>.</span></div>
+    <div class="schema-row"><span class="field-name">productType</span><span class="badge badge-string">string</span><span class="field-desc"><code>"beans"</code> · <code>"bags"</code> · <code>"merch"</code> · <code>"all"</code></span></div>
+  </div>
+
+  <!-- ── Discounts ──────────────────────────────────────────────────────────── -->
+  <h2 id="discounts">data.discounts <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong></p>
+
+  <div class="schema-block">
+    <div class="schema-header">Discount object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">code</span><span class="badge badge-string">string</span><span class="field-desc">Discount code string as entered by the customer.</span></div>
+    <div class="schema-row"><span class="field-name">discountType</span><span class="badge badge-string">string</span><span class="field-desc"><code>"percent"</code> (e.g. 10%) or <code>"flat"</code> (e.g. ₹100 off).</span></div>
+    <div class="schema-row"><span class="field-name">amount</span><span class="badge badge-number">number</span><span class="field-desc">Discount value — percentage points or INR amount depending on <code>discountType</code>.</span></div>
+    <div class="schema-row"><span class="field-name">firstOrderOnly</span><span class="badge badge-bool">boolean</span><span class="field-desc">If <code>true</code>, only applies to a customer's first order (enforced server-side).</span></div>
+    <div class="schema-row"><span class="field-name">expiresAt</span><span class="badge badge-number">number?</span><span class="field-desc">Expiry as Unix ms. <code>null</code> = never expires.</span></div>
+    <div class="schema-row"><span class="field-name">maxUses</span><span class="badge badge-number">number?</span><span class="field-desc">Maximum total redemptions. <code>null</code> = unlimited.</span></div>
+    <div class="schema-row"><span class="field-name">usageCount</span><span class="badge badge-number">number</span><span class="field-desc">Total times this code has been successfully applied.</span></div>
+  </div>
+
+  <!-- ── Posts ──────────────────────────────────────────────────────────────── -->
+  <h2 id="posts">data.posts <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong> Includes drafts and scheduled posts.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">Post object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">type</span><span class="badge badge-string">string</span><span class="field-desc"><code>"flash-sale"</code> · <code>"product-launch"</code> · <code>"cafe-news"</code> · <code>"brand-story"</code> · <code>"champion"</code></span></div>
+    <div class="schema-row"><span class="field-name">status</span><span class="badge badge-string">string</span><span class="field-desc"><code>"draft"</code> · <code>"published"</code> · <code>"scheduled"</code></span></div>
+    <div class="schema-row"><span class="field-name">headline</span><span class="badge badge-string">string</span><span class="field-desc">Post title / headline.</span></div>
+    <div class="schema-row"><span class="field-name">subhead</span><span class="badge badge-string">string?</span><span class="field-desc">Optional subtitle.</span></div>
+    <div class="schema-row"><span class="field-name">body</span><span class="badge badge-string">string</span><span class="field-desc">Main body text.</span></div>
+    <div class="schema-row"><span class="field-name">publishAt</span><span class="badge badge-number">number?</span><span class="field-desc">Scheduled publish Unix ms.</span></div>
+    <div class="schema-row"><span class="field-name">expiresAt</span><span class="badge badge-number">number?</span><span class="field-desc">Flash sale expiry Unix ms.</span></div>
+    <div class="schema-row"><span class="field-name">coverImageUrl</span><span class="badge badge-string">string?</span><span class="field-desc">Cover image URL.</span></div>
+  </div>
+
+  <!-- ── Admins ────────────────────────────────────────────────────────────── -->
+  <h2 id="admins">data.admins <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong> Internal auth IDs (<code>userId</code>, <code>invitedBy</code>) are stripped — only analytics-safe fields are exported.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">Admin object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">email</span><span class="badge badge-string">string</span><span class="field-desc">Admin's email address.</span></div>
+    <div class="schema-row"><span class="field-name">name</span><span class="badge badge-string">string?</span><span class="field-desc">Display name.</span></div>
+    <div class="schema-row"><span class="field-name">role</span><span class="badge badge-string">string</span><span class="field-desc"><code>"superadmin"</code> · <code>"admin"</code> · <code>"editor"</code> · <code>"viewer"</code> · <code>"hr"</code> · <code>"marketing"</code> · <code>"pr"</code></span></div>
+    <div class="schema-row"><span class="field-name">permissions</span><span class="badge badge-object">object</span><span class="field-desc">Section access flags — keys: <code>overview</code> · <code>inventory</code> · <code>orders</code> · <code>analytics</code> · <code>editorial</code> · <code>home</code> · <code>rules</code> · <code>customers</code> · <code>settings</code>. Each value is <code>boolean</code>.</span></div>
+    <div class="schema-row"><span class="field-name">active</span><span class="badge badge-bool">boolean</span><span class="field-desc">Whether this admin can currently log in.</span></div>
+    <div class="schema-row"><span class="field-name">invitedAt</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when this admin account was created.</span></div>
+    <div class="schema-row"><span class="field-name">lastSeenAt</span><span class="badge badge-number">number?</span><span class="field-desc">Unix ms of last admin panel visit.</span></div>
+  </div>
+
+  <!-- ── Page View Daily ───────────────────────────────────────────────────── -->
+  <h2 id="page-view-daily">data.pageViewDailySummary <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by date — rows where <code>date ≥ fromISO[0..10]</code>. No row cap (pre-aggregated).</p>
+
+  <div class="schema-block">
+    <div class="schema-header">PageViewDailySummary object</div>
+    <div class="schema-row"><span class="field-name">date</span><span class="badge badge-string">string</span><span class="field-desc">ISO date string <code>"YYYY-MM-DD"</code> (UTC).</span></div>
+    <div class="schema-row"><span class="field-name">totalViews</span><span class="badge badge-number">number</span><span class="field-desc">Total page view events on this date.</span></div>
+    <div class="schema-row"><span class="field-name">uniqueSessions</span><span class="badge badge-number">number</span><span class="field-desc">Distinct session IDs seen on this date.</span></div>
+    <div class="schema-row"><span class="field-name">pathCountsJson</span><span class="badge badge-string">string</span><span class="field-desc">JSON string — map of <code>{ "/path": count }</code>. Parse with <code>JSON.parse()</code>.</span></div>
+    <div class="schema-row"><span class="field-name">geoJson</span><span class="badge badge-string">string</span><span class="field-desc">JSON string — <code>{ countries: {}, cities: {}, regions: {} }</code> view counts by geography.</span></div>
+    <div class="schema-row"><span class="field-name">avgDurationSec</span><span class="badge badge-number">number</span><span class="field-desc">Mean time on page in seconds across all sessions that day.</span></div>
+    <div class="schema-row"><span class="field-name">durationSamples</span><span class="badge badge-number">number</span><span class="field-desc">Number of sessions contributing to <code>avgDurationSec</code>.</span></div>
+    <div class="schema-row"><span class="field-name">gpsCount</span><span class="badge badge-number">number</span><span class="field-desc">Page views with GPS-sourced geolocation.</span></div>
+    <div class="schema-row"><span class="field-name">ipCount</span><span class="badge badge-number">number</span><span class="field-desc">Page views with IP-sourced geolocation.</span></div>
+  </div>
+
+  <!-- ── Page Views ────────────────────────────────────────────────────────── -->
+  <h2 id="page-views">data.pageViews <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>timestamp ≥ from</code>. Sorted newest-first. Max <strong>2 000</strong> per call. Use the daily summary for trend analysis; raw views for session-level debugging.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">PageView object</div>
+    <div class="schema-row"><span class="field-name">path</span><span class="badge badge-string">string</span><span class="field-desc">URL path, e.g. <code>"/shop"</code>.</span></div>
+    <div class="schema-row"><span class="field-name">sessionId</span><span class="badge badge-string">string</span><span class="field-desc">Anonymous session identifier.</span></div>
+    <div class="schema-row"><span class="field-name">timestamp</span><span class="badge badge-number">number</span><span class="field-desc">Client-side Unix ms when the view was recorded.</span></div>
+    <div class="schema-row"><span class="field-name">duration</span><span class="badge badge-number">number?</span><span class="field-desc">Time spent on this page in seconds.</span></div>
+    <div class="schema-row"><span class="field-name">referrer</span><span class="badge badge-string">string?</span><span class="field-desc">HTTP Referrer header value.</span></div>
+    <div class="schema-row"><span class="field-name">country</span><span class="badge badge-string">string?</span><span class="field-desc">Country name from geolocation.</span></div>
+    <div class="schema-row"><span class="field-name">city</span><span class="badge badge-string">string?</span><span class="field-desc">City from geolocation.</span></div>
+    <div class="schema-row"><span class="field-name">lat / lon</span><span class="badge badge-number">number?</span><span class="field-desc">Coordinates from GPS or IP geo-IP lookup.</span></div>
+  </div>
+
+  <!-- ── Customer Events ───────────────────────────────────────────────────── -->
+  <h2 id="customer-events">data.customerEvents <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>ts ≥ from</code>. Sorted newest-first. Max <strong>5 000</strong> per call. <strong>No PII</strong> — identity is anonymous until an order is placed.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">CustomerEvent object</div>
+    <div class="schema-row"><span class="field-name">anonId</span><span class="badge badge-string">string</span><span class="field-desc">Long-lived anonymous identifier stored in localStorage. Consistent across sessions on the same browser.</span></div>
+    <div class="schema-row"><span class="field-name">sessionId</span><span class="badge badge-string">string</span><span class="field-desc">Per-tab session identifier. New per browser tab.</span></div>
+    <div class="schema-row"><span class="field-name">ts</span><span class="badge badge-number">number</span><span class="field-desc">Event timestamp — client-side Unix ms.</span></div>
+    <div class="schema-row"><span class="field-name">name</span><span class="badge badge-string">string</span><span class="field-desc">Event name. Common values: <code>cart_item_added</code> · <code>cart_item_removed</code> · <code>checkout_started</code> · <code>payment_initiated</code> · <code>pdp_viewed</code> · <code>quiz_completed</code></span></div>
+    <div class="schema-row"><span class="field-name">stage</span><span class="badge badge-number">number?</span><span class="field-desc">Funnel stage 1–12 (see funnel catalog).</span></div>
+    <div class="schema-row"><span class="field-name">route</span><span class="badge badge-string">string?</span><span class="field-desc">URL path where the event occurred.</span></div>
+    <div class="schema-row"><span class="field-name">propsJson</span><span class="badge badge-string">string</span><span class="field-desc">JSON string — event-specific properties. Parse with <code>JSON.parse()</code>.</span></div>
+    <div class="schema-row"><span class="field-name">device</span><span class="badge badge-string">string?</span><span class="field-desc"><code>"mobile"</code> · <code>"tablet"</code> · <code>"desktop"</code></span></div>
+    <div class="schema-row"><span class="field-name">connection</span><span class="badge badge-string">string?</span><span class="field-desc">Network type — <code>"4g"</code> · <code>"3g"</code> · <code>"wifi"</code> · <code>"unknown"</code></span></div>
+    <div class="schema-row"><span class="field-name">utmSource / utmMedium / utmCampaign</span><span class="badge badge-string">string?</span><span class="field-desc">UTM attribution parameters from the landing URL.</span></div>
+  </div>
+
+  <!-- ── Cart Snapshots ────────────────────────────────────────────────────── -->
+  <h2 id="cart-snapshots">data.cartSnapshots <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>updatedAt ≥ from</code>. Sorted newest-first. Max <strong>2 000</strong> per call. Each row is the latest cart state for a session.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">CartSnapshot object</div>
+    <div class="schema-row"><span class="field-name">anonId</span><span class="badge badge-string">string</span><span class="field-desc">Same anonymous ID as in <code>customerEvents</code>.</span></div>
+    <div class="schema-row"><span class="field-name">sessionId</span><span class="badge badge-string">string</span><span class="field-desc">Per-tab session ID.</span></div>
+    <div class="schema-row"><span class="field-name">updatedAt</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms of last cart mutation.</span></div>
+    <div class="schema-row"><span class="field-name">itemsJson</span><span class="badge badge-string">string</span><span class="field-desc">JSON string — <code>[{ productId, qty, price, name }]</code></span></div>
+    <div class="schema-row"><span class="field-name">itemCount</span><span class="badge badge-number">number</span><span class="field-desc">Total number of items (sum of qty).</span></div>
+    <div class="schema-row"><span class="field-name">subtotal</span><span class="badge badge-number">number</span><span class="field-desc">Cart value in INR (₹) at last update.</span></div>
+    <div class="schema-row"><span class="field-name">converted</span><span class="badge badge-bool">boolean</span><span class="field-desc"><code>true</code> if this cart was completed as an order. Filter on <code>!converted && !abandonedAt</code> for live abandoned carts.</span></div>
+    <div class="schema-row"><span class="field-name">abandonedAt</span><span class="badge badge-number">number?</span><span class="field-desc">Unix ms when the cart was classified as abandoned by the cron.</span></div>
+    <div class="schema-row"><span class="field-name">contactPhone</span><span class="badge badge-string">string?</span><span class="field-desc">Phone number captured at checkout (set only if user started checkout).</span></div>
+    <div class="schema-row"><span class="field-name">contactEmail</span><span class="badge badge-string">string?</span><span class="field-desc">Email captured at checkout.</span></div>
+  </div>
+
+  <!-- ── Client Errors ─────────────────────────────────────────────────────── -->
+  <h2 id="client-errors">data.clientErrors <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>ts ≥ from</code>. Sorted newest-first. Max <strong>1 000</strong> per call.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">ClientError object</div>
+    <div class="schema-row"><span class="field-name">ts</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when the error occurred client-side.</span></div>
+    <div class="schema-row"><span class="field-name">type</span><span class="badge badge-string">string</span><span class="field-desc"><code>"js"</code> · <code>"api"</code> · <code>"offline"</code> · <code>"unhandled_rejection"</code></span></div>
+    <div class="schema-row"><span class="field-name">message</span><span class="badge badge-string">string</span><span class="field-desc">Error message (capped at 500 chars).</span></div>
+    <div class="schema-row"><span class="field-name">stack</span><span class="badge badge-string">string?</span><span class="field-desc">Stack trace (capped at 2 000 chars).</span></div>
+    <div class="schema-row"><span class="field-name">route</span><span class="badge badge-string">string?</span><span class="field-desc">URL path where the error was thrown.</span></div>
+    <div class="schema-row"><span class="field-name">userAgent</span><span class="badge badge-string">string?</span><span class="field-desc">Browser user-agent string.</span></div>
+    <div class="schema-row"><span class="field-name">anonId / sessionId</span><span class="badge badge-string">string?</span><span class="field-desc">Identifiers from the session context, if available.</span></div>
+  </div>
+
+  <!-- ── Funnel Summary ────────────────────────────────────────────────────── -->
+  <h2 id="funnel-summary">data.funnelSummary <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong> Pre-aggregated funnel conversion metrics. Returns up to 3 rows — one per <code>windowDays</code> (1, 7, 30).</p>
+
+  <div class="schema-block">
+    <div class="schema-header">FunnelSummary object</div>
+    <div class="schema-row"><span class="field-name">windowDays</span><span class="badge badge-number">number</span><span class="field-desc">Aggregation window — <code>1</code>, <code>7</code>, or <code>30</code> days.</span></div>
+    <div class="schema-row"><span class="field-name">sessions</span><span class="badge badge-number">number</span><span class="field-desc">Total unique sessions in the window.</span></div>
+    <div class="schema-row"><span class="field-name">sessionsWithPdpView</span><span class="badge badge-number">number</span><span class="field-desc">Sessions that viewed a product detail page.</span></div>
+    <div class="schema-row"><span class="field-name">sessionsWithCart</span><span class="badge badge-number">number</span><span class="field-desc">Sessions that added an item to cart.</span></div>
+    <div class="schema-row"><span class="field-name">sessionsWithCheckoutInit</span><span class="badge badge-number">number</span><span class="field-desc">Sessions that began the checkout form.</span></div>
+    <div class="schema-row"><span class="field-name">sessionsWithPaymentInit</span><span class="badge badge-number">number</span><span class="field-desc">Sessions that initiated a payment.</span></div>
+    <div class="schema-row"><span class="field-name">sessionsWithOrder</span><span class="badge badge-number">number</span><span class="field-desc">Sessions that completed an order.</span></div>
+    <div class="schema-row"><span class="field-name">abandonedCarts</span><span class="badge badge-number">number</span><span class="field-desc">Carts classified as abandoned in the window.</span></div>
+    <div class="schema-row"><span class="field-name">abandonedCartValue</span><span class="badge badge-number">number</span><span class="field-desc">Total INR value of abandoned carts.</span></div>
+    <div class="schema-row"><span class="field-name">updatedAt</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when this summary was last computed.</span></div>
+  </div>
+
+  <!-- ── Web Vitals ─────────────────────────────────────────────────────────── -->
+  <h2 id="web-vitals">data.webVitals <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>_creationTime ≥ from</code>. Sorted newest-first. Max <strong>2 000</strong> per call. Real-user performance measurements (RUM).</p>
+
+  <div class="schema-block">
+    <div class="schema-header">WebVital object</div>
+    <div class="schema-row"><span class="field-name">name</span><span class="badge badge-string">string</span><span class="field-desc">Metric name — <code>"FCP"</code> · <code>"LCP"</code> · <code>"INP"</code> · <code>"CLS"</code> · <code>"TTFB"</code></span></div>
+    <div class="schema-row"><span class="field-name">value</span><span class="badge badge-number">number</span><span class="field-desc">Metric value. ms for FCP/LCP/INP/TTFB; unitless score for CLS.</span></div>
+    <div class="schema-row"><span class="field-name">rating</span><span class="badge badge-string">string</span><span class="field-desc"><code>"good"</code> · <code>"needs-improvement"</code> · <code>"poor"</code> — per Google Web Vitals thresholds.</span></div>
+    <div class="schema-row"><span class="field-name">page</span><span class="badge badge-string">string</span><span class="field-desc">URL path where the measurement was taken.</span></div>
+    <div class="schema-row"><span class="field-name">tier</span><span class="badge badge-string">string</span><span class="field-desc">Device performance tier — <code>"low"</code> · <code>"mid"</code> · <code>"high"</code> (based on hardware concurrency + memory).</span></div>
+    <div class="schema-row"><span class="field-name">userAgent</span><span class="badge badge-string">string</span><span class="field-desc">Browser user-agent string.</span></div>
+  </div>
+
+  <!-- ── Audit Log ─────────────────────────────────────────────────────────── -->
+  <h2 id="audit-log">data.auditLog <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Time-bounded</strong> by <code>timestamp ≥ from</code>. Sorted newest-first. Max <strong>2 000</strong> per call. Every admin action is logged here.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">AuditLog object</div>
+    <div class="schema-row"><span class="field-name">adminEmail</span><span class="badge badge-string">string</span><span class="field-desc">Email of the admin who performed the action.</span></div>
+    <div class="schema-row"><span class="field-name">action</span><span class="badge badge-string">string</span><span class="field-desc">Dot-separated action path, e.g. <code>"admin.invite"</code> · <code>"product.update"</code> · <code>"order.status_changed"</code></span></div>
+    <div class="schema-row"><span class="field-name">target</span><span class="badge badge-string">string?</span><span class="field-desc">Entity affected, e.g. a product name or order ID.</span></div>
+    <div class="schema-row"><span class="field-name">metadata</span><span class="badge badge-string">string?</span><span class="field-desc">JSON blob — additional context specific to the action.</span></div>
+    <div class="schema-row"><span class="field-name">timestamp</span><span class="badge badge-number">number</span><span class="field-desc">Unix ms when the action was recorded.</span></div>
+  </div>
+
+  <!-- ── Media ──────────────────────────────────────────────────────────────── -->
+  <h2 id="media">data.media <span class="badge badge-array" style="font-size:12px;vertical-align:middle">array</span></h2>
+  <p><strong>Reference table — not time-bounded.</strong> Brewing Studio media assets (images, videos, GIFs, 3D models, Lottie animations). Includes drafts.</p>
+
+  <div class="schema-block">
+    <div class="schema-header">Media object</div>
+    <div class="schema-row"><span class="field-name">_id</span><span class="badge badge-string">string</span><span class="field-desc">Convex document ID.</span></div>
+    <div class="schema-row"><span class="field-name">kind</span><span class="badge badge-string">string</span><span class="field-desc"><code>"image"</code> · <code>"video"</code> · <code>"gif"</code> · <code>"lottie"</code> · <code>"glb"</code></span></div>
+    <div class="schema-row"><span class="field-name">slot</span><span class="badge badge-string">string</span><span class="field-desc">UI slot — <code>"brew_method"</code> · <code>"brew_step"</code> · <code>"signature"</code> · <code>"product"</code> · <code>"ambience"</code></span></div>
+    <div class="schema-row"><span class="field-name">slotKey</span><span class="badge badge-string">string</span><span class="field-desc">Slot sub-key, e.g. <code>"pour-over"</code> for <code>brew_method</code>.</span></div>
+    <div class="schema-row"><span class="field-name">storageId</span><span class="badge badge-string">string</span><span class="field-desc">Convex Storage ID. Use Convex SDK to generate a temporary download URL.</span></div>
+    <div class="schema-row"><span class="field-name">status</span><span class="badge badge-string">string</span><span class="field-desc"><code>"draft"</code> · <code>"published"</code></span></div>
+    <div class="schema-row"><span class="field-name">width / height</span><span class="badge badge-number">number?</span><span class="field-desc">Pixel dimensions for images.</span></div>
+    <div class="schema-row"><span class="field-name">durationMs</span><span class="badge badge-number">number?</span><span class="field-desc">Duration in ms for video/GIF assets.</span></div>
+    <div class="schema-row"><span class="field-name">provenance</span><span class="badge badge-string">string</span><span class="field-desc"><code>"upload"</code> (admin-uploaded) · <code>"ai"</code> (AI-generated via Replicate).</span></div>
+    <div class="schema-row"><span class="field-name">publishedAt</span><span class="badge badge-number">number?</span><span class="field-desc">Unix ms when the asset was published.</span></div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ── Error Codes ───────────────────────────────────────────────────────── -->
+  <h2 id="errors">Error Codes</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>HTTP Status</th><th>Error message</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-401">401</span></td><td><code>Missing Authorization header…</code></td><td>No <code>Authorization</code> header was sent.</td></tr>
+        <tr><td><span class="badge badge-401">401</span></td><td><code>Invalid API key format.</code></td><td>Key does not start with <code>twc_live_</code>.</td></tr>
+        <tr><td><span class="badge badge-401">401</span></td><td><code>Invalid or revoked API key.</code></td><td>Key hash not found in DB, or the key has been revoked.</td></tr>
+        <tr><td><span class="badge badge-500">500</span></td><td><code>Internal Server Error</code></td><td>Unexpected Convex error — check Convex dashboard logs.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>All error bodies follow the shape <code>{ "error": "message string" }</code>.</p>
+
+  <!-- ── Rate Limits ───────────────────────────────────────────────────────── -->
+  <h2 id="rate-limits">Limits &amp; Pagination</h2>
+  <p>There is no explicit rate limit enforced by the API, but Convex enforces its own function execution limits. The recommended polling interval for an analytics app is <strong>no more than once per minute</strong>.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Table</th><th>Bounded by</th><th>Max rows</th><th>Sort</th></tr></thead>
+      <tbody>
+        <tr><td>orders</td><td><code>from</code></td><td>5 000</td><td>Newest first</td></tr>
+        <tr><td>pageViews</td><td><code>from</code></td><td>2 000</td><td>Newest first</td></tr>
+        <tr><td>customerEvents</td><td><code>from</code></td><td>5 000</td><td>Newest first</td></tr>
+        <tr><td>cartSnapshots</td><td><code>from</code></td><td>2 000</td><td>Newest first</td></tr>
+        <tr><td>clientErrors</td><td><code>from</code></td><td>1 000</td><td>Newest first</td></tr>
+        <tr><td>webVitals</td><td><code>from</code></td><td>2 000</td><td>Newest first</td></tr>
+        <tr><td>auditLog</td><td><code>from</code></td><td>2 000</td><td>Newest first</td></tr>
+        <tr><td>pageViewDailySummary</td><td><code>fromDate</code></td><td>Unlimited</td><td>Ascending date</td></tr>
+        <tr><td>products, categories, admins, discounts, posts, media, funnelSummary, orderSummary</td><td>None</td><td>Unlimited</td><td>Insertion order</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-amber">
+    <strong>If you hit a row cap</strong> (e.g. exactly 5 000 orders returned), there may be older records not included. Use <code>?from=&lt;oldest _creationTime in the batch&gt;</code> on the next call to page backwards, or reduce your sync interval so batches stay under the cap.
+  </div>
+
+  <!-- ── Incremental Sync ───────────────────────────────────────────────────── -->
+  <h2 id="incremental">Incremental Sync Pattern</h2>
+
+  <pre><code><span class="cmt">// First call — fetch all historical data</span>
+<span class="kw">const</span> r1 = <span class="kw">await</span> fetch(<span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span>, {
+  headers: { Authorization: <span class="str">`Bearer <span class="kw">${</span>API_KEY<span class="kw">}</span>`</span> }
+});
+<span class="kw">const</span> d1 = <span class="kw">await</span> r1.json();
+<span class="kw">let</span> cursor = d1.generatedAt;   <span class="cmt">// save this</span>
+
+<span class="cmt">// Subsequent calls — only new records since last sync</span>
+<span class="kw">const</span> r2 = <span class="kw">await</span> fetch(
+  <span class="str">`https://watchful-cormorant-351.convex.site/api/v1/export?from=<span class="kw">${</span>cursor<span class="kw">}</span>`</span>,
+  { headers: { Authorization: <span class="str">`Bearer <span class="kw">${</span>API_KEY<span class="kw">}</span>`</span> } }
+);
+<span class="kw">const</span> d2 = <span class="kw">await</span> r2.json();
+cursor = d2.generatedAt;   <span class="cmt">// advance cursor</span></code></pre>
+
+  <!-- ── Code Examples ─────────────────────────────────────────────────────── -->
+  <h2 id="examples">Code Examples</h2>
+
+  <div class="tabs-wrapper">
+    <div class="tabs-header">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event,'js')">JavaScript</button>
+        <button class="tab-btn" onclick="switchTab(event,'py')">Python</button>
+        <button class="tab-btn" onclick="switchTab(event,'curl')">cURL</button>
+        <button class="tab-btn" onclick="switchTab(event,'ps')">PowerShell</button>
+      </div>
+    </div>
+    <div class="tabs-body">
+
+      <div id="tab-js" class="tab-pane active">
+<pre><code><span class="kw">const</span> API_KEY = process.env.TWC_API_KEY;
+<span class="kw">const</span> BASE    = <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span>;
+
+<span class="kw">async function</span> fetchAll() {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(BASE, {
+    headers: { Authorization: <span class="str">`Bearer <span class="kw">${</span>API_KEY<span class="kw">}</span>`</span> },
+  });
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`API error <span class="kw">${</span>res.status<span class="kw">}</span>`</span>);
+  <span class="kw">return</span> res.json();
+}
+
+<span class="kw">async function</span> fetchDelta(fromMs) {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">`<span class="kw">${</span>BASE<span class="kw">}</span>?from=<span class="kw">${</span>fromMs<span class="kw">}</span>`</span>, {
+    headers: { Authorization: <span class="str">`Bearer <span class="kw">${</span>API_KEY<span class="kw">}</span>`</span> },
+  });
+  <span class="kw">return</span> res.json();
+}
+
+<span class="cmt">// Usage</span>
+<span class="kw">const</span> snap = <span class="kw">await</span> fetchAll();
+console.log(<span class="str">"Products:"</span>, snap.data.products.length);
+console.log(<span class="str">"Orders:"</span>,   snap.data.orders.length);
+console.log(<span class="str">"Counts:"</span>,   snap.counts);
+</code></pre>
+      </div>
+
+      <div id="tab-py" class="tab-pane">
+<pre><code><span class="kw">import</span> os, requests
+
+API_KEY = os.environ[<span class="str">"TWC_API_KEY"</span>]
+BASE    = <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span>
+
+<span class="kw">def</span> fetch_all():
+    r = requests.get(BASE, headers={<span class="str">"Authorization"</span>: f<span class="str">"Bearer {API_KEY}"</span>})
+    r.raise_for_status()
+    <span class="kw">return</span> r.json()
+
+<span class="kw">def</span> fetch_delta(from_ms: int):
+    r = requests.get(BASE, params={<span class="str">"from"</span>: from_ms},
+                     headers={<span class="str">"Authorization"</span>: f<span class="str">"Bearer {API_KEY}"</span>})
+    r.raise_for_status()
+    <span class="kw">return</span> r.json()
+
+snap = fetch_all()
+print(<span class="str">"Products:"</span>, len(snap[<span class="str">"data"</span>][<span class="str">"products"</span>]))
+print(<span class="str">"Orders  :"</span>, len(snap[<span class="str">"data"</span>][<span class="str">"orders"</span>]))
+print(<span class="str">"Counts  :"</span>, snap[<span class="str">"counts"</span>])
+
+<span class="cmt"># Incremental — persist cursor between runs</span>
+cursor = snap[<span class="str">"generatedAt"</span>]
+delta  = fetch_delta(cursor)
+new_orders = delta[<span class="str">"data"</span>][<span class="str">"orders"</span>]
+</code></pre>
+      </div>
+
+      <div id="tab-curl" class="tab-pane">
+<pre><code><span class="cmt"># Full sync</span>
+curl -s \
+  -H <span class="str">"Authorization: Bearer twc_live_YOUR_KEY"</span> \
+  <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span> \
+  | jq <span class="str">'.counts'</span>
+
+<span class="cmt"># Incremental sync (pass generatedAt from previous response)</span>
+curl -s \
+  -H <span class="str">"Authorization: Bearer twc_live_YOUR_KEY"</span> \
+  <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export?from=1716742800000"</span> \
+  | jq <span class="str">'{generatedAt, counts}'</span>
+
+<span class="cmt"># Pretty-print everything</span>
+curl -s \
+  -H <span class="str">"Authorization: Bearer twc_live_YOUR_KEY"</span> \
+  <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span> \
+  | jq <span class="str">'.'</span>
+</code></pre>
+      </div>
+
+      <div id="tab-ps" class="tab-pane">
+<pre><code>$API_KEY = $env:TWC_API_KEY
+$BASE    = <span class="str">"https://watchful-cormorant-351.convex.site/api/v1/export"</span>
+
+<span class="cmt"># Full sync</span>
+$r = Invoke-WebRequest -Uri $BASE `
+  -Headers @{ Authorization = <span class="str">"Bearer $API_KEY"</span> }
+
+$snap = $r.Content | ConvertFrom-Json
+$snap.counts
+$snap.data.products.Count
+$snap.data.orders.Count
+
+<span class="cmt"># Incremental sync</span>
+$cursor = $snap.generatedAt
+$delta = (Invoke-WebRequest `
+  -Uri <span class="str">"$BASE?from=$cursor"</span> `
+  -Headers @{ Authorization = <span class="str">"Bearer $API_KEY"</span> }).Content | ConvertFrom-Json
+
+$delta.counts
+</code></pre>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="alert alert-green" style="margin-top:32px">
+    <strong>API version:</strong> v1.0 &nbsp;·&nbsp;
+    <strong>Deployment:</strong> watchful-cormorant-351.convex.site &nbsp;·&nbsp;
+    <strong>Last updated:</strong> May 26, 2026
+  </div>
+
+</main>
+</div>
+
+<script>
+  function switchTab(e, id) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+  }
+
+  // Highlight active nav item on scroll
+  const sections = document.querySelectorAll('h2[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+  window.addEventListener('scroll', () => {
+    let cur = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) cur = s.id; });
+    navItems.forEach(n => {
+      n.classList.toggle('active', n.getAttribute('href') === '#' + cur);
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
