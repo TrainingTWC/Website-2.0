@@ -1,12 +1,12 @@
 # Roadmap: v1.1 Third Intelligence Context & Personality
 
-**Milestone:** v1.1 ‚Äî COMPLETE (all 3 phases shipped 2026-05-13)
-**Continuing from:** v1.0 (last phase was 0 ‚Äî no phases executed)
-**Phase numbering:** 1‚Äì3
+**Milestone:** v1.1 ó COMPLETE (all 3 phases shipped 2026-05-13)
+**Continuing from:** v1.0 (last phase was 0 ó no phases executed)
+**Phase numbering:** 1ñ3
 
 ---
 
-## Phase 1 ‚Äî Fix AI Connectivity
+## Phase 1 ó Fix AI Connectivity
 
 **Goal:** Third Intelligence produces real recommendations instead of errors.
 
@@ -26,11 +26,11 @@
 
 ### Depends On
 
-Nothing ‚Äî can start immediately.
+Nothing ó can start immediately.
 
 ---
 
-## Phase 2 ‚Äî Product Context Document
+## Phase 2 ó Product Context Document
 
 **Goal:** A single source-of-truth file exists that encodes the Third Wave Coffee brand and gives every product a full personality profile.
 
@@ -39,19 +39,19 @@ Nothing ‚Äî can start immediately.
 ### Tasks
 
 1. Create `convex/productContext.ts`
-2. Write `BRAND_CONTEXT` ‚Äî shop story, mission, specialty coffee philosophy, Third Intelligence voice directive (crisp, confident, knowledgeable)
-3. Write `PRODUCT_PERSONALITIES` ‚Äî for each of the 18 SKUs:
-   - **Archetype** ‚Äî one-word character type (e.g., The Rebel, The Wanderer, The Sage)
-   - **Tagline** ‚Äî one punchy sentence that captures the product's essence
-   - **Voice** ‚Äî how the AI should *talk about* this product (3‚Äì5 descriptors)
-   - **Ideal customer** ‚Äî one sentence profile of who this is for
-   - **Mood** ‚Äî when/where to drink this; the atmosphere it evokes
-   - **Brewing ritual** ‚Äî recommended brew method and why it unlocks the best of this product
+2. Write `BRAND_CONTEXT` ó shop story, mission, specialty coffee philosophy, Third Intelligence voice directive (crisp, confident, knowledgeable)
+3. Write `PRODUCT_PERSONALITIES` ó for each of the 18 SKUs:
+   - **Archetype** ó one-word character type (e.g., The Rebel, The Wanderer, The Sage)
+   - **Tagline** ó one punchy sentence that captures the product's essence
+   - **Voice** ó how the AI should *talk about* this product (3ñ5 descriptors)
+   - **Ideal customer** ó one sentence profile of who this is for
+   - **Mood** ó when/where to drink this; the atmosphere it evokes
+   - **Brewing ritual** ó recommended brew method and why it unlocks the best of this product
 4. Export both as named constants ready to be imported by `recommendations.ts`
 
 ### Success Criteria
 
-- File is self-documenting ‚Äî a developer reading it understands every product's character without looking elsewhere
+- File is self-documenting ó a developer reading it understands every product's character without looking elsewhere
 - All 18 SKUs have a personality entry keyed by product name (exact match to seed data)
 - Brand context covers: what TWC stands for, what "specialty coffee" means in this context, how Third Intelligence should position itself
 - Merch entries have enough personality to enable sensible cross-sells (e.g., "this mug belongs with ritual brewers")
@@ -62,7 +62,7 @@ Phase 1 (none technically, but personality work is wasted without a working AI)
 
 ---
 
-## Phase 3 ‚Äî Enhanced AI Prompt
+## Phase 3 ó Enhanced AI Prompt
 
 **Goal:** The AI prompt uses the context document so every recommendation reads as if written by an expert TWC barista, not a generic chatbot.
 
@@ -75,17 +75,17 @@ Phase 1 (none technically, but personality work is wasted without a working AI)
    - Open with the brand voice directive (from `BRAND_CONTEXT`)
    - Inject personality profiles for all products in the catalog
    - Instruct Mistral to reference the matched product's archetype, mood, and brewing ritual in the explanation
-   - Prohibit generic phrasing ("perfect for you", "great choice") ‚Äî require flavor-specific, ritual-specific language
+   - Prohibit generic phrasing ("perfect for you", "great choice") ó require flavor-specific, ritual-specific language
    - For cross-sells, require personality-compatibility reasoning
 3. Ensure prompt stays within Mistral token limits (soft cap: 8000 input tokens)
-4. Update the `explanation` field prompt so output is 2‚Äì3 sentences max, crisp and confident
+4. Update the `explanation` field prompt so output is 2ñ3 sentences max, crisp and confident
 
 ### Success Criteria
 
 - Explanation for a dark-roast match references roast character, not just "you'll love it"
 - Explanation for a single-origin match mentions origin story or flavor notes specific to that product
 - Cross-sell suggestion has a brief rationale (not just a product name)
-- Response is ‚â§3 sentences ‚Äî focused, not verbose
+- Response is =3 sentences ó focused, not verbose
 - Prompt compiles and calls Mistral without token errors
 
 ### Depends On
@@ -108,32 +108,32 @@ Phase 2 (needs `productContext.ts` to exist)
 
 ---
 
-# Roadmap: v2.0 ‚Äî Own eShop (No Shopify)
+# Roadmap: v2.0 ó Own eShop (No Shopify)
 
 **Milestone:** v2.0
 **Continuing from:** v1.1 (complete)
-**Phase numbering:** 1‚Äì3
-**Mode:** YOLO ‚Äî auto-approve, execute directly
-**Granularity:** Coarse ‚Äî 3 phases
+**Phase numbering:** 1ñ3
+**Mode:** YOLO ó auto-approve, execute directly
+**Granularity:** Coarse ó 3 phases
 
 ---
 
-## Phase 1 ‚Äî Cart + Checkout UI
+## Phase 1 ó Cart + Checkout UI
 
-**Goal:** Customers can add products to a persistent cart and fill in a complete checkout form ‚Äî entirely in the browser, no backend needed yet.
+**Goal:** Customers can add products to a persistent cart and fill in a complete checkout form ó entirely in the browser, no backend needed yet.
 
 **Requirements covered:** CART-01, CART-02, CART-03, CART-04, CART-05, CHK-01, CHK-02, CHK-03, CHK-04
 
 ### Tasks
 
-1. **`src/lib/useCart.ts`** ‚Äî React hook + localStorage persistence
+1. **`src/lib/useCart.ts`** ó React hook + localStorage persistence
    - `CartItem` type: `{ productId: string; name: string; imageUrl: string; price: number; qty: number }`
    - `useCart()` returns: `{ items, addItem, removeItem, updateQty, clearCart, itemCount, subtotal }`
    - Reads from `localStorage` on mount, writes on every change
    - `subtotal` computed from `items.reduce()`
 
-2. **`src/components/CartDrawer.tsx`** ‚Äî Slide-in panel from right
-   - Lists cart items with image, name, price, qty stepper (+/‚àí), remove button
+2. **`src/components/CartDrawer.tsx`** ó Slide-in panel from right
+   - Lists cart items with image, name, price, qty stepper (+/-), remove button
    - Shows subtotal and a "Checkout" CTA at the bottom
    - Empty state with "Your cart is empty" + "Browse products" link
    - Animated open/close with `motion/react` (same as existing modal patterns)
@@ -142,19 +142,19 @@ Phase 2 (needs `productContext.ts` to exist)
    - Add cart icon + badge to header (existing col 3)
    - Badge shows `itemCount`; zero count hides the badge
    - Cart icon click opens `CartDrawer`
-   - Pass `addItem` down to `ProductCard` ‚Äî add "Add to Cart" button on each card
+   - Pass `addItem` down to `ProductCard` ó add "Add to Cart" button on each card
    - `e.stopPropagation()` on "Add to Cart" so it doesn't navigate to product page
 
 4. **Wire "Add to Cart" into `src/components/ProductPage.tsx`**
    - Replace the existing placeholder with the real `addItem` call
    - Button shows "Added!" briefly (local state, 1.5 s) then reverts to "Add to Cart"
 
-5. **`src/components/CheckoutPage.tsx`** ‚Äî Full-page checkout
+5. **`src/components/CheckoutPage.tsx`** ó Full-page checkout
    - Route: `?view=checkout`; navigated to from CartDrawer "Checkout" CTA
    - Order summary (right on desktop, top on mobile): items, qty, subtotal
    - Form fields: Full Name*, Phone* (10 digits), Email*, Address Line 1*, Address Line 2, City*, State*, Pincode* (6 digits)
    - Validation on blur + on submit; inline error messages under each field
-   - "Place Order" button ‚Äî disabled + spinner while in-flight; Phase 1 shows a "coming soon" toast on click
+   - "Place Order" button ó disabled + spinner while in-flight; Phase 1 shows a "coming soon" toast on click
 
 ### Success Criteria
 
@@ -167,11 +167,11 @@ Phase 2 (needs `productContext.ts` to exist)
 
 ### Depends On
 
-Nothing ‚Äî pure frontend, no Convex schema changes.
+Nothing ó pure frontend, no Convex schema changes.
 
 ---
 
-## Phase 2 ‚Äî Order Backend + Confirmation
+## Phase 2 ó Order Backend + Confirmation
 
 **Goal:** Submitting the checkout form creates a real order in Convex; the customer sees a confirmation screen with their order number.
 
@@ -179,16 +179,16 @@ Nothing ‚Äî pure frontend, no Convex schema changes.
 
 ### Tasks
 
-1. **`convex/schema.ts`** ‚Äî Add `orders` table
+1. **`convex/schema.ts`** ó Add `orders` table
    - Fields: `orderId` (string), `customer` (object: name, phone, email, address), `items` (array: productId, name, qty, price), `subtotal` (float64), `status` (union literal: pending / confirmed / shipped / delivered / cancelled)
    - Indexes: `by_status`, `by_creation` (`_creationTime`)
 
-2. **`convex/orders.ts`** ‚Äî Mutations + queries
+2. **`convex/orders.ts`** ó Mutations + queries
    - `submitOrder` mutation: validate, generate `orderId` (`"TWC-" + random 8-char alphanumeric`), insert, return `orderId`
    - `listOrders` query: all orders sorted by `_creationTime` desc
    - `getOrder` query: single order by `orderId`
 
-3. **Wire `CheckoutPage` submit ‚Üí `submitOrder`**
+3. **Wire `CheckoutPage` submit ? `submitOrder`**
    - Replace Phase 1 toast with `useMutation(api.orders.submitOrder)`
    - On success: `clearCart()`, navigate to `?view=order-confirmation&id=<orderId>`
 
@@ -197,17 +197,17 @@ Nothing ‚Äî pure frontend, no Convex schema changes.
    - Shows: checkmark animation, "Order Received!", order number, item summary, "Continue Shopping" button
    - Disabled "Complete Payment" placeholder CTA with tooltip "Razorpay coming in Phase 3"
 
-5. **Extend `src/components/admin/AdminDashboard.tsx`** ‚Äî Orders tab
+5. **Extend `src/components/admin/AdminDashboard.tsx`** ó Orders tab
    - Tab alongside existing Products tab
-   - Table: Order #, Customer Name, Items (count), Subtotal (‚Çπ), Status badge, Date
+   - Table: Order #, Customer Name, Items (count), Subtotal (?), Status badge, Date
    - Clicking row expands inline detail: full customer info, address, all line items
 
 ### Success Criteria
 
-- Valid checkout ‚Üí order appears in Convex dashboard `orders` table
+- Valid checkout ? order appears in Convex dashboard `orders` table
 - Order confirmation page shows correct order number and items
 - Cart is cleared after order
-- Admin ‚Üí Orders tab shows all orders; row expand shows full detail
+- Admin ? Orders tab shows all orders; row expand shows full detail
 - `orderId` format is `TWC-XXXXXXXX`
 
 ### Depends On
@@ -216,7 +216,7 @@ Phase 1 (cart state + checkout form must exist)
 
 ---
 
-## Phase 3 ‚Äî Razorpay Payment Integration
+## Phase 3 ó Razorpay Payment Integration
 
 **Goal:** Customers can pay online. Razorpay modal collects payment; a Convex HTTP action verifies the webhook and confirms the order.
 
@@ -230,7 +230,7 @@ Phase 1 (cart state + checkout form must exist)
    npx convex env set RAZORPAY_KEY_SECRET xxxx
    ```
 
-2. **`convex/orders.ts`** ‚Äî Add `createRazorpayOrder` action (`"use node"`)
+2. **`convex/orders.ts`** ó Add `createRazorpayOrder` action (`"use node"`)
    - Calls `POST https://api.razorpay.com/v1/orders` with Basic Auth
    - Payload: `{ amount: subtotal * 100, currency: "INR", receipt: orderId }`
    - Returns `{ razorpayOrderId, keyId }`
@@ -240,19 +240,19 @@ Phase 1 (cart state + checkout form must exist)
    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
    ```
 
-4. **`src/components/OrderConfirmation.tsx`** ‚Äî Wire "Complete Payment"
+4. **`src/components/OrderConfirmation.tsx`** ó Wire "Complete Payment"
    - Calls `createRazorpayOrder` to get `razorpayOrderId` + `keyId`
    - Opens Razorpay modal with `key`, `order_id`, `amount`, `currency: "INR"`, prefill contact + email
-   - On success: show "Payment Successful! ‚úì"
+   - On success: show "Payment Successful! ?"
    - On failure: show error toast, allow retry
 
-5. **`convex/http.ts`** ‚Äî Razorpay webhook
+5. **`convex/http.ts`** ó Razorpay webhook
    - Route: `POST /webhooks/razorpay`
    - Verify `X-Razorpay-Signature` HMAC-SHA256 against `RAZORPAY_KEY_SECRET`
    - On `payment.captured`: update `order.status` to `"confirmed"`
    - Return 200 to Razorpay
 
-6. **Admin Dashboard** ‚Äî Enable status editing
+6. **Admin Dashboard** ó Enable status editing
    - Status dropdown per order row
    - Calls `updateOrderStatus` mutation
 
@@ -277,7 +277,7 @@ Phase 2 (orders must exist in Convex)
 - [ ] ORD-01 through ORD-03 verified (Phase 2)
 - [ ] ADM-01 through ADM-03 verified (Phase 2)
 - [ ] PAY-01 through PAY-04 verified (Phase 3)
-- [ ] End-to-end test: add item ‚Üí checkout ‚Üí pay via Razorpay ‚Üí order confirmed in admin
+- [ ] End-to-end test: add item ? checkout ? pay via Razorpay ? order confirmed in admin
 
 ---
 *Roadmap created: 2026-05-14*
@@ -285,37 +285,37 @@ Phase 2 (orders must exist in Convex)
 
 ---
 
-# Roadmap: v3.0 ‚Äî Operations & Customer Experience
+# Roadmap: v3.0 ó Operations & Customer Experience
 
 **Milestone:** v3.0
 **Continuing from:** v2.0 (Phases 1+2 shipped; Phase 3 Razorpay pending independently)
-**Phase numbering:** 1‚Äì3
+**Phase numbering:** 1ñ3
 **Mode:** Planned
-**Granularity:** Coarse ‚Äî 3 phases
+**Granularity:** Coarse ó 3 phases
 
 ---
 
-## Phase 1 ‚Äî Admin Sales Analytics Dashboard
+## Phase 1 ó Admin Sales Analytics Dashboard
 
-**Goal:** The admin dashboard shows live revenue metrics, order volume, best-selling products, and daily trends ‚Äî giving the merchant a real business pulse without leaving the app.
+**Goal:** The admin dashboard shows live revenue metrics, order volume, best-selling products, and daily trends ó giving the merchant a real business pulse without leaving the app.
 
 **Requirements covered:** ANALYTICS-01, ANALYTICS-02, ANALYTICS-03, ANALYTICS-04
 
 ### Tasks
 
-1. **`convex/analytics.ts`** ‚Äî New query module
+1. **`convex/analytics.ts`** ó New query module
    - `getSalesOverview` query: returns `totalRevenue` (sum of `confirmed+shipped+delivered` order totals), `totalOrders`, `avgOrderValue`, `pendingOrders` count
    - `getDailyRevenue` query: accepts `days: number` param (default 30); groups confirmed orders by `_creationTime` date bucket; returns `[{ date: string; revenue: number; orderCount: number }]`
    - `getTopProducts` query: flattens all order `items` arrays, groups by `productId + name`, sums `qty`; returns top 10 `[{ name: string; qty: number; revenue: number }]`
    - `getOrderStatusBreakdown` query: counts orders per status; returns `{ pending, confirmed, shipped, delivered, cancelled }`
-   - All queries operate on the existing `orders` table ‚Äî no schema change
+   - All queries operate on the existing `orders` table ó no schema change
 
-2. **`src/components/admin/SalesAnalytics.tsx`** ‚Äî New admin sub-component
-   - KPI cards row: Total Revenue (‚Çπ), Orders This Month, Avg Order Value (‚Çπ), Pending Orders
+2. **`src/components/admin/SalesAnalytics.tsx`** ó New admin sub-component
+   - KPI cards row: Total Revenue (?), Orders This Month, Avg Order Value (?), Pending Orders
    - Each card has an icon (TrendingUp, ShoppingBag, BarChart2, Clock from lucide-react), the value in large bold type, and a subtle color accent
-   - Revenue trend chart: 30-day sparkline using a lightweight SVG path (no chart library dependency) ‚Äî plot daily `revenue` values as a `polyline`, x-axis dates, y-axis ‚Çπ labels
-   - Top Products table: rank, product name, units sold, revenue ‚Äî sortable by either column
-   - Order Status doughnut: 5 segments rendered as an SVG arc ring using `stroke-dasharray` / `stroke-dashoffset` trick ‚Äî legend beneath
+   - Revenue trend chart: 30-day sparkline using a lightweight SVG path (no chart library dependency) ó plot daily `revenue` values as a `polyline`, x-axis dates, y-axis ? labels
+   - Top Products table: rank, product name, units sold, revenue ó sortable by either column
+   - Order Status doughnut: 5 segments rendered as an SVG arc ring using `stroke-dasharray` / `stroke-dashoffset` trick ó legend beneath
 
 3. **Wire into `src/components/admin/AdminDashboard.tsx`**
    - Add "Analytics" tab alongside existing Products + Orders tabs
@@ -324,7 +324,7 @@ Phase 2 (orders must exist in Convex)
    - Tab defaults to Analytics when admin first opens (most useful default)
 
 4. **Date range selector** (in SalesAnalytics)
-   - Pill buttons: "7D" | "30D" | "90D" ‚Äî controls `days` param passed to `getDailyRevenue`
+   - Pill buttons: "7D" | "30D" | "90D" ó controls `days` param passed to `getDailyRevenue`
    - Defaults to 30D; persists selection in component state
 
 ### Success Criteria
@@ -333,43 +333,43 @@ Phase 2 (orders must exist in Convex)
 - Switching 7D / 30D / 90D re-queries and updates the chart
 - Top products reflect actual item quantities from real orders
 - Status doughnut percentages add up to 100% (or shows "No orders yet" empty state)
-- Zero new npm dependencies ‚Äî chart uses inline SVG
+- Zero new npm dependencies ó chart uses inline SVG
 
 ### Depends On
 
-Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped)
+Phase 2 of v2.0 (orders must exist in Convex ó already shipped)
 
 ---
 
-## Phase 2 ‚Äî GPS Address Autofill at Checkout
+## Phase 2 ó GPS Address Autofill at Checkout
 
-**Goal:** When the customer opens checkout, they can tap "Use my location" to instantly fill their address from GPS ‚Äî no typing required. The address is cached so returning customers never need to grant permission twice.
+**Goal:** When the customer opens checkout, they can tap "Use my location" to instantly fill their address from GPS ó no typing required. The address is cached so returning customers never need to grant permission twice.
 
 **Requirements covered:** GEO-01, GEO-02, GEO-03
 
 ### Tasks
 
-1. **`src/lib/useGeoAddress.ts`** ‚Äî Geolocation + reverse geocode hook
+1. **`src/lib/useGeoAddress.ts`** ó Geolocation + reverse geocode hook
    - `useGeoAddress()` returns `{ loading, error, address, requestLocation }`
    - `requestLocation()`: calls `navigator.geolocation.getCurrentPosition()`
    - On success: calls Nominatim reverse geocode endpoint `https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1` (free, no API key)
    - Maps Nominatim response to checkout fields: `address1` (road + house_number), `address2` (neighbourhood / suburb), `city` (city / town / village), `state` (state), `pincode` (postcode)
    - Caches result to `localStorage` under key `twc_geo_address` with a `cachedAt` timestamp; TTL = 7 days
    - On mount: loads cache; if cache exists and TTL not expired, returns it directly without triggering GPS
-   - Permission denied / GPS unavailable ‚Üí sets `error` string; caller shows graceful message
+   - Permission denied / GPS unavailable ? sets `error` string; caller shows graceful message
 
 2. **Update `src/components/CheckoutPage.tsx`**
    - Add `useGeoAddress()` hook
-   - Show "üìç Use my location" button above the Address section (only on browsers that support `navigator.geolocation`)
-   - Button states: idle ‚Üí spinner (loading) ‚Üí success (address filled) ‚Üí error (permission denied, show inline message)
+   - Show "?? Use my location" button above the Address section (only on browsers that support `navigator.geolocation`)
+   - Button states: idle ? spinner (loading) ? success (address filled) ? error (permission denied, show inline message)
    - On success: populate all 5 address fields from the hook result; user can still edit any field after autofill
-   - If cached address exists: show "üìç Use saved location" button with a small "clear" √ó
+   - If cached address exists: show "?? Use saved location" button with a small "clear" ◊
    - `clearCache()`: removes `twc_geo_address` from localStorage; resets to manual entry
-   - No changes to form validation logic ‚Äî GPS just pre-fills values, validation runs the same
+   - No changes to form validation logic ó GPS just pre-fills values, validation runs the same
 
 3. **Security & privacy**
-   - Only request GPS on explicit button tap ‚Äî never on page load
-   - No GPS coords stored in Convex or sent to any server ‚Äî Nominatim call is client-side only
+   - Only request GPS on explicit button tap ó never on page load
+   - No GPS coords stored in Convex or sent to any server ó Nominatim call is client-side only
    - Nominatim User-Agent header: `brewmatch-ai/3.0 (contact: admin@thirdwavecoffee.in)` as required by OSM usage policy
 
 ### Success Criteria
@@ -380,53 +380,53 @@ Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped)
 - Second visit: cached address fills silently, no permission prompt
 - On deny: friendly inline error, manual entry still works perfectly
 - Cache expires after 7 days (verify by mocking `Date.now`)
-- No GPS call on page load ‚Äî only explicit user action
+- No GPS call on page load ó only explicit user action
 
 ### Depends On
 
-Phase 1 of v2.0 (CheckoutPage must exist ‚Äî already shipped)
+Phase 1 of v2.0 (CheckoutPage must exist ó already shipped)
 
 ---
 
-## Phase 3 ‚Äî Customer Order Portal
+## Phase 3 ó Customer Order Portal
 
-**Goal:** Customers can look up their order by ID, track status in real time, cancel if still pending, get AI-powered support chat, and understand next steps ‚Äî all in one self-service screen. Zero login required.
+**Goal:** Customers can look up their order by ID, track status in real time, cancel if still pending, get AI-powered support chat, and understand next steps ó all in one self-service screen. Zero login required.
 
 **Requirements covered:** CUST-01, CUST-02, CUST-03, CUST-04, CUST-05, CUST-06
 
 ### Tasks
 
-1. **`convex/orders.ts`** ‚Äî New mutations + queries
+1. **`convex/orders.ts`** ó New mutations + queries
    - `cancelOrder` mutation: accepts `orderId`; validates status is `"pending"`; sets status to `"cancelled"`; throws `ConvexError` if order not cancellable
    - `addOrderNote` mutation: accepts `orderId`, `message` (string), `role` ("customer" | "system"); appends to `notes` array on order
    - Update `convex/schema.ts`: add `notes` optional array field to `orders` table (`v.optional(v.array(v.object({ role: v.union(v.literal("customer"), v.literal("system")), message: v.string(), ts: v.number() })))`)
 
-2. **`convex/support.ts`** ‚Äî AI support chat action (`"use node"`)
+2. **`convex/support.ts`** ó AI support chat action (`"use node"`)
    - `answerSupportQuery` action: accepts `{ orderId: string; question: string; orderContext: object }`
    - Builds a Mistral prompt with: current order status, items, customer name, delivery address, and the user's question
-   - System prompt: TWC support agent persona ‚Äî helpful, concise, warm; knows order details; can explain statuses, estimated delivery (3‚Äì7 business days standard), return/refund policy (prepaid returns within 7 days), contact (support@thirdwavecoffee.in)
+   - System prompt: TWC support agent persona ó helpful, concise, warm; knows order details; can explain statuses, estimated delivery (3ñ7 business days standard), return/refund policy (prepaid returns within 7 days), contact (support@thirdwavecoffee.in)
    - Returns `{ answer: string }` (max 3 sentences)
-   - Uses existing `MISTRAL_API_KEY` env var ‚Äî no new keys needed
+   - Uses existing `MISTRAL_API_KEY` env var ó no new keys needed
 
-3. **`src/components/OrderPortal.tsx`** ‚Äî New full-page component
+3. **`src/components/OrderPortal.tsx`** ó New full-page component
    - **Lookup screen** (default): 
      - Full-page card centered on `natural-bg`
      - TWC logo / "Track Your Order" headline
      - Single text input: "Enter your Order ID (e.g. TWC-XXXXXXXX)"
-     - "Track" button ‚Äî calls `getOrder` query; shows inline error if not found
+     - "Track" button ó calls `getOrder` query; shows inline error if not found
      - Route: `?page=order-portal`; with ID: `?page=order-portal&id=TWC-XXXXXXXX`
    - **Order detail screen** (after successful lookup):
      - Header: back arrow, order ID badge, status badge (color-coded: pending=amber, confirmed=blue, shipped=violet, delivered=green, cancelled=red)
-     - Section: **Order Summary** ‚Äî product image grid, name, qty, price, subtotal, shipping, total
-     - Section: **Delivery Address** ‚Äî formatted customer address
-     - Section: **Order Timeline** ‚Äî vertical step tracker: Placed ‚Üí Confirmed ‚Üí Shipped ‚Üí Delivered; current step highlighted; cancelled state shown in red
-     - Section: **Payment Status** ‚Äî badge: Unpaid / Paid (shows `razorpayPaymentId` last 6 chars if paid)
-     - **Cancel Order** CTA ‚Äî shown only if status is `"pending"`; opens confirmation modal ("Are you sure? This can't be undone."); calls `cancelOrder` mutation; live-updates UI
-     - **AI Support Chat** ‚Äî collapsible panel at bottom
+     - Section: **Order Summary** ó product image grid, name, qty, price, subtotal, shipping, total
+     - Section: **Delivery Address** ó formatted customer address
+     - Section: **Order Timeline** ó vertical step tracker: Placed ? Confirmed ? Shipped ? Delivered; current step highlighted; cancelled state shown in red
+     - Section: **Payment Status** ó badge: Unpaid / Paid (shows `razorpayPaymentId` last 6 chars if paid)
+     - **Cancel Order** CTA ó shown only if status is `"pending"`; opens confirmation modal ("Are you sure? This can't be undone."); calls `cancelOrder` mutation; live-updates UI
+     - **AI Support Chat** ó collapsible panel at bottom
        - "Chat with Support" toggle button
        - When open: scrollable message list + input + send button
        - First message auto-sent: "Hi! I'm here to help with your order TWC-XXXXXXXX. What would you like to know?"
-       - User messages ‚Üí `answerSupportQuery` action ‚Üí AI reply rendered with typing indicator
+       - User messages ? `answerSupportQuery` action ? AI reply rendered with typing indicator
        - Chat history persisted in component state (not Convex)
        - Suggested prompts: "Where is my order?", "How do I return?", "Change delivery address"
 
@@ -434,23 +434,23 @@ Phase 1 of v2.0 (CheckoutPage must exist ‚Äî already shipped)
    - Add `?page=order-portal` route check alongside existing `checkout` / `order-confirmation` routes
    - If `?page=order-portal&id=TWC-XXXXXXXX`, pre-populate and immediately look up the order
    - Add "Track Order" link in the main site footer (small text link, not prominent)
-   - In `OrderConfirmation.tsx`: add "Track your order ‚Üí" link that navigates to `?page=order-portal&id=<orderId>`
+   - In `OrderConfirmation.tsx`: add "Track your order ?" link that navigates to `?page=order-portal&id=<orderId>`
 
 ### Success Criteria
 
 - Entering a valid Order ID shows the full order detail screen
 - Entering an invalid ID shows "Order not found" inline error
 - Status badge + timeline reflect live Convex data (real-time subscription)
-- Cancel button visible only for pending orders; confirmed orders show "Cannot cancel ‚Äî already confirmed"
+- Cancel button visible only for pending orders; confirmed orders show "Cannot cancel ó already confirmed"
 - Cancellation flows through to Convex and badge updates immediately
 - Support chat answers questions about the specific order (references status, items, address in replies)
 - Suggested prompts auto-send on click
-- Deep link `?page=order-portal&id=TWC-XXXXXXXX` works ‚Äî no manual ID entry needed
+- Deep link `?page=order-portal&id=TWC-XXXXXXXX` works ó no manual ID entry needed
 - Mobile: single-column layout, chat panel full-width
 
 ### Depends On
 
-Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped); `support.ts` requires `MISTRAL_API_KEY` (already set)
+Phase 2 of v2.0 (orders must exist in Convex ó already shipped); `support.ts` requires `MISTRAL_API_KEY` (already set)
 
 ---
 
@@ -459,7 +459,7 @@ Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped); `support.ts` 
 - [ ] ANALYTICS-01 through ANALYTICS-04 verified (Phase 1)
 - [ ] GEO-01 through GEO-03 verified (Phase 2)
 - [ ] CUST-01 through CUST-06 verified (Phase 3)
-- [ ] End-to-end: place order ‚Üí track on portal ‚Üí cancel (if pending) ‚Üí chat with support AI
+- [ ] End-to-end: place order ? track on portal ? cancel (if pending) ? chat with support AI
 
 ---
 *Roadmap created: 2026-05-14*
@@ -468,18 +468,18 @@ Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped); `support.ts` 
 
 ---
 
-# Roadmap: v5.0 ‚Äî Next.js Migration
+# Roadmap: v5.0 ó Next.js Migration
 
 **Milestone:** v5.0
 **Continuing from:** v4.0 (complete)
-**Phase numbering:** 1‚Äì3 (reset)
+**Phase numbering:** 1ñ3 (reset)
 **Mode:** Planned
-**Granularity:** Standard ‚Äî 3 phases
-**Deployment target:** GitHub Pages (`output: 'export'`) + Cloudflare CDN ‚Äî no SSR
+**Granularity:** Standard ó 3 phases
+**Deployment target:** GitHub Pages (`output: 'export'`) + Cloudflare CDN ó no SSR
 
 ---
 
-## Phase 1 ‚Äî Next.js Bootstrap + Build Pipeline
+## Phase 1 ó Next.js Bootstrap + Build Pipeline
 
 **Goal:** The project builds with Next.js 15 App Router and deploys to GitHub Pages via `output: 'export'`. The existing Vite build is removed. Convex + Auth providers are wired in root layout. GitHub Actions uploads `./out` instead of `./dist`.
 
@@ -488,18 +488,18 @@ Phase 2 of v2.0 (orders must exist in Convex ‚Äî already shipped); `support.ts` 
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md ‚Äî Next.js 15 init: package.json, next.config.ts, tsconfig, postcss (Tailwind v4), remove Vite
-- [ ] 01-02-PLAN.md ‚Äî Providers root layout + GitHub Actions deploy update + smoke-test build
+- [ ] 01-01-PLAN.md ó Next.js 15 init: package.json, next.config.ts, tsconfig, postcss (Tailwind v4), remove Vite
+- [ ] 01-02-PLAN.md ó Providers root layout + GitHub Actions deploy update + smoke-test build
 
 **Phase directory:** `.planning/phases/01-nextjs-bootstrap/`
 
 ### Depends On
 
-Nothing ‚Äî can start immediately.
+Nothing ó can start immediately.
 
 ---
 
-## Phase 2 ‚Äî Global State Providers + SSR Safety
+## Phase 2 ó Global State Providers + SSR Safety
 
 **Goal:** All shared state currently living in App.tsx (cart, discounts, toasts, cart panel) is extracted into React context providers mounted at the root layout. Every SSR-incompatible component (Three.js, Leaflet, Lenis, MagneticCursor) is wrapped in `dynamic()` or `"use client"` guards. `next build` produces zero hydration warnings.
 
@@ -508,8 +508,8 @@ Nothing ‚Äî can start immediately.
 **Plans:** 2 plans
 
 Plans:
-- [x] 02-01-PLAN.md ‚Äî CartProvider + DiscountProvider + ToastProvider + CartPanelProvider (Wave 1)
-- [x] 02-02-PLAN.md ‚Äî SSR-unsafe dynamic() wraps + SmoothScroll use client (Wave 2, depends on 02-01)
+- [x] 02-01-PLAN.md ó CartProvider + DiscountProvider + ToastProvider + CartPanelProvider (Wave 1)
+- [x] 02-02-PLAN.md ó SSR-unsafe dynamic() wraps + SmoothScroll use client (Wave 2, depends on 02-01)
 
 ### Depends On
 
@@ -517,7 +517,7 @@ Phase 1 (Next.js build must work before providers can be tested)
 
 ---
 
-## Phase 3 ‚Äî Route Migration + Cleanup
+## Phase 3 ó Route Migration + Cleanup
 
 **Goal:** All 8 pages are migrated from `?page=` query-param routing to Next.js App Router file routes. App.tsx is retired. All `navigateTo()` calls are replaced with `useRouter().push()` / `<Link>`. `generateStaticParams()` is implemented for product and post dynamic routes.
 
@@ -526,9 +526,9 @@ Phase 1 (Next.js build must work before providers can be tested)
 **Plans:** 3 plans
 
 Plans:
-- [x] 03-01-PLAN.md ‚Äî Static routes: `/shop`, `/checkout`, `/orders`, `/admin` (Wave 1)
-- [x] 03-02-PLAN.md ‚Äî Dynamic routes: `/products/[slug]`, `/journal`, `/journal/[id]` + MorphingHeader extraction (Wave 1, parallel)
-- [x] 03-03-PLAN.md ‚Äî Home page (ROUTE-01), navigation wiring, App.tsx retirement, `not-found.tsx`, final build verification (Wave 2)
+- [x] 03-01-PLAN.md ó Static routes: `/shop`, `/checkout`, `/orders`, `/admin` (Wave 1)
+- [x] 03-02-PLAN.md ó Dynamic routes: `/products/[slug]`, `/journal`, `/journal/[id]` + MorphingHeader extraction (Wave 1, parallel)
+- [x] 03-03-PLAN.md ó Home page (ROUTE-01), navigation wiring, App.tsx retirement, `not-found.tsx`, final build verification (Wave 2)
 
 ### Depends On
 
@@ -542,30 +542,30 @@ Phase 2 (providers must exist before pages consume them)
 - [ ] GitHub Actions deploys successfully to `thirdwavecoffee.prismintelligence.in`
 - [ ] All 8 routes load without blank screens or console errors
 - [ ] Cart persists across route changes (add in `/shop`, checkout on `/checkout`)
-- [ ] Discount flow works end-to-end: journal ‚Üí claim ‚Üí cart shows discount
+- [ ] Discount flow works end-to-end: journal ? claim ? cart shows discount
 - [ ] Admin dashboard accessible at `/admin`
 - [ ] No hydration mismatch warnings in browser console
-- [ ] `vite.config.ts` deleted ‚Äî no Vite artifacts remain
+- [ ] `vite.config.ts` deleted ó no Vite artifacts remain
 
 
-## ~~v4.0 ‚Äî The Editorial Hub~~ SHIPPED 2026-05-20 * 30/31 reqs * 58 commits | [Archive](.planning/milestones/v4.0-ROADMAP.md)
+## ~~v4.0 ó The Editorial Hub~~ SHIPPED 2026-05-20 * 30/31 reqs * 58 commits | [Archive](.planning/milestones/v4.0-ROADMAP.md)
 
 ---
 
-# Roadmap: v6.0 ‚Äî Performance & Fluidity Pass
+# Roadmap: v6.0 ó Performance & Fluidity Pass
 
 **Status:** Planned 2026-05-22
-**Goal:** Homepage and key routes feel buttery on a mid-range 8 GB RAM Windows laptop. Scroll, parallax, hover, and route transitions sustain 55‚Äì60 fps in Chrome/Edge. Bundle size and motion overhead are tier-aware: low-spec devices automatically degrade to lighter visuals instead of stuttering.
+**Goal:** Homepage and key routes feel buttery on a mid-range 8 GB RAM Windows laptop. Scroll, parallax, hover, and route transitions sustain 55ñ60 fps in Chrome/Edge. Bundle size and motion overhead are tier-aware: low-spec devices automatically degrade to lighter visuals instead of stuttering.
 
 **North-star metrics (measured on 8 GB RAM / integrated GPU baseline device):**
-- Homepage sustained scroll FPS ‚â• 55 (Chrome Performance panel, 10s scroll-down sweep)
-- Lighthouse performance ‚â• 90 mobile, ‚â• 95 desktop on `/`, `/shop`, `/products/[slug]`
+- Homepage sustained scroll FPS = 55 (Chrome Performance panel, 10s scroll-down sweep)
+- Lighthouse performance = 90 mobile, = 95 desktop on `/`, `/shop`, `/products/[slug]`
 - Largest Contentful Paint (LCP) < 2.5 s on cold load over fast-3G
 - Interaction-to-Next-Paint (INP) < 200 ms during cart/CTA interactions
 - No long task > 200 ms during home scroll
-- 3D bestseller carousel + GalaxySweep + MagneticCursor degrade or unmount on `deviceMemory ‚â§ 4` GB / `prefers-reduced-motion`
+- 3D bestseller carousel + GalaxySweep + MagneticCursor degrade or unmount on `deviceMemory = 4` GB / `prefers-reduced-motion`
 
-## Phase 1 ‚Äî Adaptive Performance & Fluidity
+## Phase 1 ó Adaptive Performance & Fluidity
 
 **Goal:** Add device-aware adaptive performance tiers, fix the scroll-event broadcast that re-fires every animation listener per frame, consolidate Cinematic's per-chapter `useScroll` listeners into a single shared MotionValue, gate 3D / particle / cursor effects on tier, and trim the motion/react and image payloads.
 
@@ -574,12 +574,12 @@ Phase 2 (providers must exist before pages consume them)
 **Plans:** 6 plans
 
 Plans:
-- [ ] v6.0-phase-01-01-PLAN.md ‚Äî Perf-tier hook, PerfMode context, web-vitals telemetry (Wave 1)
-- [ ] v6.0-phase-01-02-PLAN.md ‚Äî Lenis: drop synthetic scroll dispatch, tier-gate smooth scroll (Wave 1)
-- [ ] v6.0-phase-01-03-PLAN.md ‚Äî Cinematic: shared scroll MotionValue, IO-gated will-change, adaptive parallax (Wave 2, depends on 01)
-- [ ] v6.0-phase-01-04-PLAN.md ‚Äî 3D + effects adaptive degradation (carousel, GalaxySweep, MagneticCursor) (Wave 2, depends on 01)
-- [ ] v6.0-phase-01-05-PLAN.md ‚Äî Image hygiene + LazyMotion tree-shake (Wave 1)
-- [ ] v6.0-phase-01-06-PLAN.md ‚Äî 8 GB RAM UAT + Lighthouse + FPS verification (Wave 3, checkpoint)
+- [ ] v6.0-phase-01-01-PLAN.md ó Perf-tier hook, PerfMode context, web-vitals telemetry (Wave 1)
+- [ ] v6.0-phase-01-02-PLAN.md ó Lenis: drop synthetic scroll dispatch, tier-gate smooth scroll (Wave 1)
+- [ ] v6.0-phase-01-03-PLAN.md ó Cinematic: shared scroll MotionValue, IO-gated will-change, adaptive parallax (Wave 2, depends on 01)
+- [ ] v6.0-phase-01-04-PLAN.md ó 3D + effects adaptive degradation (carousel, GalaxySweep, MagneticCursor) (Wave 2, depends on 01)
+- [ ] v6.0-phase-01-05-PLAN.md ó Image hygiene + LazyMotion tree-shake (Wave 1)
+- [ ] v6.0-phase-01-06-PLAN.md ó 8 GB RAM UAT + Lighthouse + FPS verification (Wave 3, checkpoint)
 
 **Phase directory:** `.planning/phases/v6.0-phase-01-performance-fluidity/`
 
@@ -597,4 +597,231 @@ v5.0 complete (Next.js routes shipped, current scroll/motion stack in place).
 - [ ] Web vitals (FCP/LCP/INP/CLS) logged to Convex `pageViews` for production traffic
 - [ ] `prefers-reduced-motion` users get a fully static, transform-free experience
 - [ ] No regression in admin dashboard, cart, checkout, or order flows
+
+
+
+---
+
+# Roadmap: v9.0 ? Brewing Studio Media
+
+**Milestone:** v9.0
+**Continuing from:** v8.0 (in planning, independent) ? and v7.0 (in-flight, parallel)
+**Phase numbering:** 1?4
+**Mode:** Planned
+**Granularity:** Coarse ? 4 phases
+
+---
+
+## Phase 1 ? Media Schema, Storage & Renderer
+
+**Goal:** A `media` Convex table, upload pipeline, and a tier-aware `<StudioMedia>` React component exist and can render any of the five media kinds against a slot/slotKey lookup ? without any admin UI yet (mock data drives initial render tests).
+
+**Requirements covered:** MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06, REND-01, REND-02, REND-03, REND-04, REND-05, REND-06, REND-07, REND-08
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] v9.0-phase-01-01-PLAN.md  Backend foundation: media table + Convex CRUD + slot registry (MEDIA-01..06)
+- [ ] v9.0-phase-01-02-PLAN.md  Renderer: StudioMedia + LottiePlayer + GLBViewer + BlurhashImage (REND-01..08)
+
+### Tasks
+
+1. **`convex/schema.ts`** ? append `media` table with full field set (kind, slot, slotKey, storageId, posterStorageId, width, height, durationMs, blurhash, status, provenance, aiMeta, createdAt, publishedAt). Indexes: `by_slot_key (slot, slotKey)`, `by_status_slot (status, slot)`, `by_creation`.
+2. **`convex/media.ts`** ? implement `generateUploadUrl`, `saveMediaRef`, `getActive`, `listBySlot`, `setActive`, `deleteMedia`. Admin-only writes via `_authHelpers.ts`.
+3. **Size guardrails** enforced in `saveMediaRef`: image = 5 MB, video = 25 MB, gif = 10 MB, lottie = 200 KB, glb = 15 MB. Surface as `ConvexError` with clear message.
+4. **One-active-per-slot invariant**: `setActive` atomically demotes prior published row before promoting new one (same mutation).
+5. **`src/components/StudioMedia.tsx`** ? format-aware renderer with branches for each kind. Uses v6.0 `useAdaptivePerformance` + `prefers-reduced-motion` matchMedia.
+6. **`src/components/media/LottiePlayer.tsx`** ? client-only Lottie wrapper (`"use client"` + dynamic import) using `lottie-react`. Pauses offscreen via IntersectionObserver.
+7. **`src/components/media/GLBViewer.tsx`** ? R3F `<Canvas>` with `useGLTF`, scene torn down when offscreen, OrbitControls disabled by default.
+8. **`STUDIO_SLOTS` constant** in `src/lib/studioSlots.ts` enumerating valid (slot, slotKey) pairs ? exported for both renderer fallback labels and Phase 2's slot picker.
+9. **Install deps:** `npm install lottie-react blurhash react-blurhash`.
+10. **Smoke test** ? seed two mock `media` rows via Convex dashboard, mount `<StudioMedia>` in a scratch page, verify all five kinds render correctly and reduced-motion collapses motion to stills.
+
+### Success Criteria
+
+- A `media` table exists in production Convex with the documented schema and indexes
+- An admin can upload a 4 MB JPG via dashboard mutation and `<StudioMedia slot=... slotKey=... />` renders it with blurhash LQIP
+- A 20 MB MP4 uploaded with a poster image renders as video on `tier === "high"` and as poster image on `tier !== "high"`
+- A Lottie JSON renders and pauses when scrolled offscreen
+- A 4 MB GLB renders inside an R3F canvas and unmounts on scroll-away
+- Setting `prefers-reduced-motion: reduce` in OS DevTools collapses video/lottie/glb to a still frame
+- Uploading a 30 MB video returns a `ConvexError` with the size limit explained
+- Customer-facing `getActive` never returns `draft` rows
+
+### Depends On
+
+Nothing ? Convex schema is additive; no v6.0/v7.0/v8.0 dependency.
+
+---
+
+## Phase 2 ? Admin "Studio Media" CMS Tab
+
+**Goal:** A new "Studio Media" tab in AdminDashboard lets admins upload, list, replace, delete, slot-bind, and publish/unpublish media ? manual uploads only (no AI yet). Phase 1's `<StudioMedia>` renders the published assets across the existing site.
+
+**Requirements covered:** CMS-M-01, CMS-M-02, CMS-M-03, CMS-M-04, CMS-M-05, CMS-M-06, CMS-M-07
+
+### Tasks
+
+1. **`src/components/admin/StudioMediaTab.tsx`** ? top-level tab component. Two panes: media list (left, grouped by slot with collapsible sections) and detail/upload form (right).
+2. **Wire into `AdminDashboard.tsx`** ? add the tab between Editorial and Analytics. Lazy-load via `dynamic()` to keep customer bundle clean.
+3. **Upload form** ? drag-and-drop zone + file picker + slot picker dropdown (from `STUDIO_SLOTS`) + slotKey selector + optional poster-image upload for videos. Progress bar driven by `XHR.upload.onprogress` against the signed Convex Storage URL.
+4. **Thumbnail strategy** ? for image/gif show the asset itself; for video show `posterStorageId`; for lottie show a static frame snapshot (capture via canvas on upload, store as `posterStorageId`); for glb show a generic 3D icon.
+5. **Row actions** ? Replace (re-runs upload flow, then `setActive`), Delete (confirmation modal + `deleteMedia`), Publish/Unpublish (`setActive` / status flip).
+6. **Empty state per slot** ? "No media yet ? upload one or generate via AI" (AI link disabled until Phase 3 ships).
+7. **Admin-only route guard** ? verify via existing `admins.ts` pattern; non-admin sees a 403 toast.
+
+### Success Criteria
+
+- Logging in as an admin and opening AdminDashboard shows a "Studio Media" tab
+- Admin can upload a JPG to slot `brew_step:v60.bloom`, see it appear in the list as a published thumbnail, and immediately see it on the live product page Brewing Studio
+- Uploading a second JPG to the same slot demotes the first to draft automatically
+- Delete removes both the row and the Convex Storage blob
+- Slot picker rejects free-text ? only `STUDIO_SLOTS` entries selectable
+- Upload progress bar is visible and accurate for a 20 MB MP4
+- The "Studio Media" tab is NOT in the customer-facing JS bundle (verify with `next build` chunk output)
+
+### Depends On
+
+Phase 1 (`media` table, mutations, `<StudioMedia>` renderer must exist).
+
+---
+
+## Phase 3 ? AI Generation Adapter Layer
+
+**Goal:** Admins can generate media via Replicate, fal.ai, or Google Gemini directly from the Studio Media tab. Each generation lands as a draft for manual review; budget guardrails and provenance metadata are enforced.
+
+**Requirements covered:** AIGEN-01, AIGEN-02, AIGEN-03, AIGEN-04, AIGEN-05, AIGEN-06, AIGEN-07, AIGEN-08, AIGEN-09, AIGEN-10, AIGEN-11, AIGEN-12
+
+### Tasks
+
+1. **Env vars** ? run before phase begins:
+   ```bash
+   npx convex env set REPLICATE_API_TOKEN r8_...
+   npx convex env set FAL_KEY fal-...
+   npx convex env set GEMINI_API_KEY AIza...
+   npx convex env set MEDIA_GEN_WEBHOOK_SECRET <random 32-byte hex>
+   npx convex env set MEDIA_GEN_DAILY_USD_CAP 5
+   ```
+2. **`convex/mediaProviders/types.ts`** ? define `GenerateRequest` (`kind`, `prompt`, `model`, `seed?`, `slot`, `slotKey`, `webhookSecret?`) and `GenerateResult` (`url` | `predictionId` for async, `costUsd`, `width?`, `height?`, `durationMs?`).
+3. **`convex/mediaProviders/replicate.ts`** ? POST to `api.replicate.com/v1/predictions`, register webhook (`/webhooks/replicate`) with shared secret. Returns `predictionId` for async tracking.
+4. **`convex/mediaProviders/fal.ts`** ? POST to `fal.run/{model}` with `Authorization: Key {FAL_KEY}`. For streaming endpoints, consume body via `ReadableStream.getReader()`. Synchronous return where supported.
+5. **`convex/mediaProviders/gemini.ts`** ? implement Imagen 3 (image: `POST /v1beta/models/imagen-3.0-generate-001:predict`) and Veo (video: `POST /v1beta/models/veo-1.5:generateVideo` with operation polling). Use polling action for Veo's long jobs.
+6. **`convex/mediaGen.ts`** ? `"use node"` actions `generateImage` and `generateVideo`. Each one: (a) checks daily budget via `mediaGenLog` aggregate, (b) dispatches to adapter, (c) for sync results downloads via `fetch` ? `ctx.storage.store(blob)` ? insert `media` row (`status: draft`, `provenance: ai`, full `aiMeta`), (d) for async results inserts a placeholder draft row keyed by `predictionId` for the webhook to fill.
+7. **`convex/http.ts`** ? add `POST /webhooks/replicate` route. Verify HMAC of body against `MEDIA_GEN_WEBHOOK_SECRET`, look up placeholder row by `predictionId`, download finished output, replace `storageId`, mark ready (still `draft`).
+8. **`convex/schema.ts`** ? append `mediaGenLog` table: `{ provider, model, slot, slotKey, costUsd, status, errorMsg?, _creationTime }`. Indexed by creation time and provider.
+9. **AI Generation panel UI** in `StudioMediaTab.tsx` ? prompt textarea + provider dropdown + model dropdown (provider-specific) + slot picker + seed (optional) + Generate button. Below: live cost estimate + today's spend + remaining budget.
+10. **Generation history list** ? last 50 generations from `mediaGenLog` with prompt + provider + model + cost + status.
+11. **Provider-specific model lists** maintained inline in `mediaProviders/{provider}.ts` (constant) ? surfaced to UI via a `listModels` query.
+
+### Success Criteria
+
+- Admin enters "macro V60 coffee bloom shot, golden hour, shallow DOF" + Replicate + `black-forest-labs/flux-schnell`, clicks Generate, and within ~15s sees a new draft image card in the list
+- The same generation logged to `mediaGenLog` with `costUsd > 0` and `provider: "replicate"`
+- A Gemini Veo video generation completes asynchronously, with the draft row populated by the webhook (Replicate) or polling action (Gemini)
+- Generating when `MEDIA_GEN_DAILY_USD_CAP` is exhausted returns a clear error toast in the admin UI ("Daily AI budget reached: $5 spent")
+- Webhook signature verification rejects forged POSTs (verify with curl)
+- No API keys appear in `next build` client bundle (grep build output)
+- AI-generated media is never auto-published ? admin must click Publish to activate it for customers
+
+### Depends On
+
+Phase 2 (Studio Media tab + media list must exist to host the Generate panel and draft review).
+
+---
+
+## Phase 4 ? BrewingStudio Integration & Performance Polish
+
+**Goal:** `BrewingStudio.tsx` and the product detail page render real `<StudioMedia>` against all five surfaces. Ambience loop ships on `tier === "high"` only. Blurhash placeholders, video posters, and reduced-motion fallbacks are visible in production.
+
+**Requirements covered:** STUDIO-01, STUDIO-02, STUDIO-03, STUDIO-04, STUDIO-05, STUDIO-06
+
+### Tasks
+
+1. **Modify `src/components/BrewingStudio.tsx`** ? render `<StudioMedia slot="brew_step" slotKey={`${method}.${stepName}`} />` next to each step's text. Compose alongside the existing 3D rig (do not delete the rig).
+2. **Method hero** ? when method is selected, render `<StudioMedia slot="brew_method" slotKey={method} />` in a banded area above the step list.
+3. **Signature drink** ? in signature mode, render `<StudioMedia slot="signature" slotKey={drinkId} />` as the hero of the recipe panel.
+4. **Product hero** ? in `ProductPage.tsx`, add a `<StudioMedia slot="product" slotKey={product.slug} />` slot in the existing parallax band. If the active media is a GLB, render the rig viewer; otherwise the image / video.
+5. **Ambience** ? wrap the BrewingStudio section in a relative container with a `<StudioMedia slot="ambience" slotKey="studio" />` background only when `tier === "high"` and reduced-motion is false. Use `pointer-events: none`, `opacity: 0.15`, `filter: blur(8px)` so it never competes with content.
+6. **Tab-visibility pause** ? pause all autoplaying media when `document.visibilityState !== "visible"` (battery + GPU saver).
+7. **`prefers-reduced-motion` audit** ? emulate in DevTools, verify every motion surface collapses correctly (video ? poster, lottie ? still frame, ambience ? hidden, glb ? static frame).
+8. **Seed production media** ? upload at least one published asset for each top-priority slot: 4 method heroes (V60, AeroPress, FrenchPress, ColdBrew), ~12 brew-step images (3 per method), 6 signature drink shots, 1 ambience loop, 18 product hero images (one per SKU). Use admin uploads + AI generation mix.
+9. **Lighthouse + web-vitals smoke** ? run on `/products/[slug]` and confirm LCP = 2.5 s mobile, no CLS regression vs pre-v9.0 baseline.
+
+### Success Criteria
+
+- Visiting `/products/el-diablo` shows: a published product hero image, a Brewing Studio with V60 selected by default showing a method hero + per-step micro-clips, signature drink hero in signature mode, ambience loop visible (`high` tier only)
+- The existing Three.js rig in BrewingStudio still renders and animates correctly ? no regression
+- Lighthouse performance score on `/products/el-diablo` mobile = 88 (allowing a small headroom from v6.0's 90 because media adds payload)
+- CLS on `/products/el-diablo` < 0.05 (no element resize from media loading)
+- INP on opening Brewing Studio = 200 ms
+- `prefers-reduced-motion: reduce` results in zero autoplaying media on the page
+- Switching tabs pauses all video / lottie playback (verify via DevTools Performance recording)
+
+### Depends On
+
+Phase 1 (renderer), Phase 2 (admin can publish real media so the integration has assets to show). Phase 3 is OPTIONAL for Phase 4 to ship ? uploads alone are enough for go-live, AI sweetens the seeding flow.
+
+---
+
+## Milestone Completion Criteria (v9.0)
+
+- [ ] MEDIA-01..MEDIA-06 verified (Phase 1)
+- [ ] REND-01..REND-08 verified (Phase 1)
+- [ ] CMS-M-01..CMS-M-07 verified (Phase 2)
+- [ ] AIGEN-01..AIGEN-12 verified (Phase 3)
+- [ ] STUDIO-01..STUDIO-06 verified (Phase 4)
+- [ ] End-to-end: admin uploads or AI-generates media ? publishes ? customer sees it on `/products/[slug]` Brewing Studio
+- [ ] Lighthouse perf budget intact on instrumented product pages
+- [ ] `prefers-reduced-motion` users get a fully static experience
+- [ ] No regression in admin Products / Orders / Editorial / Analytics tabs
+
+---
+*Roadmap created: 2026-05-25*
+*Last updated: 2026-05-26 ó Phase 5 (API Security Proxy) added*
+*Next step: `/gsd-discuss-phase 1` (or `/gsd-plan-phase 1`)*
+
+---
+
+## Phase 5 ó API Security Proxy
+
+**Goal:** All client-initiated write operations (mutations and AI actions) route through Next.js server-side API routes instead of hitting Convex directly from the browser. The proxy enforces per-IP rate limiting and input validation before forwarding to Convex.
+
+**Requirements covered:** SEC-PROXY-01, SEC-PROXY-02, SEC-PROXY-03, SEC-PROXY-04
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] v9.0-phase-05-01-PLAN.md ó Drop static export, add security headers, create server-side Convex client + rate limiter
+- [ ] v9.0-phase-05-02-PLAN.md ó Create /api/orders and /api/recommendations proxy routes; migrate CheckoutPage + BrewingStudio
+
+### Tasks
+
+1. Remove `output: "export"` from `next.config.ts` (enables Next.js API routes)
+2. Add HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) to all routes
+3. Create `app/api/_lib/convex-server.ts` ó server-side `ConvexHttpClient` singleton
+4. Create `app/api/_lib/rate-limit.ts` ó per-IP sliding-window rate limiter
+5. Create `app/api/orders/route.ts` ó validates order payload, rate-limits at 20 req/min per IP, proxies to `submitOrder`
+6. Create `app/api/recommendations/route.ts` ó rate-limits at 10 req/min per IP, proxies to `brewingRecipe` or `flavoredDrink`
+7. Migrate `CheckoutPage.tsx` from `useMutation(api.orders.submitOrder)` to `fetch("/api/orders")`
+8. Migrate `BrewingStudio.tsx` from `useAction(api.recommendations.*)` to `fetch("/api/recommendations")`
+
+### Success Criteria
+
+- No `useAction` or order-specific `useMutation` calls remain in client components
+- `POST /api/orders` returns 400 for invalid payloads, 429 after 20 req/min, forwards valid orders to Convex
+- `POST /api/recommendations` returns 429 after 10 req/min per IP
+- `npm run build` succeeds (no static-export errors, all API routes compile)
+- Checkout and Brewing Studio work end-to-end through the proxy
+- Direct Convex mutation calls from browser dev tools no longer bypass server validation
+
+### Security Requirements
+
+- **SEC-PROXY-01:** `useMutation` for orders and `useAction` for AI recommendations are removed from client components
+- **SEC-PROXY-02:** Per-IP rate limiting enforced at the proxy layer (20/min orders, 10/min AI)
+- **SEC-PROXY-03:** Order payloads validated server-side (name, phone, email, address, items, subtotal) before forwarding
+- **SEC-PROXY-04:** `output: "export"` removed; Next.js runs in server mode enabling API routes
+
+### Depends On
+
+Nothing ó can be executed before or in parallel with v9.0 Phases 1ñ4 (disjoint files).
 
