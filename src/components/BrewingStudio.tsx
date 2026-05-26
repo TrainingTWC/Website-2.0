@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+﻿import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Coffee,
@@ -16,9 +16,9 @@ import {
 import { TIIcon } from "./TIIcon";
 import { StudioMedia } from "./StudioMedia";
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Types
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type Mode = "brew" | "craft";
 type MethodKey = "espresso" | "v60" | "french-press" | "aeropress" | "cold-brew";
 type Strength = "light" | "balanced" | "strong";
@@ -62,14 +62,14 @@ interface CraftRecipe {
   pairings?: { food: string; book: string; music: string };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Constants
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const BREW_METHODS: BrewMethod[] = [
   { key: "espresso",     label: "Espresso",     defaultDose: 18,  defaultRatio: 2,  ratioRange: [1.5, 3],  doseRange: [14, 22],   blurb: "9 bar, ~30 seconds. The classic pull.",          icon: Coffee   },
   { key: "v60",          label: "Pour Over",    defaultDose: 15,  defaultRatio: 16, ratioRange: [14, 18],  doseRange: [10, 25],   blurb: "Clarity, brightness, articulated flavor.",       icon: Droplets },
   { key: "french-press", label: "French Press", defaultDose: 30,  defaultRatio: 15, ratioRange: [12, 17],  doseRange: [20, 60],   blurb: "Full body, no filter, generous mouthfeel.",      icon: Hourglass },
-  { key: "aeropress",    label: "AeroPress",    defaultDose: 14,  defaultRatio: 14, ratioRange: [10, 18],  doseRange: [11, 18],   blurb: "Versatile, forgiving, café-strong.",             icon: Flame    },
+  { key: "aeropress",    label: "AeroPress",    defaultDose: 14,  defaultRatio: 14, ratioRange: [10, 18],  doseRange: [11, 18],   blurb: "Versatile, forgiving, cafÃ©-strong.",             icon: Flame    },
   { key: "cold-brew",    label: "Cold Brew",    defaultDose: 100, defaultRatio: 8,  ratioRange: [6, 12],   doseRange: [60, 200],  blurb: "12-hour steep, smooth, low acidity.",            icon: Snowflake },
 ];
 
@@ -87,9 +87,9 @@ const DRINK_STYLES: DrinkStyle[] = [
 const FLAVORS = ["None", "Vanilla", "Caramel", "Hazelnut", "Cinnamon", "Brown Sugar", "Cardamom", "Rose"];
 const MILKS   = ["Whole", "Oat", "Almond", "Coconut", "Soy", "No Milk"];
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Component
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface BrewingStudioProps {
   productName: string;
   roastLevel?: string;
@@ -107,7 +107,7 @@ export function BrewingStudio({
 }: BrewingStudioProps) {
   const [mode, setMode] = useState<Mode>("brew");
 
-  // ── Brew state ────────────────────────────────────────────────────
+  // â”€â”€ Brew state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [methodKey, setMethodKey] = useState<MethodKey>("v60");
   const method = useMemo(() => BREW_METHODS.find((m) => m.key === methodKey)!, [methodKey]);
   const [dose, setDose]       = useState(method.defaultDose);
@@ -121,13 +121,13 @@ export function BrewingStudio({
 
   const yieldMl = Math.round(dose * ratio);
 
-  // ── Craft state ───────────────────────────────────────────────────
+  // â”€â”€ Craft state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [drinkStyle, setDrinkStyle] = useState("latte");
   const [flavor, setFlavor] = useState("None");
   const [milk, setMilk]     = useState("Oat");
   const [temp, setTemp]     = useState<"hot" | "iced">("hot");
 
-  // ── AI actions ────────────────────────────────────────────────────
+  // â”€â”€ AI actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const [brewRecipe,  setBrewRecipe]  = useState<BrewRecipe | null>(null);
   const [craftRecipe, setCraftRecipe] = useState<CraftRecipe | null>(null);
@@ -142,12 +142,12 @@ export function BrewingStudio({
     setBrewRecipe(null);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_PROXY_URL}/recommendations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "brew", productName, roastLevel, origin, flavorNotes, method: methodKey, dose, ratio, strength }),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Brew request failed"); }
-      const result = await res.json() as { ok: boolean; recipe?: unknown; error?: string };
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ kind: "brew", productName, roastLevel, origin, flavorNotes, method: methodKey, dose, ratio, strength }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Brew request failed"); }
+            const result = await res.json();
       if (result.ok) setBrewRecipe(result.recipe);
       else setError(result.error);
     } catch (e) {
@@ -163,12 +163,12 @@ export function BrewingStudio({
     setCraftRecipe(null);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_PROXY_URL}/recommendations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "drink", productName, roastLevel, flavorNotes, drinkStyle, flavorAdd: flavor.toLowerCase(), milk: milk.toLowerCase(), temperature: temp, size: "medium" }),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Craft request failed"); }
-      const result = await res.json() as { ok: boolean; recipe?: unknown; error?: string };
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ kind: "drink", productName, roastLevel, flavorNotes, drinkStyle, flavorAdd: flavor.toLowerCase(), milk: milk.toLowerCase(), temperature: temp, size: "medium" }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Craft request failed"); }
+            const result = await res.json();
       if (result.ok) setCraftRecipe(result.recipe);
       else setError(result.error);
     } catch (e) {
@@ -178,7 +178,7 @@ export function BrewingStudio({
     }
   };
 
-  // ── Timer (brew only) ─────────────────────────────────────────────
+  // â”€â”€ Timer (brew only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const tickRef = useRef<number | null>(null);
@@ -214,7 +214,7 @@ export function BrewingStudio({
 
   const progressPct = brewRecipe ? Math.min(100, (elapsed / brewRecipe.totalTimeSec) * 100) : 0;
 
-  // Live cumulative water poured � interpolated within the active step
+  // Live cumulative water poured — interpolated within the active step
   const { flowWaterG, totalWaterG } = useMemo(() => {
     if (!brewRecipe) return { flowWaterG: 0, totalWaterG: 0 };
     const total = brewRecipe.steps.reduce((s, st) => s + (st.waterG ?? 0), 0);
@@ -241,7 +241,7 @@ export function BrewingStudio({
       {/* Ambience background video */}
       <StudioMedia slot="ambience" slotKey="studio" className="absolute inset-0 w-full h-full object-cover opacity-[0.08] pointer-events-none select-none" />
 
-      {/* ── Header ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex flex-col sm:flex-row sm:items-end gap-6 mb-12">
         <div className="flex-1">
           <p
@@ -279,10 +279,10 @@ export function BrewingStudio({
         </div>
       </div>
 
-      {/* ── Two-panel grid ────────────────────────────────────────── */}
+      {/* â”€â”€ Two-panel grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-5 lg:gap-8">
 
-        {/* ── Left: controls ────────────────────────────────────────── */}
+        {/* â”€â”€ Left: controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <AnimatePresence mode="wait">
           {mode === "brew" ? (
             <motion.div
@@ -376,7 +376,7 @@ export function BrewingStudio({
               transition={{ duration: 0.22 }}
               className="bg-natural-paper border border-natural-border rounded-3xl p-6 sm:p-8 space-y-6"
             >
-              {/* Temperature � gates drink availability */}
+              {/* Temperature — gates drink availability */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-natural-text/40 mb-3">Temperature</p>
                 <div className="flex gap-2">
@@ -482,7 +482,7 @@ export function BrewingStudio({
           )}
         </AnimatePresence>
 
-        {/* ── Right: recipe output ───────────────────────────────────── */}
+        {/* â”€â”€ Right: recipe output â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div
           className="rounded-3xl p-6 sm:p-8 text-white flex flex-col relative overflow-hidden"
           style={{
@@ -490,13 +490,13 @@ export function BrewingStudio({
             background: "linear-gradient(150deg, #1e1208 0%, #110c06 55%, #090704 100%)",
           }}
         >
-          {/* Ambient glow � top-right */}
+          {/* Ambient glow — top-right */}
           <div
             aria-hidden
             className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 pointer-events-none"
             style={{ background: accentHex }}
           />
-          {/* Ambient glow � bottom-left */}
+          {/* Ambient glow — bottom-left */}
           <div
             aria-hidden
             className="absolute -bottom-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-10 pointer-events-none"
@@ -525,7 +525,7 @@ export function BrewingStudio({
                 <p className="text-white/35 text-xs mt-3 leading-relaxed">
                   {mode === "brew"
                     ? "Set dose & ratio, then generate. Every step tuned to this bean."
-                    : "Choose a style, flavor, and milk � then let us craft the build."}
+                    : "Choose a style, flavor, and milk — then let us craft the build."}
                 </p>
               </motion.div>
             )}
@@ -542,13 +542,13 @@ export function BrewingStudio({
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: accentHex }} />
                 <p className="font-serif italic text-white/55 text-sm">
                   {mode === "brew"
-                    ? "Third Intelligence is dialing in your recipe�"
-                    : "Crafting your signature drink�"}
+                    ? "Third Intelligence is dialing in your recipe…"
+                    : "Crafting your signature drink…"}
                 </p>
               </motion.div>
             )}
 
-            {/* ── Brew recipe ─────────────────────────────────────────── */}
+            {/* â”€â”€ Brew recipe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {mode === "brew" && brewRecipe && !loading && (
               <motion.div
                 key="brew-recipe"
@@ -571,7 +571,7 @@ export function BrewingStudio({
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2.5 mb-5">
                   <StatChip icon={<Coffee     className="w-3.5 h-3.5" />} label="Grind" value={brewRecipe.grind.split(",")[0]}       accentHex={accentHex} />
-                  <StatChip icon={<Thermometer className="w-3.5 h-3.5" />} label="Temp"  value={`${brewRecipe.waterTempC}°C`}          accentHex={accentHex} />
+                  <StatChip icon={<Thermometer className="w-3.5 h-3.5" />} label="Temp"  value={`${brewRecipe.waterTempC}Â°C`}          accentHex={accentHex} />
                   <StatChip icon={<Hourglass   className="w-3.5 h-3.5" />} label="Total" value={formatTime(brewRecipe.totalTimeSec)}    accentHex={accentHex} />
                 </div>
 
@@ -704,7 +704,7 @@ export function BrewingStudio({
               </motion.div>
             )}
 
-            {/* ── Craft recipe ─────────────────────────────────────────── */}
+            {/* â”€â”€ Craft recipe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {mode === "craft" && craftRecipe && !loading && (
               <motion.div
                 key="craft-recipe"
@@ -768,9 +768,9 @@ export function BrewingStudio({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SliderRow({
   label, value, min, max, step, current, onChange, accent,
 }: {
@@ -873,7 +873,7 @@ function GenerateButton({ loading, hasResult, mode, accentHex, onClick }: {
       {loading ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
-          {mode === "brew" ? "Brewing your recipe�" : "Crafting your drink�"}
+          {mode === "brew" ? "Brewing your recipe…" : "Crafting your drink…"}
         </>
       ) : (
         <>
