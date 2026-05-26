@@ -35,6 +35,7 @@ import { useDiscount } from "../context/DiscountContext";
 import { useToast } from "../context/ToastContext";
 import { useCartPanel } from "../context/CartPanelContext";
 import { SiteFooter } from "./SiteFooter";
+import { GuidedTour } from "./GuidedTour";
 import { GalaxySweep } from "./GalaxySweepLazy";
 import { SmoothScroll } from "./SmoothScroll";
 import { CinematicHero, CurtainTransition, ChapterDeck } from "./Cinematic";
@@ -187,7 +188,7 @@ function MobileBottomNav({
         className="mx-3 mb-3 pointer-events-auto"
       >
         <div className="flex items-center justify-around glass-strong rounded-2xl px-1 py-2">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter((item) => item.key !== "home").map((item) => (
             <button
               key={item.key}
               onClick={() => onNavTo(item.target)}
@@ -1443,6 +1444,7 @@ export default function HomeContent() {
           </div>
         )}
       </div>
+        <GuidedTour onOpenTI={openTI} />
     </SmoothScroll>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
@@ -22,10 +22,11 @@ import {
   ChevronRight,
   Menu,
   X as XIcon,
+  Store,
 } from "lucide-react";
 import { asset } from "@/src/lib/asset";
 
-// ── Nav items ─────────────────────────────────────────────────
+// â”€â”€ Nav items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const NAV_ITEMS: {
   key: string;
   label: string;
@@ -39,9 +40,10 @@ export const NAV_ITEMS: {
   { key: "merch",     label: "Merch",        target: "section-merch-drinkware", Icon: ShoppingBag },
   { key: "story",     label: "Our Story",    target: "our-story",               Icon: BookOpen   },
   { key: "editorial", label: "Third Circle", target: "third-circle",            Icon: Newspaper  },
+  { key: "shop",      label: "Shop All",     target: "/shop",                   Icon: Store      },
 ];
 
-// ── Dropdown content per nav key ───────────────────────────────
+// â”€â”€ Dropdown content per nav key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type DropdownItem = {
   label: string;
   target: string;
@@ -78,7 +80,7 @@ const STATIC_DROPDOWNS: Record<string, DropdownItem[]> = {
   ],
 };
 
-// ── Active section tracker ─────────────────────────────────────
+// â”€â”€ Active section tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function useActiveSection(chapterTargets: { target: string }[] = []) {
   const [active, setActive] = useState<string>("home");
   const chapRef = useRef(chapterTargets);
@@ -131,7 +133,7 @@ export function useActiveSection(chapterTargets: { target: string }[] = []) {
   return active;
 }
 
-// ── Shared glass style ─────────────────────────────────────────
+// â”€â”€ Shared glass style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const GLASS: React.CSSProperties = {
   background: "rgba(250,249,246,0.92)",
   backdropFilter: "blur(48px) saturate(180%) brightness(1.06)",
@@ -140,7 +142,7 @@ const GLASS: React.CSSProperties = {
     "0 16px 48px -8px rgba(44,24,16,0.22), 0 1.5px 0 rgba(255,255,255,0.8) inset, 0 0 0 1px rgba(255,255,255,0.45)",
 };
 
-// ── DropdownPanel ──────────────────────────────────────────────
+// â”€â”€ DropdownPanel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DropdownPanel({
   items,
   onSelect,
@@ -267,7 +269,7 @@ function DropdownPanel({
   );
 }
 
-// ── MorphNavItem ───────────────────────────────────────────────
+// â”€â”€ MorphNavItem â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MorphNavItem({
   label,
   Icon,
@@ -328,7 +330,7 @@ function MorphNavItem({
   );
 }
 
-// ── TI button ─────────────────────────────────────────────────
+// â”€â”€ TI button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TIHeaderButton({
   compact,
   onClick,
@@ -378,7 +380,7 @@ function TIHeaderButton({
 }
 
 
-// ── MobileHeader (hamburger + glass drawer) ───────────────────
+// â”€â”€ MobileHeader (hamburger + glass drawer) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MobileHeader({
   compact,
   active,
@@ -432,7 +434,7 @@ function MobileHeader({
         >
           <button
             onClick={() => navigate("hero")}
-            aria-label="Third Wave Coffee — home"
+            aria-label="Third Wave Coffee â€” home"
             className="flex items-center"
           >
             <motion.img
@@ -622,7 +624,7 @@ function MobileHeader({
               </nav>
 
               <div className="shrink-0 px-5 pb-8 pt-3 border-t border-stone-900/8">
-                <p className="text-[11px] text-natural-text/35 font-medium">Third Wave Coffee · Bengaluru, India</p>
+                <p className="text-[11px] text-natural-text/35 font-medium">Third Wave Coffee Â· Bengaluru, India</p>
               </div>
             </motion.div>
           </>
@@ -632,7 +634,7 @@ function MobileHeader({
   );
 }
 
-// ── MorphingHeader ─────────────────────────────────────────────
+// â”€â”€ MorphingHeader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function MorphingHeader({
   headerBg,
   headerBorder,
@@ -673,7 +675,7 @@ export function MorphingHeader({
   return (
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
 
-      {/* ── Mobile: slim top bar + hamburger drawer ── */}
+      {/* â”€â”€ Mobile: slim top bar + hamburger drawer â”€â”€ */}
       <MobileHeader
         compact={compact}
         active={active}
@@ -687,7 +689,7 @@ export function MorphingHeader({
         onNavTo={onNavTo}
       />
 
-      {/* ── Desktop: fluid water-drop header ── */}
+      {/* â”€â”€ Desktop: fluid water-drop header â”€â”€ */}
       <div className="hidden md:block absolute inset-x-0 top-0 pointer-events-none">
         <motion.div
           layout
@@ -700,7 +702,7 @@ export function MorphingHeader({
           }
           style={{ maxWidth: compact ? undefined : 920, borderRadius: 999 }}
         >
-          {/* Island glass bg — single pill when expanded */}
+          {/* Island glass bg â€” single pill when expanded */}
           <span
             aria-hidden
             className="absolute inset-0 pointer-events-none"
@@ -721,7 +723,7 @@ export function MorphingHeader({
             initial={false}
             transition={{ layout: { type: "spring", stiffness: 260, damping: 30 } }}
             onClick={() => onNavTo("hero")}
-            aria-label="Third Wave Coffee—home"
+            aria-label="Third Wave Coffeeâ€”home"
             className={`relative flex-shrink-0 flex items-center justify-center overflow-hidden rounded-full pointer-events-auto z-10${compact ? " w-14 h-14" : ""}`}
           >
             <span
@@ -832,3 +834,4 @@ export function MorphingHeader({
     </div>
   );
 }
+

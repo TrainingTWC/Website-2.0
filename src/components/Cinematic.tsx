@@ -72,6 +72,28 @@ export function CinematicHero({
         <BannerSlideshow slides={slides} rounded="rounded-[2rem]" />
       </div>
 
+
+      {/* Scroll indicator — fades out as user starts scrolling */}
+      <motion.div
+        style={{ opacity: titleOpacity }}
+        className="relative z-10 flex flex-col items-center gap-1 py-5 pointer-events-none select-none"
+        aria-hidden
+      >
+        <motion.div
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.7, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-1.5"
+        >
+          <span className="text-[9px] font-bold uppercase tracking-[0.45em] text-natural-text/30">
+            Scroll to explore
+          </span>
+          <span className="w-px h-6 block"
+            style={{ background: "linear-gradient(to bottom, transparent, rgba(120,80,40,0.25), transparent)" }}
+          />
+          <ArrowDown className="w-3.5 h-3.5 text-natural-text/25" />
+        </motion.div>
+      </motion.div>
+
       {/* Hero tagline Ã¢â‚¬â€ big editorial style below the poster */}
       <div className="relative overflow-hidden py-14 sm:py-20 bg-natural-bg">
         {/* Giant ghost wordmark behind */}
