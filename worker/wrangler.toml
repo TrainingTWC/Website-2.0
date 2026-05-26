@@ -1,0 +1,27 @@
+name = "brewmatch-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Local development ────────────────────────────────────────────────────────
+[dev]
+port = 8787
+
+# ── Environment variables ────────────────────────────────────────────────────
+# Non-secret vars can go in [vars]:
+#
+# [vars]
+# ALLOWED_ORIGIN = "https://YOUR-USERNAME.github.io"
+#
+# Secret vars are set via CLI (never committed to git):
+#   wrangler secret put CONVEX_URL
+#     → paste: https://different-bulldog-772.convex.cloud
+#
+# For local dev, create worker/.dev.vars (gitignored) with:
+#   CONVEX_URL=https://different-bulldog-772.convex.cloud
+#   ALLOWED_ORIGIN=http://localhost:3000
+
+# ── Deployment ───────────────────────────────────────────────────────────────
+# After deploying, set NEXT_PUBLIC_PROXY_URL in GitHub Actions / .env.local
+# to the deployed Worker URL:
+#   https://brewmatch-proxy.YOUR-ACCOUNT.workers.dev

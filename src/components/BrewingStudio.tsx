@@ -141,7 +141,7 @@ export function BrewingStudio({
     setError(null);
     setBrewRecipe(null);
     try {
-      const res = await fetch("/api/recommendations", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_PROXY_URL}/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "brew", productName, roastLevel, origin, flavorNotes, method: methodKey, dose, ratio, strength }),
@@ -162,7 +162,7 @@ export function BrewingStudio({
     setError(null);
     setCraftRecipe(null);
     try {
-      const res = await fetch("/api/recommendations", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_PROXY_URL}/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kind: "drink", productName, roastLevel, flavorNotes, drinkStyle, flavorAdd: flavor.toLowerCase(), milk: milk.toLowerCase(), temperature: temp, size: "medium" }),

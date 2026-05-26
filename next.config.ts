@@ -1,23 +1,27 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Static export for GitHub Pages deployment.
+  // API routes are NOT supported with this mode — use the Cloudflare Worker
+  // in /worker for any server-side proxy logic.
+  output: "export",
   trailingSlash: true,
   images: {
-    // Convex-hosted assets are pre-approved for the image component.
     unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "*.convex.cloud" },
       { protocol: "https", hostname: "*.convex.site" },
     ],
   },
-  // Pre-existing TS errors in src/ were silently ignored by Vite's esbuild.
-  // Suppress during migration bridge; fix in Phase 2 type-cleanup.
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Security response headers are applied via Cloudflare Transform Rules in
+  // production (GitHub Pages cannot serve custom headers). They are also set
+  // here for `next dev` only.
   async headers() {
     return [
       {

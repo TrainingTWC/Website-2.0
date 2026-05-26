@@ -1,0 +1,9 @@
+# ── Local dev environment variables for `wrangler dev` ──────────────────────
+# This file is gitignored. Copy this file to .dev.vars and fill in values.
+# Do NOT commit .dev.vars to git.
+
+CONVEX_URL=https://different-bulldog-772.convex.cloud
+
+# Restrict CORS to your local Next.js dev server.
+# In production this is set via wrangler secret / Cloudflare dashboard.
+ALLOWED_ORIGIN=http://localhost:3000

@@ -8,3 +8,6 @@ coverage/
 !.env.example
 .next/
 out/
+
+worker/.dev.vars
+worker/node_modules/

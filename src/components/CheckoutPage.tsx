@@ -112,7 +112,7 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
     );
     try {
       const doSubmit = async (withDiscount: boolean): Promise<{ orderId: string }> => {
-        const res = await fetch("/api/orders", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_PROXY_URL}/orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
