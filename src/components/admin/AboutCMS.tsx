@@ -658,6 +658,7 @@ function CareersEditors({ onSave }: { onSave: () => void }) {
   return (
     <>
       <HeroEditor storageKey="about.careers.hero" defaults={AboutDefaults.careersHero} onSave={onSave} />
+      <ApplyLinkEditor onSave={onSave} />
       <MarqueeEditor onSave={onSave} />
       <StatsEditor onSave={onSave} />
       <CoffeeSchoolEditor onSave={onSave} />
