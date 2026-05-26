@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, ShoppingCart, MapPin, Phone, Mail, User, CreditCard, Truck, Smartphone, Loader2 } from "lucide-react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import { useGeoAddress } from "../lib/useGeoAddress";
 import { track, snapshotCart, markConverted, logError } from "../lib/analytics";
 import type { Product } from "../types";
@@ -43,7 +41,6 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
     address1: "", address2: "", city: "", state: "", pincode: "",
   });
   const [errors, setErrors] = useState<Partial<typeof form>>({});
-  const submitOrder = useMutation(api.orders.submitOrder);
 
   // ── v8.0 funnel: emit checkout_initiated once on mount
   useEffect(() => {
@@ -114,31 +111,38 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
       { phone: form.phone, email: form.email }
     );
     try {
-      const doSubmit = async (withDiscount: boolean) => {
-        return submitOrder({
-          customer: {
-            name: form.name,
-            phone: form.phone,
-            email: form.email,
-            address: {
-              line1: form.address1,
-              line2: form.address2 || undefined,
-              city: form.city,
-              state: form.state,
-              pincode: form.pincode,
+      const doSubmit = async (withDiscount: boolean): Promise<{ orderId: string }> => {
+        const res = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer: {
+              name: form.name,
+              phone: form.phone,
+              email: form.email,
+              address: {
+                line1: form.address1,
+                line2: form.address2 || undefined,
+                city: form.city,
+                state: form.state,
+                pincode: form.pincode,
+              },
             },
-          },
-          items: cartProducts.map((c) => ({
-            productId: c.productId,
-            name: c.product.name,
-            imageUrl: c.product.imageUrl,
-            qty: c.qty,
-            price: c.product.price,
-          })),
-          subtotal,
-          paymentMethod: payment,
-          ...(withDiscount && activeDiscount ? { discountCode: activeDiscount.code } : {}),
+            items: cartProducts.map((c) => ({
+              productId: c.productId,
+              name: c.product.name,
+              imageUrl: c.product.imageUrl,
+              qty: c.qty,
+              price: c.product.price,
+            })),
+            subtotal,
+            paymentMethod: payment,
+            ...(withDiscount && activeDiscount ? { discountCode: activeDiscount.code } : {}),
+          }),
         });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error ?? "Order submission failed");
+        return body as { orderId: string };
       };
 
       let result: { orderId: string };
