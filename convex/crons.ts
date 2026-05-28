@@ -7,4 +7,11 @@ crons.daily(
   { hourUTC: 2, minuteUTC: 0 },
   internal.pageViews.cleanupOldViews
 );
+crons.interval(
+  "refresh-velocity-cache",
+  { minutes: 15 },
+  internal.inventory.refreshVelocityCache,
+  {}
+);
 export default crons;
+

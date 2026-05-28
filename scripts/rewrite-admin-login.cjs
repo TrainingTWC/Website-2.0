@@ -1,4 +1,8 @@
-"use client";
+const fs = require("fs");
+const path = require("path");
+
+const file = path.join(__dirname, "../src/components/admin/AdminLogin.tsx");
+const content = `"use client";
 import { useState, useRef, type FormEvent } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useMutation, useAction, useQuery } from "convex/react";
@@ -59,51 +63,40 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setError(null);
     setInfo(null);
     setLoading(true);
-
-    const normalEmail = email.trim().toLowerCase();
-
-    // ── Step A: authenticate — signIn only, never signUp from admin login page ─
-    // SECURITY (C-04): falling back to signUp would silently create a Convex
-    // auth account for any email/password pair. Admin accounts must be invited
-    // explicitly by a superadmin via the admin panel.
-    let authed = false;
+    const fd = new FormData();
+    fd.set("email", email.trim().toLowerCase());
+    fd.set("password", password);
     try {
-      const fd = new FormData();
-      fd.set("email", normalEmail);
-      fd.set("password", password);
       fd.set("flow", "signIn");
       await signIn("password", fd);
-      authed = true;
-    } catch (signInErr: any) {
-      // Record failure and surface a clear error — no account creation here.
-      await recordFailure({ email: normalEmail }).catch(() => {});
-      const msg =
-        signInErr?.data?.toString?.() ??
-        signInErr?.message ??
-        "Invalid credentials";
-      setError(
-        `Couldn't sign in. ${msg}. If you forgot the password, use 'Reset & set new password' below.`
-      );
-    }
-
-    if (!authed) {
-      setLoading(false);
-      return;
-    }
-
-    // ── Step B: send OTP (separate from auth — errors here don't re-trigger signUp) ──
-    try {
-      await recordSuccess({ email: normalEmail });
-      await requestOTP({ email: normalEmail, purpose: "login" });
-      lockedEmail.current = normalEmail;
+      // signIn succeeded — record success + send OTP
+      await recordSuccess({ email: email.trim().toLowerCase() });
+      await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
+      lockedEmail.current = email.trim().toLowerCase();
       setStep("otp");
-      setInfo(`Code sent to ${normalEmail}`);
-    } catch (otpErr: any) {
-      const msg =
-        otpErr?.data?.toString?.() ??
-        otpErr?.message ??
-        "Could not send verification code";
-      setError(`Signed in, but the verification email failed: ${msg}. Try again or contact your superadmin.`);
+      setInfo("A 6-digit code has been sent to your email.");
+    } catch (signInErr: any) {
+      // Try sign-up (new account)
+      try {
+        fd.set("flow", "signUp");
+        if (name) fd.set("name", name);
+        await signIn("password", fd);
+        await recordSuccess({ email: email.trim().toLowerCase() });
+        await requestOTP({ email: email.trim().toLowerCase(), purpose: "login" });
+        lockedEmail.current = email.trim().toLowerCase();
+        setStep("otp");
+        setInfo("A 6-digit code has been sent to your email.");
+      } catch (signUpErr: any) {
+        await recordFailure({ email: email.trim().toLowerCase() }).catch(() => {});
+        const msg =
+          signUpErr?.data?.toString?.() ??
+          signUpErr?.message ??
+          signInErr?.message ??
+          "Unknown error";
+        setError(
+          \`Couldn't sign in or create the account. Server said: \${msg}. If you forgot the password, use 'Reset & set new password' below.\`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -130,11 +123,10 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
         // Force a re-render of the auth gate by doing a soft navigation
         window.location.reload();
       } else {
-        setError(result.error ?? "Incorrect code — please try again.");
+        setError(result.error ?? "Invalid code.");
       }
     } catch (err: any) {
-      const msg = (err as any)?.data?.toString?.() ?? (err as any)?.message ?? "Verification failed";
-      setError(msg);
+      setError(err?.message ?? "Verification failed.");
     } finally {
       setLoading(false);
     }
@@ -146,10 +138,9 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     setLoading(true);
     try {
       await requestOTP({ email: lockedEmail.current, purpose: "login" });
-      setInfo(`New code sent to ${lockedEmail.current} — check your inbox.`);
+      setInfo("New code sent! Check your email.");
     } catch (err: any) {
-      const msg = (err as any)?.data?.toString?.() ?? (err as any)?.message ?? "Could not send code";
-      setError(`Resend failed: ${msg}`);
+      setError(err?.message ?? "Failed to resend code.");
     } finally {
       setLoading(false);
     }
@@ -181,13 +172,13 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
       try { await signOut(); } catch {}
       const result = await purgeEmail({ email: email.trim().toLowerCase() });
       setInfo(
-        `Cleared ${result.removed.authAccounts} authAccount(s), ${result.removed.users} user(s), ${result.removed.admins} admin row(s). Creating fresh account…`
+        \`Cleared \${result.removed.authAccounts} authAccount(s), \${result.removed.users} user(s), \${result.removed.admins} admin row(s). Creating fresh account…\`
       );
       await new Promise((r) => setTimeout(r, 400));
       await trySignUp();
     } catch (err: any) {
       const msg = err?.data?.toString?.() ?? err?.message ?? "Reset failed. Try again.";
-      setError(`Reset failed: ${msg}`);
+      setError(\`Reset failed: \${msg}\`);
     } finally {
       setLoading(false);
     }
@@ -382,7 +373,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
                       autoFocus
                       required
                       value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\\D/g, "").slice(0, 6))}
                       placeholder="000000"
                       className="w-full text-center text-3xl font-bold tracking-[0.4em] py-3.5 rounded-xl bg-white/80 border border-white/70 outline-none focus:ring-2 ring-natural-accent/25 placeholder:tracking-normal placeholder:text-stone-300 placeholder:text-base placeholder:font-normal"
                     />
@@ -411,7 +402,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
                       disabled={loading}
                       className="w-full text-xs text-stone-500 hover:text-stone-900 transition inline-flex items-center justify-center gap-1.5"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                      <RefreshCw className={\`w-3.5 h-3.5 \${loading ? "animate-spin" : ""}\`} />
                       Resend code
                     </button>
                     <button
@@ -435,3 +426,7 @@ export function AdminLogin({ panelLabel = "Merchant" }: { panelLabel?: string })
     </div>
   );
 }
+`;
+
+fs.writeFileSync(file, content, "utf8");
+console.log("✅ AdminLogin.tsx rewritten with two-phase OTP login");

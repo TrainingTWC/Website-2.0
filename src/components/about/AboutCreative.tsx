@@ -192,8 +192,9 @@ export function SpacedTitle({
 }) {
   // One char per span — wide letter-spacing plus tiny gap glyphs.
   const chars = children.split("");
+  const SafeTag = Tag as React.ComponentType<{ className?: string; "aria-label"?: string; children?: React.ReactNode }>;
   return (
-    <Tag
+    <SafeTag
       className={`inline-flex flex-wrap items-center justify-center gap-x-[0.18em] gap-y-2 font-serif font-bold uppercase ${className}`}
       aria-label={children}
     >
@@ -202,7 +203,7 @@ export function SpacedTitle({
           {c === " " ? "\u00A0" : c}
         </span>
       ))}
-    </Tag>
+    </SafeTag>
   );
 }
 

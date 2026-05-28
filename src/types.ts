@@ -1,8 +1,8 @@
-export type ProductType = "beans" | "bags" | "merch";
+﻿export type ProductType = "beans" | "bags" | "merch";
 export type RoastLevel = "light" | "medium" | "medium-dark" | "dark";
 export type StockStatus = "in-stock" | "out-of-stock" | "low-stock";
 
-// ── Two-tier taxonomy ────────────────────────────────────────────────────
+// â”€â”€ Two-tier taxonomy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export type MainCategory = "coffee" | "merch";
 
 export type CoffeeSubCategory = "beans" | "ecb" | "brewing-tools";
@@ -58,7 +58,7 @@ export interface Product {
   description: string;
   type: ProductType;
   category: string;
-  /** New: high-level taxonomy. Optional during the rollout — derive via `resolveTaxonomy`. */
+  /** New: high-level taxonomy. Optional during the rollout â€” derive via `resolveTaxonomy`. */
   mainCategory?: MainCategory;
   /** New: sub-category within the main bucket. Optional during the rollout. */
   subCategory?: SubCategory;
@@ -76,6 +76,7 @@ export interface Product {
   lowStockThreshold?: number;
   rating?: number;
   reviewCount?: number;
+  maxOrderQtyOverride?: number;
 }
 
 export interface Session {
@@ -99,3 +100,4 @@ export interface RecommendationResult {
   crossSellProductIds: string[];
   explanation: string;
 }
+

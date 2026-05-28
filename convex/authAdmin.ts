@@ -40,11 +40,17 @@ export const purgeEmail = mutation({
       admins: 0,
     };
 
-    // 1. authAccounts (provider rows keyed by providerAccountId = email)
-    const accounts = await ctx.db.query("authAccounts").collect();
+    // 1. authAccounts — indexed lookup (M-06: avoids full table scan)
+    // @convex-dev/auth provides a compound index "providerAndAccountId" on
+    // ["provider", "providerAccountId"] for O(1) lookups.
+    const accounts = await (ctx.db as any)
+      .query("authAccounts")
+      .withIndex("providerAndAccountId", (q: any) =>
+        q.eq("provider", "password").eq("providerAccountId", target)
+      )
+      .collect();
     for (const acc of accounts) {
-      const id = ((acc as any).providerAccountId ?? "").toString().toLowerCase();
-      if (id === target) {
+      {
         // Kill child rows first (sessions/refresh/verification)
         // We don't know userId for sure; gather it for cascade below.
         const userId = (acc as any).userId;
@@ -79,22 +85,24 @@ export const purgeEmail = mutation({
       }
     }
 
-    // 2. users table (matching email)
-    const users = await ctx.db.query("users").collect();
+    // 2. users table — filter scan (M-06: avoids pulling all rows into memory)
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.eq((q as any).field("email"), target))
+      .collect();
     for (const u of users) {
-      if (((u as any).email ?? "").toString().toLowerCase() === target) {
-        await ctx.db.delete(u._id);
-        removed.users++;
-      }
+      await ctx.db.delete(u._id);
+      removed.users++;
     }
 
-    // 3. admins table (matching email)
-    const adminRows = await ctx.db.query("admins").collect();
+    // 3. admins table — indexed by email (M-06: replaces full table scan)
+    const adminRows = await ctx.db
+      .query("admins")
+      .withIndex("by_email", (q) => q.eq("email", target))
+      .collect();
     for (const a of adminRows) {
-      if ((a.email ?? "").toLowerCase() === target) {
-        await ctx.db.delete(a._id);
-        removed.admins++;
-      }
+      await ctx.db.delete(a._id);
+      removed.admins++;
     }
 
     return { ok: true, email: target, removed };

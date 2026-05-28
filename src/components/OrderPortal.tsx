@@ -39,9 +39,9 @@ function stepIndex(status: string) {
   return STEP_ORDER.indexOf(status);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Lookup screen — two tabs: Order ID | Email / Phone
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Lookup screen Ã¢â‚¬â€ two tabs: Order ID | Email / Phone
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 type ContactOrder = NonNullable<ReturnType<typeof useQuery<typeof api.orders.getOrdersByContact>>>[-1];
 
 function LookupScreen({
@@ -86,7 +86,7 @@ function LookupScreen({
     e.preventDefault();
     const trimmed = orderIdValue.trim().toUpperCase();
     if (!ORDER_ID_RE.test(trimmed)) {
-      setOrderIdError("Enter a valid order ID — format: TWC-XXXXXXXX");
+      setOrderIdError("Enter a valid order ID Ã¢â‚¬â€ format: TWC-XXXXXXXX");
       return;
     }
     setOrderIdError(null);
@@ -139,7 +139,7 @@ function LookupScreen({
         </div>
 
         <div className="px-8 py-6">
-          {/* ── Tab: Order ID ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Tab: Order ID Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {tab === "orderId" && (
             <form onSubmit={handleOrderIdSubmit} className="space-y-4">
               <div>
@@ -167,7 +167,7 @@ function LookupScreen({
             </form>
           )}
 
-          {/* ── Tab: Email / Phone ── */}
+          {/* Ã¢â€â‚¬Ã¢â€â‚¬ Tab: Email / Phone Ã¢â€â‚¬Ã¢â€â‚¬ */}
           {tab === "contact" && (
             <div className="space-y-4">
               <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -215,7 +215,7 @@ function LookupScreen({
                 </div>
               )}
 
-              {/* Results found → spinner stays until useEffect navigates away */}
+              {/* Results found Ã¢â€ â€™ spinner stays until useEffect navigates away */}
               {contactSubmitted && ordersByContact && ordersByContact.length > 0 && (
                 <div className="flex items-center justify-center py-6">
                   <div className="w-6 h-6 border-2 border-natural-accent border-t-transparent rounded-full animate-spin" />
@@ -237,9 +237,9 @@ function LookupScreen({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// My Orders — full order management dashboard (after email/phone login)
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// My Orders Ã¢â‚¬â€ full order management dashboard (after email/phone login)
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function MyOrdersScreen({
   orders,
   contact,
@@ -328,7 +328,7 @@ function MyOrdersScreen({
                 {order.items.length} item{order.items.length !== 1 ? "s" : ""}
               </p>
               <p className="ml-auto text-natural-text font-semibold text-sm">
-                ₹{order.total.toLocaleString("en-IN")}
+                Ã¢â€šÂ¹{order.total.toLocaleString("en-IN")}
               </p>
             </div>
           </motion.button>
@@ -348,9 +348,9 @@ function MyOrdersScreen({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // Support chat panel
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 interface ChatMessage { role: "customer" | "system"; text: string }
 
 const SUGGESTED_CHIPS = [
@@ -364,13 +364,13 @@ function SupportChat({
   orderId, status, itemCount, total, customerName, city, onClose,
 }: {
   orderId: string; status: string; itemCount: number; total: number;
-  customerName: string; city: string; onClose: () => void;
+  customerName?: string; city?: string; onClose: () => void;
 }) {
   const answerQuery = useAction(api.support.answerSupportQuery);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "system",
-      text: `Hi ${customerName.split(" ")[0]}! 👋 I'm here to help with your order ${orderId}. What can I assist you with?`,
+      text: `Hi ${customerName.split(" ")[0]}! Ã°Å¸â€˜â€¹ I'm here to help with your order ${orderId}. What can I assist you with?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -436,9 +436,9 @@ function SupportChat({
         {typing && (
           <div className="flex justify-start">
             <div className="bg-natural-bg rounded-2xl rounded-bl-sm px-4 py-2 text-natural-muted text-sm flex gap-1">
-              <span className="animate-bounce [animation-delay:0ms]">·</span>
-              <span className="animate-bounce [animation-delay:100ms]">·</span>
-              <span className="animate-bounce [animation-delay:200ms]">·</span>
+              <span className="animate-bounce [animation-delay:0ms]">Ã‚Â·</span>
+              <span className="animate-bounce [animation-delay:100ms]">Ã‚Â·</span>
+              <span className="animate-bounce [animation-delay:200ms]">Ã‚Â·</span>
             </div>
           </div>
         )}
@@ -467,7 +467,7 @@ function SupportChat({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question…"
+          placeholder="Ask a questionÃ¢â‚¬Â¦"
           className="flex-1 bg-natural-bg rounded-full px-4 py-2 text-sm text-natural-text placeholder:text-natural-muted focus:outline-none focus:ring-2 focus:ring-natural-accent/30"
           disabled={typing}
         />
@@ -483,9 +483,9 @@ function SupportChat({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // Order detail screen
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void }) {
   const order = useQuery(api.orders.getOrder, { orderId });
   const cancelOrder = useMutation(api.orders.cancelOrder);
@@ -621,26 +621,27 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
                   <p className="text-natural-text text-sm font-medium truncate">{item.name}</p>
                   <p className="text-natural-text/55 text-xs mt-0.5">Qty: {item.qty}</p>
                 </div>
-                <p className="text-natural-text text-sm font-semibold">₹{(item.price * item.qty).toLocaleString("en-IN")}</p>
+                <p className="text-natural-text text-sm font-semibold">Ã¢â€šÂ¹{(item.price * item.qty).toLocaleString("en-IN")}</p>
               </div>
             ))}
           </div>
           <div className="border-t border-natural-border mt-4 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-natural-text/60">Subtotal</span>
-              <span className="text-natural-text">₹{order.subtotal.toLocaleString("en-IN")}</span>
+              <span className="text-natural-text">Ã¢â€šÂ¹{order.subtotal.toLocaleString("en-IN")}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-natural-text/60">Shipping</span>
-              <span className="text-natural-text">{order.shipping === 0 ? "Free" : `₹${order.shipping}`}</span>
+              <span className="text-natural-text">{order.shipping === 0 ? "Free" : `Ã¢â€šÂ¹${order.shipping}`}</span>
             </div>
             <div className="flex justify-between font-bold text-sm pt-2 border-t border-natural-border">
               <span className="text-natural-text">Total</span>
-              <span className="text-natural-text">₹{order.total.toLocaleString("en-IN")}</span>
+              <span className="text-natural-text">Ã¢â€šÂ¹{order.total.toLocaleString("en-IN")}</span>
             </div>
           </div>
         </div>
 
+        {"customer" in order && (<>
         {/* Delivery address */}
         <div className="bg-natural-paper rounded-2xl border border-natural-border p-5">
             <h2 className="font-semibold text-natural-text mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
@@ -652,25 +653,28 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
             <p className="text-natural-text/75 text-sm">{order.customer.address.line2}</p>
           )}
           <p className="text-natural-text/75 text-sm">
-            {order.customer.address.city}, {order.customer.address.state} — {order.customer.address.pincode}
+            {order.customer.address.city}, {order.customer.address.state} Ã¢â‚¬â€ {order.customer.address.pincode}
           </p>
           {order.customer.phone && (
             <p className="text-natural-text/55 text-xs mt-2">{order.customer.phone}</p>
           )}
         </div>
 
+        </>)}
+        {"paymentMethod" in order && (<>
         {/* Payment */}
         <div className="bg-natural-paper rounded-2xl border border-natural-border p-5 flex items-center justify-between">
           <span className="text-sm text-natural-text/60">Payment</span>
           {order.razorpayPaymentId ? (
-            <span className="text-sm font-semibold text-green-600">Paid ✓</span>
+            <span className="text-sm font-semibold text-green-600">Paid Ã¢Å“â€œ</span>
           ) : (
             <span className="text-sm font-medium text-natural-text">
-              {order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod ?? "—"}
+              {order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod ?? "Ã¢â‚¬â€"}
             </span>
           )}
         </div>
 
+        </>)}
         {/* Cancel */}
         {order.status === "pending" && (
           <div className="bg-natural-paper rounded-2xl border border-natural-border p-5">
@@ -691,7 +695,7 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
                     disabled={cancelling}
                     className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600 disabled:opacity-60"
                   >
-                    {cancelling ? "Cancelling…" : "Yes, cancel"}
+                    {cancelling ? "CancellingÃ¢â‚¬Â¦" : "Yes, cancel"}
                   </button>
                   <button
                     onClick={() => setShowConfirm(false)}
@@ -730,8 +734,8 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
             status={order.status}
             itemCount={order.items.reduce((s, i) => s + i.qty, 0)}
             total={order.total}
-            customerName={order.customer.name}
-            city={order.customer.address.city}
+            customerName={"customer" in order ? order.customer.name : undefined}
+            city={"customer" in order ? order.customer.address.city : undefined}
             onClose={() => setChatOpen(false)}
           />
         )}
@@ -740,9 +744,9 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Public export — orchestrates lookup ↔ my-orders ↔ detail navigation
-// ──────────────────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Public export Ã¢â‚¬â€ orchestrates lookup Ã¢â€ â€ my-orders Ã¢â€ â€ detail navigation
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 export function OrderPortal({ initialOrderId }: OrderPortalProps) {
   type View = "lookup" | "my-orders" | "order-detail";
   const [view, setView] = useState<View>(initialOrderId ? "order-detail" : "lookup");

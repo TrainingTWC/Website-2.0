@@ -188,7 +188,14 @@ export const bootstrap = mutation({
         });
         admin = await ctx.db.get(invite._id);
       } else if (!invite) {
-        // 2. No invite and no existing admin row at all → first user wins.
+        // 2. No invite — seed the first superadmin only if the SUPERADMIN_EMAIL
+        // env var is set and matches the current user's email (BOOTSTRAP-01).
+        // Without this check any account registered after a DB wipe becomes
+        // superadmin, turning a reset into a privilege-escalation vector.
+        const allowedEmail = (process.env.SUPERADMIN_EMAIL ?? "").toLowerCase().trim();
+        if (!allowedEmail || email !== allowedEmail) {
+          return { ok: false, reason: "not-invited" as const };
+        }
         const anyAdmin = await ctx.db.query("admins").first();
         if (!anyAdmin) {
           const id = await ctx.db.insert("admins", {

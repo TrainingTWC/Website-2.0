@@ -70,13 +70,8 @@ export interface CoffeeSchool {
 export interface OrientationModule {
   eyebrow: string;
   intro: string;
-  title: string;
-  description: string;
-  durationLabel: string;
-  /** Full URL to the training content. Empty string = use local /scorm/player.html */
   launchUrl: string;
 }
-
 export interface CareerStat {
   value: string;
   label: string;
@@ -254,10 +249,7 @@ const DEFAULT_COFFEE_SCHOOL: CoffeeSchool = {
 const DEFAULT_ORIENTATION: OrientationModule = {
   eyebrow: "Before you apply",
   intro: "We made a 20-min orientation anyone can take — no account, no email, no catch. Curious? Take it. Ready to apply? Take it first.",
-  title: "Company Orientation",
-  description: "Our sourcing philosophy, cafe standards, feedback culture, training programme, and what a genuinely good cup costs to make.",
-  durationLabel: "~20 min",
-  launchUrl: "",
+  launchUrl: "https://trainingtwc.github.io/Orientation/",
 };
 
 const DEFAULT_CAREERS_MARQUEE: string[] = [

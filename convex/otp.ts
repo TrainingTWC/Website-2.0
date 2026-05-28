@@ -138,10 +138,16 @@ export const recordPasswordFailure = mutation({
       .query("adminLoginAttempts")
       .withIndex("by_email", (q) => q.eq("email", normalEmail))
       .first();
-    const recentFails = [
-      ...((doc?.failedPassAt ?? []).filter((t) => now - t < window)),
-      now,
-    ];
+    const existingFails = (doc?.failedPassAt ?? []).filter((t) => now - t < window);
+    // SECURITY (C-02): Throttle — enforce a minimum 10-second gap between
+    // recorded failures per email. This prevents unauthenticated callers from
+    // rapid-firing the endpoint to trigger a lockout in under a second.
+    // Legitimate brute-force attempts (human-typed) are always > 10 s apart.
+    const lastFail = existingFails[existingFails.length - 1];
+    if (lastFail !== undefined && now - lastFail < 10_000) {
+      return; // Too soon — ignore this recording silently
+    }
+    const recentFails = [...existingFails, now];
     const lockedUntil =
       recentFails.length >= MAX_PASSWORD_FAILS ? now + LOCKOUT_DURATION_MS : doc?.lockedUntil;
     if (doc) {
@@ -207,7 +213,10 @@ export const requestOTP = action({
     }
 
     // Generate, hash, and store OTP
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    // SECURITY (H-02): Use CSPRNG instead of Math.random() for OTP codes.
+    const otpBuf = new Uint32Array(1);
+    crypto.getRandomValues(otpBuf);
+    const code = String(100000 + (otpBuf[0] % 900000));
     const codeHash = await sha256hex(code);
     const expiresAt = now + OTP_EXPIRY_MS;
 

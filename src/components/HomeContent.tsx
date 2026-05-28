@@ -1499,7 +1499,9 @@ export default function HomeContent() {
     const start = Date.now();
     const sessionId = (() => {
       let id = sessionStorage.getItem("brewmatch:sid");
-      if (!id) { id = Math.random().toString(36).slice(2); sessionStorage.setItem("brewmatch:sid", id); }
+      // SECURITY (M-02): Use CSPRNG UUID so session IDs can't be guessed/
+      // predicted to bypass the AI rate limiter.
+      if (!id) { id = crypto.randomUUID(); sessionStorage.setItem("brewmatch:sid", id); }
       return id;
     })();
 

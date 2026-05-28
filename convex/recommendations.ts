@@ -42,7 +42,10 @@ function safeParseJSON(text: string): unknown {
 
 export const getRecommendation = action({
   args: {
-    answers: v.any(),
+    // SECURITY (M-03): Typed record prevents passing arbitrary objects.
+    // Combined with server-side sanitization below, this closes the prompt-
+    // injection vector where malicious answers could hijack the Mistral prompt.
+    answers: v.record(v.string(), v.string()),
     products: v.array(
       v.object({
         _id: v.string(),
@@ -57,8 +60,10 @@ export const getRecommendation = action({
         category: v.string(),
       })
     ),
-    // Optional: passed by the client to enable per-session rate limiting.
-    sessionId: v.optional(v.string()),
+    // Required: used for per-session rate limiting. Clients must supply a
+    // stable session ID (e.g. crypto.randomUUID() stored in sessionStorage).
+    // SECURITY (M-03 / M-02): sessionId is mandatory so rate limiting always fires.
+    sessionId: v.string(),
   },
   handler: async (ctx, args): Promise<{ primaryProductIds: string[]; crossSellProductIds: string[]; explanation: string }> => {
     const apiKey = process.env.MISTRAL_API_KEY;
@@ -84,7 +89,7 @@ export const getRecommendation = action({
     // in the Convex dashboard). Allows 5 unique AI calls per sessionId per 15 min.
     // Fallback: Convex-native counter stored in aiCache keyed by session+window.
     // Both layers are active; the Convex fallback fires whenever Redis is unavailable.
-    if (args.sessionId) {
+    {
       const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
       const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
       let blockedByRedis = false;
@@ -164,8 +169,20 @@ export const getRecommendation = action({
       return resolved;
     };
 
-    const answersSnippet = Object.entries(args.answers as Record<string, string>)
-      .map(([k, v]) => `${k}: ${v}`)
+    // SECURITY (M-03): Sanitize answers to prevent prompt injection.
+    // Cap key/value lengths and strip control characters + markdown/HTML sequences
+    // that could escape the CUSTOMER ANSWERS block in the Mistral prompt.
+    const MAX_ANSWER_KEYS = 20;
+    const MAX_KEY_LEN = 60;
+    const MAX_VAL_LEN = 200;
+    const STRIP_CTRL = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g;
+    const answersSnippet = Object.entries(args.answers)
+      .slice(0, MAX_ANSWER_KEYS)
+      .map(([k, val]) => {
+        const safeKey = k.slice(0, MAX_KEY_LEN).replace(STRIP_CTRL, "").replace(/[<>]/g, "");
+        const safeVal = val.slice(0, MAX_VAL_LEN).replace(STRIP_CTRL, "").replace(/[<>]/g, "");
+        return `${safeKey}: ${safeVal}`;
+      })
       .join("\n");
 
     const prompt = `

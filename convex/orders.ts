@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAdmin, getCallerAdmin } from "./authHelpers";
+import { computeEffectiveMOQ, applyCustomerMultiplier } from "./inventory";
 
 // Revenue-counting statuses
 const REVENUE_STATUSES = new Set(["confirmed", "shipped", "delivered"]);
@@ -64,15 +65,18 @@ async function upsertOrderSummary(
 }
 
 function randomAlphaNum(len: number): string {
+  // SECURITY (H-02): Use CSPRNG instead of Math.random() for order IDs.
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let out = "";
+  const buf = new Uint32Array(len);
+  crypto.getRandomValues(buf);
   for (let i = 0; i < len; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
+    out += chars[buf[i] % chars.length];
   }
   return out;
 }
 
-// ── submitOrder ────────────────────────────────────────────────────────────
+// ─── submitOrder ─────────────────────────────────────────────────────────────
 export const submitOrder = mutation({
   args: {
     customer: v.object({
@@ -101,22 +105,93 @@ export const submitOrder = mutation({
     discountCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // SECURITY (H-05): Rate-limit order submissions per phone number to
+    // prevent bulk order spam. Max 5 orders per phone per hour.
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const recentByPhone = await ctx.db
+      .query("orders")
+      .withIndex("by_customerPhone", (q) => q.eq("customerPhone", args.customer.phone))
+      .order("desc")
+      .take(10);
+    const recentCount = recentByPhone.filter((o) => o._creationTime > oneHourAgo).length;
+    if (recentCount >= 5) {
+      throw new ConvexError("Too many orders placed recently. Please wait before placing another order.");
+    }
+
     const orderId = `TWC-${randomAlphaNum(8)}`;
 
-    // ── Server-side price + qty verification ─────────────────────────────
-    // Re-fetch every product price from the DB. Reject invalid quantities.
-    // Build serverItems using DB prices so the stored receipt is authoritative.
+    // ── Server-side price + inventory + MOQ verification ─────────────────
+    // Re-fetches every product from DB: validates stock, enforces dynamic MOQ,
+    // and builds serverItems with authoritative prices.
     let serverSubtotal = 0;
     const serverItems = [] as typeof args.items;
     for (const item of args.items) {
-      if (item.qty < 1 || item.qty > 100) {
+      if (item.qty < 1) {
         throw new ConvexError("Invalid item quantity.");
       }
+
       const product = await ctx.db.get(item.productId as Id<"products">);
       if (!product) throw new ConvexError(`Product not found: ${item.productId}`);
+
+      // ── Inventory & MOQ checks (only when stockQty is tracked) ──────────
+      if (product.stockQty != null) {
+        if (product.stockStatus === "out-of-stock" || product.stockQty <= 0) {
+          throw new ConvexError(`${product.name} is out of stock.`);
+        }
+        if (item.qty > product.stockQty) {
+          const u = product.stockQty === 1 ? "unit" : "units";
+          throw new ConvexError(
+            `Only ${product.stockQty} ${u} available for ${product.name}.`
+          );
+        }
+
+        // Velocity cache lookup (avgDailyDemand over the last 7 days)
+        const velocityRow = await ctx.db
+          .query("productVelocityCache")
+          .withIndex("by_productId", (q) => q.eq("productId", product._id))
+          .first();
+        const dailyAvg = velocityRow?.avgDailyDemand ?? 0;
+
+        // Customer-specific recent qty for this product (last 30 days)
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const recentOrders = await ctx.db
+          .query("orders")
+          .withIndex("by_customerPhone", (q) =>
+            q.eq("customerPhone", args.customer.phone)
+          )
+          .order("desc")
+          .take(50);
+        let recentCustomerQty = 0;
+        for (const ord of recentOrders) {
+          if (ord._creationTime < thirtyDaysAgo) break;
+          const match = ord.items.find((i) => i.productId === item.productId);
+          if (match) recentCustomerQty += match.qty;
+        }
+
+        const baseMax = computeEffectiveMOQ(
+          product.stockQty,
+          product.stockStatus,
+          product.maxOrderQtyOverride,
+          dailyAvg
+        );
+        const effectiveMax = applyCustomerMultiplier(
+          baseMax,
+          product.stockQty,
+          recentCustomerQty
+        );
+
+        if (item.qty > effectiveMax) {
+          const u = effectiveMax === 1 ? "unit" : "units";
+          throw new ConvexError(
+            `Maximum order quantity for ${product.name} is ${effectiveMax} ${u}.`
+          );
+        }
+      }
+
       serverSubtotal += product.price * item.qty;
       serverItems.push({ ...item, price: product.price }); // override client price
     }
+
     if (Math.abs(serverSubtotal - args.subtotal) > 1) {
       throw new ConvexError("Order total mismatch. Please refresh and try again.");
     }
@@ -140,8 +215,6 @@ export const submitOrder = mutation({
         (discount.maxUses === undefined || discount.usageCount < discount.maxUses);
 
       // Enforce firstOrderOnly server-side (DISC-FIRST-ORDER-01).
-      // The client-facing validateDiscount query does this check too, but
-      // submitOrder is the authoritative enforcement point.
       let firstOrderOk = true;
       if (isValid && discount.firstOrderOnly) {
         const priorOrder = await ctx.db
@@ -185,6 +258,26 @@ export const submitOrder = mutation({
       customerEmail: args.customer.email,
     });
     await upsertOrderSummary(ctx, null, "pending", serverTotal);
+
+    // ── Decrement stockQty for each item (only when tracking is enabled) ──
+    // Re-fetch products here to get the latest committed values after the
+    // order insert. Math.max(0, ...) guards against negative stock from edge
+    // cases where admin manually decremented stock between our check and now.
+    for (const item of serverItems) {
+      const product = await ctx.db.get(item.productId as Id<"products">);
+      if (product?.stockQty != null) {
+        const newQty = Math.max(0, product.stockQty - item.qty);
+        const threshold = product.lowStockThreshold ?? 10;
+        const newStatus: "in-stock" | "low-stock" | "out-of-stock" =
+          newQty === 0
+            ? "out-of-stock"
+            : newQty <= threshold
+              ? "low-stock"
+              : "in-stock";
+        await ctx.db.patch(product._id, { stockQty: newQty, stockStatus: newStatus });
+      }
+    }
+
     return { orderId };
   },
 });
@@ -293,7 +386,11 @@ export const addOrderNote = mutation({
     role: v.union(v.literal("customer"), v.literal("system")),
   },
   handler: async (ctx, args) => {
-    // Only admins may post system-role notes
+    // SECURITY (H-01): ALL note submissions require authentication to prevent
+    // anonymous callers from appending notes to any order by orderId.
+    const noteUserId = await getAuthUserId(ctx);
+    if (!noteUserId) throw new ConvexError("Unauthorized: must be signed in to add notes.");
+    // System-role notes additionally require admin privileges.
     if (args.role === "system") {
       await requireAdmin(ctx);
     }

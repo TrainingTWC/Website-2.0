@@ -67,6 +67,14 @@ export const claimDiscount = mutation({
     customerEmail: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // SECURITY (H-04): Require a valid phone or email to prevent fully anonymous
+    // automated discount code enumeration and exhaustion attacks.
+    const hasPhone = typeof args.customerPhone === "string" && args.customerPhone.trim().length >= 7;
+    const hasEmail = typeof args.customerEmail === "string" && args.customerEmail.includes("@");
+    if (!hasPhone && !hasEmail) {
+      throw new ConvexError("A valid phone number or email address is required to claim this offer.");
+    }
+
     const discount = await ctx.db
       .query("discounts")
       .withIndex("by_code", (q) => q.eq("code", args.code))

@@ -23,8 +23,11 @@ auth.addHttpRoutes(http);
 // The full key is shown exactly once at creation time and never stored.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// SECURITY (H-03): Restrict CORS to the configured allowed origin.
+// Set EXPORT_ALLOWED_ORIGIN in the Convex dashboard environment variables
+// to your frontend domain (e.g. "https://yourapp.pages.dev").
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": process.env.EXPORT_ALLOWED_ORIGIN ?? "https://watchful-cormorant-351.convex.site",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Max-Age": "86400",

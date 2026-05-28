@@ -98,22 +98,57 @@ export const record = mutation({
     geoSource: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // SECURITY (M-01): Sanitise and cap all client-supplied fields to prevent
+    // analytics pollution and unbounded string storage.
+    const safePath      = args.path.slice(0, 500);
+    const safeSession   = args.sessionId.slice(0, 100);
+    const safeReferrer  = args.referrer?.slice(0, 500);
+    const safeCountry   = args.country?.slice(0, 100);
+    const safeCountryCode = args.countryCode?.slice(0, 10);
+    const safeRegion    = args.region?.slice(0, 100);
+    const safeCity      = args.city?.slice(0, 100);
+    const safeLocality  = args.locality?.slice(0, 100);
+    const safePostcode  = args.postcode?.slice(0, 20);
+    const safeGeoSource = args.geoSource?.slice(0, 10);
+    // Clamp lat/lon to valid geographic ranges.
+    const safeLat = args.lat !== undefined ? Math.max(-90,  Math.min(90,  args.lat)) : undefined;
+    const safeLon = args.lon !== undefined ? Math.max(-180, Math.min(180, args.lon)) : undefined;
+
+    // Rate-limit: at most 1 page-view insert per session per 3 seconds.
+    const recentView = await ctx.db
+      .query("pageViews")
+      .withIndex("by_timestamp", (q) => q.gte("timestamp", Date.now() - 3000))
+      .filter((q) => q.eq(q.field("sessionId"), safeSession))
+      .first();
+    if (recentView) return null; // silently ignore — too soon
+
     const id = await ctx.db.insert("pageViews", {
-      path: args.path,
-      sessionId: args.sessionId,
-      referrer: args.referrer,
-      country: args.country,
-      countryCode: args.countryCode,
-      region: args.region,
-      city: args.city,
-      locality: args.locality,
-      postcode: args.postcode,
-      lat: args.lat,
-      lon: args.lon,
-      geoSource: args.geoSource,
+      path: safePath,
+      sessionId: safeSession,
+      referrer: safeReferrer,
+      country: safeCountry,
+      countryCode: safeCountryCode,
+      region: safeRegion,
+      city: safeCity,
+      locality: safeLocality,
+      postcode: safePostcode,
+      lat: safeLat,
+      lon: safeLon,
+      geoSource: safeGeoSource,
       timestamp: Date.now(),
     });
-    await incrementDailySummary(ctx, args);
+    await incrementDailySummary(ctx, {
+      sessionId: safeSession,
+      path: safePath,
+      lat: safeLat,
+      lon: safeLon,
+      geoSource: safeGeoSource,
+      country: safeCountry,
+      city: safeCity,
+      region: safeRegion,
+      locality: safeLocality,
+      countryCode: safeCountryCode,
+    });
     return id;
   },
 });

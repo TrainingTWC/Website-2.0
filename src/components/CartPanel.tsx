@@ -1,8 +1,9 @@
-import { motion, AnimatePresence } from "motion/react";
+﻿import { motion, AnimatePresence } from "motion/react";
 import { X, ShoppingCart, Minus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Product } from "../types";
 import { snapshotCart, track } from "../lib/analytics";
+import { useCart } from "../context/CartContext";
 
 export interface CartItem {
   productId: string;
@@ -34,12 +35,22 @@ export function CartPanel({
   clearDiscount,
   discountedSubtotal,
 }: CartPanelProps) {
+  const { getMOQ, cartWarnings } = useCart();
+
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
     .filter((c): c is { productId: string; qty: number; product: Product } => c.product != null);
 
   const subtotal = cartProducts.reduce((s, c) => s + c.product.price * c.qty, 0);
   const totalQty = cart.reduce((s, c) => s + c.qty, 0);
+
+  // Disable checkout when any item has a blocking stock/availability warning
+  const hasBlockingWarning = cartWarnings.some(
+    (w) =>
+      w.status === "out-of-stock" ||
+      w.status === "removed" ||
+      w.status === "insufficient-stock"
+  );
 
   // ── v8.0 funnel: snapshot cart on every change + emit cart_viewed when opened
   const snapKey = useRef<string>("");
@@ -129,57 +140,89 @@ export function CartPanel({
                   </button>
                 </div>
               ) : (
-                cartProducts.map(({ productId, qty, product: p }) => (
-                  <motion.div
-                    key={productId}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: 40 }}
-                    className="flex items-center gap-3 bg-natural-bg rounded-2xl p-3"
-                  >
-                    {p.imageUrl && (
-                      <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-natural-muted">
-                        <img
-                          src={p.imageUrl}
-                          alt={p.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-serif font-bold text-sm text-natural-text leading-snug line-clamp-2">
-                        {p.name}
-                      </p>
-                      <p className="text-natural-accent font-bold text-sm mt-0.5">
-                        ₹{(p.price * qty).toLocaleString("en-IN")}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() =>
-                          qty === 1 ? onRemove(productId) : onUpdateQty(productId, -1)
-                        }
-                        className="w-7 h-7 rounded-full bg-natural-paper border border-natural-border flex items-center justify-center hover:border-red-300 transition-colors"
-                      >
-                        {qty === 1 ? (
-                          <Trash2 className="w-3 h-3 text-red-400" />
-                        ) : (
-                          <Minus className="w-3 h-3 text-natural-text/60" />
+                cartProducts.map(({ productId, qty, product: p }) => {
+                  const maxQty = getMOQ(productId);
+                  const atMax = qty >= maxQty && maxQty > 0;
+                  const warning = cartWarnings.find((w) => w.productId === productId);
+                  const isOutOfStock =
+                    warning?.status === "out-of-stock" || p.stockStatus === "out-of-stock";
+
+                  return (
+                    <motion.div
+                      key={productId}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 40 }}
+                      className="flex items-center gap-3 bg-natural-bg rounded-2xl p-3"
+                    >
+                      {p.imageUrl && (
+                        <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-natural-muted">
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-serif font-bold text-sm text-natural-text leading-snug line-clamp-2">
+                            {p.name}
+                          </p>
+                          {isOutOfStock && (
+                            <span className="text-xs font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+                              Out of stock
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-natural-accent font-bold text-sm mt-0.5">
+                          ₹{(p.price * qty).toLocaleString("en-IN")}
+                        </p>
+                        {atMax && !isOutOfStock && (
+                          <p className="text-xs text-amber-600 mt-0.5">Max {maxQty} per order</p>
                         )}
-                      </button>
-                      <span className="w-7 text-center font-bold text-sm tabular-nums text-natural-text">
-                        {qty}
-                      </span>
-                      <button
-                        onClick={() => onUpdateQty(productId, 1)}
-                        className="w-7 h-7 rounded-full bg-natural-paper border border-natural-border flex items-center justify-center hover:border-natural-accent/50 transition-colors"
-                      >
-                        <Plus className="w-3 h-3 text-natural-text/60" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))
+                        {warning?.status === "insufficient-stock" &&
+                          warning.remainingQty != null && (
+                            <p className="text-xs text-amber-500 mt-0.5">
+                              Only {warning.remainingQty} left
+                            </p>
+                          )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() =>
+                            qty === 1 ? onRemove(productId) : onUpdateQty(productId, -1)
+                          }
+                          className="w-7 h-7 rounded-full bg-natural-paper border border-natural-border flex items-center justify-center hover:border-red-300 transition-colors"
+                        >
+                          {qty === 1 ? (
+                            <Trash2 className="w-3 h-3 text-red-400" />
+                          ) : (
+                            <Minus className="w-3 h-3 text-natural-text/60" />
+                          )}
+                        </button>
+                        <span className="w-7 text-center font-bold text-sm tabular-nums text-natural-text">
+                          {qty}
+                        </span>
+                        <button
+                          onClick={() => {
+                            if (!atMax && !isOutOfStock) onUpdateQty(productId, 1);
+                          }}
+                          disabled={atMax || isOutOfStock}
+                          aria-label="Increase quantity"
+                          className={`w-7 h-7 rounded-full bg-natural-paper border border-natural-border flex items-center justify-center transition-colors ${
+                            atMax || isOutOfStock
+                              ? "opacity-40 cursor-not-allowed"
+                              : "hover:border-natural-accent/50"
+                          }`}
+                        >
+                          <Plus className="w-3 h-3 text-natural-text/60" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })
               )}
             </div>
 
@@ -230,9 +273,24 @@ export function CartPanel({
                 <p className="text-natural-text/35 text-xs">
                   Taxes &amp; shipping calculated at checkout.
                 </p>
+                {hasBlockingWarning && (
+                  <p className="text-xs text-red-500 font-medium -mt-1">
+                    Some items are unavailable. Please remove them to continue.
+                  </p>
+                )}
                 <button
-                  onClick={() => { onClose(); onCheckout?.(); }}
-                  className="w-full bg-natural-text text-white py-4 rounded-full font-bold text-sm hover:bg-natural-accent transition-colors active:scale-[0.98]"
+                  onClick={() => {
+                    if (!hasBlockingWarning) {
+                      onClose();
+                      onCheckout?.();
+                    }
+                  }}
+                  disabled={hasBlockingWarning}
+                  className={`w-full bg-natural-text text-white py-4 rounded-full font-bold text-sm transition-colors active:scale-[0.98] ${
+                    hasBlockingWarning
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-natural-accent"
+                  }`}
                 >
                   Proceed to Checkout
                 </button>

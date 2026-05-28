@@ -6,7 +6,6 @@ import { AboutPageShell } from "@/src/components/about/AboutPageShell";
 import { TiltCard, RevealOnScroll } from "@/src/components/about/ParallaxPrimitives";
 import { CreativeHero, MarqueeStrip } from "@/src/components/about/AboutCreative";
 import { asset } from "@/src/lib/asset";
-import { ScormViewer } from "@/src/components/about/ScormViewer";
 import { Heart, Brain, Palmtree, BookOpen, Coffee, Globe, Sparkles, Shield, Star, Gift, Sun, Award, Briefcase, GraduationCap } from "lucide-react";
 import {
   useCareersHero,
@@ -399,13 +398,14 @@ export default function CareersPage() {
             </p>
           </RevealOnScroll>
           <RevealOnScroll>
-            <ScormViewer
-              launchFile="story.html"
-              launchUrl={orientation.launchUrl || undefined}
-              durationLabel={orientation.durationLabel}
-              title={orientation.title}
-              description={orientation.description}
-            />
+            <a
+              href={orientation.launchUrl || "https://trainingtwc.github.io/Orientation/"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-natural-text text-natural-bg px-8 py-4 rounded-full font-bold text-base hover:opacity-80 transition-opacity"
+            >
+              Start orientation →
+            </a>
           </RevealOnScroll>
         </div>
       </section>

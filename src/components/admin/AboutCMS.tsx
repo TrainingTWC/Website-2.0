@@ -782,43 +782,30 @@ function OrientationEditor({ onSave }: { onSave: () => void }) {
       <div className="flex items-baseline justify-between">
         <div>
           <h4 className="font-serif font-bold text-lg text-stone-800">Orientation / Training module</h4>
-          <p className="text-xs text-stone-500">The viewer card shown on the Careers page. Paste a hosted URL below to replace the built-in SCORM player.</p>
+          <p className="text-xs text-stone-500">The orientation button shown on the Careers page. Set the URL visitors are taken to.</p>
         </div>
         <span className="text-[11px] uppercase tracking-wider text-stone-400 font-bold">about.careers.orientation</span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className={LABEL}>Section eyebrow</label>
           <input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} className={INPUT} placeholder="Before you apply" />
         </div>
         <div>
-          <label className={LABEL}>Module title</label>
-          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={INPUT} placeholder="Company Orientation" />
+          <label className={LABEL}>Section intro text</label>
+          <textarea value={form.intro} onChange={(e) => setForm({ ...form, intro: e.target.value })} className={TEXTAREA} rows={2} />
         </div>
         <div>
-          <label className={LABEL}>Duration label</label>
-          <input value={form.durationLabel} onChange={(e) => setForm({ ...form, durationLabel: e.target.value })} className={INPUT} placeholder="~20 min" />
-        </div>
-        <div>
-          <label className={LABEL}>Launch URL</label>
+          <label className={LABEL}>Button link URL</label>
           <input
             value={form.launchUrl}
             onChange={(e) => setForm({ ...form, launchUrl: e.target.value })}
             className={INPUT}
-            placeholder="https://cdn.example.com/orientation/index.html (leave blank for local)"
+            placeholder="https://trainingtwc.github.io/Orientation/"
           />
           <p className="text-[11px] text-stone-400 mt-1">
-            Supports: Hosted SCORM, HTML, Articulate Storyline, Rise 360, or any hosted URL.
-            Leave blank to use the built-in /scorm/orientation/ package.
+            The URL opened when a visitor clicks "Start orientation" on the Careers page.
           </p>
-        </div>
-        <div className="md:col-span-2">
-          <label className={LABEL}>Section intro text</label>
-          <textarea value={form.intro} onChange={(e) => setForm({ ...form, intro: e.target.value })} className={TEXTAREA} rows={2} />
-        </div>
-        <div className="md:col-span-2">
-          <label className={LABEL}>Module description (shown in the viewer card)</label>
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={TEXTAREA} rows={2} />
         </div>
       </div>
       <SaveBar status={status} error={error} onSave={handleSave} onReset={reset} />

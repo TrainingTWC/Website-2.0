@@ -50,6 +50,7 @@ export default defineSchema({
     lowStockThreshold: v.optional(v.number()),
     rating: v.optional(v.number()),
     reviewCount: v.optional(v.number()),
+    maxOrderQtyOverride: v.optional(v.number()),  // admin hard cap — overrides dynamic MOQ
   })
     .index("by_type", ["type"])
     .index("by_stockStatus", ["stockStatus"]),
@@ -156,6 +157,15 @@ export default defineSchema({
     .index("by_orderId", ["orderId"])
     .index("by_customerPhone", ["customerPhone"])
     .index("by_customerEmail", ["customerEmail"]),
+
+  // ── Product demand velocity cache (refreshed every 15 min by cron) ─────────
+  productVelocityCache: defineTable({
+    productId: v.id("products"),
+    recentSoldQty: v.number(),    // total qty sold in the windowDays window
+    avgDailyDemand: v.number(),   // recentSoldQty / windowDays
+    windowDays: v.number(),       // always 7
+    computedAt: v.number(),       // Unix ms
+  }).index("by_productId", ["productId"]),
 
   // â”€â”€ Editorial posts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   posts: defineTable({

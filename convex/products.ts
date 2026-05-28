@@ -1,16 +1,17 @@
-import { query, mutation } from "./_generated/server";
+﻿import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAdmin } from "./authHelpers";
+import { computeEffectiveMOQ } from "./inventory";
 
 // Generate a short-lived upload URL for image uploads from the admin panel.
-// Admin-only — uploads are CMS-driven so anonymous callers must be blocked.
+// Admin-only â€” uploads are CMS-driven so anonymous callers must be blocked.
 export const generateUploadUrl = mutation(async (ctx) => {
   await requireAdmin(ctx);
   return await ctx.storage.generateUploadUrl();
 });
 
 // Resolve a storageId returned from an upload into a public CDN URL.
-// Admin-only — pairs with generateUploadUrl.
+// Admin-only â€” pairs with generateUploadUrl.
 export const getStorageUrl = mutation({
   args: { storageId: v.string() },
   handler: async (ctx, args) => {
@@ -167,6 +168,7 @@ export const updateStock = mutation({
     id: v.id("products"),
     stockQty: v.number(),
     lowStockThreshold: v.optional(v.number()),
+    maxOrderQtyOverride: v.optional(v.number()),  // null = clear the override
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
@@ -177,10 +179,49 @@ export const updateStock = mutation({
         : args.stockQty <= threshold
           ? ("low-stock" as const)
           : ("in-stock" as const);
-    await ctx.db.patch(args.id, {
-      stockQty: args.stockQty,
-      lowStockThreshold: threshold,
-      stockStatus,
-    });
+    const patch: Record<string, unknown> = { stockQty: args.stockQty, lowStockThreshold: threshold, stockStatus };
+    if (args.maxOrderQtyOverride !== undefined) {
+      patch.maxOrderQtyOverride = args.maxOrderQtyOverride ?? undefined;
+    }
+    await ctx.db.patch(args.id, patch);
+  },
+});
+
+// ─── getShopCatalogWithMOQ ────────────────────────────────────────────────────
+/**
+ * Enriched product catalog — each product includes its current effectiveMOQ
+ * so the shop UI can clamp quantity selectors before the customer hits checkout.
+ * Optionally filtered by product type. Drop-in replacement for `list`/`listByType`.
+ */
+export const getShopCatalogWithMOQ = query({
+  args: {
+    type: v.optional(
+      v.union(v.literal("beans"), v.literal("bags"), v.literal("merch"))
+    ),
+  },
+  handler: async (ctx, args) => {
+    const products = args.type
+      ? await ctx.db
+          .query("products")
+          .withIndex("by_type", (q) => q.eq("type", args.type!))
+          .collect()
+      : await ctx.db.query("products").collect();
+
+    return Promise.all(
+      products.map(async (p) => {
+        const velocityRow = await ctx.db
+          .query("productVelocityCache")
+          .withIndex("by_productId", (q) => q.eq("productId", p._id))
+          .first();
+        const dailyAvg = velocityRow?.avgDailyDemand ?? 0;
+        const effectiveMOQ = computeEffectiveMOQ(
+          p.stockQty,
+          p.stockStatus,
+          p.maxOrderQtyOverride,
+          dailyAvg
+        );
+        return { ...p, effectiveMOQ };
+      })
+    );
   },
 });
