@@ -801,7 +801,7 @@ function OrientationEditor({ onSave }: { onSave: () => void }) {
             value={form.launchUrl}
             onChange={(e) => setForm({ ...form, launchUrl: e.target.value })}
             className={INPUT}
-            placeholder="https://trainingtwc.github.io/Orientation/"
+            placeholder="https://twc-orientation.prismintelligence.in/"
           />
           <p className="text-[11px] text-stone-400 mt-1">
             The URL opened when a visitor clicks "Start orientation" on the Careers page.
@@ -1229,3 +1229,4 @@ function FactsEditor({ onSave }: { onSave: () => void }) {
 }
 
 export default AboutCMS;
+

@@ -44,6 +44,9 @@ const teams: TeamFilter[] = [
   "Supply Chain",
 ];
 
+const ORIENTATION_LINK = "https://twc-orientation.prismintelligence.in/";
+const LEGACY_ORIENTATION_LINK = "https://trainingtwc.github.io/Orientation/";
+
 
 
 const gridMoments = [
@@ -91,6 +94,10 @@ export default function CareersPage() {
   const applyLink = useApplyLink();
   const coffeeSchool = useCoffeeSchool();
   const orientation = useOrientationModule();
+  const savedOrientationLink = orientation.launchUrl?.trim();
+  const orientationLink = savedOrientationLink && savedOrientationLink !== LEGACY_ORIENTATION_LINK
+    ? savedOrientationLink
+    : ORIENTATION_LINK;
   const [filter, setFilter] = useState<TeamFilter>("All");
   const visibleRoles =
     filter === "All" ? roles : roles.filter((r) => r.team === filter);
@@ -399,7 +406,7 @@ export default function CareersPage() {
           </RevealOnScroll>
           <RevealOnScroll>
             <a
-              href={orientation.launchUrl || "https://trainingtwc.github.io/Orientation/"}
+              href={orientationLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 bg-natural-text text-natural-bg px-8 py-4 rounded-full font-bold text-base hover:opacity-80 transition-opacity"
@@ -436,3 +443,4 @@ export default function CareersPage() {
     </AboutPageShell>
   );
 }
+

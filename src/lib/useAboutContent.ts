@@ -249,7 +249,7 @@ const DEFAULT_COFFEE_SCHOOL: CoffeeSchool = {
 const DEFAULT_ORIENTATION: OrientationModule = {
   eyebrow: "Before you apply",
   intro: "We made a 20-min orientation anyone can take — no account, no email, no catch. Curious? Take it. Ready to apply? Take it first.",
-  launchUrl: "https://trainingtwc.github.io/Orientation/",
+  launchUrl: "https://twc-orientation.prismintelligence.in/",
 };
 
 const DEFAULT_CAREERS_MARQUEE: string[] = [
@@ -433,3 +433,4 @@ export const BENEFIT_ICON_OPTIONS = [
   "Briefcase",
   "GraduationCap",
 ] as const;
+
