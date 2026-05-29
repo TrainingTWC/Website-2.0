@@ -5,21 +5,26 @@ import { useGeoAddress } from "../lib/useGeoAddress";
 import { track, snapshotCart, markConverted, logError } from "../lib/analytics";
 import type { Product } from "../types";
 import type { CartItem } from "./CartPanel";
+import { useDiscount } from "../context/DiscountContext";
+import { DiscountPanel } from "./DiscountPanel";
 
 interface CheckoutPageProps {
   cart: CartItem[];
   products: Product[];
   onClose: () => void;
   onOrderCreated: (orderId: string) => void;
+  onShowToast?: (msg: string) => void;
+  // Kept for backward-compat; the component now reads discount from context directly
   activeDiscount?: { code: string; discountType: "percent" | "flat"; amount: number } | null;
   clearDiscount?: () => void;
   discountedSubtotal?: number;
-  onShowToast?: (msg: string) => void;
 }
 
 type PaymentMethod = "cod" | "upi" | "card";
 
-export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDiscount, clearDiscount, discountedSubtotal, onShowToast }: CheckoutPageProps) {
+export function CheckoutPage({ cart, products, onClose, onOrderCreated, onShowToast }: CheckoutPageProps) {
+  // ── Discount state comes from context ──────────────────────────────────────
+  const { activeDiscount, clearDiscount, computeDiscountedSubtotal } = useDiscount();
   const cartProducts = cart
     .map((c) => ({ ...c, product: products.find((p) => p._id === c.productId) }))
     .filter((c): c is { productId: string; qty: number; product: Product } => c.product != null);
@@ -28,8 +33,8 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
   const shipping = subtotal > 499 ? 0 : 49;
   const total = subtotal + shipping;
 
-  const effectiveSubtotal = activeDiscount && discountedSubtotal !== undefined
-    ? discountedSubtotal
+  const effectiveSubtotal = activeDiscount
+    ? computeDiscountedSubtotal(subtotal)
     : subtotal;
   const discountedTotal = effectiveSubtotal + shipping;
   const savings = subtotal - effectiveSubtotal;
@@ -158,7 +163,7 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
           onShowToast?.(
             "This offer is no longer available. Your order has been placed without the discount."
           );
-          clearDiscount?.();
+          clearDiscount();
           result = await doSubmit(false);
         } else {
           throw err; // re-throw non-discount errors
@@ -318,7 +323,10 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
 
           {/* Mobile CTA */}
           <div className="lg:hidden">
-            <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={discountedTotal} activeDiscount={activeDiscount} savings={savings} />
+            <DiscountPanel subtotal={subtotal} phone={form.phone} email={form.email} />
+            <div className="mt-3">
+              <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={discountedTotal} activeDiscount={activeDiscount} savings={savings} />
+            </div>
             <button
               type="submit"
               disabled={submitting}
@@ -333,6 +341,7 @@ export function CheckoutPage({ cart, products, onClose, onOrderCreated, activeDi
         {/* ── Right: Order Summary (desktop) ─── */}
         <div className="hidden lg:block sticky top-24 space-y-4">
           <OrderSummaryCard cartProducts={cartProducts} subtotal={subtotal} shipping={shipping} total={discountedTotal} activeDiscount={activeDiscount} savings={savings} />
+          <DiscountPanel subtotal={subtotal} phone={form.phone} email={form.email} />
           <button
             onClick={handleSubmit as unknown as React.MouseEventHandler}
             disabled={submitting}

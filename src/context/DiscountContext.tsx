@@ -14,6 +14,9 @@ export interface Discount {
   discountType: "percent" | "flat";
   amount: number;
   claimedAt?: string;
+  offerKind?: "coupon" | "cashback" | "auto" | "freeShipping";
+  description?: string;
+  maxDiscount?: number;   // savings cap for percent discounts
 }
 
 interface DiscountContextValue {
@@ -69,8 +72,12 @@ export function DiscountProvider({ children }: { children: ReactNode }) {
       if (activeDiscount.discountType === "flat") {
         return Math.max(0, subtotal - activeDiscount.amount);
       }
-      // percent
-      return Math.max(0, subtotal * (1 - activeDiscount.amount / 100));
+      // percent — respect optional maxDiscount cap
+      const rawDiscount = subtotal * (activeDiscount.amount / 100);
+      const cappedDiscount = activeDiscount.maxDiscount
+        ? Math.min(rawDiscount, activeDiscount.maxDiscount)
+        : rawDiscount;
+      return Math.max(0, subtotal - cappedDiscount);
     },
     [activeDiscount]
   );

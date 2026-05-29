@@ -205,10 +205,24 @@ export default defineSchema({
     discountType: v.union(v.literal("percent"), v.literal("flat")),
     amount: v.number(),
     firstOrderOnly: v.boolean(),
-    expiresAt: v.optional(v.number()),  // epoch ms
+    expiresAt: v.optional(v.number()),      // epoch ms
     maxUses: v.optional(v.number()),
-    usageCount: v.number(),             // starts at 0
-  }).index("by_code", ["code"]),
+    usageCount: v.number(),                 // starts at 0
+    // ── Extended offer metadata ──────────────────────────────────────────
+    description: v.optional(v.string()),    // e.g. "10% off your first order, up to ₹100"
+    minOrderValue: v.optional(v.number()),  // cart subtotal must be >= this to unlock
+    maxDiscount: v.optional(v.number()),    // savings cap for percent discounts (e.g. max ₹100)
+    offerKind: v.optional(
+      v.union(
+        v.literal("coupon"),        // user enters code manually
+        v.literal("cashback"),      // displayed as cashback badge
+        v.literal("auto"),          // auto-applied, no code entry needed
+        v.literal("freeShipping"),  // waives shipping fee
+      )
+    ),
+  })
+    .index("by_code", ["code"])
+    .index("by_offerKind", ["offerKind"]),
 
   // â”€â”€ Site content: editable copy + media for homepage sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Generic key/value store so we can add fields without schema migrations.
