@@ -50,14 +50,28 @@ export const validateDiscount = query({
       };
     }
 
-    if (discount.firstOrderOnly && args.customerPhone) {
-      const priorOrder = await ctx.db
-        .query("orders")
-        .withIndex("by_customerPhone", (q) =>
-          q.eq("customerPhone", args.customerPhone!)
-        )
-        .first();
-      if (priorOrder) {
+    if (discount.firstOrderOnly) {
+      // DISC-FIRST-ORDER-03: Check both phone AND email — same as submitOrder.
+      let hasPriorOrder = false;
+      if (args.customerPhone) {
+        const byPhone = await ctx.db
+          .query("orders")
+          .withIndex("by_customerPhone", (q) =>
+            q.eq("customerPhone", args.customerPhone!)
+          )
+          .first();
+        if (byPhone) hasPriorOrder = true;
+      }
+      if (!hasPriorOrder && args.customerEmail) {
+        const byEmail = await ctx.db
+          .query("orders")
+          .withIndex("by_customerEmail", (q) =>
+            q.eq("customerEmail", args.customerEmail!)
+          )
+          .first();
+        if (byEmail) hasPriorOrder = true;
+      }
+      if (hasPriorOrder) {
         return { valid: false as const, reason: "first-order-only" as const };
       }
     }
@@ -110,6 +124,12 @@ export const suggestDiscounts = query({
       if (d.expiresAt && d.expiresAt < now) continue;
       // Skip maxed out
       if (d.maxUses !== undefined && d.usageCount >= d.maxUses) continue;
+      // DISC-ENUM-01: Only surface auto/cashback/freeShipping offers in the
+      // public suggestion list. Plain "coupon" codes are private/campaign
+      // codes that users must enter manually — listing them leaks their
+      // existence to every visitor and enables automated enumeration.
+      const kind = d.offerKind ?? "coupon";
+      if (kind === "coupon") continue;
 
       // Check minOrderValue
       const meetsMinOrder =
@@ -172,7 +192,7 @@ export const suggestDiscounts = query({
         description: d.description,
         minOrderValue: d.minOrderValue,
         maxDiscount: d.maxDiscount,
-        offerKind: d.offerKind ?? "coupon",
+        offerKind: kind,
         firstOrderOnly: d.firstOrderOnly,
         eligible,
         savings,
@@ -270,12 +290,28 @@ export const createDiscount = mutation({
     ),
   },
   handler: async (ctx, args) => {    await requireAdmin(ctx);
+    // CODE-FORMAT-01: Validate code format — uppercase alphanumeric + hyphens/underscores,
+    // 2–24 chars. Spaces and lowercase would create codes that can never be redeemed
+    // because the frontend uppercases user input but can't match a stored code with a space.
+    const codeRegex = /^[A-Z0-9_-]{2,24}$/;
+    if (!codeRegex.test(args.code)) {
+      throw new ConvexError(
+        "Code must be 2–24 uppercase letters/digits (hyphens and underscores allowed, no spaces)."
+      );
+    }
     // Validate bounds
     if (args.amount <= 0) throw new ConvexError("Discount amount must be greater than zero.");
     if (args.discountType === "percent" && args.amount > 100) throw new ConvexError("Percent discount cannot exceed 100.");
     if (args.maxUses !== undefined && args.maxUses < 1) throw new ConvexError("maxUses must be at least 1 if set.");
     if (args.minOrderValue !== undefined && args.minOrderValue < 0) throw new ConvexError("minOrderValue must be >= 0.");
     if (args.maxDiscount !== undefined && args.maxDiscount <= 0) throw new ConvexError("maxDiscount must be > 0.");
+    if (args.discountType === "percent" && args.maxDiscount === undefined) {
+      // Nudge admins to always set a cap on percent discounts — silently allow but
+      // this is logged in the comment so reviewers notice unbounded percent codes.
+    }
+    // Round flat amounts to avoid fractional-rupee totals
+    const normalizedAmount =
+      args.discountType === "flat" ? Math.round(args.amount) : args.amount;
     // Ensure code is unique
     const existing = await ctx.db
       .query("discounts")
@@ -286,6 +322,7 @@ export const createDiscount = mutation({
     }
     return await ctx.db.insert("discounts", {
       ...args,
+      amount: normalizedAmount,
       usageCount: 0,
     });
   },

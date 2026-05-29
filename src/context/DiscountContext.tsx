@@ -16,7 +16,8 @@ export interface Discount {
   claimedAt?: string;
   offerKind?: "coupon" | "cashback" | "auto" | "freeShipping";
   description?: string;
-  maxDiscount?: number;   // savings cap for percent discounts
+  maxDiscount?: number;     // savings cap for percent discounts
+  minOrderValue?: number;   // invalidate discount if cart drops below this
 }
 
 interface DiscountContextValue {

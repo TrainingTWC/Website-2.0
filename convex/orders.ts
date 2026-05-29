@@ -214,32 +214,62 @@ export const submitOrder = mutation({
         (!discount.expiresAt || discount.expiresAt > Date.now()) &&
         (discount.maxUses === undefined || discount.usageCount < discount.maxUses);
 
-      // Enforce firstOrderOnly server-side (DISC-FIRST-ORDER-01).
+      // DISC-FIRST-ORDER-02: Check BOTH phone AND email so users can't bypass
+      // by registering with a different phone number.
       let firstOrderOk = true;
       if (isValid && discount.firstOrderOnly) {
-        const priorOrder = await ctx.db
+        const byPhone = await ctx.db
           .query("orders")
           .withIndex("by_customerPhone", (q) =>
             q.eq("customerPhone", args.customer.phone)
           )
           .first();
-        if (priorOrder) firstOrderOk = false;
+        if (byPhone) {
+          firstOrderOk = false;
+        } else if (args.customer.email) {
+          const byEmail = await ctx.db
+            .query("orders")
+            .withIndex("by_customerEmail", (q) =>
+              q.eq("customerEmail", args.customer.email)
+            )
+            .first();
+          if (byEmail) firstOrderOk = false;
+        }
       }
 
       if (isValid && firstOrderOk && discount) {
-        const savings =
-          discount.discountType === "percent"
-            ? Math.round(serverSubtotal * (discount.amount / 100))
-            : Math.min(discount.amount, serverSubtotal);
+        // DISC-MIN-ORDER-02: Enforce minOrderValue server-side.
+        // The frontend shows/hides offers, but the server is the authority.
+        // Silently ignore a discount whose threshold isn't met rather than
+        // throwing — cart value may legitimately have changed since apply.
+        const meetsMinOrder =
+          discount.minOrderValue === undefined ||
+          serverSubtotal >= discount.minOrderValue;
 
-        const discountedSubtotal = serverSubtotal - savings;
-        serverTotal = discountedSubtotal + serverShipping;
-        discountApplied = savings;
-        validatedDiscountCode = discount.code;
+        if (meetsMinOrder) {
+          let savings: number;
+          if (discount.discountType === "percent") {
+            const rawSavings = Math.round(serverSubtotal * (discount.amount / 100));
+            // DISC-MAX-CAP-01: Apply maxDiscount cap.
+            // Without this a 20%-off code with a ₹100 cap gives ₹2 000 off a
+            // ₹10 000 order — exactly what the admin intended to prevent.
+            savings =
+              discount.maxDiscount !== undefined
+                ? Math.min(rawSavings, discount.maxDiscount)
+                : rawSavings;
+          } else {
+            savings = Math.min(discount.amount, serverSubtotal);
+          }
 
-        await ctx.db.patch(discount._id, {
-          usageCount: discount.usageCount + 1,
-        });
+          const discountedSubtotal = serverSubtotal - savings;
+          serverTotal = discountedSubtotal + serverShipping;
+          discountApplied = savings;
+          validatedDiscountCode = discount.code;
+
+          await ctx.db.patch(discount._id, {
+            usageCount: discount.usageCount + 1,
+          });
+        }
       }
     }
 

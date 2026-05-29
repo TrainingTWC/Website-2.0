@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useConvex } from "convex/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -89,6 +89,9 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
   const [codeErr, setCodeErr] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  // FIX-AUTO-1: Track when the user explicitly removes an auto discount so
+  // we don’t immediately re-apply it when suggestions refresh.
+  const userRemovedAutoRef = useRef(false);
   const convex = useConvex();
 
   const hasPhone = /^\d{10}$/.test(phone);
@@ -106,9 +109,28 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
       : "skip"
   );
 
-  // Auto-apply the best eligible "auto" offer once, when no discount is active
+  // FIX-CART-DROP: If the active discount has a minOrderValue and the cart
+  // drops below it, clear the discount so the user doesn’t check out with a
+  // saving they no longer qualify for.
   useEffect(() => {
-    if (activeDiscount || !suggestions) return;
+    if (!activeDiscount?.minOrderValue) return;
+    if (subtotal < activeDiscount.minOrderValue) {
+      clearDiscount();
+      // If the user had manually applied a coupon, mark it so auto-apply
+      // doesn’t immediately put something back.
+      if (activeDiscount.offerKind === "auto") userRemovedAutoRef.current = true;
+      setCodeErr(
+        `“${activeDiscount.code}” removed — minimum order ₹${activeDiscount.minOrderValue.toLocaleString("en-IN")} not met.`
+      );
+    }
+  // subtotal is the only thing that can trigger this invalidation at runtime
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
+  // Auto-apply the best eligible "auto" offer once, when no discount is active.
+  // FIX-AUTO-1: Respect userRemovedAutoRef — don’t re-apply after user removes it.
+  useEffect(() => {
+    if (userRemovedAutoRef.current || activeDiscount || !suggestions) return;
     const autoOffer = suggestions.find((s) => s.offerKind === "auto" && s.eligible);
     if (autoOffer) {
       setActiveDiscount({
@@ -118,6 +140,7 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
         offerKind: autoOffer.offerKind as Discount["offerKind"],
         description: autoOffer.description,
         maxDiscount: autoOffer.maxDiscount,
+        minOrderValue: autoOffer.minOrderValue,
       });
     }
   // run once when suggestions first arrive
@@ -128,6 +151,9 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
   const handleApplyFromList = useCallback(
     (offer: SuggestedOffer) => {
       if (!offer.eligible) return;
+      // Applying a new offer means the user has reconsidered — allow auto-apply
+      // to work again for future sessions.
+      userRemovedAutoRef.current = false;
       setActiveDiscount({
         code: offer.code,
         discountType: offer.discountType,
@@ -135,6 +161,7 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
         offerKind: offer.offerKind as Discount["offerKind"],
         description: offer.description,
         maxDiscount: offer.maxDiscount,
+        minOrderValue: offer.minOrderValue,
       });
       setCodeErr(null);
     },
@@ -158,6 +185,7 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
         cartSubtotal: subtotal,
       });
       if (result.valid) {
+        userRemovedAutoRef.current = false;
         setActiveDiscount({
           code: trimmed,
           discountType: result.discountType,
@@ -165,6 +193,7 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
           offerKind: result.offerKind ?? "coupon",
           description: result.description,
           maxDiscount: result.maxDiscount,
+          minOrderValue: result.minOrderValue,
         });
         setCodeInput("");
       } else {
@@ -259,7 +288,14 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
                   </div>
                   <button
                     type="button"
-                    onClick={clearDiscount}
+                    onClick={() => {
+                      // FIX-AUTO-1: Track user intent — if they remove an auto
+                      // discount, don’t silently re-apply it.
+                      if (activeDiscount?.offerKind === "auto") {
+                        userRemovedAutoRef.current = true;
+                      }
+                      clearDiscount();
+                    }}
                     className="text-natural-text/40 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50"
                     aria-label="Remove discount"
                   >
@@ -288,7 +324,12 @@ export function DiscountPanel({ subtotal, phone, email }: DiscountPanelProps) {
                         isBestDeal={i === 0 && !activeDiscount}
                         isApplied={isApplied}
                         onApply={() => handleApplyFromList(offer)}
-                        onRemove={clearDiscount}
+                        onRemove={() => {
+                          if (activeDiscount?.offerKind === "auto") {
+                            userRemovedAutoRef.current = true;
+                          }
+                          clearDiscount();
+                        }}
                       />
                     );
                   })}
