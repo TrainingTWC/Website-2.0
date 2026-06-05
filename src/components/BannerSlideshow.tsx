@@ -71,7 +71,7 @@ export function BannerSlideshow({
     >
       {/* Portrait on phones so the banners are tall and impactful; switches to
           a wide cinematic 16:6 from sm: up. */}
-      <div className="relative w-full aspect-[4/5] sm:aspect-16/6">
+      <div className="relative w-full aspect-[4/5] sm:aspect-16/6 bg-black">
         <AnimatePresence mode="sync" custom={direction}>
           {slides.map((node, i) =>
             i === active ? (

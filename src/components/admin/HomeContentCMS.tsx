@@ -637,6 +637,7 @@ function SectionHeadingsEditor() {
 interface BannerSlide {
   storageId?: string;
   url?: string;             // resolved on read; not persisted when storageId present
+  imageUrl?: string;        // server-hydrated field name (same data as url)
   partner?: string;
   headline: string;
   headlineItalic?: string;
@@ -854,7 +855,12 @@ function BannerSlidesEditor() {
     if (entry === undefined) return;
     if (entry === null) { setSlides([]); return; }
     const v = entry.value as { slides?: BannerSlide[] } | null;
-    setSlides(Array.isArray(v?.slides) ? v!.slides : []);
+    // Server hydrates storageId → imageUrl; normalise to url so the preview renders
+    const normalised = (v?.slides ?? []).map((s: BannerSlide) => ({
+      ...s,
+      url: s.url || s.imageUrl,
+    }));
+    setSlides(Array.isArray(v?.slides) ? normalised : []);
   }, [entry]);
 
   async function handleSave() {
