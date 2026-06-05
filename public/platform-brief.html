@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Third Wave Coffee — Platform Deep Dive</title>
+<style>
+  :root {
+    --cream: #fdf6ec;
+    --espresso: #1a0f08;
+    --roast: #3d1f0d;
+    --amber: #c8732a;
+    --gold: #e8a040;
+    --light: #f5ece0;
+    --mid: #d9c3a8;
+    --text: #2c1a0e;
+    --muted: #7a5c42;
+    --success: #2e7d5e;
+    --warn: #c8732a;
+    --danger: #a83232;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --teal: #0d7377;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--espresso);
+    color: var(--cream);
+    line-height: 1.7;
+  }
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(26,15,8,0.97);
+    border-bottom: 1px solid rgba(200,115,42,0.3);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-size: 1rem; font-weight: bold; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a { font-family: sans-serif; font-size: 0.75rem; color: var(--mid); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold); }
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 60%, #3d1f0d 0%, #1a0f08 60%, #0d0604 100%);
+    padding: 6rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8732a' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block; padding: 0.35rem 1.2rem;
+    background: rgba(200,115,42,0.15); border: 1px solid rgba(200,115,42,0.4);
+    border-radius: 100px; font-family: sans-serif; font-size: 0.7rem; letter-spacing: 0.12em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 2rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900; line-height: 1.1;
+    color: var(--cream); letter-spacing: -0.02em; margin-bottom: 1.5rem;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero-sub { font-family: sans-serif; font-size: 1.1rem; color: var(--mid); max-width: 640px; margin-bottom: 3rem; }
+  .hero-meta { display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap; }
+  .hero-meta-item { text-align: center; }
+  .hero-meta-item .val { font-size: 2rem; font-weight: 700; color: var(--gold); }
+  .hero-meta-item .lbl { font-family: sans-serif; font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  /* ── SECTION SCAFFOLD ── */
+  section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+  section.full { max-width: none; padding: 5rem 0; }
+  .section-header { text-align: center; margin-bottom: 3.5rem; }
+  .section-tag {
+    display: inline-block; font-family: sans-serif; font-size: 0.68rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold); border: 1px solid rgba(200,115,42,0.35);
+    padding: 0.3rem 1rem; border-radius: 100px; margin-bottom: 1rem;
+  }
+  h2 { font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; color: var(--cream); line-height: 1.2; }
+  h3 { font-size: 1.25rem; font-weight: 700; color: var(--cream); margin-bottom: 0.5rem; }
+  h4 { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: 0.4rem; }
+  p { font-family: sans-serif; font-size: 0.92rem; color: var(--mid); line-height: 1.75; }
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid rgba(200,115,42,0.15); margin: 0 2rem; }
+  /* ── CARDS ── */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+  .card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 1.75rem; transition: border-color 0.25s, transform 0.25s;
+  }
+  .card:hover { border-color: rgba(200,115,42,0.35); transform: translateY(-2px); }
+  .card-icon { display: none; }
+  /* ── LAYERS ── */
+  .layer-block {
+    border-radius: 20px; padding: 2.5rem; margin-bottom: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .layer-superadmin { background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(124,58,237,0.04) 100%); border-color: rgba(124,58,237,0.3); }
+  .layer-admin       { background: linear-gradient(135deg, rgba(200,115,42,0.12) 0%, rgba(200,115,42,0.04) 100%); border-color: rgba(200,115,42,0.3); }
+  .layer-editor      { background: linear-gradient(135deg, rgba(13,115,119,0.12) 0%, rgba(13,115,119,0.04) 100%); border-color: rgba(13,115,119,0.3); }
+  .layer-user        { background: linear-gradient(135deg, rgba(46,125,94,0.12) 0%, rgba(46,125,94,0.04) 100%); border-color: rgba(46,125,94,0.3); }
+  .role-tag {
+    display: inline-block; padding: 0.25rem 0.9rem; border-radius: 100px;
+    font-family: sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 1rem;
+  }
+  .tag-superadmin { background: rgba(124,58,237,0.25); color: #c4b5fd; }
+  .tag-admin       { background: rgba(200,115,42,0.25); color: var(--gold); }
+  .tag-editor      { background: rgba(13,115,119,0.25); color: #5eead4; }
+  .tag-user        { background: rgba(46,125,94,0.25); color: #6ee7b7; }
+  .tag-viewer      { background: rgba(37,99,235,0.25); color: #93c5fd; }
+  .tag-marketing   { background: rgba(219,39,119,0.2); color: #f9a8d4; }
+  /* ── PERMS TABLE ── */
+  .perm-grid {
+    display: grid; grid-template-columns: 1fr repeat(7, auto);
+    gap: 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden;
+    font-family: sans-serif; font-size: 0.8rem; margin-top: 2rem;
+  }
+  .perm-grid .ph { background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .perm-grid .pr { padding: 0.55rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--cream); }
+  .perm-grid .pc { padding: 0.55rem 1rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .perm-grid .pr:nth-child(18n+1) { background: rgba(255,255,255,0.015); }
+  .yes { color: #34d399; font-size: 1rem; }
+  .no  { color: rgba(255,255,255,0.15); font-size: 1rem; }
+  /* ── JOURNEY ── */
+  .journey-track { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 3rem; }
+  .journey-track::before { content: ''; position: absolute; left: 1.25rem; top: 1.5rem; bottom: 1.5rem; width: 2px; background: linear-gradient(to bottom, var(--amber), var(--gold), rgba(200,115,42,0.2)); border-radius: 2px; }
+  .journey-step { position: relative; padding: 1.5rem 1.5rem 1.5rem 2rem; margin-bottom: 0; }
+  .journey-step::before { content: attr(data-step); position: absolute; left: -2.85rem; top: 1.4rem; width: 2.1rem; height: 2.1rem; background: var(--roast); border: 2px solid var(--amber); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--gold); }
+  .journey-step h4 { color: var(--gold); font-family: sans-serif; font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .journey-step p { font-size: 0.85rem; }
+  /* ── TECH STACK ── */
+  .tech-row { display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; align-items: start; padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .tech-row:last-child { border-bottom: none; }
+  .tech-name { font-family: sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--cream); }
+  .tech-version { font-family: sans-serif; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+  .tech-badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 100px; font-family: sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; }
+  .badge-fe { background: rgba(37,99,235,0.2); color: #93c5fd; }
+  .badge-be { background: rgba(200,115,42,0.2); color: var(--gold); }
+  .badge-ai { background: rgba(124,58,237,0.2); color: #c4b5fd; }
+  .badge-infra { background: rgba(13,115,119,0.2); color: #5eead4; }
+  .badge-sec { background: rgba(168,50,50,0.2); color: #fca5a5; }
+  /* ── DATA TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 0.82rem; }
+  .data-table th { background: rgba(200,115,42,0.12); color: var(--gold); font-weight: 700; padding: 0.8rem 1rem; text-align: left; border-bottom: 2px solid rgba(200,115,42,0.25); letter-spacing: 0.06em; font-size: 0.72rem; text-transform: uppercase; }
+  .data-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--mid); vertical-align: top; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table code { background: rgba(200,115,42,0.12); color: var(--gold); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.78rem; font-family: 'Courier New', monospace; }
+  .pii-badge { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 4px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; }
+  .pii-yes { background: rgba(168,50,50,0.2); color: #fca5a5; }
+  .pii-no  { background: rgba(46,125,94,0.15); color: #6ee7b7; }
+  /* ── PERF TABLE ── */
+  .perf-card {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 2rem; text-align: center;
+  }
+  .perf-card .metric { font-size: 2.2rem; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 0.4rem; }
+  .perf-card .metric-label { font-family: sans-serif; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+  .perf-card .metric-detail { font-family: sans-serif; font-size: 0.8rem; color: var(--mid); }
+  /* ── SECURITY BLOCK ── */
+  .security-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: flex-start; }
+  .sec-code { font-family: monospace; font-size: 0.72rem; color: #fca5a5; background: rgba(168,50,50,0.15); padding: 0.15rem 0.5rem; border-radius: 4px; white-space: nowrap; margin-top: 0.15rem; }
+  .sec-text h4 { font-family: sans-serif; font-size: 0.88rem; margin-bottom: 0.25rem; }
+  .sec-text p { font-size: 0.82rem; }
+  /* ── WORKFLOW FLOW ── */
+  .workflow-row { display: flex; gap: 1rem; align-items: stretch; flex-wrap: wrap; margin-bottom: 1rem; }
+  .wf-step {
+    flex: 1; min-width: 150px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 1.2rem; text-align: center; position: relative;
+  }
+  .wf-step .wf-icon { display: none; }
+  .wf-step .wf-icon + h4 { margin-top: 0; }
+  .wf-step h4 { font-family: sans-serif; font-size: 0.8rem; color: var(--cream); margin-bottom: 0.3rem; }
+  .wf-step p { font-size: 0.75rem; color: var(--muted); }
+  .wf-arrow { display: flex; align-items: center; color: var(--amber); font-size: 1.4rem; padding: 0 0.25rem; }
+  /* ── FUNNEL BARS ── */
+  .funnel-item { margin-bottom: 1.2rem; }
+  .funnel-item .fi-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem; }
+  .funnel-item .fi-name { font-family: sans-serif; font-size: 0.85rem; color: var(--cream); }
+  .funnel-item .fi-pct { font-family: sans-serif; font-size: 0.8rem; color: var(--gold); font-weight: 700; }
+  .funnel-bar-bg { height: 8px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+  .funnel-bar { height: 100%; border-radius: 100px; background: linear-gradient(to right, var(--amber), var(--gold)); }
+  /* ── CRON ITEMS ── */
+  .cron-item { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1.2rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 0.75rem; }
+  .cron-name { font-family: sans-serif; font-size: 0.88rem; color: var(--cream); }
+  .cron-schedule { font-family: monospace; font-size: 0.78rem; color: var(--gold); background: rgba(200,115,42,0.12); padding: 0.2rem 0.7rem; border-radius: 6px; }
+  .cron-desc { font-family: sans-serif; font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    border-top: 1px solid rgba(200,115,42,0.15);
+    font-family: sans-serif; font-size: 0.8rem; color: var(--muted);
+  }
+  /* ── CALLOUT ── */
+  .callout {
+    background: rgba(200,115,42,0.07); border-left: 3px solid var(--amber);
+    border-radius: 0 12px 12px 0; padding: 1.25rem 1.5rem; margin: 2rem 0;
+  }
+  .callout p { font-size: 0.88rem; }
+  /* ── LIST ── */
+  ul.styled { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+  ul.styled li { font-family: sans-serif; font-size: 0.85rem; color: var(--mid); display: flex; gap: 0.6rem; align-items: flex-start; }
+  ul.styled li::before { content: '→'; color: var(--amber); flex-shrink: 0; }
+  /* ── CHIP ── */
+  .chip { display: inline-block; padding: 0.2rem 0.75rem; border-radius: 100px; font-family: sans-serif; font-size: 0.72rem; background: rgba(255,255,255,0.06); color: var(--mid); margin: 0.2rem; }
+  /* Scroll offset for fixed nav */
+  [id] { scroll-margin-top: 70px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══════════════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-logo">Third Wave Coffee</div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#layers">Layers</a></li>
+    <li><a href="#journey">Journey</a></li>
+    <li><a href="#workflow">Admin Flow</a></li>
+    <li><a href="#techstack">Tech Stack</a></li>
+    <li><a href="#perf">Performance</a></li>
+    <li><a href="#data">Data Capture</a></li>
+    <li><a href="#security">Security</a></li>
+  </ul>
+</nav>
+
+<!-- ═══ HERO ═══════════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-badge">Platform Deep Dive · Confidential</div>
+  <h1>Third Wave Coffee<br /><span>Platform Architecture</span></h1>
+  <p class="hero-sub">
+    A full-stack, AI-powered specialty coffee e-commerce platform with real-time backend,
+    granular analytics, multi-tier RBAC, and sub-second page performance.
+  </p>
+  <p class="hero-sub" style="font-size:0.85rem;opacity:0.6;margin-top:-2rem;margin-bottom:3rem;">In plain terms: one platform that runs the entire business — the customer-facing shop, the admin operations, and all the data — with no separate servers to manage.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><div class="val">7</div><div class="lbl">Access Roles</div></div>
+    <div class="hero-meta-item"><div class="val">9</div><div class="lbl">Admin Dashboards</div></div>
+    <div class="hero-meta-item"><div class="val">26+</div><div class="lbl">Event Types Tracked</div></div>
+    <div class="hero-meta-item"><div class="val">5</div><div class="lbl">Core Web Vitals Measured</div></div>
+    <div class="hero-meta-item"><div class="val">2</div><div class="lbl">AI Models Integrated</div></div>
+    <div class="hero-meta-item"><div class="val">∞</div><div class="lbl">Realtime Sync</div></div>
+  </div>
+</div>
+
+<!-- ═══ OVERVIEW ══════════════════════════════════════════════════════════ -->
+<hr class="divider" id="overview" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">What This Platform Is</div>
+    <h2>One system. Every layer of the business.</h2>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <h3>Customer Storefront</h3>
+      <p>Premium e-commerce experience with 3D product viewer, AI-powered coffee match quiz, smooth-scroll storytelling, and Razorpay checkout.</p>
+    </div>
+    <div class="card">
+      <h3>Real-Time Operations Hub</h3>
+      <p>Admin dashboard with live inventory, order management, customer lookup, editorial CMS, discount engine, and full funnel analytics.</p>
+    </div>
+    <div class="card">
+      <h3>AI-First Architecture</h3>
+      <p>Mistral AI for coffee recommendations and customer support. Responses are cached so repeat questions cost nothing. Usage is rate-limited to prevent abuse.</p>
+    </div>
+    <div class="card">
+      <h3>Behavioural Analytics</h3>
+      <p>26+ anonymous shopper actions tracked per session — where people drop off, which carts are abandoned, which payment methods fail, and which UI elements confuse users.</p>
+    </div>
+    <div class="card">
+      <h3>Security-First Design</h3>
+      <p>Two-factor login for all admins, tamper-proof order IDs, locked-down login with automatic account protection after repeated failures.</p>
+    </div>
+    <div class="card">
+      <h3>Globally Fast</h3>
+      <p>The website is pre-built and served as static files from Cloudflare's global network. No server boots up when a user visits. Pages load in under 2 seconds anywhere in the world.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ══════════════════════════════════════════════════════════ -->
+<hr class="divider" id="features" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Product Features</div>
+    <h2>Every feature, documented.</h2>
+  </div>
+
+  <h3 style="color:var(--gold);margin-bottom:1.5rem;font-family:sans-serif;">Customer-Facing Features</h3>
+  <div class="grid-2" style="margin-bottom:3rem;">
+    <div class="card">
+      <h4>Homepage Storytelling Experience</h4>
+      <p>Lenis smooth-scroll narrative with animated hero, rotating brand story stats, product showcases, editorial cards, and Flash Sale banners. All copy is live-editable via CMS.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: the homepage is a living, scrollable brand story. Marketing can update every word and image without touching a line of code.</em></p>
+    </div>
+    <div class="card">
+      <h4>Shop — Filterable Product Catalogue</h4>
+      <p>Two-level product taxonomy: Coffee Beans, Easy Coffee Bags, Drinkware, Carry Bags, Keychains, Chocolates &amp; Nuts, Brewing Tools. Filter by roast level, origin, and tags. Live stock status badges.</p>
+    </div>
+    <div class="card">
+      <h4>Product Detail Page + 3D Viewer</h4>
+      <p>Interactive 3D model viewer per product. Flavor note chips, roast level indicator, origin badge, rating, and AI-matched cross-sell suggestions.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: customers can rotate and inspect products in 3D before buying, the same way you'd pick up a bag in-store.</em></p>
+    </div>
+    <div class="card">
+      <h4>AI BrewMatch Quiz</h4>
+      <p>Multi-step preference quiz (brew method, taste profile, occasion). An AI model picks the best-matched products with a personalised explanation. Identical answers are cached — repeat quiz runs cost zero in API fees.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: a customer says how they like their coffee, and the platform recommends the right product — like a knowledgeable barista, but available 24/7.</em></p>
+    </div>
+    <div class="card">
+      <h4>Smart Cart with Order Limits</h4>
+      <p>The cart automatically enforces a per-product order limit based on current stock and recent sales velocity. First-time buyers get a slightly higher limit to encourage trial; frequent bulk buyers get a lower one to keep stock available for everyone.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: no single customer can clear out stock on a popular product. The limit adjusts itself every 15 minutes based on how fast items are selling.</em></p>
+    </div>
+    <div class="card">
+      <h4>Discount Engine</h4>
+      <p>Four offer types: <strong>coupon</strong> (manual code entry), <strong>cashback</strong> (badge display), <strong>auto</strong> (no code needed), <strong>free shipping</strong>. Supports percentage or flat discounts, first-order-only restriction, minimum cart value, savings cap, expiry date, and total usage limits.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: marketing can create any kind of offer with guardrails — a code that works only once per person, only on first orders, only above a certain cart value, and only until a set date.</em></p>
+    </div>
+    <div class="card">
+      <h4>Checkout + Razorpay Payments</h4>
+      <p>Full address form with validation. Prices are recalculated on the server at payment time — the customer cannot manipulate the amount. Supports UPI, cards, net banking, EMI, and wallets. Discount is re-validated at submit.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: the server always decides the final price. Nothing the customer does on their browser can change what they actually get charged.</em></p>
+    </div>
+    <div class="card">
+      <h4>Order Tracking Page</h4>
+      <p>Customer self-service order lookup by order ID. Live status timeline. AI-powered support chat that knows the customer's specific order — answers questions about status, items, and shipping without a human agent.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: customers get instant answers about their order from an AI that already knows their details — reducing support load on the team.</em></p>
+    </div>
+    <div class="card">
+      <h4>Journal / Editorial Hub</h4>
+      <p>Content feed of five post types: <strong>Flash Sale</strong>, <strong>Product Launch</strong>, <strong>Café News</strong>, <strong>Brand Story</strong>, <strong>Champion Feature</strong>. Linked to products and discounts. Draft / scheduled / published workflow with expiry support.</p>
+    </div>
+    <div class="card">
+      <h4>About &amp; Third Circle Pages</h4>
+      <p>Brand narrative with stats, team story, and sourcing journey. Third Circle: exclusive community section with its own route and content.</p>
+    </div>
+    <div class="card">
+      <h4>Interactive Map (Leaflet)</h4>
+      <p>Sourcing origin map using React Leaflet — shows coffee growing regions linked to catalog origins.</p>
+    </div>
+    <div class="card">
+      <h4>OTP Login (Customer Phone)</h4>
+      <p>Convex Auth OTP flow for customers wanting order history. Anonymous shopping works without any login — OTP is only required for returning user features.</p>
+    </div>
+  </div>
+
+  <h3 style="color:var(--gold);margin-bottom:1.5rem;font-family:sans-serif;">Platform &amp; Operations Features</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Admin Dashboard — Overview</h4>
+      <p>Instant KPIs: total revenue, total orders, completed/pending/cancelled breakdown, average order value. All numbers update in real time as orders come in — no page refresh needed.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: the moment a customer places an order, the revenue counter on the admin screen ticks up automatically.</em></p>
+    </div>
+    <div class="card">
+      <h4>Inventory Management</h4>
+      <p>Add, edit, and delete products. Upload images and 3D models. Track stock quantities with automatic low-stock flagging. The system recalculates order limits every 15 minutes based on recent sales.</p>
+    </div>
+    <div class="card">
+      <h4>Order Management</h4>
+      <p>Full order lifecycle: view, filter by status, mark confirmed/shipped/delivered/cancelled, add internal notes. Look up any customer by phone or email. Revenue figures update the moment a status changes.</p>
+    </div>
+    <div class="card">
+      <h4>Editorial CMS</h4>
+      <p>Write and publish posts: Flash Sales, Product Launches, Cafe News, Brand Stories, Champion Features. Schedule posts to go live at a future date and expire automatically. Link any post to a product or discount code.</p>
+    </div>
+    <div class="card">
+      <h4>Home Content CMS</h4>
+      <p>Edit every section of the homepage — headlines, body text, stats, images, and story slides — directly from the admin panel. Changes go live instantly with no code deployment required.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: marketing can refresh the entire homepage look and feel in minutes, without involving a developer.</em></p>
+    </div>
+    <div class="card">
+      <h4>Discount Code Manager</h4>
+      <p>Create/edit/deactivate discount codes. All four offer kinds. Preview computed savings before saving. Usage tracking in real time.</p>
+    </div>
+    <div class="card">
+      <h4>Funnel Analytics Dashboard</h4>
+      <p>10-section dashboard: KPI tiles, funnel bar chart, dropout hotspots, abandoned carts (with ₹ value), payment funnel, device breakdown, rage/dead click counts, client error feed, daily trends, and UTM attribution.</p>
+    </div>
+    <div class="card">
+      <h4>Page View Analytics</h4>
+      <p>Daily summary with total views, unique sessions, per-path breakdown, geo heatmap (country + city), GPS vs IP geo source split, and avg time on page.</p>
+    </div>
+    <div class="card">
+      <h4>Real-User Performance Monitoring</h4>
+      <p>Five Google-standard page speed metrics are measured on every visitor's actual device and stored — split by device tier (budget phone, mid-range, high-end). This shows whether the site is genuinely fast for the customers using it, not just fast on a developer's laptop.</p>
+    </div>
+    <div class="card">
+      <h4>Audit Log</h4>
+      <p>Immutable server-side log of every admin action: product edits, order updates, admin invites, discount changes. Tagged with admin user ID + email + timestamp.</p>
+    </div>
+    <div class="card">
+      <h4>Admin Access Control &amp; Two-Factor Login</h4>
+      <p>Every admin has a role that restricts exactly which sections they can see. Login requires both a password and a one-time code sent to the admin's email. Sessions expire after 30 minutes. The account locks automatically after repeated wrong attempts.</p>
+      <p style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"><em>In plain terms: a content writer can log in and edit posts but will never see revenue figures or customer data — those sections simply don't appear for them.</em></p>
+    </div>
+    <div class="card">
+      <h4>API Key Management</h4>
+      <p>Admin-controlled API keys for external integrations. Key scoping and revocation capabilities.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LAYERS ════════════════════════════════════════════════════════════ -->
+<hr class="divider" id="layers" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Access Layers</div>
+    <h2>Who can do what.</h2>
+  </div>
+
+  <div class="layer-block layer-superadmin">
+    <div class="role-tag tag-superadmin">SuperAdmin</div>
+    <h3>Unrestricted Platform Control</h3>
+    <p style="margin-bottom:1rem;">Full access to every section and every action. The only role that can: invite/revoke other admins, change any admin's role, access Settings (API keys, danger zone), and manage recommendation rules. Typically the founder and CTO.</p>
+    <ul class="styled">
+      <li>All admin capabilities below</li>
+      <li>Invite, deactivate, and role-change any admin account</li>
+      <li>Access Settings — API keys, Convex environment variables, danger zone operations</li>
+      <li>Manage recommendation rules (the rule engine that maps quiz answers to products)</li>
+      <li>Trigger one-time data backfills and migrations</li>
+      <li>Access full audit log across all admin users</li>
+    </ul>
+  </div>
+
+  <div class="layer-block layer-admin">
+    <div class="role-tag tag-admin">Admin</div>
+    <h3>Full Operational Access</h3>
+    <p style="margin-bottom:1rem;">Day-to-day operations. Can do everything except change admin roles or access settings. Typically the ops manager and head of marketing.</p>
+    <ul class="styled">
+      <li>Overview dashboard — revenue, orders, KPIs</li>
+      <li>Inventory — full CRUD on products, images, stock quantities</li>
+      <li>Orders — view, filter, update status (confirmed/shipped/delivered/cancelled), add notes</li>
+      <li>Analytics — funnel dashboard, page views, web vitals, top products, daily revenue</li>
+      <li>Editorial — create/edit/schedule/publish all five post types</li>
+      <li>Home CMS — edit every homepage section copy and media</li>
+      <li>Customers — look up customers by phone/email, view order history</li>
+      <li>Discount Manager — full CRUD on discount codes</li>
+    </ul>
+  </div>
+
+  <div class="layer-block layer-editor">
+    <div class="role-tag tag-editor">Editor</div>
+    <h3>Content Creation Only</h3>
+    <p style="margin-bottom:1rem;">Access limited to editorial posts and homepage content. Cannot see revenue, orders, or customer data. Ideal for content writers and social media managers.</p>
+    <ul class="styled">
+      <li>Overview dashboard — read only</li>
+      <li>Editorial — full CRUD on posts (flash-sale, product-launch, café-news, brand-story, champion)</li>
+      <li>Home CMS — edit homepage copy and media sections</li>
+    </ul>
+  </div>
+
+  <div class="layer-block" style="background:linear-gradient(135deg,rgba(37,99,235,0.1) 0%,rgba(37,99,235,0.03) 100%);border-color:rgba(37,99,235,0.3);">
+    <div class="role-tag tag-viewer">Viewer</div>
+    <h3>Read-Only Reporting</h3>
+    <p style="margin-bottom:1rem;">Can see overview KPIs and analytics. Zero ability to modify anything. For board members or external consultants who need reporting access.</p>
+    <ul class="styled">
+      <li>Overview dashboard — read only</li>
+      <li>Analytics — funnel, page views, web vitals</li>
+    </ul>
+  </div>
+
+  <div class="layer-block" style="background:linear-gradient(135deg,rgba(219,39,119,0.1) 0%,rgba(219,39,119,0.03) 100%);border-color:rgba(219,39,119,0.3);">
+    <div class="role-tag tag-marketing">HR / Marketing / PR</div>
+    <h3>Homepage CMS Only</h3>
+    <p style="margin-bottom:1rem;">The most restricted internal role. Only access is the Home content editor — can update brand copy, upload images, and edit homepage sections. Nothing else is visible.</p>
+    <ul class="styled">
+      <li>Home CMS — edit homepage sections, upload images, manage slides</li>
+    </ul>
+  </div>
+
+  <div class="layer-block layer-user">
+    <div class="role-tag tag-user">User (Customer)</div>
+    <h3>Storefront &amp; Order Tracking</h3>
+    <p style="margin-bottom:1rem;">The public experience. No account required for browsing and purchasing. OTP login optional for returning customers who want order history.</p>
+    <ul class="styled">
+      <li>Browse homepage, shop, product pages, journal, about</li>
+      <li>Take BrewMatch AI quiz and receive personalised recommendations</li>
+      <li>Add to cart (MOQ engine enforced silently)</li>
+      <li>Apply discount codes and see computed savings</li>
+      <li>Complete checkout with Razorpay payment</li>
+      <li>Track order by order ID on the orders page</li>
+      <li>Chat with AI support agent in the context of their order</li>
+      <li>Optional OTP login for saved order history</li>
+    </ul>
+  </div>
+
+  <h3 style="color:var(--cream);font-family:sans-serif;margin-top:3rem;margin-bottom:1.5rem;">Permission Matrix</h3>
+  <div class="perm-grid">
+    <div class="ph">Section</div>
+    <div class="ph">SuperAdmin</div>
+    <div class="ph">Admin</div>
+    <div class="ph">Editor</div>
+    <div class="ph">Viewer</div>
+    <div class="ph">HR</div>
+    <div class="ph">Marketing</div>
+    <div class="ph">PR</div>
+
+    <div class="pr">Overview</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Inventory</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Orders</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Analytics</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Editorial</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Home CMS</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div>
+    <div class="pr">Rules Engine</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Customers</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+    <div class="pr">Settings</div><div class="pc"><span class="yes">✓</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div><div class="pc"><span class="no">—</span></div>
+  </div>
+</section>
+
+<!-- ═══ USER JOURNEY ═══════════════════════════════════════════════════════ -->
+<hr class="divider" id="journey" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Customer Experience</div>
+    <h2>The complete user journey.</h2>
+  </div>
+  <div class="grid-2">
+    <div class="journey-track">
+      <div class="journey-step" data-step="1">
+        <h4>Discovery</h4>
+        <p>Shopper arrives via organic search, social media, or a campaign link. The channel they came from (Instagram, Google, email, etc.) is recorded on their very first action and remembered for the rest of their visit.</p>
+      </div>
+      <div class="journey-step" data-step="2">
+        <h4>Landing &amp; Brand Immersion</h4>
+        <p>Homepage loads in under 2 seconds from Cloudflare's nearest server. The scrollable brand narrative plays — hero, story stats, product teasers, editorial cards, flash-sale banners. The visit is recorded, starting the funnel.</p>
+      </div>
+      <div class="journey-step" data-step="3">
+        <h4>Explore — Shop or BrewMatch</h4>
+        <p><strong>Path A — Shop:</strong> User filters by type, roast, origin, and browses. <strong>Path B — BrewMatch:</strong> User takes the 5-step AI quiz and gets personalised product picks with an explanation. Visiting a product page is recorded as a funnel event.</p>
+      </div>
+      <div class="journey-step" data-step="4">
+        <h4>Product Detail</h4>
+        <p>3D model viewer loads. User reviews flavor notes, origin, roast level, and stock status. The order limit for this product is already pre-calculated and ready — the customer never sees a delay.</p>
+      </div>
+      <div class="journey-step" data-step="5">
+        <h4>Add to Cart</h4>
+        <p>Adding to cart is recorded as a funnel event. A cart snapshot is saved — item list, subtotal, and the page they were on. Quantity changes and removals are also tracked to detect friction.</p>
+      </div>
+      <div class="journey-step" data-step="6">
+        <h4>Discount Code</h4>
+        <p>User enters a coupon (or an auto-discount applies). The server checks: is the code still valid, has the usage limit been hit, does the cart meet the minimum value, and is this actually the customer's first order? Savings preview shown before confirm.</p>
+      </div>
+    </div>
+    <div class="journey-track">
+      <div class="journey-step" data-step="7">
+        <h4>Cart Review</h4>
+        <p>Opening the cart panel is recorded as a funnel event. If the user goes idle for more than 30 minutes, the cart is flagged as abandoned. Abandoned carts that have a phone or email (entered at checkout) are eligible for recovery outreach.</p>
+      </div>
+      <div class="journey-step" data-step="8">
+        <h4>Checkout</h4>
+        <p>Starting checkout is recorded. User fills in name, phone, email, and delivery address. If form validation fails, the failing fields are recorded — this shows which fields are causing the most friction. Once submitted, the contact details are attached to the cart snapshot so it becomes recoverable.</p>
+      </div>
+      <div class="journey-step" data-step="9">
+        <h4>Payment</h4>
+        <p>Payment method selection is recorded. When the customer taps "Place Order", the server recalculates the total from the database and re-validates the discount — then creates the Razorpay payment. The Razorpay modal opens for the customer to complete payment.</p>
+      </div>
+      <div class="journey-step" data-step="10">
+        <h4>Order Confirmed</h4>
+        <p>On success, the order confirmation event fires. The cart is removed from the abandoned cart list. The order gets a unique ID (TWC-XXXXXXXX). Revenue counters and order counts update immediately across the entire admin dashboard.</p>
+      </div>
+      <div class="journey-step" data-step="11">
+        <h4>Order Tracking</h4>
+        <p>Customer visits the orders page, enters their order ID, and sees the live status. They can ask the AI support agent anything about their order — it knows their order details and responds in plain language.</p>
+      </div>
+      <div class="journey-step" data-step="12">
+        <h4>Return &amp; Re-engagement</h4>
+        <p>The anonymous browser ID persists across visits, so returning customers are recognised and stitched to their previous funnel history. Flash sales and new product posts in the journal drive repeat visits.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ADMIN / EDITOR WORKFLOW ════════════════════════════════════════════ -->
+<hr class="divider" id="workflow" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Operational Workflow</div>
+    <h2>Admin &amp; Editor day-to-day flows.</h2>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-bottom:1rem;">Admin Login (Two-Factor)</h3>
+  <div class="workflow-row" style="margin-bottom:2.5rem;">
+    <div class="wf-step"><h4>Enter Email + Password</h4><p>Admin visits the admin panel</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>OTP Sent via Email</h4><p>6-digit code, valid 10 min, max 3 sends per 15 min</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Enter OTP</h4><p>5 wrong guesses invalidates the code entirely</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Secure Session Created</h4><p>Server issues a session token, valid 30 min, checked on every page</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Dashboard</h4><p>Only the sections permitted for that role are visible</p></div>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-bottom:1rem;">Order Fulfilment Flow</h3>
+  <div class="workflow-row" style="margin-bottom:2.5rem;">
+    <div class="wf-step"><h4>Order Arrives</h4><p>Status: pending. Admin dashboard updates instantly — no refresh needed.</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Confirm</h4><p>Admin marks confirmed. Revenue figures update immediately.</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Pack &amp; Ship</h4><p>Admin adds courier note. Status set to shipped.</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Delivered</h4><p>Status set to delivered. Customer sees the live update on their tracking page.</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Cancel (if needed)</h4><p>Status set to cancelled. Revenue adjusts. Action is permanently logged.</p></div>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-bottom:1rem;">Content Editor Flow</h3>
+  <div class="workflow-row" style="margin-bottom:2.5rem;">
+    <div class="wf-step"><h4>New Post</h4><p>Choose type: Flash Sale, Launch, News, Story, Champion</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Upload Cover Image</h4><p>Image is stored and served via CDN automatically</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Link Product &amp; Discount</h4><p>Optional: tie the post to a specific product and discount code</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Schedule or Publish</h4><p>Set a go-live date and auto-expiry, or publish right now</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Live on Journal</h4><p>Appears instantly for all customers — no deployment needed</p></div>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-bottom:1rem;">Inventory + Order Limit Management</h3>
+  <div class="workflow-row">
+    <div class="wf-step"><h4>Every 15 Minutes</h4><p>System calculates how fast each product has been selling over the last 7 days</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Order Limit Set</h4><p>Products selling fast get tighter per-customer limits. Products with plenty of stock get generous limits.</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Low Stock Alert</h4><p>Admin sees a warning badge on any product running low</p></div>
+    <div class="wf-arrow">→</div>
+    <div class="wf-step"><h4>Admin Override</h4><p>Admin can manually hard-cap any product's limit at any time, overriding the automatic calculation</p></div>
+  </div>
+
+  <div class="callout" style="margin-top:2.5rem;">
+    <h4>Automated Background Jobs</h4>
+    <div class="cron-item">
+      <div><div class="cron-name">Tidy Old Page View Records</div><div class="cron-desc">Removes raw visit logs older than the retention window. Daily summaries are kept. Keeps the database lean.</div></div>
+      <div class="cron-schedule">Daily @ 02:00 UTC</div>
+    </div>
+    <div class="cron-item">
+      <div><div class="cron-name">Refresh Sales Velocity</div><div class="cron-desc">Recalculates how fast each product is selling so the order limit engine stays current.</div></div>
+      <div class="cron-schedule">Every 15 minutes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TECH STACK ════════════════════════════════════════════════════════ -->
+<hr class="divider" id="techstack" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Technology</div>
+    <h2>Why every tool was chosen.</h2>
+  </div>
+
+  <div class="callout">
+    <p><strong>The core philosophy:</strong> Every technology choice eliminates a category of operational burden. We have no servers to manage, no deployment pipelines to babysit, no CDN to configure, and no database to scale. The team ships features, not infrastructure.</p>
+    <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--mid);"><em>In plain terms: there is no machine sitting in a data centre that we pay for and worry about. The whole platform runs on managed cloud services that scale automatically and charge only for what is used.</em></p>
+  </div>
+
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:20px;overflow:hidden;margin-top:2rem;">
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Next.js 15.3</div>
+        <div class="tech-version">React 19 · TypeScript 5.8</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-fe">Frontend</span></div>
+      </div>
+      <div>
+        <p>Static export means the entire storefront ships as flat HTML/JS/CSS files. <strong>No server required. No cold starts. No scaling knobs to turn.</strong> Cloudflare serves files from the nearest global edge location at zero infrastructure cost.</p>
+        <p style="margin-top:0.5rem;"><strong>Why not something simpler?</strong> Next.js gives us file-based routing, built-in image optimisation, and the ability to load heavy components (3D viewer, animations) only when needed — critical for users on budget Android devices.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: the website is like a PDF — it is pre-built and just delivered. It does not need a running computer to serve it. This is why it loads so fast and never goes down.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Convex</div>
+        <div class="tech-version">v1.38 · Real-time serverless BaaS</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-be">Backend</span></div>
+      </div>
+      <div>
+        <p>Convex is the entire backend: database, server logic, file storage, authentication, scheduled jobs, and live data sync — all in one service. <strong>Why Convex over Firebase or Supabase?</strong></p>
+        <ul class="styled" style="margin-top:0.75rem;">
+          <li>The admin dashboard updates live the moment an order arrives — no page refresh, no polling</li>
+          <li>Revenue counters update atomically when an order status changes — no chance of double-counting</li>
+          <li>Server functions can call Mistral, Razorpay, and Resend without needing a separate API server</li>
+          <li>Product images and post covers are stored and served via CDN automatically</li>
+          <li>Scheduled jobs (like the 15-min order limit refresh) are a few lines of code, not a separate service</li>
+        </ul>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: Convex is the brain of the operation — it holds all the data and runs all the business logic. When the admin marks an order as delivered, Convex updates the revenue counter, the customer's tracking page, and the audit log — all at once, instantly.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Mistral AI</div>
+        <div class="tech-version">mistral-small-2603 · Hybrid Reasoning</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-ai">AI</span></div>
+      </div>
+      <div>
+        <p>Two AI features use Mistral: <strong>BrewMatch</strong> (quiz recommendations) and <strong>Order Support Chat</strong>. The model chosen is good at following complex multi-step reasoning — like matching a taste preference to a specific product across 50+ catalog items — at a low cost per use.</p>
+        <p style="margin-top:0.75rem;"><strong>Cost control is built-in:</strong> Every BrewMatch result is fingerprinted by the user's answers. If two people give identical answers, the second person gets the cached result instantly — no AI call, zero cost. The cache automatically clears whenever the underlying prompts are changed.</p>
+        <p style="margin-top:0.75rem;"><strong>Abuse protection (two layers):</strong> A maximum of 5 AI calls per user per 15-minute window. A backup limiter kicks in if the primary one is unavailable. Neither can be bypassed.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: the AI features cost almost nothing to run at scale because repeat questions are served from a cache rather than calling the AI again. And no one can run up the bill by spamming the quiz.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Tailwind CSS v4</div>
+        <div class="tech-version">+ Motion (Framer Motion 12)</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-fe">Frontend</span></div>
+      </div>
+      <div>
+        <p>Tailwind handles all visual styling with minimal CSS output. Motion handles all animations — but only using properties the browser can animate on the GPU (movement and transparency), never ones that require recalculating layout.</p>
+        <p style="margin-top:0.5rem;"><strong>Why this matters:</strong> Animations only start when an element scrolls into view. Users on budget phones get smooth animations, not janky ones.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: the visual polish is engineered to be smooth on a ₹8,000 Android, not just on a MacBook.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">React Three Fiber + Three.js</div>
+        <div class="tech-version">R3F v9 · @react-three/drei v10</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-fe">Frontend</span></div>
+      </div>
+      <div>
+        <p>Powers the interactive 3D product viewer. Models load in WebGL — the same technology used in browser-based games — so products can be rotated and examined from any angle.</p>
+        <p style="margin-top:0.5rem;">The 3D code is loaded separately, only when the user visits a product page. It never adds weight to the homepage load.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: the homepage loads fast because the heavy 3D code only downloads when a customer actually opens a product detail page.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Lenis</div>
+        <div class="tech-version">v1.3 · Smooth scroll</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-fe">Frontend</span></div>
+      </div>
+      <div>
+        <p>Lenis gives the page a smooth, momentum-based scroll feel — the same technique used by luxury and editorial brand websites globally. It works in harmony with the scroll-triggered animations so the whole experience feels cohesive.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: this is the library responsible for that premium, buttery scroll feeling when you move through the homepage.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Razorpay</div>
+        <div class="tech-version">Payment Gateway · India-first</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-be">Payments</span></div>
+      </div>
+      <div>
+        <p><strong>The only viable choice for an Indian D2C brand</strong> — supports UPI (GPay, PhonePe, Paytm), Net Banking, Cards, EMI, and Wallets. Payment references are stored on every order for finance reconciliation. The server always recomputes the final price before creating the payment — the customer's browser cannot manipulate what they get charged.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: Razorpay handles the money. The customer pays, Razorpay confirms it, and we get the order. No card numbers or payment details ever touch our servers.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Convex Auth + OTP 2FA</div>
+        <div class="tech-version">@convex-dev/auth v0.0.92</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-sec">Security</span></div>
+      </div>
+      <div>
+        <p>Handles all user authentication. The admin two-factor layer sits on top: every login requires a 6-digit code sent by email. The code itself is never stored — only a one-way encrypted fingerprint of it is saved. Even if the database were compromised, active codes could not be recovered. Sessions are verified on the server on every page — not just at login.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: knowing someone's admin password is not enough to get in. You also need access to their email inbox.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">Upstash Redis</div>
+        <div class="tech-version">REST API · Serverless Redis</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-infra">Infra</span></div>
+      </div>
+      <div>
+        <p>A fast in-memory counter service used to track how many AI calls a user has made in the last 15 minutes. Works via a simple HTTP call — no persistent connection needed. If this service is ever unavailable, a backup counter inside the database takes over automatically.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: this is the bouncer that prevents any single user from spamming the AI quiz and running up costs. There are two bouncers, so if one is out sick, the other steps in.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">GitHub Pages + Cloudflare</div>
+        <div class="tech-version">CDN · Worker Proxy</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-infra">Infra</span></div>
+      </div>
+      <div>
+        <p><strong>Zero server to manage.</strong> The built website files are pushed to GitHub Pages automatically when code is merged. Cloudflare sits in front for: custom domain, HTTPS, global caching, security headers, and a lightweight serverless function for any logic that needs to run server-side.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: deploying a code change is one git push. The whole pipeline — build, test, deploy — runs automatically in about 3 minutes with no human involvement.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">PostHog</div>
+        <div class="tech-version">v1.375 · Product Analytics</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-infra">Analytics</span></div>
+      </div>
+      <div>
+        <p>PostHog captures session recordings, heatmaps, and retention cohorts as a <strong>second analytics layer</strong>. The two systems serve different purposes: PostHog is for marketing and UX exploration — watching how users navigate, where they click, who comes back. The custom analytics built into the platform is for real-time operational decisions — abandoned carts, payment failures, live error monitoring.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: PostHog is like a CCTV recording of the shop floor. The custom analytics is the ops dashboard telling us right now what is broken and what money is being left on the table.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row">
+      <div>
+        <div class="tech-name">web-vitals + BlurHash</div>
+        <div class="tech-version">v4.2 · RUM Telemetry</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-infra">Performance</span></div>
+      </div>
+      <div>
+        <p>Google's standard page speed library measures five performance metrics on every real visitor's device and stores them in the database — tagged by device tier so we can tell if a change made things slower specifically for budget-phone users. BlurHash means product images always show a blurred colour preview instantly while the real image loads — they never appear as a blank white box.</p>
+        <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"><em>In plain terms: we measure page speed on real customers' phones, not just in a lab. If a code change slows things down for someone on a ₹6,000 handset, we see it in the data before customers complain.</em></p>
+      </div>
+    </div>
+
+    <div class="tech-row" style="border-bottom:none;">
+      <div>
+        <div class="tech-name">Resend</div>
+        <div class="tech-version">Transactional Email</div>
+        <div style="margin-top:0.5rem;"><span class="tech-badge badge-be">Email</span></div>
+      </div>
+      <div>
+        <p>Sends the admin two-factor login codes via email from a verified domain. High deliverability means OTP codes reliably reach inboxes and do not land in spam. Also used for future customer order confirmation and shipping update emails.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PERFORMANCE ═══════════════════════════════════════════════════════ -->
+<hr class="divider" id="perf" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Latency &amp; Traffic</div>
+    <h2>How the platform handles scale.</h2>
+  </div>
+
+  <div class="grid-4" style="margin-bottom:3rem;">
+    <div class="perf-card">
+      <div class="metric">&lt;2s</div>
+      <div class="metric-label">Main Content Visible</div>
+      <div class="metric-detail">Time until the hero image and headline are on screen. Delivered from Cloudflare's nearest global edge.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">&lt;200ms</div>
+      <div class="metric-label">Response to Tap/Click</div>
+      <div class="metric-detail">How fast the page reacts when a user taps a button. Animations run on the GPU — never blocks interaction.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">&lt;0.1</div>
+      <div class="metric-label">Layout Stability</div>
+      <div class="metric-detail">Google's score for how much the page jumps around while loading. Blurred image previews prevent layout shifts.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">Instant</div>
+      <div class="metric-label">Revenue Dashboard Load</div>
+      <div class="metric-detail">Revenue KPIs are pre-calculated and stored. The dashboard never needs to scan through all orders to show totals.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">50</div>
+      <div class="metric-label">Events Per API Call</div>
+      <div class="metric-detail">Up to 50 user behaviour events are bundled into a single database write every 5 seconds — reducing network overhead 50-fold.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">15 min</div>
+      <div class="metric-label">Order Limit Refresh</div>
+      <div class="metric-detail">Per-product order limits are never more than 15 minutes out of date. Sales velocity is recalculated automatically.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">Unlimited</div>
+      <div class="metric-label">Concurrent Visitors</div>
+      <div class="metric-detail">No server to overload. Cloudflare serves the static site to any number of simultaneous visitors.</div>
+    </div>
+    <div class="perf-card">
+      <div class="metric">5 / 15m</div>
+      <div class="metric-label">AI Quiz Limit</div>
+      <div class="metric-detail">Maximum 5 AI recommendation calls per user per 15 minutes. Backed by two independent limiters.</div>
+    </div>
+  </div>
+
+  <h3 style="color:var(--cream);font-family:sans-serif;margin-bottom:1.5rem;">Traffic Architecture — How Requests Flow</h3>
+  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:2rem;">
+    <div class="workflow-row" style="margin-bottom:0;">
+      <div class="wf-step" style="border-color:rgba(37,99,235,0.3);">
+        <h4>Visitor's Browser</h4>
+        <p>The React app runs here. After the first load, all page navigation is instant — no full reload needed.</p>
+      </div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step" style="border-color:rgba(13,115,119,0.3);">
+        <h4>Cloudflare (Global Edge)</h4>
+        <p>Serves files from the nearest data centre to the visitor. Adds security headers. Responds in under 50ms.</p>
+      </div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step" style="border-color:rgba(200,115,42,0.3);">
+        <h4>GitHub Pages (Origin)</h4>
+        <p>Stores the master copy of the built website files. Free, auto-updated on every code push.</p>
+      </div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step" style="border-color:rgba(124,58,237,0.3);">
+        <h4>Convex (Database + Logic)</h4>
+        <p>All live data — orders, products, analytics — lives here. Changes push to all connected screens instantly.</p>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;border-top:1px solid rgba(255,255,255,0.07);padding-top:1.5rem;">
+      <p><strong style="color:var(--cream);">Why this scales:</strong> The storefront has <strong>no backend server</strong>. 10 users or 10,000 concurrent users get the same sub-50ms static file response from Cloudflare's edge. Convex handles data queries — its serverless functions auto-scale horizontally. The only "scale concern" is Convex function throughput, which is metered per-project and scales with usage automatically.</p>
+    </div>
+  </div>
+
+  <h3 style="color:var(--cream);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Database Design for Speed</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h4>Indexed Reads — Never Full Scans</h4>
+      <p>Every query uses an explicit Convex index: <code>by_status</code>, <code>by_orderId</code>, <code>by_customerPhone</code>, <code>by_date</code>, <code>by_anon</code>. No table scans in production queries.</p>
+    </div>
+    <div class="card">
+      <h4>Materialized Aggregates</h4>
+      <p>Revenue KPIs stored in <code>orderSummary</code> singleton — updated atomically on every order mutation. Dashboard loads instantly without ever scanning orders.</p>
+    </div>
+    <div class="card">
+      <h4>Daily Summary Rollups</h4>
+      <p><code>pageViewDailySummary</code> is a pre-aggregated counter updated on every page view. Raw <code>pageViews</code> rows are cleaned up nightly by cron.</p>
+    </div>
+    <div class="card">
+      <h4>AI Response Cache</h4>
+      <p>SHA-256 keyed cache in <code>aiCache</code> table. Identical quiz answers return a cached recommendation — <strong>no Mistral API call, no latency, no cost.</strong></p>
+    </div>
+    <div class="card">
+      <h4>3-Second Rate Limiter</h4>
+      <p>Page view mutations check for a recent insert from the same session before writing — prevents analytics spam from rapid navigation.</p>
+    </div>
+    <div class="card">
+      <h4>Event Batch Writes</h4>
+      <p><code>trackBatch</code> writes up to 50 behavioural events in a single Convex mutation call. 50× reduction in round-trips vs. event-per-mutation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DATA CAPTURE ══════════════════════════════════════════════════════ -->
+<hr class="divider" id="data" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Data Intelligence</div>
+    <h2>Every data point, every surface.</h2>
+  </div>
+
+  <div class="callout">
+    <p><strong>Privacy-first design:</strong> All browsing and clicking behaviour is tracked anonymously. No name, phone, or email is ever attached to the event data — shoppers are identified only by a random ID generated in their browser. Contact details are collected only when a customer explicitly fills in the checkout form and places an order.</p>
+    <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--mid);"><em>In plain terms: we know that "someone" added a product to their cart and then left — but we do not know who that person is until they choose to tell us by completing a purchase.</em></p>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Per Click / Per Action — Anonymous Behaviour Events</h3>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07);">
+    <table class="data-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>What It Captures</th><th>PII?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>anonId</code></td><td>string</td><td>Persistent browser UUID (localStorage). Links all events across sessions from the same browser.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>sessionId</code></td><td>string</td><td>In-memory UUID per tab/reload. Groups events into a single visit. New tab = new session.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>ts</code></td><td>number (ms)</td><td>Client-side Unix timestamp of when the event fired.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>Event name — see full catalog below.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>stage</code></td><td>number (1–10)</td><td>Funnel stage number for this event (e.g. 2=product viewed, 3=cart, 5=checkout, 10=order).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>route</code></td><td>string</td><td>URL path where the event fired (e.g. <code>/shop/product/123</code>).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>propsJson</code></td><td>JSON string</td><td>Event-specific payload (productId, qty, price, orderId, method, etc.) — max 4 KB.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>device</code></td><td>mobile/tablet/desktop</td><td>Detected from screen width. Used for device-segmented dropout analysis.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>connection</code></td><td>string</td><td><code>navigator.connection.effectiveType</code> — "4g", "3g", "2g", "wifi". Correlates with checkout failures on slow networks.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>referrer</code></td><td>string</td><td><code>document.referrer</code> — the page that brought the user to the site. First-touch capture only.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>utmSource</code></td><td>string</td><td>First-touch UTM source from URL query string (e.g. "instagram", "google").</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>utmMedium</code></td><td>string</td><td>First-touch UTM medium (e.g. "social", "cpc", "email").</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>utmCampaign</code></td><td>string</td><td>First-touch UTM campaign name (e.g. "diwali-sale-2025").</td><td><span class="pii-badge pii-no">No</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Per Session / Per Visit — Page View Data</h3>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07);">
+    <table class="data-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>What It Captures</th><th>PII?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>path</code></td><td>string</td><td>URL path of the viewed page (e.g. <code>/shop</code>, <code>/products/abc</code>).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>sessionId</code></td><td>string</td><td>Links page views to a session. Used for unique session counting.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>referrer</code></td><td>string</td><td>HTTP referrer of the page view.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>timestamp</code></td><td>number (ms)</td><td>When the page was viewed.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>duration</code></td><td>number (seconds)</td><td>Time spent on the page before navigation. Powers "avg time on page" analytics.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>country</code></td><td>string</td><td>Country name from geo-lookup (IP or GPS).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>countryCode</code></td><td>string</td><td>ISO country code (e.g. "IN").</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>region</code></td><td>string</td><td>State or administrative region.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>city</code></td><td>string</td><td>City name. Powers the geo heatmap in analytics.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>locality</code></td><td>string</td><td>Sub-city locality (neighbourhood / area name).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>postcode</code></td><td>string</td><td>Postal code. Enables hyper-local delivery zone analysis.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>lat</code> / <code>lon</code></td><td>number</td><td>GPS or IP-resolved coordinates. Clamped to valid range before storage.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>geoSource</code></td><td>"gps" / "ip"</td><td>Whether coordinates came from GPS (high-accuracy) or IP lookup (city-level).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Per Cart / Abandoned Cart — Cart Snapshot Data</h3>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07);">
+    <table class="data-table">
+      <thead>
+        <tr><th>Field</th><th>What It Captures</th><th>PII?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>anonId</code></td><td>Browser fingerprint — links snapshot to the shopper's full event history.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>itemsJson</code></td><td>Full cart: array of {productId, qty, price, name} — used to compute ₹ value of abandoned carts.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>subtotal</code></td><td>₹ value of cart. Used to sort abandoned carts by value for recovery prioritisation.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>itemCount</code></td><td>Total units. Quick counter without parsing itemsJson.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>lastEventName</code></td><td>What the shopper was doing when they abandoned (e.g. "cart_item_added", "checkout_validation_failed").</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>lastRoute</code></td><td>Which page they were on when the snapshot was last written.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>converted</code></td><td>Boolean — true after successful order. Prevents this from appearing in abandonment reports.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>abandonedAt</code></td><td>Timestamp when 30-min idle threshold was hit. Reserved for recovery flow.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>contactPhone</code></td><td><strong>Written only at checkout form submit.</strong> Enables SMS recovery for carts that reached checkout.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+        <tr><td><code>contactEmail</code></td><td><strong>Written only at checkout form submit.</strong> Enables email recovery for carts that reached checkout.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Per Order — Order Data</h3>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07);">
+    <table class="data-table">
+      <thead>
+        <tr><th>Field</th><th>What It Captures</th><th>PII?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>orderId</code></td><td>CSPRNG-generated "TWC-XXXXXXXX" ID. Shared with customer for tracking.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>customer.name</code></td><td>Full name from checkout form.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+        <tr><td><code>customer.phone</code></td><td>Mobile number. Used for order lookup and first-order-only discount check.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+        <tr><td><code>customer.email</code></td><td>Email address. Used for order lookup and discount checks.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+        <tr><td><code>customer.address</code></td><td>Delivery address: line1, line2, city, state, pincode.</td><td><span class="pii-badge pii-yes">PII</span></td></tr>
+        <tr><td><code>items[]</code></td><td>Array of ordered items: productId, name, imageUrl, qty, price. Stored for receipt and fulfilment.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>subtotal</code></td><td>Pre-discount cart total (₹).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>shipping</code></td><td>Shipping fee applied (₹).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>total</code></td><td>Final total charged (₹) — server-computed.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>status</code></td><td>Order lifecycle: pending → confirmed → shipped → delivered → cancelled.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>paymentMethod</code></td><td>Payment method used (UPI, card, netbanking, etc.).</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>razorpayOrderId</code></td><td>Razorpay's order reference. Used for reconciliation.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>razorpayPaymentId</code></td><td>Razorpay's payment capture ID. Used for reconciliation and refunds.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>paidAt</code></td><td>Timestamp of successful payment capture.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>discountCode</code></td><td>Applied discount code string.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>discountApplied</code></td><td>₹ amount saved from the discount.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+        <tr><td><code>notes[]</code></td><td>Internal admin/system notes with role (customer/system), message, and timestamp.</td><td><span class="pii-badge pii-no">No</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Per Page Load — Speed Metrics</h3>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07);">
+    <table class="data-table">
+      <thead>
+        <tr><th>Metric</th><th>Full Name</th><th>What It Measures</th><th>Good Threshold</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>FCP</code></td><td>First Contentful Paint</td><td>Time until first text or image renders. First impression of load speed.</td><td>&lt;1.8s</td></tr>
+        <tr><td><code>LCP</code></td><td>Largest Contentful Paint</td><td>Time until the main content is visible. Google's key ranking signal.</td><td>&lt;2.5s</td></tr>
+        <tr><td><code>INP</code></td><td>Interaction to Next Paint</td><td>Responsiveness to user interactions (clicks, taps). Replaced FID in 2024.</td><td>&lt;200ms</td></tr>
+        <tr><td><code>CLS</code></td><td>Cumulative Layout Shift</td><td>Visual stability — how much does layout jump around during load?</td><td>&lt;0.1</td></tr>
+        <tr><td><code>TTFB</code></td><td>Time to First Byte</td><td>Server response time. For static sites, this is CDN cache latency.</td><td>&lt;800ms</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:0.75rem;">Each sample is tagged with the page it was measured on, the browser, and a device tier (budget / mid-range / high-end). This lets us isolate slowdowns to specific device types — essential for the Indian market where many users are on entry-level Android phones.</p>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Complete Event Catalog</h3>
+  <div class="grid-2">
+    <div>
+      <h4>Auto-Tracked (every session)</h4>
+      <ul class="styled">
+        <li><code>page_view</code> — entry into every funnel (Stage 1)</li>
+        <li><code>tab_hidden</code> — comparison shopping signal</li>
+        <li><code>tab_visible</code> — return rate after comparison</li>
+        <li><code>rage_click</code> — 3+ clicks/sec on same element</li>
+        <li><code>dead_click</code> — click on non-interactive element</li>
+      </ul>
+      <h4 style="margin-top:1.5rem;">Product Discovery</h4>
+      <ul class="styled">
+        <li><code>product_viewed</code> — Stage 2 (100% sampled)</li>
+      </ul>
+      <h4 style="margin-top:1.5rem;">Cart Events</h4>
+      <ul class="styled">
+        <li><code>cart_item_added</code> — Stage 3</li>
+        <li><code>cart_item_removed</code> — regret/friction signal</li>
+        <li><code>cart_item_quantity_changed</code> — upsell signal</li>
+        <li><code>cart_emptied_manually</code> — hard abandonment</li>
+        <li><code>cart_viewed</code> — panel open (Stage 3)</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Checkout Events</h4>
+      <ul class="styled">
+        <li><code>checkout_initiated</code> — Stage 5</li>
+        <li><code>checkout_validation_failed</code> — friction (Stage 7)</li>
+        <li><code>payment_method_selected</code> — method mix (Stage 8)</li>
+        <li><code>payment_initiated</code> — Stage 8</li>
+        <li><code>order_confirmed</code> — Stage 10 (goal)</li>
+        <li><code>payment_failed</code> — Stage 9 (with reason)</li>
+      </ul>
+      <h4 style="margin-top:1.5rem;">Error Tracking (<code>clientErrors</code>)</h4>
+      <ul class="styled">
+        <li>Uncaught JS errors — type + message + stack</li>
+        <li>Unhandled Promise rejections</li>
+        <li>Network offline events</li>
+        <li>API mutation failures (submitOrder, etc.)</li>
+      </ul>
+      <h4 style="margin-top:1.5rem;">Sampled (10%) — High Volume Passives</h4>
+      <ul class="styled">
+        <li><code>impression</code> — product card visible in viewport</li>
+        <li><code>pdp_dwell</code> — time on product detail page</li>
+        <li><code>scroll_depth</code> — how far down the page</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="color:var(--gold);font-family:sans-serif;margin-top:2.5rem;margin-bottom:1rem;">Admin Funnel Dashboard — 10 Sections</h3>
+  <div class="grid-2" style="margin-bottom:2rem;">
+    <div class="card"><h4>1. KPI Tiles</h4><p>Total sessions, conversion rate, total orders (24H/7D/30D), avg order value. Reads from pre-aggregated counters.</p></div>
+    <div class="card"><h4>2. Funnel Bar Chart</h4><p>Stage-by-stage dropoff: Views → Cart → Checkout → Payment → Order. Dropout % between each stage visible at a glance.</p></div>
+    <div class="card"><h4>3. Dropout Hotspots</h4><p>Top 10 "last event before abandonment" — shows exactly which action users took before leaving.</p></div>
+    <div class="card"><h4>4. Abandoned Carts</h4><p>List of recent carts with no order. Sorted by ₹ value. Contact info shown if available (entered at checkout).</p></div>
+    <div class="card"><h4>5. Payment Funnel</h4><p>checkout-init → payment-init → order success/failed. Broken down by payment method.</p></div>
+    <div class="card"><h4>6. Device Breakdown</h4><p>Mobile vs. tablet vs. desktop dropout rates. Surfaces mobile-specific UX regressions.</p></div>
+    <div class="card"><h4>7. Friction Events</h4><p>Rage click + dead click + validation failure counts. High numbers = broken or confusing UI elements.</p></div>
+    <div class="card"><h4>8. Client Error Feed</h4><p>Live feed of JS errors, unhandled rejections, API failures. Surfaces broken functionality before support tickets arrive.</p></div>
+    <div class="card"><h4>9. Daily Trend</h4><p>Orders + sessions per day over 7/30 days. Revenue trend line.</p></div>
+    <div class="card"><h4>10. UTM Attribution</h4><p>Which channels (UTM source/medium/campaign) are driving sessions and conversions. First-touch model.</p></div>
+  </div>
+</section>
+
+<!-- ═══ SECURITY ══════════════════════════════════════════════════════════ -->
+<hr class="divider" id="security" />
+<section>
+  <div class="section-header">
+    <div class="section-tag">Security</div>
+    <h2>Built secure by design.</h2>
+  </div>
+  <div class="callout">
+    <p>Every security measure has a tracking code (e.g. H-02, M-01) that is referenced directly in the source code. This means any security control can be traced to the exact line of code that implements it — making audits straightforward.</p>
+    <p style="margin-top:0.75rem;font-size:0.82rem;color:var(--mid);"><em>In plain terms: security is not an afterthought. Every known attack vector has a named defence, and that defence is documented inside the code itself.</em></p>
+  </div>
+  <div style="margin-top:1.5rem;">
+    <div class="security-item">
+      <div class="sec-code">H-02</div>
+      <div class="sec-text"><h4>Cryptographically Random Order IDs</h4><p>Order IDs are generated using a cryptographically secure random number generator — not a predictable one. This prevents anyone from guessing other customers' order IDs by incrementing numbers.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">M-01</div>
+      <div class="sec-text"><h4>Analytics Input Limits</h4><p>All data sent by the browser to the analytics system is capped at a maximum length before being stored. This prevents a malicious user from flooding the database with junk data by sending oversized payloads.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">M-03</div>
+      <div class="sec-text"><h4>AI Prompt Injection Protection</h4><p>Customer quiz answers and the system's own instructions are sent to the AI in separate, isolated message slots. A customer cannot write something in the quiz that tricks the AI into ignoring its instructions or revealing internal data.</p>
+      <p style="margin-top:0.4rem;font-size:0.8rem;color:var(--muted);"><em>In plain terms: the AI cannot be manipulated by a customer typing something clever into the quiz.</em></p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">XSS-03</div>
+      <div class="sec-text"><h4>Support Chat Length Cap</h4><p>Customer messages in the AI support chat are capped at 500 characters before being sent to the AI. Order details (trusted) and the customer's question (untrusted) are kept in separate message slots so one cannot contaminate the other.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">OTP-01</div>
+      <div class="sec-text"><h4>Login Codes Never Stored in Plain Text</h4><p>The 6-digit login code is converted to an irreversible fingerprint before being saved. Even if the database were fully exposed, no attacker could recover the actual codes.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">AUTH-01</div>
+      <div class="sec-text"><h4>Automatic Account Lockout</h4><p>5 wrong passwords locks the account for 15 minutes. A maximum of 3 login codes can be sent per 15-minute window. 5 wrong code guesses invalidates the code entirely. Each limit is independent.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">AUTH-02</div>
+      <div class="sec-text"><h4>Server-Side Session Verification</h4><p>Admin sessions are checked against the server on every single page load — not just at login. An attacker who modifies their browser's local storage to fake a session will be rejected immediately.</p>
+      <p style="margin-top:0.4rem;font-size:0.8rem;color:var(--muted);"><em>In plain terms: you cannot break into the admin panel by tampering with your browser. The server checks every page access independently.</em></p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">TELEMETRY-FLOOD-01</div>
+      <div class="sec-text"><h4>Analytics Flood Protection</h4><p>A maximum of 50 events can be sent in one batch. Each field has a size limit. Events over the limit are silently trimmed rather than causing an error — so a misbehaving browser never breaks itself or the analytics system.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">EDGE-01</div>
+      <div class="sec-text"><h4>Two-Layer AI Usage Limits</h4><p>Maximum 5 AI recommendation calls per user per 15 minutes, enforced by two independent systems. Neither can be bypassed on its own. Prevents a malicious user from running up AI costs by automating quiz submissions.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">DISC-FIRST-ORDER-03</div>
+      <div class="sec-text"><h4>First-Order Discount Anti-Abuse</h4><p>"First order only" discounts are validated against both the customer's phone number and email address. Creating a new email to reuse the discount while keeping the same phone number is blocked — and vice versa.</p></div>
+    </div>
+    <div class="security-item">
+      <div class="sec-code">HTTP Headers</div>
+      <div class="sec-text"><h4>Browser Security Headers</h4><p>The site cannot be embedded inside another website (clickjacking protection). The browser is prevented from guessing file types (MIME sniffing protection). The camera, microphone, and location are blocked at the browser level unless explicitly granted by the user.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════════════ -->
+<hr class="divider" />
+<footer>
+  <p style="color:var(--gold);font-size:1rem;margin-bottom:0.5rem;">Third Wave Coffee</p>
+  <p>Platform Deep Dive · Confidential · Prepared for leadership meeting · June 2026</p>
+  <p style="margin-top:0.5rem;">Built on Next.js 15 · Convex · Mistral AI · Razorpay · Cloudflare · PostHog</p>
+</footer>
+
+</body>
+</html>
