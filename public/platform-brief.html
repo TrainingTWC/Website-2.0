@@ -305,6 +305,9 @@
   .layer-block p { color: var(--text); }
   /* override any remaining mid-coloured paragraphs */
   p { color: var(--text); }
+  /* "In plain terms:" lines have inline color styles — !important needed to override */
+  p em { color: #5c3d1e !important; opacity: 1 !important; }
+  p.hero-sub[style*="opacity"] { opacity: 1 !important; color: var(--text) !important; }
 </style>
 </head>
 <body>
