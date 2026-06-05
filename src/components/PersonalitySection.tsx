@@ -106,8 +106,7 @@ export function PersonalitySection({
             style={{ backgroundColor: accentHex }}
           />
           <span
-            className="text-[10px] font-black uppercase tracking-[0.4em]"
-            style={{ color: accentHex }}
+            className="text-[10px] font-black uppercase tracking-[0.4em] text-natural-text/50"
           >
             Coffee Personality
           </span>
@@ -278,8 +277,7 @@ function TraitCard({
 
       {/* Label */}
       <p
-        className="text-[10px] font-black uppercase tracking-[0.35em] mb-3"
-        style={{ color: accentHex }}
+        className="text-[10px] font-black uppercase tracking-[0.35em] mb-3 text-natural-text/50"
       >
         {label}
       </p>

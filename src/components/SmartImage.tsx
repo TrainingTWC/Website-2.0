@@ -99,6 +99,7 @@ export function SmartImage({
         className={`relative w-full h-full transition-opacity duration-700 ease-out ${
           loaded || !blur ? "opacity-100" : "opacity-0"
         } ${className}`}
+        style={transparent ? { mixBlendMode: "multiply" } : undefined}
       />
     </div>
   );
