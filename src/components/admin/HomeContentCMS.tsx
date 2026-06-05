@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Plus, Trash2, Save, ImagePlus } from "lucide-react";
@@ -658,6 +658,186 @@ const BANNER_EMPTY: BannerSlide = {
   gradientOpacity: 0.6,
 };
 
+// ─── Banner image crop modal ─────────────────────────────────────────────────
+// Aspect ratio of the desktop banner on the website (BannerSlideshow: aspect-[16/6])
+const BANNER_CROP_ASPECT = 16 / 6;
+
+function BannerCropModal({
+  file,
+  srcUrl,
+  onConfirm,
+  onSkip,
+  onCancel,
+}: {
+  file: File;
+  srcUrl: string;
+  onConfirm: (croppedFile: File) => void;
+  onSkip: () => void;
+  onCancel: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [nat, setNat] = useState({ w: 0, h: 0 });
+  // crop box top-left as fraction of the rendered image (0..1)
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
+
+  function onImgLoad() {
+    const img = imgRef.current!;
+    setNat({ w: img.naturalWidth, h: img.naturalHeight });
+  }
+
+  // Centre the crop box once we know natural dimensions
+  useEffect(() => {
+    if (!nat.w || !nat.h) return;
+    const { fw, fh } = getBoxFractions(nat.w / nat.h);
+    setPos({ x: (1 - fw) / 2, y: (1 - fh) / 2 });
+  }, [nat.w, nat.h]);
+
+  // Fraction of rendered image width/height occupied by the 16:6 crop box
+  function getBoxFractions(imgAspect: number) {
+    if (imgAspect >= BANNER_CROP_ASPECT) {
+      // image wider than banner → box fills full rendered height
+      return { fw: BANNER_CROP_ASPECT / imgAspect, fh: 1 };
+    }
+    // image taller than banner → box fills full rendered width
+    return { fw: 1, fh: imgAspect / BANNER_CROP_ASPECT };
+  }
+
+  // Rendered image rect inside the container (object-contain letterboxing)
+  function getRenderedRect() {
+    const c = containerRef.current;
+    const img = imgRef.current;
+    if (!c || !img || !nat.w) return null;
+    const cw = c.clientWidth, ch = c.clientHeight;
+    const ir = nat.w / nat.h, cr = cw / ch;
+    if (ir > cr) return { x: 0, y: (ch - cw / ir) / 2, w: cw, h: cw / ir };
+    return { x: (cw - ch * ir) / 2, y: 0, w: ch * ir, h: ch };
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    dragRef.current = { sx: e.clientX, sy: e.clientY, px: pos.x, py: pos.y };
+    e.preventDefault();
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    const r = getRenderedRect();
+    if (!r) return;
+    const { fw, fh } = getBoxFractions(nat.w / nat.h);
+    const dx = (e.clientX - dragRef.current.sx) / r.w;
+    const dy = (e.clientY - dragRef.current.sy) / r.h;
+    setPos({
+      x: Math.max(0, Math.min(1 - fw, dragRef.current.px + dx)),
+      y: Math.max(0, Math.min(1 - fh, dragRef.current.py + dy)),
+    });
+  }
+
+  function onPointerUp() { dragRef.current = null; }
+
+  function applyCrop() {
+    const img = imgRef.current;
+    if (!img) return;
+    const { fw, fh } = getBoxFractions(nat.w / nat.h);
+    const sx = Math.round(pos.x * nat.w);
+    const sy = Math.round(pos.y * nat.h);
+    const sw = Math.round(fw * nat.w);
+    const sh = Math.round(fh * nat.h);
+    const canvas = document.createElement("canvas");
+    canvas.width = sw; canvas.height = sh;
+    canvas.getContext("2d")!.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    canvas.toBlob((blob) => {
+      if (!blob) { onSkip(); return; }
+      const stem = file.name.replace(/\.[^.]+$/, "");
+      onConfirm(new File([blob], `${stem}-banner.jpg`, { type: "image/jpeg" }));
+    }, "image/jpeg", 0.92);
+  }
+
+  const r = nat.w ? getRenderedRect() : null;
+  const { fw, fh } = nat.w ? getBoxFractions(nat.w / nat.h) : { fw: 0, fh: 0 };
+  const box = r
+    ? { left: r.x + pos.x * r.w, top: r.y + pos.y * r.h, width: fw * r.w, height: fh * r.h }
+    : null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onCancel}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-stone-200 flex items-center justify-between shrink-0">
+          <div>
+            <p className="font-bold text-stone-800 text-sm">Crop to banner size</p>
+            <p className="text-xs text-stone-500 mt-0.5">Drag the white frame to set which part shows on the website (16:6 desktop ratio)</p>
+          </div>
+          <button onClick={onCancel} className="text-stone-400 hover:text-stone-700 text-xl leading-none">×</button>
+        </div>
+        {/* Image area */}
+        <div ref={containerRef} className="relative bg-stone-900 select-none" style={{ height: 320 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={srcUrl}
+            alt=""
+            onLoad={onImgLoad}
+            className="w-full h-full object-contain"
+            draggable={false}
+            crossOrigin="anonymous"
+          />
+          {box && (
+            <>
+              {/* Darkened areas outside crop */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-x-0 top-0 bg-black/55" style={{ height: box.top }} />
+                <div className="absolute inset-x-0 bottom-0 bg-black/55" style={{ top: box.top + box.height }} />
+                <div className="absolute bg-black/55" style={{ left: 0, top: box.top, width: box.left, height: box.height }} />
+                <div className="absolute bg-black/55" style={{ left: box.left + box.width, right: 0, top: box.top, height: box.height }} />
+              </div>
+              {/* Draggable crop frame */}
+              <div
+                className="absolute border-2 border-white cursor-move touch-none"
+                style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+              >
+                <div className="absolute top-0 left-0 w-3 h-3 bg-white" />
+                <div className="absolute top-0 right-0 w-3 h-3 bg-white" />
+                <div className="absolute bottom-0 left-0 w-3 h-3 bg-white" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-white" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-white text-[10px] font-bold bg-black/40 px-2 py-0.5 rounded select-none">Banner area</span>
+                </div>
+              </div>
+            </>
+          )}
+          {!nat.w && (
+            <div className="absolute inset-0 flex items-center justify-center text-stone-400 text-xs">Loading image…</div>
+          )}
+        </div>
+        {/* Actions */}
+        <div className="px-5 py-4 border-t border-stone-200 flex items-center justify-between shrink-0">
+          <button onClick={onSkip} className="text-sm text-stone-500 hover:text-stone-700 underline-offset-2 hover:underline">
+            Use original (no crop)
+          </button>
+          <div className="flex gap-2">
+            <button onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border border-stone-200 text-stone-700 hover:bg-stone-50">
+              Cancel
+            </button>
+            <button
+              onClick={applyCrop}
+              disabled={!nat.w}
+              className="px-4 py-2 text-sm rounded-lg bg-natural-accent text-white font-bold hover:opacity-90 disabled:opacity-50"
+            >
+              Crop & Use
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function BannerSlidesEditor() {
   const entry = useQuery(convexApi.siteContent.get, { key: "banner.slides" });
   const setContent = useMutation(convexApi.siteContent.set);
@@ -668,6 +848,7 @@ function BannerSlidesEditor() {
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [cropState, setCropState] = useState<{ file: File; srcUrl: string; idx: number } | null>(null);
 
   useEffect(() => {
     if (entry === undefined) return;
@@ -750,6 +931,13 @@ function BannerSlidesEditor() {
     setSlides((arr) => arr.map((s, idx) => (idx === i ? { ...s, [key]: val } : s)));
   }
 
+  function openCropper(file: File, idx: number) {
+    setCropState({ file, srcUrl: URL.createObjectURL(file), idx });
+  }
+  function closeCropper() {
+    setCropState((s) => { if (s) URL.revokeObjectURL(s.srcUrl); return null; });
+  }
+
   if (entry === undefined) return <p className="text-stone-400 text-sm">Loading…</p>;
 
   return (
@@ -786,46 +974,54 @@ function BannerSlidesEditor() {
       ) : (
         <div className="space-y-4">
           {slides.map((slide, i) => (
-            <div key={i} className="rounded-xl border border-stone-200 bg-white p-4 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
-              {/* image */}
-              <div className="space-y-2">
-                <div className="relative rounded-lg overflow-hidden border border-stone-200 bg-stone-100 aspect-[4/5]">
-                  {slide.url ? (
-                    <img src={slide.url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-300 text-xs">No image</div>
-                  )}
-                  {uploadingIdx === i && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-white text-xs font-bold animate-pulse">Uploading…</span>
-                    </div>
-                  )}
-                  <div className="absolute top-1 left-1 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{i + 1}</div>
-                </div>
-                <label className="block text-center px-2 py-1 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 cursor-pointer">
-                  {slide.storageId || slide.url ? "Replace image" : "Upload image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleImageUpload(f, i);
-                      e.currentTarget.value = "";
-                    }}
-                  />
-                </label>
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1">
+            <div key={i} className="rounded-xl border border-stone-200 bg-white overflow-hidden">
+              {/* Full-width banner preview — matches the website desktop ratio */}
+              <div className="relative bg-stone-100" style={{ aspectRatio: "16/6" }}>
+                {slide.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={slide.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-stone-300 text-sm">
+                    No image — upload to preview
+                  </div>
+                )}
+                {uploadingIdx === i && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold animate-pulse">Uploading…</span>
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 bg-white/90 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded font-mono tracking-wide">16:6 desktop view</div>
+              </div>
+
+              {/* Controls + fields */}
+              <div className="p-4 space-y-3">
+                {/* Image controls */}
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 cursor-pointer">
+                    <ImagePlus className="w-3.5 h-3.5" />
+                    {slide.storageId || slide.url ? "Replace image" : "Upload image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) openCropper(f, i);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                  <div className="flex gap-1 ml-auto">
                     <button
                       onClick={() => moveSlide(i, -1)}
                       disabled={i === 0}
-                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                      className="px-2 py-1 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
                     >←</button>
                     <button
                       onClick={() => moveSlide(i, 1)}
                       disabled={i === slides.length - 1}
-                      className="px-2 py-0.5 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
+                      className="px-2 py-1 rounded bg-stone-100 text-xs font-bold text-stone-700 hover:bg-stone-200 disabled:opacity-30"
                     >→</button>
                   </div>
                   <button
@@ -836,68 +1032,83 @@ function BannerSlidesEditor() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
 
-              {/* fields */}
-              <div className="space-y-2">
-                <div>
-                  <label className={LABEL}>Partner / Eyebrow (small uppercase line)</label>
-                  <input value={slide.partner ?? ""} onChange={(e) => update(i, "partner", e.target.value)} className={INPUT} placeholder="THIRD WAVE × Partner" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Fields */}
+                <div className="space-y-2">
                   <div>
-                    <label className={LABEL}>Headline</label>
-                    <input value={slide.headline} onChange={(e) => update(i, "headline", e.target.value)} className={INPUT} />
+                    <label className={LABEL}>Partner / Eyebrow (small uppercase line)</label>
+                    <input value={slide.partner ?? ""} onChange={(e) => update(i, "partner", e.target.value)} className={INPUT} placeholder="THIRD WAVE × Partner" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className={LABEL}>Headline</label>
+                      <input value={slide.headline} onChange={(e) => update(i, "headline", e.target.value)} className={INPUT} />
+                    </div>
+                    <div>
+                      <label className={LABEL}>Headline italic (optional)</label>
+                      <input value={slide.headlineItalic ?? ""} onChange={(e) => update(i, "headlineItalic", e.target.value)} className={INPUT} placeholder="FIZZ." />
+                    </div>
                   </div>
                   <div>
-                    <label className={LABEL}>Headline italic (optional)</label>
-                    <input value={slide.headlineItalic ?? ""} onChange={(e) => update(i, "headlineItalic", e.target.value)} className={INPUT} placeholder="FIZZ." />
-                  </div>
-                </div>
-                <div>
-                  <label className={LABEL}>Subheading</label>
-                  <input value={slide.subhead ?? ""} onChange={(e) => update(i, "subhead", e.target.value)} className={INPUT} />
-                </div>
-                <div>
-                  <label className={LABEL}>Tagline (pill text)</label>
-                  <input value={slide.tagline ?? ""} onChange={(e) => update(i, "tagline", e.target.value)} className={INPUT} placeholder="In stores now" />
-                </div>
-                <div className="grid grid-cols-3 gap-2 items-end">
-                  <div>
-                    <label className={LABEL}>Gradient from</label>
-                    <input
-                      type="color"
-                      value={slide.gradientFrom ?? "#1a3a8a"}
-                      onChange={(e) => update(i, "gradientFrom", e.target.value)}
-                      className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
-                    />
+                    <label className={LABEL}>Subheading</label>
+                    <input value={slide.subhead ?? ""} onChange={(e) => update(i, "subhead", e.target.value)} className={INPUT} />
                   </div>
                   <div>
-                    <label className={LABEL}>Gradient to</label>
-                    <input
-                      type="color"
-                      value={slide.gradientTo ?? "#ff6fa4"}
-                      onChange={(e) => update(i, "gradientTo", e.target.value)}
-                      className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
-                    />
+                    <label className={LABEL}>Tagline (pill text)</label>
+                    <input value={slide.tagline ?? ""} onChange={(e) => update(i, "tagline", e.target.value)} className={INPUT} placeholder="In stores now" />
                   </div>
-                  <div>
-                    <label className={LABEL}>Overlay opacity</label>
-                    <input
-                      type="number"
-                      step="0.05"
-                      min={0}
-                      max={1}
-                      value={slide.gradientOpacity ?? 0.6}
-                      onChange={(e) => update(i, "gradientOpacity", Number(e.target.value))}
-                      className={INPUT}
-                    />
+                  <div className="grid grid-cols-3 gap-2 items-end">
+                    <div>
+                      <label className={LABEL}>Gradient from</label>
+                      <input
+                        type="color"
+                        value={slide.gradientFrom ?? "#1a3a8a"}
+                        onChange={(e) => update(i, "gradientFrom", e.target.value)}
+                        className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL}>Gradient to</label>
+                      <input
+                        type="color"
+                        value={slide.gradientTo ?? "#ff6fa4"}
+                        onChange={(e) => update(i, "gradientTo", e.target.value)}
+                        className="w-full h-10 rounded-lg border border-stone-200 bg-white cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL}>Overlay opacity</label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        min={0}
+                        max={1}
+                        value={slide.gradientOpacity ?? 0.6}
+                        onChange={(e) => update(i, "gradientOpacity", Number(e.target.value))}
+                        className={INPUT}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+      {cropState && (
+        <BannerCropModal
+          file={cropState.file}
+          srcUrl={cropState.srcUrl}
+          onConfirm={(croppedFile) => {
+            handleImageUpload(croppedFile, cropState.idx);
+            closeCropper();
+          }}
+          onSkip={() => {
+            handleImageUpload(cropState.file, cropState.idx);
+            closeCropper();
+          }}
+          onCancel={closeCropper}
+        />
       )}
     </section>
   );
