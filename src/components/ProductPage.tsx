@@ -460,6 +460,7 @@ function ImmersiveProductLayout({
                         src={product.imageUrl} blur={product.imageBlur} alt={product.name}
                         className="object-contain object-center"
                         wrapperClassName="w-full h-full"
+                        transparent
                         priority
                       />
                     </motion.div>
@@ -489,6 +490,7 @@ function ImmersiveProductLayout({
                         src={product.imageUrl} blur={product.imageBlur} alt={product.name}
                         className="object-contain object-center"
                         wrapperClassName="w-full h-full"
+                        transparent
                         priority
                       />
                     </div>
@@ -501,6 +503,7 @@ function ImmersiveProductLayout({
                         src={product.imageUrl} blur={product.imageBlur} alt=""
                         className="object-contain object-center scale-x-[-1]"
                         wrapperClassName="w-full h-full"
+                        transparent
                       />
                     </div>
                   </motion.div>

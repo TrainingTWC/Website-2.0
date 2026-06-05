@@ -11,6 +11,8 @@ interface SmartImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   priority?: boolean;
   /** Optional className wrapper, kept for compatibility */
   wrapperClassName?: string;
+  /** Remove wrapper background so PNG products float on themed backgrounds */
+  transparent?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export function SmartImage({
   sizes = "(max-width: 768px) 100vw, 50vw",
   wrapperClassName = "",
   className = "",
+  transparent = false,
   style,
   ...rest
 }: SmartImageProps) {
@@ -68,8 +71,8 @@ export function SmartImage({
       className={`relative overflow-hidden ${wrapperClassName}`}
       style={{
         aspectRatio,
-        backgroundColor: "var(--color-natural-muted)",
-        backgroundImage: blur ? `url(${blur})` : undefined,
+        backgroundColor: transparent ? "transparent" : "var(--color-natural-muted)",
+        backgroundImage: transparent ? undefined : (blur ? `url(${blur})` : undefined),
         backgroundSize: "cover",
         backgroundPosition: "center",
         ...style,
