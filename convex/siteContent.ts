@@ -20,7 +20,7 @@ async function hydrateSlides(ctx: any, parsed: any) {
   if (!parsed || typeof parsed !== "object") return parsed;
   const out: any = { ...parsed };
   if (Array.isArray(parsed.slides)) {
-    out.slides = await hydrateArray(ctx, parsed.slides, "url");
+    out.slides = await hydrateArray(ctx, parsed.slides, "imageUrl");
   }
   if (Array.isArray(parsed.chapters)) {
     out.chapters = await hydrateArray(ctx, parsed.chapters, "imageUrl");
